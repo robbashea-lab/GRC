@@ -41,8 +41,8 @@ function versions(entry) {
     ['1.1', '1.2', '1.3', '1.4', '1.5'].includes(entry.id)
       ? 'cis-v8.1-control1-5' : 'cis-v8.1-program-5',
   ];
-  if (entry.module_key === 'criterion') return ['soc2-omni-2', 'soc2-assessment-rollout-1'];
-  if (['isms', 'annex_a'].includes(entry.module_key)) return ['iso27001-omni-2', 'iso27001-assessment-rollout-1'];
+  if (entry.module_key === 'criterion') return ['soc2-omni-2', 'soc2-assessment-rollout-1', 'soc2-assessment-rollout-2'];
+  if (['isms', 'annex_a'].includes(entry.module_key)) return ['iso27001-omni-2', 'iso27001-assessment-rollout-1', 'iso27001-assessment-rollout-2'];
   return [];
 }
 function guidance(callout, help) {

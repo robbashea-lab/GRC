@@ -124,7 +124,7 @@ test('real native fresh entry and save/read keep the qualified historical proof 
 });
 
 test('unpatched rollout defaults preserve the materialized authored-V2 personal interviews across cold reload without grafting new questions',()=>{
-  expect(socGuidedCatalog.version).toBe('soc2-assessment-rollout-1');
+  expect(socGuidedCatalog.version).toBe('soc2-assessment-rollout-2');
   const warm=readStore();
   const ownGuided=db=>Object.fromEntries(Object.entries(db.guided_assessment_pilot||{}).filter(([,draft])=>draft.client_id===CID));
   // The installer copies these authored native identities verbatim; do not derive

@@ -286,8 +286,8 @@ class PlatformCisSocInventoryTests(unittest.IsolatedAsyncioTestCase):
         self.vectors = self.contract['vectors']
         self.ledger['soc_vector_version'] = self.contract['soc_question_version']
         self.assertEqual(self.contract['assessment_date'], self.ledger['assessment_date'])
-        self.assertEqual(soc_engine.CURRENT_VERSION, 'soc2-assessment-rollout-1')
-        self.assertEqual(self.contract['soc_question_version'], 'soc2-assessment-rollout-1')
+        self.assertEqual(soc_engine.CURRENT_VERSION, 'soc2-assessment-rollout-2')
+        self.assertEqual(self.contract['soc_question_version'], 'soc2-assessment-rollout-2')
         clients, workspaces = await self.setup_clients()
         await self.assert_scope_placements(clients, workspaces)
         rows = {(alias, row['definition_id']): row for alias, workspace in workspaces.items() for row in workspace['assessments']}
@@ -307,10 +307,10 @@ class PlatformCisSocInventoryTests(unittest.IsolatedAsyncioTestCase):
                 foreign_before = await server.db.framework_assessments.find(
                     {'definition_id': vector['id'], 'client_id': {'$ne': row['client_id']}}, {'_id': 0}).to_list(None)
                 draft = await self.request('GET', path + '/guided-assessment')
-                self.assertEqual(draft['version'], 'soc2-assessment-rollout-1')
+                self.assertEqual(draft['version'], 'soc2-assessment-rollout-2')
                 self.assertEqual(draft['revision'], 0)
                 self.assertEqual(draft['answers'], {})
-                context = soc_engine.ROLLOUT['definitions'][vector['id']]['groups'][-1]
+                context = soc_engine.PROPOSAL['definitions'][vector['id']]['groups'][-1]
                 self.assertEqual(context['id'], 'implementation_context')
                 self.assertTrue(all(question['type'] == 'text' and question['optional'] is True for question in context['questions']))
                 answers = {question['id']: 'Synthetic reported context for ' + question['id'] for question in context['questions']}
@@ -321,7 +321,7 @@ class PlatformCisSocInventoryTests(unittest.IsolatedAsyncioTestCase):
                            **{key: draft[key] for key in ('base_assessment_token', 'base_scope_fingerprint')}}
                 progress = await self.request('PUT', path + '/guided-assessment', json=payload)
                 self.assertEqual(progress['answers'], answers)
-                self.assertEqual(progress['version'], 'soc2-assessment-rollout-1')
+                self.assertEqual(progress['version'], 'soc2-assessment-rollout-2')
                 self.assertEqual(progress['revision'], 1)
                 self.assertFalse(progress['completed'])
                 self.assertIsNone(progress.get('result'))
@@ -339,7 +339,7 @@ class PlatformCisSocInventoryTests(unittest.IsolatedAsyncioTestCase):
         visited = set()
         for vector in current_lifecycles:
             with self.subTest(current_soc_criterion=vector['id'], scenario=vector['scenario']):
-                self.assertEqual(vector['version'], 'soc2-assessment-rollout-1')
+                self.assertEqual(vector['version'], 'soc2-assessment-rollout-2')
                 row = rows[(vector['client'], vector['id'])]
                 path = '/api/framework_assessments/' + row['framework_assessment_id']
                 if vector['scenario'] == 'adequate':

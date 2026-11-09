@@ -107,9 +107,9 @@ test('unpatched fresh ISO rollout starts clean, saves only interview progress an
   const workspace=(await api.get('/frameworks/iso-27001',{params:{client_id:'demo_dunder'}})).data;
   const record=workspace.assessments.find(item=>item.definition_id==='4.1');expect(record).toBeTruthy();
   const nativePath='/framework_assessments/'+record.framework_assessment_id,route=nativePath+'/guided-assessment',native=(await api.get(nativePath)).data;
-  const fresh=(await api.get(route)).data;expect(fresh).toMatchObject({version:'iso27001-assessment-rollout-1',answers:{},revision:0,completed:false,lineage_known:true,lineage_stale:false});
+  const fresh=(await api.get(route)).data;expect(fresh).toMatchObject({version:'iso27001-assessment-rollout-2',answers:{},revision:0,completed:false,lineage_known:true,lineage_stale:false});
   const payload={version:fresh.version,answers:{},step:0,completed:false,narrative:'',expected_revision:0,base_assessment_token:fresh.base_assessment_token,base_scope_fingerprint:fresh.base_scope_fingerprint};
-  const progress=(await api.put(route,payload)).data;expect(progress).toMatchObject({version:'iso27001-assessment-rollout-1',answers:{},revision:1,completed:false});
+  const progress=(await api.put(route,payload)).data;expect(progress).toMatchObject({version:'iso27001-assessment-rollout-2',answers:{},revision:1,completed:false});
   expect((await api.get(nativePath)).data).toEqual(native);await expect(api.put(route,payload)).rejects.toMatchObject({response:{status:409}});
   await api.patch('/onboarding/programs/iso-27001',{client_id:'demo_dunder',applicability:'does_not_apply'});
   await expect(api.get(route)).rejects.toMatchObject({response:{status:404}});await expect(api.put(route,continuation(progress))).rejects.toMatchObject({response:{status:404}});

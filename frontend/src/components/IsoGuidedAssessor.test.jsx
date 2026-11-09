@@ -829,15 +829,24 @@ test('rollout Pause and reopening retain the visible question, unsaved answer an
   expect(api.get).toHaveBeenCalledTimes(reads);expect(api.put).not.toHaveBeenCalled();expect(props.onSaveAssessment).not.toHaveBeenCalled();expect(props.onDraftChange).toHaveBeenLastCalledWith(true);
 });
 
-test.each([['NATIVE01','additional_gap','gaps','gap'],['NATIVE02','additional_confirmation','unknowns','verification']])('%s rollout preserves reported signals while reviewer Apply changes only a narrative draft',async(_scenario,parent,detail,kind)=>{
+test.each([['NATIVE01','additional_gap','gaps','gap','needs_attention','Not Implemented / Needs Validation'],['NATIVE02','additional_confirmation','unknowns','verification','not_assessed','Not Assessed']])('%s prospective rollout constrains the proposal while reviewer Apply changes only a narrative draft',async(_scenario,parent,detail,kind,status,label)=>{
   retainedRolloutSummary('A.8.13',{[parent]:'Yes',[detail]:'Reported unresolved work for reviewer consideration.'});
   const stage=jest.fn(()=>true),native=copy(props.current);await openRollout({onUpdateImplementation:stage});
-  expect(stored.result.status).toBe('addressed');expect(stored.result.signals).toEqual([{questionId:detail,kind,text:stored.answers[detail]}]);
-  expect(document.body.textContent).toContain('Proposed implementation status: Implemented');
+  expect(stored.result.status).toBe(status);expect(stored.result.signals).toEqual([{questionId:detail,kind,text:stored.answers[detail]}]);
+  expect(document.body.textContent).toContain('Proposed implementation status: '+label);
   expect(document.querySelector('[aria-label="Implementation draft"]').value).toBe(stored.narrative);
   for(const section of ['OVERVIEW','IMPLEMENTATION BREAKDOWN','ITEMS TO ADDRESS'])expect(stored.result.narrative).toContain(section);
   expect(stored.result.narrative).toContain(stored.answers[detail]);
   await click('Apply draft');expect(stage).toHaveBeenCalledWith(stored.narrative,'');expect(props.current).toEqual(native);expect(props.onSaveAssessment).not.toHaveBeenCalled();expect(api.put).not.toHaveBeenCalled();
+});
+
+test('prospective grouped concern guidance leaves the native assessment and interview untouched',async()=>{
+  stored={...stored,step:isoGroups('4.1').length-1};const before=copy(stored),native=copy(props.current);
+  await render();await open();await click('Start');
+  expect(document.body.textContent).toContain('Affirmed, described gaps or uncertainty constrain the proposed implementation status. The saved assessment status remains your decision.');
+  expect(document.body.textContent).not.toContain('These optional notes add context; they do not decide readiness.');
+  expect(document.querySelector('[aria-label="Is there an additional confirmed gap relevant to this requirement?"]')).toBeTruthy();
+  expect(stored).toEqual(before);expect(props.current).toEqual(native);expect(api.put).not.toHaveBeenCalled();expect(props.onSaveAssessment).not.toHaveBeenCalled();
 });
 
 function retainedHistoricalIsoVersion(version){
@@ -848,9 +857,9 @@ function retainedHistoricalIsoVersion(version){
   return {interview:copy(stored),native:copy(props.current)};
 }
 
-test.each(['iso27001-omni-1','iso27001-omni-2'])('active rollout reads retained %s answers and wording without enabling historical edits or writes',async version=>{
+test.each(['iso27001-omni-1','iso27001-omni-2','iso27001-assessment-rollout-1'])('active rollout reads retained %s answers and wording without enabling historical edits or writes',async version=>{
   const before=retainedHistoricalIsoVersion(version),stage=jest.fn(()=>true);
-  expect(isoGuidedCatalog.version).toBe('iso27001-assessment-rollout-1');
+  expect(isoGuidedCatalog.version).toBe('iso27001-assessment-rollout-2');
   api.get.mockImplementation(async path=>({data:path.endsWith('/history')?{items:[copy(before.interview)],has_more:false}:copy(stored)}));
   await openRollout({onUpdateImplementation:stage});
   expect(document.body.textContent).toContain('This interview uses retained historical guidance. Begin a new current-version review before updating the assessment.');
@@ -861,7 +870,7 @@ test.each(['iso27001-omni-1','iso27001-omni-2'])('active rollout reads retained 
   expect(history.querySelectorAll('input,textarea,select')).toHaveLength(0);expect(api.put).not.toHaveBeenCalled();expect(stage).not.toHaveBeenCalled();expect(props.onSaveAssessment).not.toHaveBeenCalled();expect(stored).toEqual(before.interview);expect(props.current).toEqual(before.native);
 });
 
-test.each(['iso27001-omni-1','iso27001-omni-2'])('cancelling an explicit new review retains the exact active %s interview and native assessment',async version=>{
+test.each(['iso27001-omni-1','iso27001-omni-2','iso27001-assessment-rollout-1'])('cancelling an explicit new review retains the exact active %s interview and native assessment',async version=>{
   const before=retainedHistoricalIsoVersion(version),stage=jest.fn(()=>true);await openRollout({onUpdateImplementation:stage});
   const reads=api.get.mock.calls.length;await click('Begin a new review');
   const confirmation=[...document.querySelectorAll('[role="dialog"]')].find(node=>node.querySelector('h2')?.textContent==='Begin a new review?');expect(confirmation).toBeTruthy();
@@ -869,12 +878,12 @@ test.each(['iso27001-omni-1','iso27001-omni-2'])('cancelling an explicit new rev
   expect(document.querySelectorAll('[role="dialog"]')).toHaveLength(0);expect(button('Resume your review').disabled).toBe(true);expect(stored).toEqual(before.interview);expect(props.current).toEqual(before.native);expect(props.form).toEqual(before.native);expect(api.get).toHaveBeenCalledTimes(reads);expect(api.put).not.toHaveBeenCalled();expect(stage).not.toHaveBeenCalled();expect(props.onSaveAssessment).not.toHaveBeenCalled();
 });
 
-test.each(['iso27001-omni-1','iso27001-omni-2'])('explicitly restarting active %s uses the real rollout version, empty answers and exact native CAS',async version=>{
+test.each(['iso27001-omni-1','iso27001-omni-2','iso27001-assessment-rollout-1'])('explicitly restarting active %s uses the real rollout version, empty answers and exact native CAS',async version=>{
   const before=retainedHistoricalIsoVersion(version),stage=jest.fn(()=>true);await openRollout({onUpdateImplementation:stage});await click('Begin a new review');
   const confirmation=[...document.querySelectorAll('[role="dialog"]')].find(node=>node.querySelector('h2')?.textContent==='Begin a new review?');expect(confirmation).toBeTruthy();
   await act(async()=>[...confirmation.querySelectorAll('button')].find(node=>node.textContent==='Begin a new review').click());
   expect(api.put).toHaveBeenCalledTimes(1);expect(api.put).toHaveBeenCalledWith('/framework_assessments/iso-4.1/guided-assessment',{
-    version:'iso27001-assessment-rollout-1',answers:{},step:0,completed:false,narrative:'',summary_review:null,result:null,restart:true,expected_revision:7,base_assessment_token:'native-saved-position',base_scope_fingerprint:fingerprint,
+    version:'iso27001-assessment-rollout-2',answers:{},step:0,completed:false,narrative:'',summary_review:null,result:null,restart:true,expected_revision:7,base_assessment_token:'native-saved-position',base_scope_fingerprint:fingerprint,
   });
   expect(api.get).toHaveBeenCalledTimes(2);expect(stored.version).toBe(isoGuidedCatalog.version);expect(stored.answers).toEqual({});expect(stored.narrative).toBe('');expect(stored.summary_review).toBeNull();expect(stored.revision).toBe(8);expect(stored.completed).toBe(false);
   const first=document.querySelector('.iso-sequential-interview fieldset');expect(first).not.toBeNull();expect(first.dataset.questionId).toBe(isoGroups('4.1',{},isoGuidedCatalog.version)[0].questions[0].id);expect([...first.querySelectorAll('select')].every(select=>select.value==='')).toBe(true);

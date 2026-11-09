@@ -5,6 +5,7 @@ import {Textarea} from './ui/textarea';
 import AssessmentQuestionGuidance from './AssessmentQuestionGuidance';
 import AssessmentToolField from './AssessmentToolField';
 import {assessmentQuestionPresentation} from '@/lib/assessmentRolloutPresentation';
+import {isoUsesConcernStatus} from '@/lib/isoGuidedAssessment';
 import './CisSequentialInterview.css';
 
 // The cursor is presentation state; saved ISO steps remain native group indexes.
@@ -68,7 +69,7 @@ export default function IsoSequentialInterview({id,version,groups,extras,answers
       <fieldset disabled={blocked} data-question-id={question.id}>
         <legend ref={assessmentRollout?heading:undefined} data-question-focus={assessmentRollout?true:undefined} tabIndex={assessmentRollout?-1:undefined} className={assessmentRollout?'gn-question':undefined}>{question.prompt}</legend>
         {question.help && <p className="omni-help">{question.help}</p>}
-        {entry.extra && <p className="omni-help">Use the question choices for substantive gaps or uncertainty. These optional notes add context; they do not decide implementation status.</p>}
+        {entry.extra && <p className="omni-help">{isoUsesConcernStatus(version)?'Affirmed, described gaps or uncertainty constrain the proposed implementation status. The saved assessment status remains your decision.':'Use the question choices for substantive gaps or uncertainty. These optional notes add context; they do not decide implementation status.'}</p>}
         {assessmentRollout&&<AssessmentQuestionGuidance guidance={presentation?.guidance} reference={`ISO/IEC 27001:2022 · ${id}`}/>}
         {assessmentRollout&&presentation?.tool&&question.type==='text'?<AssessmentToolField key={question.id} label={question.prompt} value={answers[question.id]||''} disabled={blocked} onChange={value=>put(question.id,value)} options={presentation.tool.options} manualOnly={presentation.tool.manualOnly}/>:<>
         {assessmentRollout&&<label className="gn-fieldlabel" htmlFor={'iso-answer-'+question.id}>Your answer</label>}

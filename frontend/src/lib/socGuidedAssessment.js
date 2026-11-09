@@ -1,19 +1,23 @@
 import catalog from '@catalogs/guidedSoc2.json';
 import legacyCatalog from '@catalogs/guidedSoc2V1.json';
 import rolloutCatalog from '@catalogs/guidedSoc2Rollout1.json';
+import proposalCatalog from '@catalogs/guidedSoc2Rollout2.json';
 import {formatInlineSummary,inlineSentence} from './inlineAssessment';
 
-// New reviews use rollout context; retained versions keep their original definitions.
-export const socGuidedCatalog = rolloutCatalog;
+// Only new reviews use the prospective proposal; retained versions keep their original rules.
+export const socGuidedCatalog = proposalCatalog;
 export const socRolloutCatalog = rolloutCatalog;
-const versions = {[catalog.version]: catalog,[legacyCatalog.version]:legacyCatalog,[rolloutCatalog.version]:rolloutCatalog};
+export const socProposalCatalog = proposalCatalog;
+const versions = {[catalog.version]: catalog,[legacyCatalog.version]:legacyCatalog,[rolloutCatalog.version]:rolloutCatalog,[proposalCatalog.version]:proposalCatalog};
 const versionFeatures = {
   [legacyCatalog.version]: {intentGates:false,inlineSentences:false},
   [catalog.version]: {intentGates:true,inlineSentences:true},
   [rolloutCatalog.version]: {intentGates:true,inlineSentences:true},
+  [proposalCatalog.version]: {intentGates:true,inlineSentences:true,reportedWorkStatus:true},
 };
 export const socUsesIntentGates = version => versionFeatures[version]?.intentGates === true;
 export const socUsesInlineSentences = version => versionFeatures[version]?.inlineSentences === true;
+export const socUsesReportedWorkStatus = version => versionFeatures[version]?.reportedWorkStatus === true;
 const positions = {addressed: 'practices addressing', in_progress: 'partial or unresolved practices for', needs_attention: 'confirmed deficiencies affecting', not_assessed: 'an unconfirmed implementation position for'};
 const choices = ['Yes', 'Partially', 'No', 'Not sure'];
 const contextChoices = ['Relevant', 'Outside the selected system', 'Not sure'];
@@ -138,10 +142,14 @@ export function socGuidedResult(id, answers, version = socGuidedCatalog.version,
   }
   const additionalContext = socExtraQuestions(answers,version).filter(question=>['gaps','unknowns'].includes(question.id)).map(question => text(answers[question.id])).filter(Boolean);
   if (additionalContext.length) breakdown.push(`Additional reported context\n${additionalContext.map(context => `- ${concise(context)}`).join('\n')}`);
-  const status = confirmedNo ? 'needs_attention' : !meaningful || version!==legacyCatalog.version&&unknowns.length&&!gaps.length ? 'not_assessed' : gaps.length||unknowns.length ? 'in_progress' : 'addressed';
+  const statusForSignals = () => confirmedNo ? 'needs_attention' : !meaningful || version!==legacyCatalog.version&&unknowns.length&&!gaps.length ? 'not_assessed' : gaps.length||unknowns.length ? 'in_progress' : 'addressed';
+  // Retained versions chose status before additional reported-work signals.
+  const historicalStatus = statusForSignals(), reportedWorkStatus = socUsesReportedWorkStatus(version);
   if(version!==legacyCatalog.version)for(const [key,kind] of [['gaps','gap'],['unknowns','verification']])if(answers[key==='gaps'?'additional_gap':'additional_confirmation']==='Yes'&&text(answers[key])){
     const message=text(answers[key]);signals.push({questionId:key,kind,text:message});(kind==='gap'?gaps:unknowns).push(message);nextSteps.push((kind==='gap'?'Address the reported gap: ':'Confirm the reported information: ')+message);
+    if(reportedWorkStatus&&kind==='gap')confirmedNo=true;
   }
+  const status = reportedWorkStatus ? statusForSignals() : historicalStatus;
   const position = positions[status];
   const overview = `${clientName} reports ${position} ${id} — ${definition.title} within the selected system. This is reported readiness, not evidence verification or an auditor opinion.`;
   const actions = [...new Set(nextSteps)];

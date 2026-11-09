@@ -14,8 +14,8 @@ const state={version:3,step:3,policies:Object.fromEntries(baseline.policies.map(
 beforeEach(async()=>{localStorage.clear();sessionStorage.clear();await api.post('/demo/enter');});
 
 test.each([
-  ['soc-2','CC6.1',socGuidedCatalog,socQuestions,socGuidedResult,'soc2-assessment-rollout-1'],
-  ['iso-27001','6.1.2',isoGuidedCatalog,isoQuestions,isoGuidedResult,'iso27001-assessment-rollout-1'],
+  ['soc-2','CC6.1',socGuidedCatalog,socQuestions,socGuidedResult,'soc2-assessment-rollout-2'],
+  ['iso-27001','6.1.2',isoGuidedCatalog,isoQuestions,isoGuidedResult,'iso27001-assessment-rollout-2'],
 ])('%s fresh native Demo interview uses the rollout version and persists optional context without saving its assessment',async(framework,id,catalog,questions,evaluate,version)=>{
   expect(catalog.version).toBe(version);
   const client=(await api.post('/clients',{name:'SYNTHETIC rollout version fixture'})).data;

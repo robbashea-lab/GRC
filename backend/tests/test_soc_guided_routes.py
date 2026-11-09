@@ -122,20 +122,20 @@ class SocGuidedRoutes(unittest.IsolatedAsyncioTestCase):
 
     async def test_unpatched_rollout_defaults_roundtrip_registered_context_through_native_routes(self):
         await self.setup_soc()
-        for framework, identity, engine in (('soc-2', 'CC6.1', soc_guided_assessment),
-                                           ('iso-27001', '6.1.2', iso_guided_assessment)):
+        for framework, identity, engine, version in (('soc-2', 'CC6.1', soc_guided_assessment, 'soc2-assessment-rollout-2'),
+                                                    ('iso-27001', '6.1.2', iso_guided_assessment, 'iso27001-assessment-rollout-2')):
             with self.subTest(framework=framework):
                 workspace = (await self.client.get('/api/frameworks/' + framework, params={'client_id': 'a'})).json()
                 row = next(item for item in workspace['assessments'] if item['definition_id'] == identity)
                 path = '/api/framework_assessments/' + row['framework_assessment_id']
                 before = (await self.client.get(path)).json()
                 initial = (await self.client.get(path + '/guided-assessment')).json()
-                self.assertEqual(initial['version'], engine.ROLLOUT['version'])
+                self.assertEqual(initial['version'], version)
                 self.assertEqual(initial['answers'], {})
                 questions = engine._questions(identity, initial['version'])
                 answers = {q['id']: 'Exact reported context: ' + q['id'] if q['type'] == 'text'
                            else 'Relevant' if q['type'] == 'context' else 'Yes' for q in questions}
-                optional = [q for group in engine.ROLLOUT['definitions'][identity]['groups']
+                optional = [q for group in engine.VERSIONS[version]['definitions'][identity]['groups']
                             if group['id'] == 'implementation_context' for q in group['questions']]
                 self.assertTrue(optional)
                 text = 'Synthetic reviewer wording; no evidence or completion is inferred.'
@@ -149,7 +149,7 @@ class SocGuidedRoutes(unittest.IsolatedAsyncioTestCase):
                 response = await self.client.put(path + '/guided-assessment', json=body)
                 self.assertEqual(response.status_code, 200, response.text)
                 reloaded = (await self.client.get(path + '/guided-assessment')).json()
-                self.assertEqual(reloaded['version'], engine.ROLLOUT['version'])
+                self.assertEqual(reloaded['version'], version)
                 self.assertEqual(reloaded['answers'], answers)
                 for question in optional:
                     self.assertEqual(reloaded['answers'][question['id']], answers[question['id']])

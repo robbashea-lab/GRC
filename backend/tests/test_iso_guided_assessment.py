@@ -20,6 +20,7 @@ def complete(id, version=engine.V2['version']):
 
 
 ROLLOUT_VERSION = 'iso27001-assessment-rollout-1'
+PROSPECTIVE_VERSION = 'iso27001-assessment-rollout-2'
 OPTIONAL_REGISTRATIONS = [
     *((id, f'SPEC-ISO-{id}-tool-context') for id in
       ('6.1.2', '6.1.3', '7.2', '7.3', '7.5.3', '9.2.2', '9.3.3', '10.2')),
@@ -46,7 +47,9 @@ class IsoGuidedTests(unittest.TestCase):
                 self.assertTrue(policy(engine.V2['version']))
                 self.assertFalse(policy(engine.LEGACY['version']))
 
+    @patch.object(engine, 'VERSION', ROLLOUT_VERSION)
     def test_rollout_reader_preserves_v2_core_and_activates_the_compatible_default(self):
+        # Retain the original R1 activation oracle; real R2 defaults are unpatched below.
         self.assertEqual(engine.VERSION, ROLLOUT_VERSION)
         self.assertEqual(engine.ROLLOUT['version'], ROLLOUT_VERSION)
         self.assertEqual(engine.ROLLOUT['framework_id'], engine.CATALOG['framework_id'])
@@ -125,11 +128,84 @@ class IsoGuidedTests(unittest.TestCase):
                     self.assertEqual(engine.result_status('A.8.13', reported, version), 'addressed')
                     self.assertEqual(reported, before)
 
+    def test_prospective_iso_proposal_concern_precedence(self):
+        cases = (
+            ('affirmative gap overrides otherwise Yes core', 'Yes',
+             {'additional_gap': 'Yes', 'gaps': 'A confirmed scoped backup gap remains.'}, 'needs_attention'),
+            ('affirmative confirmation constrains otherwise Yes core', 'Yes',
+             {'additional_confirmation': 'Yes', 'unknowns': 'Restore coverage remains unconfirmed.'}, 'not_assessed'),
+            ('affirmative gap takes precedence over confirmation', 'Yes',
+             {'additional_gap': 'Yes', 'gaps': 'A confirmed scoped backup gap remains.',
+              'additional_confirmation': 'Yes', 'unknowns': 'Restore coverage remains unconfirmed.'}, 'needs_attention'),
+            ('partial core retains its existing precedence over confirmation', 'Partially',
+             {'additional_confirmation': 'Yes', 'unknowns': 'Restore coverage remains unconfirmed.'}, 'in_progress'),
+            ('core No retains precedence over confirmation', 'No',
+             {'additional_confirmation': 'Yes', 'unknowns': 'Restore coverage remains unconfirmed.'}, 'needs_attention'),
+            ('affirmative gap overrides core uncertainty', 'Not sure',
+             {'additional_gap': 'Yes', 'gaps': 'A confirmed scoped backup gap remains.'}, 'needs_attention'),
+            ('affirmative gap constrains partial core', 'Partially',
+             {'additional_gap': 'Yes', 'gaps': 'A confirmed scoped backup gap remains.'}, 'needs_attention'),
+        )
+        for scenario, core, concern, expected in cases:
+            with self.subTest(scenario=scenario):
+                answers = complete('A.8.13', engine.VERSION)
+                first = next(question['id'] for question in engine._active_questions('A.8.13', answers)
+                             if question['type'] == 'select')
+                reported = {**answers, first: core, **concern}
+                before = copy.deepcopy(reported)
+                engine.validate_completion('A.8.13', reported)
+                self.assertEqual(engine.result_status('A.8.13', reported), expected)
+                self.assertEqual(reported, before)
+
+    def test_prospective_iso_proposal_ignores_nonaffirmative_intent_and_unicode_blank_draft_detail(self):
+        answers = complete('A.8.13', engine.VERSION)
+        for intent in (None, 'No', 'Not sure'):
+            with self.subTest(intent=intent):
+                reported = {**answers, 'gaps': 'Retained hidden gap text.', 'unknowns': 'Retained hidden confirmation text.'}
+                if intent is not None:
+                    reported.update(additional_gap=intent, additional_confirmation=intent)
+                before = copy.deepcopy(reported)
+                engine.validate_completion('A.8.13', reported)
+                self.assertEqual(engine.result_status('A.8.13', reported), 'addressed')
+                self.assertEqual(reported, before)
+        for parent, detail in (('additional_gap', 'gaps'), ('additional_confirmation', 'unknowns')):
+            with self.subTest(blank_detail=detail):
+                reported = {**answers, parent: 'Yes', detail: '\t\n\u00a0\u2003\ufeff '}
+                before = copy.deepcopy(reported)
+                self.assertEqual(engine.result_status('A.8.13', reported), 'addressed')
+                self.assert_rejected(lambda: engine.validate_completion('A.8.13', reported), 422)
+                self.assertEqual(reported, before)
+
+    def test_prospective_iso_catalog_only_changes_version_and_preserves_historical_concern_status(self):
+        self.assertEqual(engine.VERSION, PROSPECTIVE_VERSION)
+        self.assertEqual(engine.PROSPECTIVE, {**engine.ROLLOUT, 'version': PROSPECTIVE_VERSION})
+        self.assertTrue(engine.uses_concern_status())
+        self.assertTrue(engine.uses_concern_status(PROSPECTIVE_VERSION))
+        for version in (engine.LEGACY['version'], engine.V2['version'], ROLLOUT_VERSION, 'iso27001-unknown'):
+            self.assertFalse(engine.uses_concern_status(version))
+        with patch.object(engine, 'VERSION', ROLLOUT_VERSION):
+            self.assertFalse(engine.uses_concern_status())
+            self.assertTrue(engine.uses_concern_status(PROSPECTIVE_VERSION))
+        answers = {**complete('A.8.13', ROLLOUT_VERSION), 'additional_gap': 'Yes', 'gaps': 'Exact retained R1 gap.'}
+        before = copy.deepcopy(answers)
+        self.assertEqual(engine.result_status('A.8.13', answers, ROLLOUT_VERSION), 'addressed')
+        self.assertEqual(engine.result_status('A.8.13', answers, PROSPECTIVE_VERSION), 'needs_attention')
+        self.assertEqual(answers, before)
+
+    def test_prospective_iso_proposal_populated_unicode_detail_uses_existing_js_trim_boundary(self):
+        for value in (' \u0085 ', ' \u200b ', '\u00a0Confirmed scoped gap.\ufeff'):
+            with self.subTest(detail=value):
+                answers = {**complete('A.8.13', engine.VERSION), 'additional_gap': 'Yes', 'gaps': value}
+                before = copy.deepcopy(answers)
+                engine.validate_completion('A.8.13', answers)
+                self.assertEqual(engine.result_status('A.8.13', answers), 'needs_attention')
+                self.assertEqual(answers, before)
+
     def test_unpatched_active_default_exposes_every_optional_context_field(self):
         added = 0
         for id in engine.CATALOG['definitions']:
             with self.subTest(definition=id):
-                self.assertEqual(engine.current_version(id), ROLLOUT_VERSION)
+                self.assertEqual(engine.current_version(id), PROSPECTIVE_VERSION)
                 answers = complete(id, engine.VERSION)
                 context = [q for group in engine.ROLLOUT['definitions'][id]['groups']
                            if group['id'] == 'implementation_context' for q in group['questions']]
@@ -292,6 +368,17 @@ class IsoGuidedTests(unittest.TestCase):
                         {q['id']: 'Not sure' for q in engine._questions(id) if q['type'] != 'text'},
                         {**answers, 'gaps': 'Freeform reported gap', 'unknowns': 'Optional name unknown'},
                         {**answers, key + '_detail': '\U0001f600' * 1000}]
+            if id == 'A.8.13':
+                gap = {'additional_gap': 'Yes', 'gaps': 'Confirmed scoped gap.'}
+                confirmation = {'additional_confirmation': 'Yes', 'unknowns': 'Scoped information remains unconfirmed.'}
+                variants.extend([
+                    {**answers, **gap}, {**answers, **confirmation}, {**answers, **gap, **confirmation},
+                    {**answers, key: 'Partially', **confirmation}, {**answers, key: 'No', **confirmation},
+                    {**answers, key: 'Not sure', **gap}, {**answers, key: 'Partially', **gap},
+                    {**answers, 'additional_gap': 'Yes', 'gaps': '\u00a0\ufeff'},
+                    {**answers, 'additional_gap': 'Yes', 'gaps': ' \u0085 '},
+                    {**answers, 'additional_confirmation': 'Yes', 'unknowns': ' \u200b '},
+                ])
             for q in [q for q in engine._active_questions(id, answers) if q['type'] == 'context']:
                 excluded = {**answers, q['id']: 'Not relevant here'}
                 variants.extend([excluded, {**excluded, q['id'] + '_detail': 'Scoped reason'},
@@ -310,7 +397,7 @@ let source = fs.readFileSync(root + '/frontend/src/lib/isoGuidedAssessment.js', 
 const inline = fs.readFileSync(root + '/frontend/src/lib/inlineAssessment.js', 'utf8');
 const inlineUrl = 'data:text/javascript;base64,' + Buffer.from(inline).toString('base64');
 source = source.replace(/from ['"]\\.\\/inlineAssessment['"]/g, 'from ' + JSON.stringify(inlineUrl));
-for (const [name, file] of [['isms', 'guidedIsoIsms'], ['organizational', 'guidedIsoOrganizationalPeople'], ['technology', 'guidedIsoPhysicalTechnology'], ['currentCatalog', 'guidedIsoV2'], ['rolloutCatalog', 'guidedIso27001Rollout1']]) {
+for (const [name, file] of [['isms', 'guidedIsoIsms'], ['organizational', 'guidedIsoOrganizationalPeople'], ['technology', 'guidedIsoPhysicalTechnology'], ['currentCatalog', 'guidedIsoV2'], ['rolloutCatalog', 'guidedIso27001Rollout1'], ['prospectiveCatalog', 'guidedIso27001Rollout2']]) {
   source = source.replace(`import ${name} from '@catalogs/${file}.json';`, 'const ' + name + ' = ' + fs.readFileSync(root + '/shared/catalogs/' + file + '.json', 'utf8') + ';');
 }
 const engine = await import('data:text/javascript;base64,' + Buffer.from(source).toString('base64'));

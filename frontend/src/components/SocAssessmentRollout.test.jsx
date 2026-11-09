@@ -58,7 +58,7 @@ beforeEach(()=>{
 });
 afterEach(async()=>{await act(async()=>root.unmount());container.remove();reviewHost.remove();jest.clearAllMocks();});
 
-test.each(['soc2-omni-1','soc2-omni-2'])('%s active old draft remains preserved until an explicit empty current-version restart; archived history stays read-only',async savedVersion=>{
+test.each(['soc2-omni-1','soc2-omni-2','soc2-assessment-rollout-1'])('%s active old draft remains preserved until an explicit empty current-version restart; archived history stays read-only',async savedVersion=>{
   const first=socGroups(record.definition_id,{},savedVersion)[0].questions[0];
   const oldAnswers={[first.id]:'Partially',[first.id+'_detail']:'Exact old-version context — preserve this custom text.'};
   record={...record,status:'in_progress',implementation:'Native saved assessment text remains independent.',last_saved:'2026-11-09T11:00:00Z'};
@@ -91,7 +91,7 @@ test.each(['soc2-omni-1','soc2-omni-2'])('%s active old draft remains preserved 
   expect(api.put.mock.calls[0][1]).toMatchObject({version:socGuidedCatalog.version,answers:{},narrative:'',summary_review:null,result:null,
     completed:false,step:0,restart:true,expected_revision:before.revision,base_assessment_token:before.current_assessment_token,
     base_scope_fingerprint:before.current_scope_fingerprint});
-  expect(socGuidedCatalog.version).toBe('soc2-assessment-rollout-1');expect(stored.version).toBe(socGuidedCatalog.version);
+  expect(socGuidedCatalog.version).toBe('soc2-assessment-rollout-2');expect(stored.version).toBe(socGuidedCatalog.version);
   expect(stored.answers).toEqual({});expect(stored.narrative).toBe('');expect(stored.result).toBeNull();
   expect(history).toEqual([prior,before]);expect(record).toEqual(native);
   const optional=socGroups(record.definition_id,{},socGuidedCatalog.version).find(group=>group.id==='implementation_context').questions;
@@ -245,19 +245,71 @@ test('editing retained manual wording after answers change still requires explic
 test.each([
   {additional_gap:'Yes',gaps:'A substantive scoped practice is missing.'},
   {additional_confirmation:'Yes',unknowns:'Confirm the unresolved coverage.'},
-])('NATIVE01/02 keeps reported substantive context and stages no readiness decision: %j',async extra=>{
+])('prospective NATIVE01/02 keeps reported substantive context and stages no readiness decision: %j',async extra=>{
   seedCompleted(extra);const before=copy(record);await render();await openCompleted();
   const text=document.querySelector('[aria-label="Implementation draft"]').value;
   expect(text).toContain(extra.gaps||extra.unknowns);expect(document.body.textContent).toContain('Proposed SOC 2 status:');
   const questionId=extra.gaps?'gaps':'unknowns',kind=extra.gaps?'gap':'verification',reported=extra[questionId];
   const result=socGuidedResult('CC1.1',stored.answers,stored.version,'Synthetic SOC rollout');
-  expect(result.status).toBe('addressed');expect(result.signals).toEqual([{questionId,kind,text:reported}]);
-  expect(document.body.textContent).toContain('Proposed SOC 2 status: Addressed (Readiness).');
+  const historicalResult=socGuidedResult('CC1.1',stored.answers,socRolloutCatalog.version,'Synthetic SOC rollout');
+  expect(historicalResult.status).toBe('addressed');expect(historicalResult.signals).toEqual([{questionId,kind,text:reported}]);
+  expect(result.status).toBe(kind==='gap'?'needs_attention':'not_assessed');expect(result.signals).toEqual([{questionId,kind,text:reported}]);
+  expect(document.body.textContent).toContain('Proposed SOC 2 status: '+(kind==='gap'?'Needs Remediation / Validation':'Not Assessed')+'.');
   expect(text).toContain((kind==='gap'?'Reported gap: ':'Requires confirmation: ')+reported);
   expect(text).not.toContain((kind==='gap'?'Requires confirmation: ':'Reported gap: ')+reported);
   await click('Apply draft');expect(props.onUpdateImplementation).toHaveBeenCalledWith(text,'');
   expect(record).toEqual(before);expect(record.status).toBe('not_assessed');
   expect(props.onSaveAssessment).not.toHaveBeenCalled();expect(api.put).not.toHaveBeenCalled();expect(api.patch).not.toHaveBeenCalled();
+});
+
+test('prospective combined concerns constrain the proposal without changing an existing manual status on Apply',async()=>{
+  const extra={additional_gap:'Yes',gaps:'A confirmed scoped deficiency.',additional_confirmation:'Yes',unknowns:'Confirm the unresolved scope.'};
+  record={...record,status:'addressed'};props={...props,record,current:record,form:copy(record)};
+  seedCompleted(extra);const before=copy(record),answers=copy(stored.answers);await render();await openCompleted();
+  expect(document.body.textContent).toContain('Proposed SOC 2 status: Needs Remediation / Validation.');
+  const text=document.querySelector('[aria-label="Implementation draft"]').value;
+  expect(text).toContain('Reported gap: '+extra.gaps);expect(text).toContain('Requires confirmation: '+extra.unknowns);
+  await click('Apply draft');expect(props.onUpdateImplementation).toHaveBeenCalledWith(text,'');
+  expect(record).toEqual(before);expect(record.status).toBe('addressed');expect(stored.answers).toEqual(answers);
+  expect(props.onSaveAssessment).not.toHaveBeenCalled();
+  for(const method of ['put','patch','post','delete'])expect(api[method]).not.toHaveBeenCalled();
+});
+
+test('a retained completed rollout-1 proposal remains exact and read-only rather than adopting the prospective rule',async()=>{
+  const answers={...completeAnswers(),additional_gap:'Yes',gaps:'Exact retained reported gap.'};
+  const result=socGuidedResult('CC1.1',answers,socRolloutCatalog.version,'Synthetic SOC rollout');
+  stored={...stored,version:socRolloutCatalog.version,answers,revision:4,completed:true,result,
+    narrative:'Exact reviewer-authored rollout-1 summary.\nPreserve this line.',summary_review:{version:socRolloutCatalog.version,answers}};
+  const before=copy(stored),native=copy(record);await render();await click('Resume guided assessment');
+  expect(result.status).toBe('addressed');expect(socGuidedResult('CC1.1',answers).status).toBe('needs_attention');
+  expect(document.body.textContent).toContain('Begin a new current-version review before updating the assessment.');
+  expect(button('Resume your review').disabled).toBe(true);expect(button('Review implementation',reviewHost).disabled).toBe(true);
+  expect(stored).toEqual(before);expect(record).toEqual(native);
+  expect(props.onUpdateImplementation).not.toHaveBeenCalled();expect(props.onSaveAssessment).not.toHaveBeenCalled();
+  for(const method of ['put','patch','post','delete'])expect(api[method]).not.toHaveBeenCalled();
+});
+
+test.each(['soc2-assessment-rollout-1','soc2-assessment-rollout-2'])('%s sequential reported-work help retains the correct saved-version meaning',async version=>{
+  const answers={additional_gap:'No',additional_confirmation:'No'},groups=socGroups('CC1.1',answers,version),put=jest.fn();
+  await act(async()=>root.render(<SocSequentialInterview id="CC1.1" {...{version,answers,groups,put}} extras={socExtraQuestions(answers,version)}
+    step={groups.length-1} setStep={jest.fn()} onNext={jest.fn()} onSaveProgress={jest.fn()}/>));
+  for(let index=0;index<3;index++)await click('Continue');
+  expect(container.querySelector('fieldset').dataset.questionId).toBe('additional_gap');
+  const oldHelp='Use the question choices for substantive gaps or uncertainty. These optional notes add context; they do not decide readiness.';
+  const newHelp='Affirmative reported gaps or confirmation needs can constrain the proposed readiness. Saved assessment status still requires your explicit decision.';
+  expect(container.textContent).toContain(version==='soc2-assessment-rollout-2'?newHelp:oldHelp);
+  expect(container.textContent).not.toContain(version==='soc2-assessment-rollout-2'?oldHelp:newHelp);
+  expect(put).not.toHaveBeenCalled();expect(api.put).not.toHaveBeenCalled();
+});
+
+test('prospective grouped interview explains the proposal constraint without saving or changing native actions',async()=>{
+  const answers=completeAnswers(),groups=socGroups('CC1.1',answers,stored.version);
+  stored={...stored,answers,revision:1,step:groups.length-1};
+  await render({assessmentRollout:false,sequential:false,inlineOpen:true});await click('Resume your review');
+  expect(container.textContent).toContain('Affirmative reported gaps or confirmation needs can constrain the proposed readiness. Saved assessment status still requires your explicit decision.');
+  expect(container.textContent).not.toContain('These optional notes add context; they do not decide readiness.');
+  expect(button('Save & next')).toBeTruthy();expect(button('Save & close')).toBeTruthy();
+  expect(api.put).not.toHaveBeenCalled();expect(props.onSaveAssessment).not.toHaveBeenCalled();
 });
 
 test('controlled personal history is read-only, preserves historical answers and paginates the native route',async()=>{

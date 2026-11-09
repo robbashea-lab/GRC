@@ -12,9 +12,9 @@ The 235 ISO normative-content holds retain unchanged native content. Held candid
 
 ## Questionnaires and compatibility
 
-New SOC and ISO reviews use `soc2-assessment-rollout-1` and `iso27001-assessment-rollout-1`. They add exactly 220 and 57 optional text fields, respectively. Frontend and backend use the same catalogs and strict native validators. Core question definitions, conditions, choices and evaluators are unchanged. CIS versions are unchanged.
+The original rollout-1 catalogs added exactly 220 SOC and 57 ISO optional text fields. New SOC and ISO reviews now use `soc2-assessment-rollout-2` and `iso27001-assessment-rollout-2`. Their catalogs differ from rollout-1 only in the version token; question identities, wording, conditions, choices and order stay unchanged. Frontend and backend use the same catalogs and strict native validators. CIS versions are unchanged.
 
-V1/V2 catalogs and saved histories remain intact. The authored Prestige V2 fixture imports its immutable catalog explicitly rather than following a future default. Historical test contexts are labelled separately from unpatched current-version tests. The product owner explicitly retained the native **Begin a new review** flow. Archived interviews remain readable; an active obsolete draft is preserved but its complete answers/wording are not displayed before that explicit restart. Editable continuation and pre-restart active-draft display remain gaps. No migration, automatic restart or answer copying is introduced.
+V1/V2/rollout-1 catalogs and saved histories remain intact. The authored Prestige V2 fixture imports its immutable catalog explicitly rather than following a future default. Historical test contexts are labelled separately from unpatched current-version tests. The product owner explicitly retained the native **Begin a new review** flow. Archived interviews remain readable; an active obsolete draft is preserved but its complete answers/wording are not displayed before that explicit restart. Editable continuation and pre-restart active-draft display remain gaps. No migration, automatic restart or answer copying is introduced.
 
 ## Native save boundaries
 
@@ -24,6 +24,8 @@ SoA uses its existing fields and the same Annex assessment controller. Audit wor
 
 ## Acceptance boundaries
 
-Native SOC/ISO evaluators can still propose `addressed` when core answers are Yes alongside affirmative additional gap/confirmation signals. Characterization tests preserve that behavior; this rollout contains no scoring correction. The narrative-only Apply boundary does not resolve that semantic hold.
+The approved prospective correction applies only to rollout-2 proposals. An explicit Yes to additional gaps with nonblank gap details joins the existing confirmed-deficiency input before status precedence; an explicit Yes to additional confirmations with nonblank confirmation details joins uncertainty. Core No and confirmed deficiencies retain precedence over uncertainty; partial practice retains its existing In progress precedence over uncertainty. Thus otherwise-Yes core answers plus a confirmed gap propose `needs_attention`; a confirmation alone proposes `not_assessed`. Both concerns propose `needs_attention`. Missing, No or Not sure intent, blank details and unrelated optional context do not affect status.
+
+Historical V1/V2/rollout-1 readers, proposal outcomes, narrative wording and archives are retained; saved records are not recalculated or migrated. Starting the current review remains explicit and empty. Completing a rollout-2 interview does not save an assessment, and Apply still stages narrative only: native status, verification and final Save remain manual. New regression checks distinguish historical reads, empty restart, stale-write denial, exact replay and explicit assessment Save. Source implementation and automated qualification do not close the browser/native acceptance gaps.
 
 Source mapping, automated tests, builds, exact-head CI, actual browser rendering, authenticated tenant checks and owner acceptance are separate evidence. The task receipts record each independently. No passing automated check clears content or release holds, and this document grants no staging deployment, merge or production authority.

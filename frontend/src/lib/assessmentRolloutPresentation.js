@@ -8,6 +8,12 @@ function freezeMetadata(value) {
 }
 freezeMetadata(registry);
 
+// Proposal R2 keeps the exact optional questions registered by the R1 package.
+const presentationVersionAliases = new Map([
+  ['soc2-assessment-rollout-2', 'soc2-assessment-rollout-1'],
+  ['iso27001-assessment-rollout-2', 'iso27001-assessment-rollout-1'],
+]);
+
 // These are presentation references, never permission or questionnaire selectors.
 const recordsByIdentity = new Map();
 for (const record of registry.records) {
@@ -34,12 +40,13 @@ export function assessmentQuestionPresentation(frameworkKey, id, questionId,
   if (typeof questionId !== 'string' || (row !== undefined && typeof row !== 'string')) return null;
   const record = assessmentRolloutEntry(frameworkKey, id, {module, packageKey});
   if (!record || (version !== undefined && record.versions.length && !record.versions.includes(version))) return null;
+  const presentationVersion = presentationVersionAliases.get(version) || version;
   const matches = record.questions.filter(question => {
     // Workflow display keys stay explicitly separate from any native answer field.
     const identityMatches = question.questionId === questionId
       || (question.questionId === null && (question.presentationId === questionId
         || question.nativeMapping?.native_field === questionId));
-    if (!identityMatches || (question.version && question.version !== version)) return false;
+    if (!identityMatches || (question.version && question.version !== presentationVersion)) return false;
     if (row === undefined) return question.row === undefined;
     return question.row === row || question.rows?.some(item => item.row === row);
   });

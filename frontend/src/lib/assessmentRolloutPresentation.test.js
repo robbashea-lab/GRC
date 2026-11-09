@@ -86,6 +86,31 @@ test('new optional text metadata requires its exact registered version', () => {
     {version: 'soc2-omni-2'})).not.toBeNull();
 });
 
+test('prospective presentation versions retain exact R1 registration and reject unrelated versions', () => {
+  let checked = 0;
+  const successors = {
+    'soc2-assessment-rollout-1': 'soc2-assessment-rollout-2',
+    'iso27001-assessment-rollout-1': 'iso27001-assessment-rollout-2',
+  };
+  for (const record of registry.records) {
+    for (const question of record.questions.filter(item => item.version)) {
+      const options = {module: record.module, packageKey: record.packageKey, row: question.row};
+      const original = assessmentQuestionPresentation(record.frameworkKey, record.id, question.questionId,
+        {...options, version: question.version});
+      expect(original).not.toBeNull();
+      expect(assessmentQuestionPresentation(record.frameworkKey, record.id, question.questionId,
+        {...options, version: successors[question.version]})).toEqual(original);
+      expect(original.version).toBe(question.version);
+      expect(assessmentQuestionPresentation(record.frameworkKey, record.id, question.questionId,
+        {...options, version: record.frameworkKey === 'soc-2' ? 'soc2-omni-2' : 'iso27001-omni-2'})).toBeNull();
+      expect(assessmentQuestionPresentation(record.frameworkKey, record.id, question.questionId,
+        {...options, version: 'unregistered-proposal-version'})).toBeNull();
+      checked++;
+    }
+  }
+  expect(checked).toBe(277);
+});
+
 test('SoA display IDs explicitly retain native field mapping rather than becoming answer keys', () => {
   const result = assessmentQuestionPresentation('iso-27001', 'A.5.1', 'soa_applicability',
     {module: 'statement_of_applicability'});

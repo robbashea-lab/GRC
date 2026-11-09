@@ -27,8 +27,26 @@ def first_practice(id):
 
 
 class SocGuidedTests(unittest.TestCase):
+    def test_prospective_proposal_active_default_includes_reported_work_in_status_precedence(self):
+        cases = (
+            ('affirmative gap', {'additional_gap': 'Yes', 'gaps': 'A scoped practice is confirmed missing.'}, 'needs_attention', False),
+            ('affirmative confirmation', {'additional_confirmation': 'Yes', 'unknowns': 'Confirm the unresolved scoped practice.'}, 'not_assessed', False),
+            ('gap before confirmation', {'additional_gap': 'Yes', 'gaps': 'A scoped practice is confirmed missing.',
+                                         'additional_confirmation': 'Yes', 'unknowns': 'Confirm the unresolved scoped practice.'}, 'needs_attention', False),
+            ('partial practice with confirmation', {'additional_confirmation': 'Yes', 'unknowns': 'Confirm the unresolved scoped practice.'}, 'in_progress', True),
+        )
+        for label, extra, expected, partial_practice in cases:
+            with self.subTest(prospective_proposal=label):
+                answers = {**complete('CC1.1'), **extra}
+                if partial_practice:
+                    answers[first_practice('CC1.1')['id']] = 'Partially'
+                before = copy.deepcopy(answers)
+                engine.validate_completion('CC1.1', answers)
+                self.assertEqual(engine.result_status('CC1.1', answers), expected)
+                self.assertEqual(answers, before)
+
     def test_rollout_is_active_without_reinterpreting_prior_versions(self):
-        self.assertEqual(engine.current_version('CC1.1'), 'soc2-assessment-rollout-1')
+        self.assertEqual(engine.current_version('CC1.1'), 'soc2-assessment-rollout-2')
         self.assertEqual(engine.ROLLOUT['version'], 'soc2-assessment-rollout-1')
         self.assertEqual(list(engine.ROLLOUT['definitions']), list(engine.CATALOG['definitions']))
         self.assertEqual(engine.ROLLOUT['extra_questions'], engine.CATALOG['extra_questions'])
@@ -58,15 +76,66 @@ class SocGuidedTests(unittest.TestCase):
             self.assertFalse(engine.uses_intent_gates(version))
             self.assertFalse(engine.uses_inline_sentences(version))
 
+    def test_prospective_proposal_catalog_and_feature_preserve_all_historical_readers(self):
+        self.assertEqual(engine.PROPOSAL['version'], 'soc2-assessment-rollout-2')
+        self.assertEqual({**engine.PROPOSAL, 'version': engine.ROLLOUT['version']}, engine.ROLLOUT)
+        self.assertTrue(engine.uses_reported_work_status(engine.PROPOSAL['version']))
+        self.assertTrue(engine.uses_intent_gates(engine.PROPOSAL['version']))
+        self.assertTrue(engine.uses_inline_sentences(engine.PROPOSAL['version']))
+        for version in (engine.LEGACY['version'], engine.CATALOG['version'], engine.ROLLOUT['version'], 'foreign-version'):
+            self.assertFalse(engine.uses_reported_work_status(version))
+
+    def test_prospective_proposal_preserves_core_precedence_for_every_criterion(self):
+        for id in engine.PROPOSAL['definitions']:
+            practice = first_practice(id)['id']
+            cases = (
+                ({'additional_gap': 'Yes', 'gaps': 'A confirmed scoped deficiency.'}, 'needs_attention'),
+                ({'additional_confirmation': 'Yes', 'unknowns': 'The scoped practice needs confirmation.'}, 'not_assessed'),
+                ({'additional_gap': 'Yes', 'gaps': 'A confirmed scoped deficiency.',
+                  'additional_confirmation': 'Yes', 'unknowns': 'The scoped practice needs confirmation.'}, 'needs_attention'),
+                ({practice: 'Partially', 'additional_confirmation': 'Yes', 'unknowns': 'The scoped practice needs confirmation.'}, 'in_progress'),
+                ({practice: 'No', 'additional_confirmation': 'Yes', 'unknowns': 'The scoped practice needs confirmation.'}, 'needs_attention'),
+            )
+            for extra, expected in cases:
+                with self.subTest(criterion=id, extra=extra):
+                    answers = {**complete(id), **extra}
+                    before = copy.deepcopy(answers)
+                    engine.validate_completion(id, answers)
+                    self.assertEqual(engine.result_status(id, answers), expected)
+                    self.assertEqual(answers, before)
+
+    def test_prospective_proposal_requires_affirmative_populated_details_with_javascript_whitespace(self):
+        for field, intent, expected in (('gaps', 'additional_gap', 'needs_attention'),
+                                        ('unknowns', 'additional_confirmation', 'not_assessed')):
+            for invalid in (True, 'yes', 'Maybe', {}):
+                self.assert_rejected(lambda: engine.validate_answers('CC1.1', {intent: invalid}), 422)
+            for value in (None, 'No', 'Not sure'):
+                answers = {**complete('CC1.1'), field: 'Retained text without affirmative intent.'}
+                if value is not None:
+                    answers[intent] = value
+                engine.validate_completion('CC1.1', answers)
+                self.assertEqual(engine.result_status('CC1.1', answers), 'addressed')
+            for blank in ('', ' \n\t', '\ufeff', '\u00a0\u2028\u3000'):
+                answers = {**complete('CC1.1'), intent: 'Yes', field: blank}
+                self.assert_rejected(lambda: engine.validate_completion('CC1.1', answers), 422)
+                self.assertEqual(engine.result_status('CC1.1', answers), 'addressed')
+            self.assert_rejected(lambda: engine.validate_completion('CC1.1', {**complete('CC1.1'), intent: 'Yes'}), 422)
+            for detail in ('\ufeff Reconcile café / 核对 😀 \u00a0', '\u0085', '\u001c'):
+                answers = {**complete('CC1.1'), intent: 'Yes', field: detail}
+                before = copy.deepcopy(answers)
+                engine.validate_completion('CC1.1', answers)
+                self.assertEqual(engine.result_status('CC1.1', answers), expected)
+                self.assertEqual(answers, before)
+
     def test_unpatched_active_default_exposes_every_optional_context_field(self):
         added = 0
         for id in engine.CATALOG['definitions']:
             with self.subTest(criterion=id):
-                self.assertEqual(engine.current_version(id), engine.ROLLOUT['version'])
+                self.assertEqual(engine.current_version(id), engine.PROPOSAL['version'])
                 active = engine._questions(id)
                 answers = {q['id']: 'Exact current context: ' + q['id'] if q['type'] == 'text'
                            else 'Relevant' if q['type'] == 'context' else 'Yes' for q in active}
-                context = engine.ROLLOUT['definitions'][id]['groups'][-1]['questions']
+                context = engine.PROPOSAL['definitions'][id]['groups'][-1]['questions']
                 added += len(context)
                 self.assertTrue(all(q['id'] in answers for q in context))
                 engine.validate_completion(id, answers)
@@ -310,6 +379,28 @@ class SocGuidedTests(unittest.TestCase):
                                  'status': engine.result_status(id, answers, engine.ROLLOUT['version']), 'completed': True,
                                  'signals': ([['gaps', 'gap']] if 'gaps' in extra else [])
                                             + ([['unknowns', 'verification']] if 'unknowns' in extra else [])})
+        for id in engine.PROPOSAL['definitions']:
+            practice = first_practice(id)['id']
+            for extra, expected in (
+                ({'additional_gap': 'Yes', 'gaps': 'A confirmed scoped deficiency.'}, 'needs_attention'),
+                ({'additional_confirmation': 'Yes', 'unknowns': 'The scoped practice needs confirmation.'}, 'not_assessed'),
+                ({'additional_gap': 'Yes', 'gaps': 'A confirmed scoped deficiency.',
+                  'additional_confirmation': 'Yes', 'unknowns': 'The scoped practice needs confirmation.'}, 'needs_attention'),
+                ({practice: 'Partially', 'additional_confirmation': 'Yes', 'unknowns': 'The scoped practice needs confirmation.'}, 'in_progress'),
+                ({practice: 'No', 'additional_confirmation': 'Yes', 'unknowns': 'The scoped practice needs confirmation.'}, 'needs_attention'),
+            ):
+                answers = {**complete(id), **extra}
+                engine.validate_completion(id, answers, engine.PROPOSAL['version'])
+                self.assertEqual(engine.result_status(id, answers, engine.PROPOSAL['version']), expected)
+                fixtures.append({'id': id, 'answers': answers, 'version': engine.PROPOSAL['version'],
+                                 'status': expected, 'completed': True})
+        for field, intent, expected in (('gaps', 'additional_gap', 'needs_attention'),
+                                        ('unknowns', 'additional_confirmation', 'not_assessed')):
+            for detail in ('', '\u00a0\u2028\u3000\ufeff', '\ufeff Reconcile café / 核对 😀 \u00a0', '\u0085', '\u001c'):
+                answers = {**complete('CC1.1'), intent: 'Yes', field: detail}
+                populated = bool(detail.strip(engine.TEXT_WHITESPACE))
+                fixtures.append({'id': 'CC1.1', 'answers': answers, 'version': engine.PROPOSAL['version'],
+                                 'status': expected if populated else 'addressed', 'completed': populated})
         root = Path(__file__).resolve().parents[2]
         script = """
 import fs from 'node:fs';
@@ -321,6 +412,7 @@ const source = fs.readFileSync(root + '/frontend/src/lib/socGuidedAssessment.js'
   .replace("import catalog from '@catalogs/guidedSoc2.json';", 'const catalog = ' + catalog + ';')
   .replace("import legacyCatalog from '@catalogs/guidedSoc2V1.json';", 'const legacyCatalog = ' + fs.readFileSync(root + '/shared/catalogs/guidedSoc2V1.json', 'utf8') + ';')
   .replace("import rolloutCatalog from '@catalogs/guidedSoc2Rollout1.json';", 'const rolloutCatalog = ' + fs.readFileSync(root + '/shared/catalogs/guidedSoc2Rollout1.json', 'utf8') + ';')
+  .replace("import proposalCatalog from '@catalogs/guidedSoc2Rollout2.json';", 'const proposalCatalog = ' + fs.readFileSync(root + '/shared/catalogs/guidedSoc2Rollout2.json', 'utf8') + ';')
   .replace(/from ['"]\\.\\/inlineAssessment['"]/g, 'from ' + JSON.stringify(inlineUrl));
 const engine = await import('data:text/javascript;base64,' + Buffer.from(source).toString('base64'));
 const fixtures = JSON.parse(fs.readFileSync(0, 'utf8'));

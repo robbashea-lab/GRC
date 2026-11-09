@@ -9,13 +9,16 @@ from framework_catalog import ROOT, client_configuration
 CATALOG = json.loads((ROOT / 'guidedSoc2.json').read_text(encoding='utf-8'))
 LEGACY = json.loads((ROOT / 'guidedSoc2V1.json').read_text(encoding='utf-8'))
 ROLLOUT = json.loads((ROOT / 'guidedSoc2Rollout1.json').read_text(encoding='utf-8'))
-# CATALOG remains the immutable V2 reader; new reviews use the compatible rollout.
-CURRENT_VERSION = ROLLOUT['version']
-VERSIONS = {CATALOG['version']: CATALOG, LEGACY['version']: LEGACY, ROLLOUT['version']: ROLLOUT}
+PROPOSAL = json.loads((ROOT / 'guidedSoc2Rollout2.json').read_text(encoding='utf-8'))
+# CATALOG and ROLLOUT remain immutable readers; only new reviews select PROPOSAL.
+CURRENT_VERSION = PROPOSAL['version']
+VERSIONS = {CATALOG['version']: CATALOG, LEGACY['version']: LEGACY, ROLLOUT['version']: ROLLOUT,
+            PROPOSAL['version']: PROPOSAL}
 VERSION_FEATURES = {
     LEGACY['version']: {'intent_gates': False, 'inline_sentences': False},
     CATALOG['version']: {'intent_gates': True, 'inline_sentences': True},
     ROLLOUT['version']: {'intent_gates': True, 'inline_sentences': True},
+    PROPOSAL['version']: {'intent_gates': True, 'inline_sentences': True, 'reported_work_status': True},
 }
 CHOICES = ['Yes', 'Partially', 'No', 'Not sure']
 CONTEXT_CHOICES = ['Relevant', 'Outside the selected system', 'Not sure']
@@ -34,6 +37,10 @@ def uses_intent_gates(version):
 
 def uses_inline_sentences(version):
     return VERSION_FEATURES.get(version, {}).get('inline_sentences') is True
+
+
+def uses_reported_work_status(version):
+    return VERSION_FEATURES.get(version, {}).get('reported_work_status') is True
 
 
 def _definition(id, version=None):
@@ -153,6 +160,9 @@ def result_status(id, answers, version=None):
         confirmed_no |= value == 'No'
         partial |= value == 'Partially'
         unknown |= value not in ('Yes', 'Partially', 'No')
+    if uses_reported_work_status(version or CURRENT_VERSION):
+        confirmed_no |= answers.get('additional_gap') == 'Yes' and bool(_text(answers, 'gaps'))
+        unknown |= answers.get('additional_confirmation') == 'Yes' and bool(_text(answers, 'unknowns'))
     if confirmed_no:
         return 'needs_attention'
     if not meaningful or (version or CATALOG['version']) != LEGACY['version'] and unknown and not partial:

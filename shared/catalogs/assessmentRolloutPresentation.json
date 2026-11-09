@@ -25011,7 +25011,8 @@
       "reference": "CC1.1",
       "versions": [
         "soc2-omni-2",
-        "soc2-assessment-rollout-1"
+        "soc2-assessment-rollout-1",
+        "soc2-assessment-rollout-2"
       ],
       "requirement": {
         "text": "Ethical conduct must be reflected in leadership behavior and how departures are handled, not just in a handbook. Consider employees, contractors, and relevant provider personnel.",
@@ -25121,7 +25122,8 @@
       "reference": "CC1.2",
       "versions": [
         "soc2-omni-2",
-        "soc2-assessment-rollout-1"
+        "soc2-assessment-rollout-1",
+        "soc2-assessment-rollout-2"
       ],
       "requirement": {
         "text": "Those overseeing internal control need sufficient objectivity and expertise to challenge management. The appropriate governance structure depends on the organization's size and circumstances.",
@@ -25231,7 +25233,8 @@
       "reference": "CC1.3",
       "versions": [
         "soc2-omni-2",
-        "soc2-assessment-rollout-1"
+        "soc2-assessment-rollout-1",
+        "soc2-assessment-rollout-2"
       ],
       "requirement": {
         "text": "People need clear reporting lines, authority, and responsibility for achieving system objectives. Outsourcing work does not remove the need to define how responsibilities fit together.",
@@ -25327,7 +25330,8 @@
       "reference": "CC1.4",
       "versions": [
         "soc2-omni-2",
-        "soc2-assessment-rollout-1"
+        "soc2-assessment-rollout-1",
+        "soc2-assessment-rollout-2"
       ],
       "requirement": {
         "text": "The organization needs people with appropriate competence to carry out its objectives. Consider recruitment, development, retention, and the capabilities supplied by relevant providers.",
@@ -25430,7 +25434,8 @@
       "reference": "CC1.5",
       "versions": [
         "soc2-omni-2",
-        "soc2-assessment-rollout-1"
+        "soc2-assessment-rollout-1",
+        "soc2-assessment-rollout-2"
       ],
       "requirement": {
         "text": "Assigning a control is not enough: people must be accountable for carrying it out. Performance expectations should support control objectives rather than encourage shortcuts.",
@@ -25526,7 +25531,8 @@
       "reference": "CC2.1",
       "versions": [
         "soc2-omni-2",
-        "soc2-assessment-rollout-1"
+        "soc2-assessment-rollout-1",
+        "soc2-assessment-rollout-2"
       ],
       "requirement": {
         "text": "Control decisions depend on reliable information. The organization needs relevant, accurate, complete, and timely information about its systems, assets, data flows, and control activity.",
@@ -25629,7 +25635,8 @@
       "reference": "CC2.2",
       "versions": [
         "soc2-omni-2",
-        "soc2-assessment-rollout-1"
+        "soc2-assessment-rollout-1",
+        "soc2-assessment-rollout-2"
       ],
       "requirement": {
         "text": "Personnel need the objectives, responsibilities, and reporting information required to operate controls. Internal communication should reach the people affected when expectations or systems change.",
@@ -25732,7 +25739,8 @@
       "reference": "CC2.3",
       "versions": [
         "soc2-omni-2",
-        "soc2-assessment-rollout-1"
+        "soc2-assessment-rollout-1",
+        "soc2-assessment-rollout-2"
       ],
       "requirement": {
         "text": "Relevant external parties need information that supports internal control, and the organization needs a way to receive concerns from them. Communication must match commitments and responsibilities.",
@@ -25828,7 +25836,8 @@
       "reference": "CC3.1",
       "versions": [
         "soc2-omni-2",
-        "soc2-assessment-rollout-1"
+        "soc2-assessment-rollout-1",
+        "soc2-assessment-rollout-2"
       ],
       "requirement": {
         "text": "Objectives must be clear enough to identify risks to achieving them. For SOC 2, connect objectives to service commitments and system requirements rather than an unexplained generic risk list.",
@@ -25924,7 +25933,8 @@
       "reference": "CC3.2",
       "versions": [
         "soc2-omni-2",
-        "soc2-assessment-rollout-1"
+        "soc2-assessment-rollout-1",
+        "soc2-assessment-rollout-2"
       ],
       "requirement": {
         "text": "Identify and analyze risks that could prevent the organization from meeting its objectives. Consider internal and external threats, dependencies, and how the risks should be managed.",
@@ -26027,7 +26037,8 @@
       "reference": "CC3.3",
       "versions": [
         "soc2-omni-2",
-        "soc2-assessment-rollout-1"
+        "soc2-assessment-rollout-1",
+        "soc2-assessment-rollout-2"
       ],
       "requirement": {
         "text": "Risk assessment must consider fraud, including incentives, opportunities, and rationalizations that could undermine objectives. This is broader than checking for technical attacks alone.",
@@ -26123,7 +26134,8 @@
       "reference": "CC3.4",
       "versions": [
         "soc2-omni-2",
-        "soc2-assessment-rollout-1"
+        "soc2-assessment-rollout-1",
+        "soc2-assessment-rollout-2"
       ],
       "requirement": {
         "text": "Changes can create new risks or make existing controls unsuitable. The organization needs to identify and assess significant changes affecting its system and objectives.",
@@ -26219,7 +26231,8 @@
       "reference": "CC4.1",
       "versions": [
         "soc2-omni-2",
-        "soc2-assessment-rollout-1"
+        "soc2-assessment-rollout-1",
+        "soc2-assessment-rollout-2"
       ],
       "requirement": {
         "text": "Evaluate whether internal control remains present and functioning. Ongoing monitoring, separate evaluations, or a suitable combination should reveal weaknesses in the actual environment.",
@@ -26315,7 +26328,8 @@
       "reference": "CC4.2",
       "versions": [
         "soc2-omni-2",
-        "soc2-assessment-rollout-1"
+        "soc2-assessment-rollout-1",
+        "soc2-assessment-rollout-2"
       ],
       "requirement": {
         "text": "Control deficiencies need evaluation and timely communication to people responsible for corrective action, including management or oversight where appropriate. Recording a gap is only the beginning.",
@@ -26411,7 +26425,8 @@
       "reference": "CC5.1",
       "versions": [
         "soc2-omni-2",
-        "soc2-assessment-rollout-1"
+        "soc2-assessment-rollout-1",
+        "soc2-assessment-rollout-2"
       ],
       "requirement": {
         "text": "Select and develop control activities that reduce relevant risks to acceptable levels. Controls should address the identified exposure, not merely populate a standard checklist.",
@@ -26507,7 +26522,8 @@
       "reference": "CC5.2",
       "versions": [
         "soc2-omni-2",
-        "soc2-assessment-rollout-1"
+        "soc2-assessment-rollout-1",
+        "soc2-assessment-rollout-2"
       ],
       "requirement": {
         "text": "Technology controls must support the achievement of objectives, including reliable infrastructure, access, and technology acquisition or development. The needed controls depend on the actual system.",
@@ -26603,7 +26619,8 @@
       "reference": "CC5.3",
       "versions": [
         "soc2-omni-2",
-        "soc2-assessment-rollout-1"
+        "soc2-assessment-rollout-1",
+        "soc2-assessment-rollout-2"
       ],
       "requirement": {
         "text": "Control activities need policies that establish expectations and procedures that put them into action. Their form should fit the organization; a specific policy title is not the outcome.",
@@ -26699,7 +26716,8 @@
       "reference": "CC6.1",
       "versions": [
         "soc2-omni-2",
-        "soc2-assessment-rollout-1"
+        "soc2-assessment-rollout-1",
+        "soc2-assessment-rollout-2"
       ],
       "requirement": {
         "text": "Logical access safeguards should protect information assets against threats consistent with system objectives. Assess the access architecture and protections, not simply whether one security product is installed.",
@@ -26829,7 +26847,8 @@
       "reference": "CC6.2",
       "versions": [
         "soc2-omni-2",
-        "soc2-assessment-rollout-1"
+        "soc2-assessment-rollout-1",
+        "soc2-assessment-rollout-2"
       ],
       "requirement": {
         "text": "Before access is issued, users must be appropriately registered and authorized. Access should also be removed when authorization no longer applies, including personnel leaving either organization.",
@@ -26941,7 +26960,8 @@
       "reference": "CC6.3",
       "versions": [
         "soc2-omni-2",
-        "soc2-assessment-rollout-1"
+        "soc2-assessment-rollout-1",
+        "soc2-assessment-rollout-2"
       ],
       "requirement": {
         "text": "Access rights should match authorized roles and responsibilities and be changed or removed when no longer needed. Consider least privilege and incompatible duties in the actual environment.",
@@ -27062,7 +27082,8 @@
       "reference": "CC6.4",
       "versions": [
         "soc2-omni-2",
-        "soc2-assessment-rollout-1"
+        "soc2-assessment-rollout-1",
+        "soc2-assessment-rollout-2"
       ],
       "requirement": {
         "text": "Physical access to facilities and protected information assets must be limited to authorized people. Include relevant offices, hosting sites, and sensitive media locations within the system boundary.",
@@ -27158,7 +27179,8 @@
       "reference": "CC6.5",
       "versions": [
         "soc2-omni-2",
-        "soc2-assessment-rollout-1"
+        "soc2-assessment-rollout-1",
+        "soc2-assessment-rollout-2"
       ],
       "requirement": {
         "text": "When physical assets are retired, moved, or otherwise leave protected use, safeguards should prevent data and software from becoming accessible to unauthorized parties.",
@@ -27254,7 +27276,8 @@
       "reference": "CC6.6",
       "versions": [
         "soc2-omni-2",
-        "soc2-assessment-rollout-1"
+        "soc2-assessment-rollout-1",
+        "soc2-assessment-rollout-2"
       ],
       "requirement": {
         "text": "Protect system boundaries against unauthorized access from outside the system. Examine actual external connections and exposure, including third-party and remote-access paths.",
@@ -27368,7 +27391,8 @@
       "reference": "CC6.7",
       "versions": [
         "soc2-omni-2",
-        "soc2-assessment-rollout-1"
+        "soc2-assessment-rollout-1",
+        "soc2-assessment-rollout-2"
       ],
       "requirement": {
         "text": "Information transmission, movement, and removal need restrictions and protections appropriate to the data and objectives. Consider transfers between systems, devices, customers, and providers.",
@@ -27482,7 +27506,8 @@
       "reference": "CC6.8",
       "versions": [
         "soc2-omni-2",
-        "soc2-assessment-rollout-1"
+        "soc2-assessment-rollout-1",
+        "soc2-assessment-rollout-2"
       ],
       "requirement": {
         "text": "Prevent or detect unauthorized or malicious software and respond appropriately. Protection should address the actual systems and software-entry paths, not require a named security tool.",
@@ -27605,7 +27630,8 @@
       "reference": "CC7.1",
       "versions": [
         "soc2-omni-2",
-        "soc2-assessment-rollout-1"
+        "soc2-assessment-rollout-1",
+        "soc2-assessment-rollout-2"
       ],
       "requirement": {
         "text": "Use detection and monitoring to identify configuration changes that introduce vulnerabilities and susceptibility to newly discovered vulnerabilities. This informs protection of the system over time.",
@@ -27728,7 +27754,8 @@
       "reference": "CC7.2",
       "versions": [
         "soc2-omni-2",
-        "soc2-assessment-rollout-1"
+        "soc2-assessment-rollout-1",
+        "soc2-assessment-rollout-2"
       ],
       "requirement": {
         "text": "Monitor system components for anomalies that may indicate malicious activity, environmental failure, or other security events. Evaluate whether anomalies affect achievement of objectives.",
@@ -27842,7 +27869,8 @@
       "reference": "CC7.3",
       "versions": [
         "soc2-omni-2",
-        "soc2-assessment-rollout-1"
+        "soc2-assessment-rollout-1",
+        "soc2-assessment-rollout-2"
       ],
       "requirement": {
         "text": "Detected security events need evaluation to decide whether they are incidents and whether action is needed. Not every alert is an incident, but the judgment needs a sound basis.",
@@ -27956,7 +27984,8 @@
       "reference": "CC7.4",
       "versions": [
         "soc2-omni-2",
-        "soc2-assessment-rollout-1"
+        "soc2-assessment-rollout-1",
+        "soc2-assessment-rollout-2"
       ],
       "requirement": {
         "text": "Respond to identified security incidents through a defined process that contains and addresses the event and communicates appropriately. Responsibilities and decisions must fit the incident's impact.",
@@ -28075,7 +28104,8 @@
       "reference": "CC7.5",
       "versions": [
         "soc2-omni-2",
-        "soc2-assessment-rollout-1"
+        "soc2-assessment-rollout-1",
+        "soc2-assessment-rollout-2"
       ],
       "requirement": {
         "text": "Recover from identified security incidents using appropriate activities to restore the system and address the consequences. Recovery also helps determine whether objectives can again be met.",
@@ -28189,7 +28219,8 @@
       "reference": "CC8.1",
       "versions": [
         "soc2-omni-2",
-        "soc2-assessment-rollout-1"
+        "soc2-assessment-rollout-1",
+        "soc2-assessment-rollout-2"
       ],
       "requirement": {
         "text": "System changes need authorization, design, development or acquisition, testing, and implementation appropriate to objectives. Include infrastructure, software, data, and procedures rather than only code releases.",
@@ -28345,7 +28376,8 @@
       "reference": "CC9.1",
       "versions": [
         "soc2-omni-2",
-        "soc2-assessment-rollout-1"
+        "soc2-assessment-rollout-1",
+        "soc2-assessment-rollout-2"
       ],
       "requirement": {
         "text": "Identify and select ways to mitigate risks from potential business disruption. The appropriate response depends on objectives and exposure; it is not limited to an Availability category checklist.",
@@ -28450,7 +28482,8 @@
       "reference": "CC9.2",
       "versions": [
         "soc2-omni-2",
-        "soc2-assessment-rollout-1"
+        "soc2-assessment-rollout-1",
+        "soc2-assessment-rollout-2"
       ],
       "requirement": {
         "text": "Assess and manage risks arising from vendors and business partners. Contracting with a provider does not automatically establish that its services meet the organization's control objectives.",
@@ -28555,7 +28588,8 @@
       "reference": "A1.1",
       "versions": [
         "soc2-omni-2",
-        "soc2-assessment-rollout-1"
+        "soc2-assessment-rollout-1",
+        "soc2-assessment-rollout-2"
       ],
       "requirement": {
         "text": "Capacity must be managed so the system can meet availability commitments. Consider actual usage, expected demand, and resources needed across infrastructure and service dependencies.",
@@ -28658,7 +28692,8 @@
       "reference": "A1.2",
       "versions": [
         "soc2-omni-2",
-        "soc2-assessment-rollout-1"
+        "soc2-assessment-rollout-1",
+        "soc2-assessment-rollout-2"
       ],
       "requirement": {
         "text": "Environmental protection, backup, and recovery infrastructure should support availability commitments and system requirements. The design must fit the service, data, dependencies, and recovery objectives.",
@@ -28777,7 +28812,8 @@
       "reference": "A1.3",
       "versions": [
         "soc2-omni-2",
-        "soc2-assessment-rollout-1"
+        "soc2-assessment-rollout-1",
+        "soc2-assessment-rollout-2"
       ],
       "requirement": {
         "text": "Recovery procedures must be tested to support availability objectives. Testing should establish whether the selected recovery approach works, not merely whether instructions exist.",
@@ -28882,7 +28918,8 @@
       "reference": "C1.1",
       "versions": [
         "soc2-omni-2",
-        "soc2-assessment-rollout-1"
+        "soc2-assessment-rollout-1",
+        "soc2-assessment-rollout-2"
       ],
       "requirement": {
         "text": "Confidential information needs identification and protection consistent with confidentiality commitments. Determine what is confidential and how safeguards follow it across its lifecycle and service boundaries.",
@@ -28987,7 +29024,8 @@
       "reference": "C1.2",
       "versions": [
         "soc2-omni-2",
-        "soc2-assessment-rollout-1"
+        "soc2-assessment-rollout-1",
+        "soc2-assessment-rollout-2"
       ],
       "requirement": {
         "text": "Confidential information must be disposed of consistently with confidentiality commitments and requirements. Disposal includes relevant copies and locations, not merely closing an account or deleting one file.",
@@ -29083,7 +29121,8 @@
       "reference": "PI1.1",
       "versions": [
         "soc2-omni-2",
-        "soc2-assessment-rollout-1"
+        "soc2-assessment-rollout-1",
+        "soc2-assessment-rollout-2"
       ],
       "requirement": {
         "text": "Processing must be based on clear information about expected products, services, data, and processing specifications. People need usable definitions to determine whether processing meets objectives.",
@@ -29193,7 +29232,8 @@
       "reference": "PI1.2",
       "versions": [
         "soc2-omni-2",
-        "soc2-assessment-rollout-1"
+        "soc2-assessment-rollout-1",
+        "soc2-assessment-rollout-2"
       ],
       "requirement": {
         "text": "Inputs must meet defined requirements so processing can be complete and accurate. Identify what should enter the process and how invalid, missing, or unauthorized inputs are handled.",
@@ -29296,7 +29336,8 @@
       "reference": "PI1.3",
       "versions": [
         "soc2-omni-2",
-        "soc2-assessment-rollout-1"
+        "soc2-assessment-rollout-1",
+        "soc2-assessment-rollout-2"
       ],
       "requirement": {
         "text": "Processing must execute according to the defined specifications, with errors identified and addressed. Focus on what the system actually does between accepted inputs and resulting outputs.",
@@ -29399,7 +29440,8 @@
       "reference": "PI1.4",
       "versions": [
         "soc2-omni-2",
-        "soc2-assessment-rollout-1"
+        "soc2-assessment-rollout-1",
+        "soc2-assessment-rollout-2"
       ],
       "requirement": {
         "text": "Outputs need to be complete, accurate, timely, and delivered to intended parties according to specifications. A successful internal processing step is not enough if delivery fails.",
@@ -29509,7 +29551,8 @@
       "reference": "PI1.5",
       "versions": [
         "soc2-omni-2",
-        "soc2-assessment-rollout-1"
+        "soc2-assessment-rollout-1",
+        "soc2-assessment-rollout-2"
       ],
       "requirement": {
         "text": "Inputs, in-process data, and outputs must be stored according to processing specifications. Storage should preserve their integrity and accessibility for the purpose they serve.",
@@ -29628,7 +29671,8 @@
       "reference": "P1.1",
       "versions": [
         "soc2-omni-2",
-        "soc2-assessment-rollout-1"
+        "soc2-assessment-rollout-1",
+        "soc2-assessment-rollout-2"
       ],
       "requirement": {
         "text": "People need notice of privacy practices relevant to their personal information. Notices should accurately describe practices and changes; responsibilities depend on whether the organization acts as controller or processor.",
@@ -29731,7 +29775,8 @@
       "reference": "P2.1",
       "versions": [
         "soc2-omni-2",
-        "soc2-assessment-rollout-1"
+        "soc2-assessment-rollout-1",
+        "soc2-assessment-rollout-2"
       ],
       "requirement": {
         "text": "People need understandable choices about collection, use, retention, disclosure, and disposal, including consequences. Consent must be handled appropriately, with an understood basis where implicit consent is used.",
@@ -29848,7 +29893,8 @@
       "reference": "P3.1",
       "versions": [
         "soc2-omni-2",
-        "soc2-assessment-rollout-1"
+        "soc2-assessment-rollout-1",
+        "soc2-assessment-rollout-2"
       ],
       "requirement": {
         "text": "Collect personal information consistently with privacy objectives. Collection should fit stated purposes and applicable requirements rather than expanding simply because additional data is available.",
@@ -29944,7 +29990,8 @@
       "reference": "P3.2",
       "versions": [
         "soc2-omni-2",
-        "soc2-assessment-rollout-1"
+        "soc2-assessment-rollout-1",
+        "soc2-assessment-rollout-2"
       ],
       "requirement": {
         "text": "When explicit consent is required for collection, explain its necessity and the consequences of refusal and obtain it before collecting the information.",
@@ -30054,7 +30101,8 @@
       "reference": "P4.1",
       "versions": [
         "soc2-omni-2",
-        "soc2-assessment-rollout-1"
+        "soc2-assessment-rollout-1",
+        "soc2-assessment-rollout-2"
       ],
       "requirement": {
         "text": "Use personal information only for identified purposes consistent with privacy objectives. Access to information does not itself authorize a new use.",
@@ -30150,7 +30198,8 @@
       "reference": "P4.2",
       "versions": [
         "soc2-omni-2",
-        "soc2-assessment-rollout-1"
+        "soc2-assessment-rollout-1",
+        "soc2-assessment-rollout-2"
       ],
       "requirement": {
         "text": "Retain personal information consistently with privacy objectives and relevant obligations. Retention should support necessary purposes without keeping data indefinitely by default.",
@@ -30255,7 +30304,8 @@
       "reference": "P4.3",
       "versions": [
         "soc2-omni-2",
-        "soc2-assessment-rollout-1"
+        "soc2-assessment-rollout-1",
+        "soc2-assessment-rollout-2"
       ],
       "requirement": {
         "text": "Dispose of personal information securely when its use and retention purposes end, consistent with privacy objectives. Include relevant systems and providers rather than one visible application record.",
@@ -30351,7 +30401,8 @@
       "reference": "P5.1",
       "versions": [
         "soc2-omni-2",
-        "soc2-assessment-rollout-1"
+        "soc2-assessment-rollout-1",
+        "soc2-assessment-rollout-2"
       ],
       "requirement": {
         "text": "Authenticated individuals need appropriate access to their personal information for review and copies. If access is denied, handle the denial and explanation according to privacy objectives.",
@@ -30461,7 +30512,8 @@
       "reference": "P5.2",
       "versions": [
         "soc2-omni-2",
-        "soc2-assessment-rollout-1"
+        "soc2-assessment-rollout-1",
+        "soc2-assessment-rollout-2"
       ],
       "requirement": {
         "text": "Individuals need a way to request correction or amendment of personal information. Appropriate changes and relevant notifications should follow through, with justified denials explained.",
@@ -30564,7 +30616,8 @@
       "reference": "P6.1",
       "versions": [
         "soc2-omni-2",
-        "soc2-assessment-rollout-1"
+        "soc2-assessment-rollout-1",
+        "soc2-assessment-rollout-2"
       ],
       "requirement": {
         "text": "The criterion addresses explicit consent before personal information is disclosed to third parties. Assess the actual disclosure, consent, and privacy objectives rather than treating a provider agreement as consent.",
@@ -30667,7 +30720,8 @@
       "reference": "P6.2",
       "versions": [
         "soc2-omni-2",
-        "soc2-assessment-rollout-1"
+        "soc2-assessment-rollout-1",
+        "soc2-assessment-rollout-2"
       ],
       "requirement": {
         "text": "Authorized disclosures of personal information need complete, accurate, and timely records consistent with privacy objectives. Records should explain what was shared and to whom.",
@@ -30770,7 +30824,8 @@
       "reference": "P6.3",
       "versions": [
         "soc2-omni-2",
-        "soc2-assessment-rollout-1"
+        "soc2-assessment-rollout-1",
+        "soc2-assessment-rollout-2"
       ],
       "requirement": {
         "text": "Detected or reported unauthorized disclosures need reliable records. This criterion focuses on recording the disclosure; incident evaluation, response, and notification have related but distinct purposes.",
@@ -30875,7 +30930,8 @@
       "reference": "P6.4",
       "versions": [
         "soc2-omni-2",
-        "soc2-assessment-rollout-1"
+        "soc2-assessment-rollout-1",
+        "soc2-assessment-rollout-2"
       ],
       "requirement": {
         "text": "Third parties handling personal information need appropriate privacy commitments, evaluated periodically and as needed. Identified failures require corrective action appropriate to privacy objectives.",
@@ -31001,7 +31057,8 @@
       "reference": "P6.5",
       "versions": [
         "soc2-omni-2",
-        "soc2-assessment-rollout-1"
+        "soc2-assessment-rollout-1",
+        "soc2-assessment-rollout-2"
       ],
       "requirement": {
         "text": "Third parties must commit to report actual or suspected unauthorized disclosures, and appropriate personnel need to receive and act on those reports in line with privacy objectives.",
@@ -31136,7 +31193,8 @@
       "reference": "P6.6",
       "versions": [
         "soc2-omni-2",
-        "soc2-assessment-rollout-1"
+        "soc2-assessment-rollout-1",
+        "soc2-assessment-rollout-2"
       ],
       "requirement": {
         "text": "Affected people, regulators, and others need notification of personal-information breaches or incidents according to privacy objectives and applicable obligations. Requirements depend on the circumstances and jurisdiction.",
@@ -31248,7 +31306,8 @@
       "reference": "P6.7",
       "versions": [
         "soc2-omni-2",
-        "soc2-assessment-rollout-1"
+        "soc2-assessment-rollout-1",
+        "soc2-assessment-rollout-2"
       ],
       "requirement": {
         "text": "On request, provide an accounting of the personal information held and its disclosures consistent with privacy objectives. This is not limited to an incident or one application's sharing log.",
@@ -31344,7 +31403,8 @@
       "reference": "P7.1",
       "versions": [
         "soc2-omni-2",
-        "soc2-assessment-rollout-1"
+        "soc2-assessment-rollout-1",
+        "soc2-assessment-rollout-2"
       ],
       "requirement": {
         "text": "Personal information should be accurate, current, complete, and relevant for the purposes for which it is used. Quality depends on the use and consequences of incorrect information.",
@@ -31454,7 +31514,8 @@
       "reference": "P8.1",
       "versions": [
         "soc2-omni-2",
-        "soc2-assessment-rollout-1"
+        "soc2-assessment-rollout-1",
+        "soc2-assessment-rollout-2"
       ],
       "requirement": {
         "text": "Privacy objectives need ongoing attention through complaint handling, communication, monitoring, and correction. A privacy notice alone does not show that the organization follows its stated practices.",
@@ -31564,7 +31625,8 @@
       "reference": "4.1",
       "versions": [
         "iso27001-omni-2",
-        "iso27001-assessment-rollout-1"
+        "iso27001-assessment-rollout-1",
+        "iso27001-assessment-rollout-2"
       ],
       "requirement": {
         "text": "The ISMS needs to reflect the business conditions in which it operates, including whether climate change is relevant to that context.",
@@ -31665,7 +31727,8 @@
       "reference": "4.2",
       "versions": [
         "iso27001-omni-2",
-        "iso27001-assessment-rollout-1"
+        "iso27001-assessment-rollout-1",
+        "iso27001-assessment-rollout-2"
       ],
       "requirement": {
         "text": "Understand whose needs and obligations matter to the ISMS and which of those expectations it addresses, including relevant climate concerns.",
@@ -31757,7 +31820,8 @@
       "reference": "4.3",
       "versions": [
         "iso27001-omni-2",
-        "iso27001-assessment-rollout-1"
+        "iso27001-assessment-rollout-1",
+        "iso27001-assessment-rollout-2"
       ],
       "requirement": {
         "text": "Make the ISMS boundary understandable: the locations, services, interfaces and dependencies that the management system covers.",
@@ -31865,7 +31929,8 @@
       "reference": "4.4",
       "versions": [
         "iso27001-omni-2",
-        "iso27001-assessment-rollout-1"
+        "iso27001-assessment-rollout-1",
+        "iso27001-assessment-rollout-2"
       ],
       "requirement": {
         "text": "The ISMS is a set of connected operating processes, not just a collection of security documents.",
@@ -31973,7 +32038,8 @@
       "reference": "5.1",
       "versions": [
         "iso27001-omni-2",
-        "iso27001-assessment-rollout-1"
+        "iso27001-assessment-rollout-1",
+        "iso27001-assessment-rollout-2"
       ],
       "requirement": {
         "text": "Leadership support should be visible in decisions, resources and the way information security is integrated into business activity.",
@@ -32126,7 +32192,8 @@
       "reference": "5.2",
       "versions": [
         "iso27001-omni-2",
-        "iso27001-assessment-rollout-1"
+        "iso27001-assessment-rollout-1",
+        "iso27001-assessment-rollout-2"
       ],
       "requirement": {
         "text": "Security policy communicates management direction and provides a basis for objectives; people need to understand the policy relevant to their work.",
@@ -32252,7 +32319,8 @@
       "reference": "5.3",
       "versions": [
         "iso27001-omni-2",
-        "iso27001-assessment-rollout-1"
+        "iso27001-assessment-rollout-1",
+        "iso27001-assessment-rollout-2"
       ],
       "requirement": {
         "text": "People need clear responsibility for operating the ISMS and reporting its performance and conformity.",
@@ -32360,7 +32428,8 @@
       "reference": "6.1.1",
       "versions": [
         "iso27001-omni-2",
-        "iso27001-assessment-rollout-1"
+        "iso27001-assessment-rollout-1",
+        "iso27001-assessment-rollout-2"
       ],
       "requirement": {
         "text": "ISMS planning should address relevant risks and opportunities and explain how the chosen actions will be evaluated.",
@@ -32522,7 +32591,8 @@
       "reference": "6.1.2",
       "versions": [
         "iso27001-omni-2",
-        "iso27001-assessment-rollout-1"
+        "iso27001-assessment-rollout-1",
+        "iso27001-assessment-rollout-2"
       ],
       "requirement": {
         "text": "A repeatable risk assessment approach makes criteria, ownership and evaluation consistent enough to support meaningful decisions.",
@@ -32774,7 +32844,8 @@
       "reference": "6.1.3",
       "versions": [
         "iso27001-omni-2",
-        "iso27001-assessment-rollout-1"
+        "iso27001-assessment-rollout-1",
+        "iso27001-assessment-rollout-2"
       ],
       "requirement": {
         "text": "Risk treatment connects selected controls, owner decisions and the Statement of Applicability. Necessary controls are not limited to the Annex A reference set.",
@@ -32972,7 +33043,8 @@
       "reference": "6.2",
       "versions": [
         "iso27001-omni-2",
-        "iso27001-assessment-rollout-1"
+        "iso27001-assessment-rollout-1",
+        "iso27001-assessment-rollout-2"
       ],
       "requirement": {
         "text": "Information security objectives need an accountable plan and measures that show whether progress is being made.",
@@ -33179,7 +33251,8 @@
       "reference": "6.3",
       "versions": [
         "iso27001-omni-2",
-        "iso27001-assessment-rollout-1"
+        "iso27001-assessment-rollout-1",
+        "iso27001-assessment-rollout-2"
       ],
       "requirement": {
         "text": "Changes to the ISMS should be planned so their impact and implementation are understood rather than accidental.",
@@ -33269,7 +33342,8 @@
       "reference": "7.1",
       "versions": [
         "iso27001-omni-2",
-        "iso27001-assessment-rollout-1"
+        "iso27001-assessment-rollout-1",
+        "iso27001-assessment-rollout-2"
       ],
       "requirement": null,
       "sourceIds": [
@@ -33333,7 +33407,8 @@
       "reference": "7.2",
       "versions": [
         "iso27001-omni-2",
-        "iso27001-assessment-rollout-1"
+        "iso27001-assessment-rollout-1",
+        "iso27001-assessment-rollout-2"
       ],
       "requirement": null,
       "sourceIds": [
@@ -33424,7 +33499,8 @@
       "reference": "7.3",
       "versions": [
         "iso27001-omni-2",
-        "iso27001-assessment-rollout-1"
+        "iso27001-assessment-rollout-1",
+        "iso27001-assessment-rollout-2"
       ],
       "requirement": null,
       "sourceIds": [
@@ -33500,7 +33576,8 @@
       "reference": "7.4",
       "versions": [
         "iso27001-omni-2",
-        "iso27001-assessment-rollout-1"
+        "iso27001-assessment-rollout-1",
+        "iso27001-assessment-rollout-2"
       ],
       "requirement": null,
       "sourceIds": [
@@ -33574,7 +33651,8 @@
       "reference": "7.5.1",
       "versions": [
         "iso27001-omni-2",
-        "iso27001-assessment-rollout-1"
+        "iso27001-assessment-rollout-1",
+        "iso27001-assessment-rollout-2"
       ],
       "requirement": null,
       "sourceIds": [
@@ -33633,7 +33711,8 @@
       "reference": "7.5.2",
       "versions": [
         "iso27001-omni-2",
-        "iso27001-assessment-rollout-1"
+        "iso27001-assessment-rollout-1",
+        "iso27001-assessment-rollout-2"
       ],
       "requirement": null,
       "sourceIds": [
@@ -33707,7 +33786,8 @@
       "reference": "7.5.3",
       "versions": [
         "iso27001-omni-2",
-        "iso27001-assessment-rollout-1"
+        "iso27001-assessment-rollout-1",
+        "iso27001-assessment-rollout-2"
       ],
       "requirement": null,
       "sourceIds": [
@@ -33843,7 +33923,8 @@
       "reference": "8.1",
       "versions": [
         "iso27001-omni-2",
-        "iso27001-assessment-rollout-1"
+        "iso27001-assessment-rollout-1",
+        "iso27001-assessment-rollout-2"
       ],
       "requirement": null,
       "sourceIds": [
@@ -33952,7 +34033,8 @@
       "reference": "8.2",
       "versions": [
         "iso27001-omni-2",
-        "iso27001-assessment-rollout-1"
+        "iso27001-assessment-rollout-1",
+        "iso27001-assessment-rollout-2"
       ],
       "requirement": null,
       "sourceIds": [
@@ -34031,7 +34113,8 @@
       "reference": "8.3",
       "versions": [
         "iso27001-omni-2",
-        "iso27001-assessment-rollout-1"
+        "iso27001-assessment-rollout-1",
+        "iso27001-assessment-rollout-2"
       ],
       "requirement": null,
       "sourceIds": [
@@ -34090,7 +34173,8 @@
       "reference": "9.1",
       "versions": [
         "iso27001-omni-2",
-        "iso27001-assessment-rollout-1"
+        "iso27001-assessment-rollout-1",
+        "iso27001-assessment-rollout-2"
       ],
       "requirement": null,
       "sourceIds": [
@@ -34199,7 +34283,8 @@
       "reference": "9.2.1",
       "versions": [
         "iso27001-omni-2",
-        "iso27001-assessment-rollout-1"
+        "iso27001-assessment-rollout-1",
+        "iso27001-assessment-rollout-2"
       ],
       "requirement": null,
       "sourceIds": [
@@ -34273,7 +34358,8 @@
       "reference": "9.2.2",
       "versions": [
         "iso27001-omni-2",
-        "iso27001-assessment-rollout-1"
+        "iso27001-assessment-rollout-1",
+        "iso27001-assessment-rollout-2"
       ],
       "requirement": null,
       "sourceIds": [
@@ -34414,7 +34500,8 @@
       "reference": "9.3.1",
       "versions": [
         "iso27001-omni-2",
-        "iso27001-assessment-rollout-1"
+        "iso27001-assessment-rollout-1",
+        "iso27001-assessment-rollout-2"
       ],
       "requirement": null,
       "sourceIds": [
@@ -34488,7 +34575,8 @@
       "reference": "9.3.2",
       "versions": [
         "iso27001-omni-2",
-        "iso27001-assessment-rollout-1"
+        "iso27001-assessment-rollout-1",
+        "iso27001-assessment-rollout-2"
       ],
       "requirement": null,
       "sourceIds": [
@@ -34602,7 +34690,8 @@
       "reference": "9.3.3",
       "versions": [
         "iso27001-omni-2",
-        "iso27001-assessment-rollout-1"
+        "iso27001-assessment-rollout-1",
+        "iso27001-assessment-rollout-2"
       ],
       "requirement": null,
       "sourceIds": [
@@ -34673,7 +34762,8 @@
       "reference": "10.1",
       "versions": [
         "iso27001-omni-2",
-        "iso27001-assessment-rollout-1"
+        "iso27001-assessment-rollout-1",
+        "iso27001-assessment-rollout-2"
       ],
       "requirement": null,
       "sourceIds": [
@@ -34737,7 +34827,8 @@
       "reference": "10.2",
       "versions": [
         "iso27001-omni-2",
-        "iso27001-assessment-rollout-1"
+        "iso27001-assessment-rollout-1",
+        "iso27001-assessment-rollout-2"
       ],
       "requirement": null,
       "sourceIds": [
@@ -34873,7 +34964,8 @@
       "reference": "A.5.1",
       "versions": [
         "iso27001-omni-2",
-        "iso27001-assessment-rollout-1"
+        "iso27001-assessment-rollout-1",
+        "iso27001-assessment-rollout-2"
       ],
       "requirement": null,
       "sourceIds": [
@@ -34952,7 +35044,8 @@
       "reference": "A.5.2",
       "versions": [
         "iso27001-omni-2",
-        "iso27001-assessment-rollout-1"
+        "iso27001-assessment-rollout-1",
+        "iso27001-assessment-rollout-2"
       ],
       "requirement": null,
       "sourceIds": [
@@ -35021,7 +35114,8 @@
       "reference": "A.5.3",
       "versions": [
         "iso27001-omni-2",
-        "iso27001-assessment-rollout-1"
+        "iso27001-assessment-rollout-1",
+        "iso27001-assessment-rollout-2"
       ],
       "requirement": null,
       "sourceIds": [
@@ -35085,7 +35179,8 @@
       "reference": "A.5.4",
       "versions": [
         "iso27001-omni-2",
-        "iso27001-assessment-rollout-1"
+        "iso27001-assessment-rollout-1",
+        "iso27001-assessment-rollout-2"
       ],
       "requirement": null,
       "sourceIds": [
@@ -35149,7 +35244,8 @@
       "reference": "A.5.5",
       "versions": [
         "iso27001-omni-2",
-        "iso27001-assessment-rollout-1"
+        "iso27001-assessment-rollout-1",
+        "iso27001-assessment-rollout-2"
       ],
       "requirement": null,
       "sourceIds": [
@@ -35218,7 +35314,8 @@
       "reference": "A.5.6",
       "versions": [
         "iso27001-omni-2",
-        "iso27001-assessment-rollout-1"
+        "iso27001-assessment-rollout-1",
+        "iso27001-assessment-rollout-2"
       ],
       "requirement": null,
       "sourceIds": [
@@ -35282,7 +35379,8 @@
       "reference": "A.5.7",
       "versions": [
         "iso27001-omni-2",
-        "iso27001-assessment-rollout-1"
+        "iso27001-assessment-rollout-1",
+        "iso27001-assessment-rollout-2"
       ],
       "requirement": null,
       "sourceIds": [
@@ -35356,7 +35454,8 @@
       "reference": "A.5.8",
       "versions": [
         "iso27001-omni-2",
-        "iso27001-assessment-rollout-1"
+        "iso27001-assessment-rollout-1",
+        "iso27001-assessment-rollout-2"
       ],
       "requirement": null,
       "sourceIds": [
@@ -35425,7 +35524,8 @@
       "reference": "A.5.9",
       "versions": [
         "iso27001-omni-2",
-        "iso27001-assessment-rollout-1"
+        "iso27001-assessment-rollout-1",
+        "iso27001-assessment-rollout-2"
       ],
       "requirement": null,
       "sourceIds": [
@@ -35496,7 +35596,8 @@
       "reference": "A.5.10",
       "versions": [
         "iso27001-omni-2",
-        "iso27001-assessment-rollout-1"
+        "iso27001-assessment-rollout-1",
+        "iso27001-assessment-rollout-2"
       ],
       "requirement": null,
       "sourceIds": [
@@ -35560,7 +35661,8 @@
       "reference": "A.5.11",
       "versions": [
         "iso27001-omni-2",
-        "iso27001-assessment-rollout-1"
+        "iso27001-assessment-rollout-1",
+        "iso27001-assessment-rollout-2"
       ],
       "requirement": null,
       "sourceIds": [
@@ -35624,7 +35726,8 @@
       "reference": "A.5.12",
       "versions": [
         "iso27001-omni-2",
-        "iso27001-assessment-rollout-1"
+        "iso27001-assessment-rollout-1",
+        "iso27001-assessment-rollout-2"
       ],
       "requirement": null,
       "sourceIds": [
@@ -35700,7 +35803,8 @@
       "reference": "A.5.13",
       "versions": [
         "iso27001-omni-2",
-        "iso27001-assessment-rollout-1"
+        "iso27001-assessment-rollout-1",
+        "iso27001-assessment-rollout-2"
       ],
       "requirement": null,
       "sourceIds": [
@@ -35771,7 +35875,8 @@
       "reference": "A.5.14",
       "versions": [
         "iso27001-omni-2",
-        "iso27001-assessment-rollout-1"
+        "iso27001-assessment-rollout-1",
+        "iso27001-assessment-rollout-2"
       ],
       "requirement": null,
       "sourceIds": [
@@ -35840,7 +35945,8 @@
       "reference": "A.5.15",
       "versions": [
         "iso27001-omni-2",
-        "iso27001-assessment-rollout-1"
+        "iso27001-assessment-rollout-1",
+        "iso27001-assessment-rollout-2"
       ],
       "requirement": null,
       "sourceIds": [
@@ -35911,7 +36017,8 @@
       "reference": "A.5.16",
       "versions": [
         "iso27001-omni-2",
-        "iso27001-assessment-rollout-1"
+        "iso27001-assessment-rollout-1",
+        "iso27001-assessment-rollout-2"
       ],
       "requirement": null,
       "sourceIds": [
@@ -35987,7 +36094,8 @@
       "reference": "A.5.17",
       "versions": [
         "iso27001-omni-2",
-        "iso27001-assessment-rollout-1"
+        "iso27001-assessment-rollout-1",
+        "iso27001-assessment-rollout-2"
       ],
       "requirement": null,
       "sourceIds": [
@@ -36068,7 +36176,8 @@
       "reference": "A.5.18",
       "versions": [
         "iso27001-omni-2",
-        "iso27001-assessment-rollout-1"
+        "iso27001-assessment-rollout-1",
+        "iso27001-assessment-rollout-2"
       ],
       "requirement": null,
       "sourceIds": [
@@ -36144,7 +36253,8 @@
       "reference": "A.5.19",
       "versions": [
         "iso27001-omni-2",
-        "iso27001-assessment-rollout-1"
+        "iso27001-assessment-rollout-1",
+        "iso27001-assessment-rollout-2"
       ],
       "requirement": null,
       "sourceIds": [
@@ -36220,7 +36330,8 @@
       "reference": "A.5.20",
       "versions": [
         "iso27001-omni-2",
-        "iso27001-assessment-rollout-1"
+        "iso27001-assessment-rollout-1",
+        "iso27001-assessment-rollout-2"
       ],
       "requirement": null,
       "sourceIds": [
@@ -36301,7 +36412,8 @@
       "reference": "A.5.21",
       "versions": [
         "iso27001-omni-2",
-        "iso27001-assessment-rollout-1"
+        "iso27001-assessment-rollout-1",
+        "iso27001-assessment-rollout-2"
       ],
       "requirement": null,
       "sourceIds": [
@@ -36377,7 +36489,8 @@
       "reference": "A.5.22",
       "versions": [
         "iso27001-omni-2",
-        "iso27001-assessment-rollout-1"
+        "iso27001-assessment-rollout-1",
+        "iso27001-assessment-rollout-2"
       ],
       "requirement": null,
       "sourceIds": [
@@ -36448,7 +36561,8 @@
       "reference": "A.5.23",
       "versions": [
         "iso27001-omni-2",
-        "iso27001-assessment-rollout-1"
+        "iso27001-assessment-rollout-1",
+        "iso27001-assessment-rollout-2"
       ],
       "requirement": null,
       "sourceIds": [
@@ -36534,7 +36648,8 @@
       "reference": "A.5.24",
       "versions": [
         "iso27001-omni-2",
-        "iso27001-assessment-rollout-1"
+        "iso27001-assessment-rollout-1",
+        "iso27001-assessment-rollout-2"
       ],
       "requirement": null,
       "sourceIds": [
@@ -36615,7 +36730,8 @@
       "reference": "A.5.25",
       "versions": [
         "iso27001-omni-2",
-        "iso27001-assessment-rollout-1"
+        "iso27001-assessment-rollout-1",
+        "iso27001-assessment-rollout-2"
       ],
       "requirement": null,
       "sourceIds": [
@@ -36686,7 +36802,8 @@
       "reference": "A.5.26",
       "versions": [
         "iso27001-omni-2",
-        "iso27001-assessment-rollout-1"
+        "iso27001-assessment-rollout-1",
+        "iso27001-assessment-rollout-2"
       ],
       "requirement": null,
       "sourceIds": [
@@ -36767,7 +36884,8 @@
       "reference": "A.5.27",
       "versions": [
         "iso27001-omni-2",
-        "iso27001-assessment-rollout-1"
+        "iso27001-assessment-rollout-1",
+        "iso27001-assessment-rollout-2"
       ],
       "requirement": null,
       "sourceIds": [
@@ -36843,7 +36961,8 @@
       "reference": "A.5.28",
       "versions": [
         "iso27001-omni-2",
-        "iso27001-assessment-rollout-1"
+        "iso27001-assessment-rollout-1",
+        "iso27001-assessment-rollout-2"
       ],
       "requirement": null,
       "sourceIds": [
@@ -36929,7 +37048,8 @@
       "reference": "A.5.29",
       "versions": [
         "iso27001-omni-2",
-        "iso27001-assessment-rollout-1"
+        "iso27001-assessment-rollout-1",
+        "iso27001-assessment-rollout-2"
       ],
       "requirement": null,
       "sourceIds": [
@@ -37010,7 +37130,8 @@
       "reference": "A.5.30",
       "versions": [
         "iso27001-omni-2",
-        "iso27001-assessment-rollout-1"
+        "iso27001-assessment-rollout-1",
+        "iso27001-assessment-rollout-2"
       ],
       "requirement": null,
       "sourceIds": [
@@ -37091,7 +37212,8 @@
       "reference": "A.5.31",
       "versions": [
         "iso27001-omni-2",
-        "iso27001-assessment-rollout-1"
+        "iso27001-assessment-rollout-1",
+        "iso27001-assessment-rollout-2"
       ],
       "requirement": null,
       "sourceIds": [
@@ -37160,7 +37282,8 @@
       "reference": "A.5.32",
       "versions": [
         "iso27001-omni-2",
-        "iso27001-assessment-rollout-1"
+        "iso27001-assessment-rollout-1",
+        "iso27001-assessment-rollout-2"
       ],
       "requirement": null,
       "sourceIds": [
@@ -37224,7 +37347,8 @@
       "reference": "A.5.33",
       "versions": [
         "iso27001-omni-2",
-        "iso27001-assessment-rollout-1"
+        "iso27001-assessment-rollout-1",
+        "iso27001-assessment-rollout-2"
       ],
       "requirement": null,
       "sourceIds": [
@@ -37308,7 +37432,8 @@
       "reference": "A.5.34",
       "versions": [
         "iso27001-omni-2",
-        "iso27001-assessment-rollout-1"
+        "iso27001-assessment-rollout-1",
+        "iso27001-assessment-rollout-2"
       ],
       "requirement": null,
       "sourceIds": [
@@ -37384,7 +37509,8 @@
       "reference": "A.5.35",
       "versions": [
         "iso27001-omni-2",
-        "iso27001-assessment-rollout-1"
+        "iso27001-assessment-rollout-1",
+        "iso27001-assessment-rollout-2"
       ],
       "requirement": null,
       "sourceIds": [
@@ -37463,7 +37589,8 @@
       "reference": "A.5.36",
       "versions": [
         "iso27001-omni-2",
-        "iso27001-assessment-rollout-1"
+        "iso27001-assessment-rollout-1",
+        "iso27001-assessment-rollout-2"
       ],
       "requirement": null,
       "sourceIds": [
@@ -37527,7 +37654,8 @@
       "reference": "A.5.37",
       "versions": [
         "iso27001-omni-2",
-        "iso27001-assessment-rollout-1"
+        "iso27001-assessment-rollout-1",
+        "iso27001-assessment-rollout-2"
       ],
       "requirement": null,
       "sourceIds": [
@@ -37591,7 +37719,8 @@
       "reference": "A.6.1",
       "versions": [
         "iso27001-omni-2",
-        "iso27001-assessment-rollout-1"
+        "iso27001-assessment-rollout-1",
+        "iso27001-assessment-rollout-2"
       ],
       "requirement": null,
       "sourceIds": [
@@ -37670,7 +37799,8 @@
       "reference": "A.6.2",
       "versions": [
         "iso27001-omni-2",
-        "iso27001-assessment-rollout-1"
+        "iso27001-assessment-rollout-1",
+        "iso27001-assessment-rollout-2"
       ],
       "requirement": null,
       "sourceIds": [
@@ -37734,7 +37864,8 @@
       "reference": "A.6.3",
       "versions": [
         "iso27001-omni-2",
-        "iso27001-assessment-rollout-1"
+        "iso27001-assessment-rollout-1",
+        "iso27001-assessment-rollout-2"
       ],
       "requirement": null,
       "sourceIds": [
@@ -37810,7 +37941,8 @@
       "reference": "A.6.4",
       "versions": [
         "iso27001-omni-2",
-        "iso27001-assessment-rollout-1"
+        "iso27001-assessment-rollout-1",
+        "iso27001-assessment-rollout-2"
       ],
       "requirement": null,
       "sourceIds": [
@@ -37874,7 +38006,8 @@
       "reference": "A.6.5",
       "versions": [
         "iso27001-omni-2",
-        "iso27001-assessment-rollout-1"
+        "iso27001-assessment-rollout-1",
+        "iso27001-assessment-rollout-2"
       ],
       "requirement": null,
       "sourceIds": [
@@ -37943,7 +38076,8 @@
       "reference": "A.6.6",
       "versions": [
         "iso27001-omni-2",
-        "iso27001-assessment-rollout-1"
+        "iso27001-assessment-rollout-1",
+        "iso27001-assessment-rollout-2"
       ],
       "requirement": null,
       "sourceIds": [
@@ -38012,7 +38146,8 @@
       "reference": "A.6.7",
       "versions": [
         "iso27001-omni-2",
-        "iso27001-assessment-rollout-1"
+        "iso27001-assessment-rollout-1",
+        "iso27001-assessment-rollout-2"
       ],
       "requirement": null,
       "sourceIds": [
@@ -38093,7 +38228,8 @@
       "reference": "A.6.8",
       "versions": [
         "iso27001-omni-2",
-        "iso27001-assessment-rollout-1"
+        "iso27001-assessment-rollout-1",
+        "iso27001-assessment-rollout-2"
       ],
       "requirement": null,
       "sourceIds": [
@@ -38169,7 +38305,8 @@
       "reference": "A.7.1",
       "versions": [
         "iso27001-omni-2",
-        "iso27001-assessment-rollout-1"
+        "iso27001-assessment-rollout-1",
+        "iso27001-assessment-rollout-2"
       ],
       "requirement": null,
       "sourceIds": [
@@ -38233,7 +38370,8 @@
       "reference": "A.7.2",
       "versions": [
         "iso27001-omni-2",
-        "iso27001-assessment-rollout-1"
+        "iso27001-assessment-rollout-1",
+        "iso27001-assessment-rollout-2"
       ],
       "requirement": null,
       "sourceIds": [
@@ -38312,7 +38450,8 @@
       "reference": "A.7.3",
       "versions": [
         "iso27001-omni-2",
-        "iso27001-assessment-rollout-1"
+        "iso27001-assessment-rollout-1",
+        "iso27001-assessment-rollout-2"
       ],
       "requirement": null,
       "sourceIds": [
@@ -38381,7 +38520,8 @@
       "reference": "A.7.4",
       "versions": [
         "iso27001-omni-2",
-        "iso27001-assessment-rollout-1"
+        "iso27001-assessment-rollout-1",
+        "iso27001-assessment-rollout-2"
       ],
       "requirement": null,
       "sourceIds": [
@@ -38445,7 +38585,8 @@
       "reference": "A.7.5",
       "versions": [
         "iso27001-omni-2",
-        "iso27001-assessment-rollout-1"
+        "iso27001-assessment-rollout-1",
+        "iso27001-assessment-rollout-2"
       ],
       "requirement": null,
       "sourceIds": [
@@ -38509,7 +38650,8 @@
       "reference": "A.7.6",
       "versions": [
         "iso27001-omni-2",
-        "iso27001-assessment-rollout-1"
+        "iso27001-assessment-rollout-1",
+        "iso27001-assessment-rollout-2"
       ],
       "requirement": null,
       "sourceIds": [
@@ -38573,7 +38715,8 @@
       "reference": "A.7.7",
       "versions": [
         "iso27001-omni-2",
-        "iso27001-assessment-rollout-1"
+        "iso27001-assessment-rollout-1",
+        "iso27001-assessment-rollout-2"
       ],
       "requirement": null,
       "sourceIds": [
@@ -38637,7 +38780,8 @@
       "reference": "A.7.8",
       "versions": [
         "iso27001-omni-2",
-        "iso27001-assessment-rollout-1"
+        "iso27001-assessment-rollout-1",
+        "iso27001-assessment-rollout-2"
       ],
       "requirement": null,
       "sourceIds": [
@@ -38701,7 +38845,8 @@
       "reference": "A.7.9",
       "versions": [
         "iso27001-omni-2",
-        "iso27001-assessment-rollout-1"
+        "iso27001-assessment-rollout-1",
+        "iso27001-assessment-rollout-2"
       ],
       "requirement": null,
       "sourceIds": [
@@ -38765,7 +38910,8 @@
       "reference": "A.7.10",
       "versions": [
         "iso27001-omni-2",
-        "iso27001-assessment-rollout-1"
+        "iso27001-assessment-rollout-1",
+        "iso27001-assessment-rollout-2"
       ],
       "requirement": null,
       "sourceIds": [
@@ -38834,7 +38980,8 @@
       "reference": "A.7.11",
       "versions": [
         "iso27001-omni-2",
-        "iso27001-assessment-rollout-1"
+        "iso27001-assessment-rollout-1",
+        "iso27001-assessment-rollout-2"
       ],
       "requirement": null,
       "sourceIds": [
@@ -38898,7 +39045,8 @@
       "reference": "A.7.12",
       "versions": [
         "iso27001-omni-2",
-        "iso27001-assessment-rollout-1"
+        "iso27001-assessment-rollout-1",
+        "iso27001-assessment-rollout-2"
       ],
       "requirement": null,
       "sourceIds": [
@@ -38962,7 +39110,8 @@
       "reference": "A.7.13",
       "versions": [
         "iso27001-omni-2",
-        "iso27001-assessment-rollout-1"
+        "iso27001-assessment-rollout-1",
+        "iso27001-assessment-rollout-2"
       ],
       "requirement": null,
       "sourceIds": [
@@ -39041,7 +39190,8 @@
       "reference": "A.7.14",
       "versions": [
         "iso27001-omni-2",
-        "iso27001-assessment-rollout-1"
+        "iso27001-assessment-rollout-1",
+        "iso27001-assessment-rollout-2"
       ],
       "requirement": null,
       "sourceIds": [
@@ -39110,7 +39260,8 @@
       "reference": "A.8.1",
       "versions": [
         "iso27001-omni-2",
-        "iso27001-assessment-rollout-1"
+        "iso27001-assessment-rollout-1",
+        "iso27001-assessment-rollout-2"
       ],
       "requirement": null,
       "sourceIds": [
@@ -39181,7 +39332,8 @@
       "reference": "A.8.2",
       "versions": [
         "iso27001-omni-2",
-        "iso27001-assessment-rollout-1"
+        "iso27001-assessment-rollout-1",
+        "iso27001-assessment-rollout-2"
       ],
       "requirement": null,
       "sourceIds": [
@@ -39257,7 +39409,8 @@
       "reference": "A.8.3",
       "versions": [
         "iso27001-omni-2",
-        "iso27001-assessment-rollout-1"
+        "iso27001-assessment-rollout-1",
+        "iso27001-assessment-rollout-2"
       ],
       "requirement": null,
       "sourceIds": [
@@ -39333,7 +39486,8 @@
       "reference": "A.8.4",
       "versions": [
         "iso27001-omni-2",
-        "iso27001-assessment-rollout-1"
+        "iso27001-assessment-rollout-1",
+        "iso27001-assessment-rollout-2"
       ],
       "requirement": null,
       "sourceIds": [
@@ -39409,7 +39563,8 @@
       "reference": "A.8.5",
       "versions": [
         "iso27001-omni-2",
-        "iso27001-assessment-rollout-1"
+        "iso27001-assessment-rollout-1",
+        "iso27001-assessment-rollout-2"
       ],
       "requirement": null,
       "sourceIds": [
@@ -39485,7 +39640,8 @@
       "reference": "A.8.6",
       "versions": [
         "iso27001-omni-2",
-        "iso27001-assessment-rollout-1"
+        "iso27001-assessment-rollout-1",
+        "iso27001-assessment-rollout-2"
       ],
       "requirement": null,
       "sourceIds": [
@@ -39549,7 +39705,8 @@
       "reference": "A.8.7",
       "versions": [
         "iso27001-omni-2",
-        "iso27001-assessment-rollout-1"
+        "iso27001-assessment-rollout-1",
+        "iso27001-assessment-rollout-2"
       ],
       "requirement": null,
       "sourceIds": [
@@ -39625,7 +39782,8 @@
       "reference": "A.8.8",
       "versions": [
         "iso27001-omni-2",
-        "iso27001-assessment-rollout-1"
+        "iso27001-assessment-rollout-1",
+        "iso27001-assessment-rollout-2"
       ],
       "requirement": null,
       "sourceIds": [
@@ -39701,7 +39859,8 @@
       "reference": "A.8.9",
       "versions": [
         "iso27001-omni-2",
-        "iso27001-assessment-rollout-1"
+        "iso27001-assessment-rollout-1",
+        "iso27001-assessment-rollout-2"
       ],
       "requirement": null,
       "sourceIds": [
@@ -39777,7 +39936,8 @@
       "reference": "A.8.10",
       "versions": [
         "iso27001-omni-2",
-        "iso27001-assessment-rollout-1"
+        "iso27001-assessment-rollout-1",
+        "iso27001-assessment-rollout-2"
       ],
       "requirement": null,
       "sourceIds": [
@@ -39846,7 +40006,8 @@
       "reference": "A.8.11",
       "versions": [
         "iso27001-omni-2",
-        "iso27001-assessment-rollout-1"
+        "iso27001-assessment-rollout-1",
+        "iso27001-assessment-rollout-2"
       ],
       "requirement": null,
       "sourceIds": [
@@ -39915,7 +40076,8 @@
       "reference": "A.8.12",
       "versions": [
         "iso27001-omni-2",
-        "iso27001-assessment-rollout-1"
+        "iso27001-assessment-rollout-1",
+        "iso27001-assessment-rollout-2"
       ],
       "requirement": null,
       "sourceIds": [
@@ -39991,7 +40153,8 @@
       "reference": "A.8.13",
       "versions": [
         "iso27001-omni-2",
-        "iso27001-assessment-rollout-1"
+        "iso27001-assessment-rollout-1",
+        "iso27001-assessment-rollout-2"
       ],
       "requirement": null,
       "sourceIds": [
@@ -40067,7 +40230,8 @@
       "reference": "A.8.14",
       "versions": [
         "iso27001-omni-2",
-        "iso27001-assessment-rollout-1"
+        "iso27001-assessment-rollout-1",
+        "iso27001-assessment-rollout-2"
       ],
       "requirement": null,
       "sourceIds": [
@@ -40131,7 +40295,8 @@
       "reference": "A.8.15",
       "versions": [
         "iso27001-omni-2",
-        "iso27001-assessment-rollout-1"
+        "iso27001-assessment-rollout-1",
+        "iso27001-assessment-rollout-2"
       ],
       "requirement": null,
       "sourceIds": [
@@ -40212,7 +40377,8 @@
       "reference": "A.8.16",
       "versions": [
         "iso27001-omni-2",
-        "iso27001-assessment-rollout-1"
+        "iso27001-assessment-rollout-1",
+        "iso27001-assessment-rollout-2"
       ],
       "requirement": null,
       "sourceIds": [
@@ -40288,7 +40454,8 @@
       "reference": "A.8.17",
       "versions": [
         "iso27001-omni-2",
-        "iso27001-assessment-rollout-1"
+        "iso27001-assessment-rollout-1",
+        "iso27001-assessment-rollout-2"
       ],
       "requirement": null,
       "sourceIds": [
@@ -40352,7 +40519,8 @@
       "reference": "A.8.18",
       "versions": [
         "iso27001-omni-2",
-        "iso27001-assessment-rollout-1"
+        "iso27001-assessment-rollout-1",
+        "iso27001-assessment-rollout-2"
       ],
       "requirement": null,
       "sourceIds": [
@@ -40428,7 +40596,8 @@
       "reference": "A.8.19",
       "versions": [
         "iso27001-omni-2",
-        "iso27001-assessment-rollout-1"
+        "iso27001-assessment-rollout-1",
+        "iso27001-assessment-rollout-2"
       ],
       "requirement": null,
       "sourceIds": [
@@ -40504,7 +40673,8 @@
       "reference": "A.8.20",
       "versions": [
         "iso27001-omni-2",
-        "iso27001-assessment-rollout-1"
+        "iso27001-assessment-rollout-1",
+        "iso27001-assessment-rollout-2"
       ],
       "requirement": null,
       "sourceIds": [
@@ -40580,7 +40750,8 @@
       "reference": "A.8.21",
       "versions": [
         "iso27001-omni-2",
-        "iso27001-assessment-rollout-1"
+        "iso27001-assessment-rollout-1",
+        "iso27001-assessment-rollout-2"
       ],
       "requirement": null,
       "sourceIds": [
@@ -40656,7 +40827,8 @@
       "reference": "A.8.22",
       "versions": [
         "iso27001-omni-2",
-        "iso27001-assessment-rollout-1"
+        "iso27001-assessment-rollout-1",
+        "iso27001-assessment-rollout-2"
       ],
       "requirement": null,
       "sourceIds": [
@@ -40727,7 +40899,8 @@
       "reference": "A.8.23",
       "versions": [
         "iso27001-omni-2",
-        "iso27001-assessment-rollout-1"
+        "iso27001-assessment-rollout-1",
+        "iso27001-assessment-rollout-2"
       ],
       "requirement": null,
       "sourceIds": [
@@ -40803,7 +40976,8 @@
       "reference": "A.8.24",
       "versions": [
         "iso27001-omni-2",
-        "iso27001-assessment-rollout-1"
+        "iso27001-assessment-rollout-1",
+        "iso27001-assessment-rollout-2"
       ],
       "requirement": null,
       "sourceIds": [
@@ -40878,7 +41052,8 @@
       "reference": "A.8.25",
       "versions": [
         "iso27001-omni-2",
-        "iso27001-assessment-rollout-1"
+        "iso27001-assessment-rollout-1",
+        "iso27001-assessment-rollout-2"
       ],
       "requirement": null,
       "sourceIds": [
@@ -40949,7 +41124,8 @@
       "reference": "A.8.26",
       "versions": [
         "iso27001-omni-2",
-        "iso27001-assessment-rollout-1"
+        "iso27001-assessment-rollout-1",
+        "iso27001-assessment-rollout-2"
       ],
       "requirement": null,
       "sourceIds": [
@@ -41025,7 +41201,8 @@
       "reference": "A.8.27",
       "versions": [
         "iso27001-omni-2",
-        "iso27001-assessment-rollout-1"
+        "iso27001-assessment-rollout-1",
+        "iso27001-assessment-rollout-2"
       ],
       "requirement": null,
       "sourceIds": [
@@ -41096,7 +41273,8 @@
       "reference": "A.8.28",
       "versions": [
         "iso27001-omni-2",
-        "iso27001-assessment-rollout-1"
+        "iso27001-assessment-rollout-1",
+        "iso27001-assessment-rollout-2"
       ],
       "requirement": null,
       "sourceIds": [
@@ -41172,7 +41350,8 @@
       "reference": "A.8.29",
       "versions": [
         "iso27001-omni-2",
-        "iso27001-assessment-rollout-1"
+        "iso27001-assessment-rollout-1",
+        "iso27001-assessment-rollout-2"
       ],
       "requirement": null,
       "sourceIds": [
@@ -41248,7 +41427,8 @@
       "reference": "A.8.30",
       "versions": [
         "iso27001-omni-2",
-        "iso27001-assessment-rollout-1"
+        "iso27001-assessment-rollout-1",
+        "iso27001-assessment-rollout-2"
       ],
       "requirement": null,
       "sourceIds": [
@@ -41324,7 +41504,8 @@
       "reference": "A.8.31",
       "versions": [
         "iso27001-omni-2",
-        "iso27001-assessment-rollout-1"
+        "iso27001-assessment-rollout-1",
+        "iso27001-assessment-rollout-2"
       ],
       "requirement": null,
       "sourceIds": [
@@ -41400,7 +41581,8 @@
       "reference": "A.8.32",
       "versions": [
         "iso27001-omni-2",
-        "iso27001-assessment-rollout-1"
+        "iso27001-assessment-rollout-1",
+        "iso27001-assessment-rollout-2"
       ],
       "requirement": null,
       "sourceIds": [
@@ -41486,7 +41668,8 @@
       "reference": "A.8.33",
       "versions": [
         "iso27001-omni-2",
-        "iso27001-assessment-rollout-1"
+        "iso27001-assessment-rollout-1",
+        "iso27001-assessment-rollout-2"
       ],
       "requirement": null,
       "sourceIds": [
@@ -41560,7 +41743,8 @@
       "reference": "A.8.34",
       "versions": [
         "iso27001-omni-2",
-        "iso27001-assessment-rollout-1"
+        "iso27001-assessment-rollout-1",
+        "iso27001-assessment-rollout-2"
       ],
       "requirement": null,
       "sourceIds": [

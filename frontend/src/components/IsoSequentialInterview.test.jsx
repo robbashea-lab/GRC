@@ -86,6 +86,17 @@ test('optional intent questions keep conditional context in catalog order', asyn
   expect(props.onNext).not.toHaveBeenCalled();
 });
 
+test.each(['iso27001-omni-1','iso27001-omni-2','iso27001-assessment-rollout-1','iso27001-assessment-rollout-2'])('concern guidance describes only the proposal rules of saved %s',async version=>{
+  configure('4.1',{},version);props={...props,id:'4.1',version,step:props.groups.length-1};await render();
+  for(const question of props.groups.at(-1).questions){expect(container.querySelector('fieldset').dataset.questionId).toBe(question.id);await click('Continue');}
+  expect(container.querySelector('fieldset').dataset.questionId).toBe(props.extras[0].id);
+  const historical='Use the question choices for substantive gaps or uncertainty. These optional notes add context; they do not decide implementation status.';
+  const prospective='Affirmed, described gaps or uncertainty constrain the proposed implementation status. The saved assessment status remains your decision.';
+  expect(container.textContent).toContain(version==='iso27001-assessment-rollout-2'?prospective:historical);
+  expect(container.textContent).not.toContain(version==='iso27001-assessment-rollout-2'?historical:prospective);
+  expect(props.put).not.toHaveBeenCalled();expect(props.onNext).not.toHaveBeenCalled();expect(props.onSaveClose).not.toHaveBeenCalled();
+});
+
 test('read-only responses and forward actions remain disabled while safe Pause remains available', async () => {
   configure('4.1'); props.blocked = true; await render();
   expect(container.querySelector('fieldset').disabled).toBe(true); expect(button('Continue').disabled).toBe(true); expect(button('Save & close').disabled).toBe(true);

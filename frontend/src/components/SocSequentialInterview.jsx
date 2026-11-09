@@ -3,6 +3,7 @@ import {ArrowLeft,ArrowRight,Asterisk} from 'lucide-react';
 import {Button} from './ui/button';
 import {Textarea} from './ui/textarea';
 import {assessmentQuestionPresentation} from '@/lib/assessmentRolloutPresentation';
+import {socUsesReportedWorkStatus} from '@/lib/socGuidedAssessment';
 import AssessmentQuestionGuidance from './AssessmentQuestionGuidance';
 import AssessmentToolField from './AssessmentToolField';
 import './CisSequentialInterview.css';
@@ -41,7 +42,7 @@ export default function SocSequentialInterview({groups,extras,answers,step,setSt
       <fieldset disabled={blocked} data-question-id={question.id}>
         <legend ref={assessmentRollout?heading:undefined} tabIndex={assessmentRollout?-1:undefined} className={assessmentRollout?'gn-question':undefined}>{question.prompt}</legend>{question.help&&<p className={'omni-help'+(assessmentRollout?' gn-hint':'')}>{question.help}</p>}
         {assessmentRollout&&<AssessmentQuestionGuidance guidance={presentation?.guidance} reference={presentation?.reference}/>}
-        {entry.extra&&!assessmentRollout&&<p className="omni-help">Use the question choices for substantive gaps or uncertainty. These optional notes add context; they do not decide readiness.</p>}
+        {entry.extra&&!assessmentRollout&&<p className="omni-help">{socUsesReportedWorkStatus(version)?'Affirmative reported gaps or confirmation needs can constrain the proposed readiness. Saved assessment status still requires your explicit decision.':'Use the question choices for substantive gaps or uncertainty. These optional notes add context; they do not decide readiness.'}</p>}
         {assessmentRollout&&presentation?.tool?<AssessmentToolField key={question.id} label="Your answer" value={answers[question.id]||''} disabled={blocked} options={presentation.tool.options} manualOnly={presentation.tool.manualOnly} onChange={value=>put(question.id,value)}/>:<>
           {assessmentRollout&&<label className="gn-fieldlabel" htmlFor={'soc-answer-'+question.id}>Your answer</label>}
           {question.type==='text'?<Textarea className={assessmentRollout?'gn-field':undefined} id={'soc-answer-'+question.id} aria-label={question.prompt} maxLength={2000} value={answers[question.id]||''} onChange={event=>put(question.id,event.target.value)}/>:<select className={assessmentRollout?'gn-answer':undefined} id={'soc-answer-'+question.id} aria-label={question.prompt} value={answers[question.id]||''} onChange={event=>put(question.id,event.target.value)}><option value="">{entry.extra?'Select an answer':'Choose an answer'}</option>{question.choices.map(value=><option key={value} value={value}>{value}</option>)}</select>}
