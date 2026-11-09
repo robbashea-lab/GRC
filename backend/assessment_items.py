@@ -78,7 +78,7 @@ def _origins(row, draft, questions):
     if framework in ('soc-2', 'iso-27001'):
         engine = soc_guided_assessment if framework == 'soc-2' else iso_guided_assessment
         def sentence(fragment):
-            return fragment if draft['version'] == engine.CATALOG['version'] and fragment.endswith(('.', '!', '?')) else fragment + '.'
+            return fragment if engine.uses_inline_sentences(draft['version']) and fragment.endswith(('.', '!', '?')) else fragment + '.'
         substantive = 0
         outside = 'Outside the selected system' if framework == 'soc-2' else 'Not relevant here'
         for question in questions.values():

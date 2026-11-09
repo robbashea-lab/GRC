@@ -34,6 +34,8 @@ import './BrawndoSafeguard11.css';
 import {PREVIEW_MODE} from '@/lib/api';
 import {brawndoAssessmentPilotEligible} from '@/lib/brawndoAssessmentPilot';
 import './BrawndoAssessmentPilot.css';
+import {assessmentRolloutEntry} from '@/lib/assessmentRolloutPresentation';
+import AssessmentRequirementDisclosure from './AssessmentRequirementDisclosure';
 
 // Shared CIS IG1 workspace. The historical name is retained for existing callers.
 // Read-only guidance never writes assessment responses, status or verification.
@@ -58,12 +60,14 @@ export default function BrawndoCisSafeguard({state,actions}){
   const saved=verificationOf(current),presentation=presentationData.requirements[id];
   const programLabel=ctx?cisLabel(ctx.configuration):breadcrumb?.[0]?.label||'CIS';
   const inventoryContext=id==='1.2'&&focusedOmniEnabled(clientId,user,record.framework_key,ctx?.configuration,id)?ctx?.inventoryContext:undefined;
-  const visualReference=state.visualReference===true,summary=summaryData.requirements[id];
+  const visualReference=state.visualReference===true||state.assessmentRollout===true,summary=summaryData.requirements[id];
   const brawndoRecord=useBrawndoFullRecord(record,clientId);
   const safeguard11=safeguard11Eligible({visualReference,brawndoRecord,record,current,definition,ctx});
-  const assessmentConcept=brawndoAssessmentPilotEligible({demoMode:PREVIEW_MODE,workspaceMode,user,safeguard11,directProgramOpener:state.directProgramOpener,record,current,ctx,pathname:window.location.pathname});
+  const referencePilot=brawndoAssessmentPilotEligible({demoMode:PREVIEW_MODE,workspaceMode,user,safeguard11,directProgramOpener:state.directProgramOpener,record,current,ctx,pathname:window.location.pathname});
+  const assessmentConcept=referencePilot||state.assessmentRollout===true;
+  const rolloutEntry=assessmentRolloutEntry('cis-ig1',id,{module:'safeguard'});
   useEffect(()=>setDetailsView(null),[assessmentConcept,record.framework_assessment_id,user?.user_id]);
-  const nativeBreadcrumb=safeguard11&&definition.control_name?breadcrumb?.map(entry=>entry.label===`Control ${definition.control}`?{...entry,label:`${entry.label} · ${definition.control_name}`}:entry):breadcrumb;
+  const nativeBreadcrumb=(safeguard11||state.assessmentRollout)&&definition.control_name?breadcrumb?.map(entry=>entry.label===`Control ${definition.control}`?{...entry,label:`${entry.label} · ${definition.control_name}`}:entry):breadcrumb;
   const displayBreadcrumb=assessmentConcept&&currentClient?.client_id===clientId&&currentClient.name
     ?[{label:currentClient.name},...(nativeBreadcrumb||[])]:nativeBreadcrumb;
   const inventoryReviewPlan=safeguard11&&activePlans(record.framework_key,ctx.configuration).some(plan=>plan.safeguards.includes(id)&&plan.default_cadence==='semiannual');
@@ -92,7 +96,7 @@ export default function BrawndoCisSafeguard({state,actions}){
     {presentation?.trigger&&<div className="gn-trigger"><CalendarClock className="gn-icon" aria-hidden="true"/><p><span className="gn-trigger-label">Required operation / trigger</span>Review and update the inventory <mark>at least every six months</mark>.</p></div>}
     {officialUrl&&<a className="gn-source" href={officialUrl} target="_blank" rel="noopener noreferrer">Official CIS source<ExternalLink className="gn-icon" aria-hidden="true"/></a>}
   </div>:<div className="cis-native-requirement-meta">{presentation?.trigger&&<span><strong>Required operation / trigger:</strong> {presentation.trigger}</span>}{officialUrl&&<a href={officialUrl} target="_blank" rel="noopener noreferrer">Official CIS source</a>}</div>;
-  const requirement=<section className="cis-native-requirement"><details className={'cis-collapsible-requirement'+(assessmentConcept?' gn-requirement':'')}><summary>{assessmentConcept?<><span className="gn-summary-left"><BookOpen className="gn-icon" aria-hidden="true"/>What CIS requires <span className="gn-summary-ref">CIS v8.1 · {id}</span></span><ChevronDown className="gn-icon gn-chevron" aria-hidden="true"/></>:<>What CIS requires · CIS v8.1 safeguard {id}</>}</summary>{officialRequirement}{assessmentConcept&&requirementMeta}</details>{!assessmentConcept&&requirementMeta}</section>;
+  const requirement=state.assessmentRollout&&!referencePilot?<AssessmentRequirementDisclosure frameworkLabel="CIS" reference={`CIS v8.1 · ${id}`} text={source.text||rolloutEntry?.requirement.text} trigger={rolloutEntry?.requirement.trigger||presentation?.trigger} highlight={rolloutEntry?.requirement.trigger} source={{url:rolloutEntry?.sources[0]?.url||officialUrl,label:"Official CIS source"}}/>:<section className="cis-native-requirement"><details className={'cis-collapsible-requirement'+(assessmentConcept?' gn-requirement':'')}><summary>{assessmentConcept?<><span className="gn-summary-left"><BookOpen className="gn-icon" aria-hidden="true"/>What CIS requires <span className="gn-summary-ref">CIS v8.1 · {id}</span></span><ChevronDown className="gn-icon gn-chevron" aria-hidden="true"/></>:<>What CIS requires · CIS v8.1 safeguard {id}</>}</summary>{officialRequirement}{assessmentConcept&&requirementMeta}</details>{!assessmentConcept&&requirementMeta}</section>;
   const returnToDetails=event=>{event.preventDefault();detailsTrigger.current?.focus({preventScroll:true});};
   const detailsMenu=assessmentConcept?<DropdownMenu onOpenChange={open=>{if(open)detailsDestination.current=false;}}>
     <DropdownMenuTrigger asChild><Button ref={detailsTrigger} className="gn-button gn-details-trigger" variant="outline" disabled={busy}>Assessment details<ChevronDown className="gn-icon" aria-hidden="true"/></Button></DropdownMenuTrigger>
@@ -116,9 +120,9 @@ export default function BrawndoCisSafeguard({state,actions}){
       <div className={'flex flex-wrap gap-2'+(assessmentConcept?' gn-footer-actions':'')}>{visualReference&&!assessmentConcept&&state.manageRecord&&<Button variant="outline" disabled={busy} onClick={state.manageRecord}>Manage</Button>}{writable&&<><Button className={assessmentConcept?'gn-button':undefined} variant={saveAndNext?'outline':'default'} disabled={disabled} onClick={save}>{busy?'Working…':'Save assessment'}</Button>{saveAndNext&&<Button className={assessmentConcept?'gn-button gn-primary':undefined} disabled={disabled||otherDraft} aria-describedby={finding?'bcsg-finding-draft':undefined} onClick={saveAndNext}>Save & next{assessmentConcept&&<ArrowRight className="gn-icon" aria-hidden="true"/>}</Button>}</>}</div></>}>
     {!ctx&&!error&&<p role="status" className="py-3 text-sm">Loading assessment…</p>}
     <AssessmentLayout inlineWorkflow guidedWorkflow criteriaSummary="Omnisciente guidance for assessing this safeguard. These are not additional CIS requirements." criteriaTitle="CIS assessment criteria" reference={`CIS v8.1 · Safeguard ${id}`} key={clientId+':'+id} summary={visualReference?undefined:summary?.plain} summaryLabel={visualReference?'Guided assessment':undefined}
-      requirement={requirement} checklist={checklist} sectionCounts={sectionCounts} safeguard11={safeguard11}
+      requirement={requirement} checklist={checklist} sectionCounts={sectionCounts} safeguard11={safeguard11||state.assessmentRollout===true}
       findings={<BrawndoCisFindings {...{record,definition,current,ctx,related,writable,busy,finding,setFinding,run,setNested,setFeedback,safeguard11,error}}/>}
-      interview={({open,close})=>guideConfiguration?<GuidedAssessor sequential inline inlineOpen={open} onInlineClose={close} visualReference={visualReference} safeguard11={safeguard11} assessmentConcept={assessmentConcept} implementationReviewContainer={assessmentConcept?implementationReviewContainer:undefined} pilotPortalContainer={assessmentConcept?state.pilotPortalContainer:undefined}
+      interview={({open,close})=>guideConfiguration?<GuidedAssessor sequential inline inlineOpen={open} onInlineClose={close} visualReference={visualReference} safeguard11={safeguard11} assessmentConcept={referencePilot} assessmentRollout={state.assessmentRollout===true} implementationReviewContainer={assessmentConcept?implementationReviewContainer:undefined} pilotPortalContainer={assessmentConcept?state.pilotPortalContainer:undefined}
         interviewHistoryOpen={assessmentConcept&&detailsView==='history'} onInterviewHistoryOpenChange={open=>{if(!open)setDetailsView(null);}} onInterviewHistoryCloseAutoFocus={returnToDetails}
         clientId={clientId} framework={record.framework_key} configuration={guideConfiguration} record={{...record,title:definition.title}} current={current} related={related} people={ctx?.users} inventoryContext={inventoryContext} contextComplete={!!ctx&&current.work?.context_complete===true} assessmentDirty={dirty&&!state.focusedImplementationOnly} onOpenNative={(kind,record)=>kind==='evidence'?actions.download?.(record):setNested({kind,record})} form={form} disabled={disabled} onApply={actions.applyGuided} onSaveAssessment={actions.saveGuidedAssessment} onDraftChange={actions.setGuidedDraft} onUpdateImplementation={disabled?undefined:actions.stageGuidedImplementation}/>:null}
       itemsToAddress={<><AssessmentItems safeguard11={safeguard11} record={current} ctx={ctx} disabled={disabled} onSaved={actions.itemsSaved} onCreateFinding={actions.createItemFinding} onDraftChange={actions.setItemsDraft}/>{inventoryReviewPlan&&state.manageRecord&&<section className="sg11-review-schedule"><Button variant="outline" disabled={busy||!ctx} onClick={state.manageRecord}>Schedule six-monthly review in Manage</Button></section>}</>} findingDraft={!!finding}

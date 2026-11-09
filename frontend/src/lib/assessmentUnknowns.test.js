@@ -77,7 +77,9 @@ test.each([
   ['iso-27001',isoGuidedCatalog,isoQuestions,isoGuidedResult,validateIsoCompletion],
 ])('%s additional work requires explicit intent, agrees with Items and preserves historical outcomes', (framework,catalog,questions,result,validate)=>{
   const id=Object.keys(catalog.definitions)[0],answers={};
-  for(let pass=0;pass<30;pass++)for(const q of questions(id,answers))if(!(q.id in answers))answers[q.id]=q.optional?'No':q.type==='text'?'':q.type==='context'?'Relevant':'Yes';
+  const historicalVersion=framework==='soc-2'?'soc2-omni-2':'iso27001-omni-2';
+  // This fixture is reused by the explicit V1 assertion; retain its immutable V2 keys.
+  for(let pass=0;pass<30;pass++)for(const q of questions(id,answers,historicalVersion))if(!(q.id in answers))answers[q.id]=q.optional?'No':q.type==='text'?'':q.type==='context'?'Relevant':'Yes';
   const row={framework_key:framework,framework_assessment_id:'isolated:'+id,definition_id:id},notes={...answers,gaps:'No outstanding gaps.',unknowns:'The optional document title is not recorded.'};
   for(const choice of [undefined,'No','Not sure']){
     const hidden={...notes,additional_gap:choice,additional_confirmation:choice};if(choice===undefined){delete hidden.additional_gap;delete hidden.additional_confirmation;}

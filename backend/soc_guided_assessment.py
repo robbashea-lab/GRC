@@ -8,7 +8,15 @@ from framework_catalog import ROOT, client_configuration
 
 CATALOG = json.loads((ROOT / 'guidedSoc2.json').read_text(encoding='utf-8'))
 LEGACY = json.loads((ROOT / 'guidedSoc2V1.json').read_text(encoding='utf-8'))
-VERSIONS = {CATALOG['version']: CATALOG, LEGACY['version']: LEGACY}
+ROLLOUT = json.loads((ROOT / 'guidedSoc2Rollout1.json').read_text(encoding='utf-8'))
+# CATALOG remains the immutable V2 reader; new reviews use the compatible rollout.
+CURRENT_VERSION = ROLLOUT['version']
+VERSIONS = {CATALOG['version']: CATALOG, LEGACY['version']: LEGACY, ROLLOUT['version']: ROLLOUT}
+VERSION_FEATURES = {
+    LEGACY['version']: {'intent_gates': False, 'inline_sentences': False},
+    CATALOG['version']: {'intent_gates': True, 'inline_sentences': True},
+    ROLLOUT['version']: {'intent_gates': True, 'inline_sentences': True},
+}
 CHOICES = ['Yes', 'Partially', 'No', 'Not sure']
 CONTEXT_CHOICES = ['Relevant', 'Outside the selected system', 'Not sure']
 EXTRA_KEYS = {'gaps', 'unknowns', 'evidence'}
@@ -20,8 +28,16 @@ def _text(answers, key):
     return answers.get(key, '').strip(TEXT_WHITESPACE)
 
 
+def uses_intent_gates(version):
+    return VERSION_FEATURES.get(version, {}).get('intent_gates') is True
+
+
+def uses_inline_sentences(version):
+    return VERSION_FEATURES.get(version, {}).get('inline_sentences') is True
+
+
 def _definition(id, version=None):
-    catalog = VERSIONS.get(version or CATALOG['version'])
+    catalog = VERSIONS.get(version or CURRENT_VERSION)
     if not catalog or id not in catalog['definitions']:
         raise HTTPException(409, 'SOC question set is not available')
     return catalog['definitions'][id]
@@ -29,7 +45,7 @@ def _definition(id, version=None):
 
 def current_version(id):
     _definition(id)
-    return CATALOG['version']
+    return CURRENT_VERSION
 
 
 def _questions(id, version=None):
@@ -39,7 +55,7 @@ def _questions(id, version=None):
 
 
 def extra_questions(version=None):
-    return VERSIONS[version or CATALOG['version']].get('extra_questions',
+    return VERSIONS[version or CURRENT_VERSION].get('extra_questions',
         [{'id': key, 'type': 'text'} for key in ('gaps', 'unknowns', 'evidence')])
 
 

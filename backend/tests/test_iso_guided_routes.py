@@ -151,7 +151,7 @@ const root = process.argv[1];
 let source = fs.readFileSync(root + '/frontend/src/lib/isoGuidedAssessment.js', 'utf8');
 const inline = fs.readFileSync(root + '/frontend/src/lib/inlineAssessment.js', 'utf8');
 source = source.replace("from './inlineAssessment'", 'from ' + JSON.stringify('data:text/javascript;base64,' + Buffer.from(inline).toString('base64')));
-for (const [name, file] of [['isms', 'guidedIsoIsms'], ['organizational', 'guidedIsoOrganizationalPeople'], ['technology', 'guidedIsoPhysicalTechnology'], ['currentCatalog', 'guidedIsoV2']]) {
+for (const [name, file] of [['isms', 'guidedIsoIsms'], ['organizational', 'guidedIsoOrganizationalPeople'], ['technology', 'guidedIsoPhysicalTechnology'], ['currentCatalog', 'guidedIsoV2'], ['rolloutCatalog', 'guidedIso27001Rollout1']]) {
   source = source.replace(`import ${name} from '@catalogs/${file}.json';`, 'const ' + name + ' = ' + fs.readFileSync(root + '/shared/catalogs/' + file + '.json', 'utf8') + ';');
 }
 const frontend = await import('data:text/javascript;base64,' + Buffer.from(source).toString('base64'));

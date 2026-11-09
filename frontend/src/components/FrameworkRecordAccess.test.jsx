@@ -2,7 +2,7 @@ import React,{act} from 'react';
 import {createRoot} from 'react-dom/client';
 import FrameworkDrawer from './FrameworkDrawer';
 import api from '@/lib/api';
-import {activePlans} from '@/lib/frameworks';
+import {activePlans,frameworkCatalog} from '@/lib/frameworks';
 
 let mockUser,mockGroup;
 jest.mock('@/context/AuthContext',()=>({useAuth:()=>({user:mockUser})}));
@@ -161,4 +161,38 @@ test.each(['cis-ig1','soc-2'])('%s management does not add an ISO process owner 
   expect(node.querySelector('[aria-label="Organizational Controls"]')).toBeNull();expect(api.get.mock.calls.some(([path])=>path==='/organizational-controls')).toBe(false);
  await change(node.querySelector('[aria-label="Assessment Owner"]'),'contributor');await act(async()=>button('Save owner').click());
  expect(api.patch.mock.calls[0][1]).not.toHaveProperty('process_owner_id');
+});
+
+function soaManagementContext(selected=true){
+  record={...record,framework_assessment_id:'synthetic-soa-A.5.1',definition_id:'A.5.1',framework_version:frameworkCatalog('iso-27001').version,soa_applicability:'included',soa_justification:'Exact native SoA decision.'};
+  const get=api.get.getMockImplementation();api.get.mockImplementation(async(path,...args)=>{
+    const response=await get(path,...args);
+    return path==='/frameworks/iso-27001'?{data:{...response.data,selected,configured:true,framework:{key:'iso-27001',version:frameworkCatalog('iso-27001').version},assessments:[record]}}:response;
+  });
+}
+
+test('eligible SoA management adds guidance beside existing owner, links and Reviews access with the exact native commands',async()=>{
+  soaManagementContext();const navigate=jest.fn();await render({isoView:'soa',onReviews:navigate});
+  expect([...node.querySelectorAll('[data-soa-guidance]')].map(element=>element.dataset.soaGuidance)).toEqual(['owner','review-trigger','risk-links']);
+  expect(node.querySelector('[data-soa-guidance="owner"]').textContent).toContain('Who is responsible for the decision and its maintenance?');
+  expect(node.querySelector('[data-soa-guidance="risk-links"]').textContent).toContain('Which assessed risks or other obligations support that decision?');
+  expect(node.querySelector('[data-soa-guidance="review-trigger"]').textContent).toContain('What organizational changes or planned review arrangements will prompt reconsideration?');
+  for(const element of node.querySelectorAll('[data-soa-guidance]')){expect(element.textContent).toContain('ISO/IEC 27001:2022 · 6.1.3(d)');expect(element.querySelectorAll('input,textarea,select,button')).toHaveLength(0);}
+  expect(api.post).not.toHaveBeenCalled();expect(api.patch).not.toHaveBeenCalled();expect(node.querySelectorAll('[aria-label="Assessment Owner"]')).toHaveLength(1);expect(node.querySelectorAll('[aria-label="Process Owner"]')).toHaveLength(1);
+  await change(node.querySelector('[aria-label="Assessment Owner"]'),'contributor');await act(async()=>button('Save owner').click());
+  expect(api.patch).toHaveBeenCalledWith('/framework_assessments/synthetic-soa-A.5.1',{owner_id:'contributor',process_owner_id:null,expected_last_assessed:'2026-10-01'});
+  await change(node.querySelector('[aria-label="Related record"]'),'risk');await act(async()=>button('Link record').click());expect(api.post).toHaveBeenCalledWith('/framework_assessments/synthetic-soa-A.5.1/links',{kind:'risks',id:'risk'});
+  await act(async()=>node.querySelector('a[href^="/reviews?"]').click());expect(navigate).toHaveBeenCalledWith('/reviews?client_id=client&framework_key=iso-27001&framework_assessment=synthetic-soa-A.5.1');
+  expect(record.soa_applicability).toBe('included');expect(record.soa_justification).toBe('Exact native SoA decision.');expect(record.implementation).toBe('Saved scope');
+});
+
+test('SoA management guidance follows validated view context without changing the other ISO manager',async()=>{
+  soaManagementContext();await render({isoView:'annex_control'});expect(node.querySelectorAll('[data-soa-guidance]')).toHaveLength(0);
+  await render({isoView:'soa'});expect(node.querySelectorAll('[data-soa-guidance]')).toHaveLength(3);
+  await render();expect(node.querySelectorAll('[data-soa-guidance]')).toHaveLength(0);expect(button('Save owner')).toBeDefined();expect(button('Link record')).toBeDefined();expect(api.patch).not.toHaveBeenCalled();expect(api.post).not.toHaveBeenCalled();
+});
+
+test('an unenrolled SoA record receives no rollout guidance and read-only management retains all native restrictions',async()=>{
+  soaManagementContext(false);mockUser.role='client_viewer';await render({isoView:'soa'});
+  expect(node.querySelectorAll('[data-soa-guidance]')).toHaveLength(0);expect(button('Save owner').disabled).toBe(true);expect(button('Link record').disabled).toBe(true);expect(node.querySelector('[aria-label="Assessment Owner"]').disabled).toBe(true);expect(api.patch).not.toHaveBeenCalled();expect(api.post).not.toHaveBeenCalled();
 });

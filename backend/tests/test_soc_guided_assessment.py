@@ -6,6 +6,7 @@ from pathlib import Path
 import shutil
 import subprocess
 import unittest
+from unittest.mock import patch
 
 from fastapi import HTTPException
 from framework_catalog import SOC
@@ -26,6 +27,96 @@ def first_practice(id):
 
 
 class SocGuidedTests(unittest.TestCase):
+    def test_rollout_is_active_without_reinterpreting_prior_versions(self):
+        self.assertEqual(engine.current_version('CC1.1'), 'soc2-assessment-rollout-1')
+        self.assertEqual(engine.ROLLOUT['version'], 'soc2-assessment-rollout-1')
+        self.assertEqual(list(engine.ROLLOUT['definitions']), list(engine.CATALOG['definitions']))
+        self.assertEqual(engine.ROLLOUT['extra_questions'], engine.CATALOG['extra_questions'])
+        added = 0
+        for id, definition in engine.ROLLOUT['definitions'].items():
+            with self.subTest(criterion=id):
+                previous = engine.CATALOG['definitions'][id]
+                self.assertEqual(definition['groups'][:-1], previous['groups'])
+                for field in ('title', 'category', 'objective', 'source_page'):
+                    self.assertEqual(definition[field], previous[field])
+                context = definition['groups'][-1]
+                self.assertEqual(context['id'], 'implementation_context')
+                self.assertEqual(context['title'], 'Implementation context')
+                self.assertEqual([q['id'] for q in context['questions'][:3]],
+                    [id + '-implementation-method', id + '-responsible-owner', id + '-operating-schedule'])
+                for question in context['questions']:
+                    self.assertEqual(question['type'], 'text')
+                    self.assertIs(question['optional'], True)
+                    self.assertNotIn('condition', question)
+                    self.assertNotIn('default', question)
+                added += len(context['questions'])
+        self.assertEqual(added, 220)
+        for version in ('soc2-omni-2', 'soc2-assessment-rollout-1'):
+            self.assertTrue(engine.uses_intent_gates(version))
+            self.assertTrue(engine.uses_inline_sentences(version))
+        for version in ('soc2-omni-1', 'foreign-version'):
+            self.assertFalse(engine.uses_intent_gates(version))
+            self.assertFalse(engine.uses_inline_sentences(version))
+
+    def test_unpatched_active_default_exposes_every_optional_context_field(self):
+        added = 0
+        for id in engine.CATALOG['definitions']:
+            with self.subTest(criterion=id):
+                self.assertEqual(engine.current_version(id), engine.ROLLOUT['version'])
+                active = engine._questions(id)
+                answers = {q['id']: 'Exact current context: ' + q['id'] if q['type'] == 'text'
+                           else 'Relevant' if q['type'] == 'context' else 'Yes' for q in active}
+                context = engine.ROLLOUT['definitions'][id]['groups'][-1]['questions']
+                added += len(context)
+                self.assertTrue(all(q['id'] in answers for q in context))
+                engine.validate_completion(id, answers)
+                self.assertEqual(engine.result_status(id, answers), 'addressed')
+        self.assertEqual(added, 220)
+
+    def test_rollout_optional_context_is_strict_non_scoring_and_not_accepted_by_old_versions(self):
+        version = engine.ROLLOUT['version']
+        for id, definition in engine.ROLLOUT['definitions'].items():
+            with self.subTest(criterion=id):
+                optional = definition['groups'][-1]['questions']
+                supplied = {q['id']: 'Other source — scope unconfirmed; reported by the owner.' for q in optional}
+                answers = {**complete(id), **supplied}
+                before = copy.deepcopy(answers)
+                engine.validate_completion(id, complete(id), version)
+                engine.validate_completion(id, answers, version)
+                self.assertEqual(engine.result_status(id, answers, version), engine.result_status(id, complete(id)))
+                self.assertEqual(engine.result_status(id, supplied, version), 'not_assessed')
+                self.assert_rejected(lambda: engine.validate_completion(id, supplied, version), 422)
+                self.assertEqual(answers, before)
+                for question in optional:
+                    key = question['id']
+                    engine.validate_answers(id, {key: ''}, version)
+                    engine.validate_answers(id, {key: '\U0001f600' * 1000}, version)
+                    for bad in (True, [], {}, 'x' * 2001, '\U0001f600' * 1001):
+                        self.assert_rejected(lambda: engine.validate_answers(id, {key: bad}, version), 422)
+                    for prior in ('soc2-omni-1', 'soc2-omni-2'):
+                        self.assert_rejected(lambda: engine.validate_answers(id, {key: 'Custom source'}, prior), 422)
+                self.assert_rejected(lambda: engine.validate_answers(id, {id + '-unregistered-context': 'Unknown'}, version), 422)
+
+    def test_native01_02_preserves_the_held_additional_gap_confirmation_proposal(self):
+        for id in engine.CATALOG['definitions']:
+            for version in (engine.CATALOG['version'], engine.ROLLOUT['version']):
+                for extra in (
+                    {'additional_gap': 'Yes', 'gaps': 'A substantive scoped practice is missing.'},
+                    {'additional_confirmation': 'Yes', 'unknowns': 'Confirm the unresolved coverage.'},
+                    {'additional_gap': 'Yes', 'gaps': 'A substantive scoped practice is missing.',
+                     'additional_confirmation': 'Yes', 'unknowns': 'Confirm the unresolved coverage.'},
+                ):
+                    with self.subTest(criterion=id, version=version, extra=extra):
+                        answers = {**complete(id), **extra}
+                        before = copy.deepcopy(answers)
+                        engine.validate_completion(id, answers, version)
+                        # Characterization only: do not change the native evaluator to resolve this hold.
+                        self.assertEqual(engine.result_status(id, answers, version), 'addressed')
+                        self.assertEqual(answers, before)
+                        for key in ('gaps', 'unknowns'):
+                            if key in extra:
+                                self.assert_rejected(lambda: engine.validate_completion(id, {**answers, key: ' \n'}, version), 422)
+
     def test_explicit_v1_retains_historical_uncertainty_semantics(self):
         self.assertEqual(engine.LEGACY['version'], 'soc2-omni-1')
         for id in engine.LEGACY['definitions']:
@@ -40,7 +131,9 @@ class SocGuidedTests(unittest.TestCase):
         self.assertEqual(error.exception.status_code, status)
         self.assertLess(len(error.exception.detail), 200)
 
+    @patch.object(engine, 'CURRENT_VERSION', 'soc2-omni-2')
     def test_catalog_exact_coverage_and_version_is_separate_from_cis(self):
+        # Original current-V2 characterization; the real unpatched default is checked above.
         self.assertEqual(engine.CATALOG['version'], 'soc2-omni-2')
         self.assertEqual(engine.CATALOG['framework_id'], 'soc-2')
         self.assertEqual(set(engine.CATALOG['definitions']), {row['id'] for row in SOC['requirements']})
@@ -144,7 +237,9 @@ class SocGuidedTests(unittest.TestCase):
             client['framework_settings'] = {'soc-2': {'categories': categories}}
             self.assert_rejected(lambda: engine.check_scope({'client_id': client['client_id'], 'framework_key': 'soc-2', 'definition_id': 'CC1.1'}, client), 404)
 
+    @patch.object(engine, 'CURRENT_VERSION', 'soc2-omni-2')
     def test_scope_fingerprint_is_exact_and_changes_with_authoritative_lineage(self):
+        # Retain the exact historical V2 fingerprint oracle rather than reinterpret it.
         row = {'client_id': 'synthetic-soc-client', 'framework_assessment_id': 'synthetic-CC1.1',
                'framework_key': 'soc-2', 'framework_version': SOC['version'], 'definition_id': 'CC1.1',
                'owner_id': 'synthetic-owner', 'process_owner_id': 'synthetic-process-owner',
@@ -205,6 +300,16 @@ class SocGuidedTests(unittest.TestCase):
                 except HTTPException:
                     completed = False
                 fixtures.append({'id': id, 'answers': variant, 'status': engine.result_status(id, variant), 'completed': completed})
+        for id, definition in engine.ROLLOUT['definitions'].items():
+            optional = {q['id']: 'Custom source and reported scope.' for q in definition['groups'][-1]['questions']}
+            for extra in ({}, {'additional_gap': 'Yes', 'gaps': 'A substantive scoped practice is missing.'},
+                          {'additional_confirmation': 'Yes', 'unknowns': 'Confirm the unresolved coverage.'}):
+                answers = {**complete(id), **optional, **extra}
+                engine.validate_completion(id, answers, engine.ROLLOUT['version'])
+                fixtures.append({'id': id, 'answers': answers, 'version': engine.ROLLOUT['version'],
+                                 'status': engine.result_status(id, answers, engine.ROLLOUT['version']), 'completed': True,
+                                 'signals': ([['gaps', 'gap']] if 'gaps' in extra else [])
+                                            + ([['unknowns', 'verification']] if 'unknowns' in extra else [])})
         root = Path(__file__).resolve().parents[2]
         script = """
 import fs from 'node:fs';
@@ -215,13 +320,14 @@ const inlineUrl = 'data:text/javascript;base64,' + Buffer.from(inline).toString(
 const source = fs.readFileSync(root + '/frontend/src/lib/socGuidedAssessment.js', 'utf8')
   .replace("import catalog from '@catalogs/guidedSoc2.json';", 'const catalog = ' + catalog + ';')
   .replace("import legacyCatalog from '@catalogs/guidedSoc2V1.json';", 'const legacyCatalog = ' + fs.readFileSync(root + '/shared/catalogs/guidedSoc2V1.json', 'utf8') + ';')
+  .replace("import rolloutCatalog from '@catalogs/guidedSoc2Rollout1.json';", 'const rolloutCatalog = ' + fs.readFileSync(root + '/shared/catalogs/guidedSoc2Rollout1.json', 'utf8') + ';')
   .replace(/from ['"]\\.\\/inlineAssessment['"]/g, 'from ' + JSON.stringify(inlineUrl));
 const engine = await import('data:text/javascript;base64,' + Buffer.from(source).toString('base64'));
 const fixtures = JSON.parse(fs.readFileSync(0, 'utf8'));
-const results = fixtures.map(({id, answers}) => {
+const results = fixtures.map(({id, answers, version}) => {
   let completed = true;
-  try { engine.validateSocCompletion(id, answers); } catch { completed = false; }
-  const result = engine.socGuidedResult(id, answers);
+  try { engine.validateSocCompletion(id, answers, version); } catch { completed = false; }
+  const result = engine.socGuidedResult(id, answers, version);
   return {status: result.status, completed, result};
 });
 process.stdout.write(JSON.stringify(results));
@@ -236,6 +342,8 @@ process.stdout.write(JSON.stringify(results));
                                  {key: fixture[key] for key in ['status', 'completed']})
                 snapshot = ResultSnapshot.model_validate(output['result'])
                 self.assertEqual(snapshot.status, fixture['status'])
+                if 'signals' in fixture:
+                    self.assertEqual([[signal['questionId'], signal['kind']] for signal in output['result']['signals']], fixture['signals'])
 
 
 if __name__ == '__main__':

@@ -120,6 +120,41 @@ class SocGuidedRoutes(unittest.IsolatedAsyncioTestCase):
                 self.assertEqual(await server.db.guided_assessment_history.find({'assessment_id': aid}).to_list(None), history_before)
                 self.assertEqual(await server.db.portfolio_events.find({'source_id': aid}).to_list(None), events_before)
 
+    async def test_unpatched_rollout_defaults_roundtrip_registered_context_through_native_routes(self):
+        await self.setup_soc()
+        for framework, identity, engine in (('soc-2', 'CC6.1', soc_guided_assessment),
+                                           ('iso-27001', '6.1.2', iso_guided_assessment)):
+            with self.subTest(framework=framework):
+                workspace = (await self.client.get('/api/frameworks/' + framework, params={'client_id': 'a'})).json()
+                row = next(item for item in workspace['assessments'] if item['definition_id'] == identity)
+                path = '/api/framework_assessments/' + row['framework_assessment_id']
+                before = (await self.client.get(path)).json()
+                initial = (await self.client.get(path + '/guided-assessment')).json()
+                self.assertEqual(initial['version'], engine.ROLLOUT['version'])
+                self.assertEqual(initial['answers'], {})
+                questions = engine._questions(identity, initial['version'])
+                answers = {q['id']: 'Exact reported context: ' + q['id'] if q['type'] == 'text'
+                           else 'Relevant' if q['type'] == 'context' else 'Yes' for q in questions}
+                optional = [q for group in engine.ROLLOUT['definitions'][identity]['groups']
+                            if group['id'] == 'implementation_context' for q in group['questions']]
+                self.assertTrue(optional)
+                text = 'Synthetic reviewer wording; no evidence or completion is inferred.'
+                result = {'version': initial['version'], 'status': engine.result_status(identity, answers, initial['version']),
+                          'narrative': text, 'basis': [], 'gaps': [], 'unknowns': [], 'nextSteps': [],
+                          'evidence': [], 'answers': [], 'signals': []}
+                body = {'version': initial['version'], 'answers': answers, 'completed': True, 'step': 0,
+                        'narrative': text, 'result': result, 'expected_revision': initial['revision'],
+                        'summary_review': {'version': initial['version'], 'answers': answers},
+                        **{key: initial[key] for key in ('base_assessment_token', 'base_scope_fingerprint')}}
+                response = await self.client.put(path + '/guided-assessment', json=body)
+                self.assertEqual(response.status_code, 200, response.text)
+                reloaded = (await self.client.get(path + '/guided-assessment')).json()
+                self.assertEqual(reloaded['version'], engine.ROLLOUT['version'])
+                self.assertEqual(reloaded['answers'], answers)
+                for question in optional:
+                    self.assertEqual(reloaded['answers'][question['id']], answers[question['id']])
+                self.assertEqual((await self.client.get(path)).json(), before)
+
     async def setup_soc(self,cid='a'):
         payload=self.body(('soc-2','iso-27001'),cid)
         await self.configure(payload)
@@ -216,10 +251,11 @@ class SocGuidedRoutes(unittest.IsolatedAsyncioTestCase):
         draft=(await self.client.get(path)).json()
         answers={**self.answers(row['definition_id']),**(changes or {})}
         text='OVERVIEW\nSynthetic reported practices for '+row['definition_id']+'\n\nIMPLEMENTATION BREAKDOWN\n- Reviewed synthetic write-up.\n\nITEMS TO ADDRESS\n- Review reported limits.'
-        status=result_status(row['definition_id'],answers,CATALOG['version'])
-        result={'version':CATALOG['version'],'status':status,'narrative':text,'basis':[],'gaps':[],'unknowns':[],'nextSteps':[],'evidence':[],'answers':[],'signals':[]}
-        payload={'version':CATALOG['version'],'answers':answers,'step':0,'completed':True,'narrative':text,'expected_revision':draft['revision'],'result':result,
-            'summary_review':{'version':CATALOG['version'],'answers':answers},
+        version=draft['version']
+        status=result_status(row['definition_id'],answers,version)
+        result={'version':version,'status':status,'narrative':text,'basis':[],'gaps':[],'unknowns':[],'nextSteps':[],'evidence':[],'answers':[],'signals':[]}
+        payload={'version':version,'answers':answers,'step':0,'completed':True,'narrative':text,'expected_revision':draft['revision'],'result':result,
+            'summary_review':{'version':version,'answers':answers},
             **{k:draft[k] for k in ('base_assessment_token','base_scope_fingerprint')}}
         response=await self.client.put(path,json=payload)
         self.assertEqual(response.status_code,200,response.text)

@@ -102,3 +102,51 @@ test('retained v1 questions keep their own optional prompts and order', async ()
   expect([...container.querySelectorAll('.cis-answer-review strong')].slice(-props.extras.length).map(item => item.textContent)).toEqual(props.extras.map(question => question.prompt));
   expect(props.extras.map(question => question.id)).toEqual(['gaps', 'unknowns']); expect(props.onNext).not.toHaveBeenCalled();
 });
+
+test('rollout renders every native shared extra including reported supporting records and preserves group checkpoints',async()=>{
+  const answers={additional_gap:'No',additional_confirmation:'No',evidence:'Exact retained supporting-record location.'};
+  configure('4.1',answers);props={...props,id:'4.1',version:isoGuidedCatalog.version,assessmentRollout:true,pilotGuideOpen:true,extras:isoExtraQuestions(answers),onSaveProgress:jest.fn()};
+  await render();const questions=[...props.groups.flatMap(group=>group.questions),...props.extras];
+  for(const [index,question] of questions.entries()){
+    expect(container.querySelector('fieldset').dataset.questionId).toBe(question.id);
+    expect(container.querySelector('legend').textContent).toBe(question.prompt);
+    expect(document.activeElement).toBe(container.querySelector('legend'));
+    await click(index===questions.length-1?'Review responses':'Continue');
+  }
+  expect([...container.querySelectorAll('.gn-review-list strong')].map(item=>item.textContent)).toEqual(questions.map(question=>question.prompt));
+  expect(container.textContent).toContain('Reported supporting records');expect(container.textContent).toContain(answers.evidence);
+  expect(props.onNext).toHaveBeenCalledTimes(props.groups.length-1);
+  expect(props.onSaveClose).not.toHaveBeenCalled();await click('Save progress');expect(props.onSaveProgress).toHaveBeenCalledTimes(1);
+  expect(props.answers.evidence).toBe(answers.evidence);
+});
+
+test('rollout tool context restores exact custom strings and remains an optional native text answer',async()=>{
+  const id='6.1.2',key='SPEC-ISO-6.1.2-tool-context',version='iso27001-assessment-rollout-1',saved='Internal risk register / team library\nExact retained location';
+  configure(id,{[key]:saved},version);props={...props,id,version,assessmentRollout:true,pilotGuideOpen:true,step:props.groups.findIndex(group=>group.id==='implementation_context'),onSaveProgress:jest.fn()};
+  await render();expect(container.querySelector('fieldset').dataset.questionId).toBe(key);
+  expect(container.querySelector('.brawndo-pilot-tool-field__other textarea').value).toBe(saved);
+  const select=container.querySelector('.brawndo-pilot-tool-field select');
+  expect([...select.options].map(option=>option.value)).toEqual(['','SharePoint / Microsoft Lists','__other__','Not sure']);
+  await act(async()=>{select.value='Not sure';select.dispatchEvent(new Event('change',{bubbles:true}));});
+  expect(props.put).toHaveBeenLastCalledWith(key,'Not sure');expect(props.answers[key]).toBe('Not sure');
+  expect(props.onNext).not.toHaveBeenCalled();expect(props.onSaveClose).not.toHaveBeenCalled();
+});
+
+test('rollout reopening focuses the retained visible question without resetting answers or the local cursor',async()=>{
+  configure('A.6.1');props={...props,id:'A.6.1',version:isoGuidedCatalog.version,assessmentRollout:true,pilotGuideOpen:true,onSaveProgress:jest.fn()};
+  await render();await click('Continue');const key=container.querySelector('fieldset').dataset.questionId;
+  await act(async()=>props.put(key,'Partially'));const before=JSON.stringify(props.answers);
+  for(let cycle=0;cycle<2;cycle++){
+    props={...props,pilotGuideOpen:false};await render();props={...props,pilotGuideOpen:true};await render();
+    expect(container.querySelector('fieldset').dataset.questionId).toBe(key);expect(document.activeElement).toBe(container.querySelector('legend'));
+    expect(JSON.stringify(props.answers)).toBe(before);
+  }
+  expect(props.onNext).not.toHaveBeenCalled();expect(props.onSaveProgress).not.toHaveBeenCalled();expect(props.onSaveClose).not.toHaveBeenCalled();
+});
+
+test('held Annex presentation preserves native wording and help without activating candidate requirement guidance',async()=>{
+  configure('A.5.9');props={...props,id:'A.5.9',version:isoGuidedCatalog.version,assessmentRollout:true,pilotGuideOpen:true};
+  await render();const native=props.groups[0].questions[0];
+  expect(container.querySelector('legend').textContent).toBe(native.prompt);expect(container.textContent).toContain(native.help);
+  expect(container.querySelector('.gn-inline-requirement')).toBeNull();expect(props.put).not.toHaveBeenCalled();expect(props.onNext).not.toHaveBeenCalled();
+});

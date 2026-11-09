@@ -13,12 +13,133 @@ from framework_catalog import ISO
 import iso_guided_assessment as engine
 
 
-def complete(id):
+def complete(id, version=engine.V2['version']):
+    # Historical test fixtures do not acquire new optional keys from the active default.
     return {q['id']: '' if q['type'] == 'text' else 'Relevant' if q['type'] == 'context' else 'Yes'
-            for q in engine._questions(id)}
+            for q in engine._questions(id, version)}
+
+
+ROLLOUT_VERSION = 'iso27001-assessment-rollout-1'
+OPTIONAL_REGISTRATIONS = [
+    *((id, f'SPEC-ISO-{id}-tool-context') for id in
+      ('6.1.2', '6.1.3', '7.2', '7.3', '7.5.3', '9.2.2', '9.3.3', '10.2')),
+    *((id, f'ISO-{id}-tool-location-context') for id in (
+        'A.5.9', 'A.5.12', 'A.5.13', 'A.5.15', 'A.5.16', 'A.5.17', 'A.5.18', 'A.5.19',
+        'A.5.20', 'A.5.21', 'A.5.22', 'A.5.23', 'A.5.24', 'A.5.25', 'A.5.26', 'A.5.27',
+        'A.5.28', 'A.5.29', 'A.5.30', 'A.5.34', 'A.6.3', 'A.6.7', 'A.6.8', 'A.8.1',
+        'A.8.2', 'A.8.3', 'A.8.4', 'A.8.5', 'A.8.7', 'A.8.8', 'A.8.9', 'A.8.12',
+        'A.8.13', 'A.8.15', 'A.8.16', 'A.8.18', 'A.8.19', 'A.8.20', 'A.8.21', 'A.8.22',
+        'A.8.23', 'A.8.25', 'A.8.26', 'A.8.27', 'A.8.28', 'A.8.29', 'A.8.30', 'A.8.31', 'A.8.32')),
+]
 
 
 class IsoGuidedTests(unittest.TestCase):
+    def test_saved_version_policies_do_not_depend_on_current_catalog(self):
+        for policy in (engine.uses_intent_gates, engine.uses_inline_sentences):
+            self.assertTrue(policy())
+            self.assertFalse(policy(engine.LEGACY['version']))
+            self.assertTrue(policy(engine.V2['version']))
+            self.assertTrue(policy(ROLLOUT_VERSION))
+            self.assertFalse(policy('iso27001-unknown'))
+            with patch.object(engine, 'VERSION', ROLLOUT_VERSION):
+                self.assertTrue(policy())
+                self.assertTrue(policy(engine.V2['version']))
+                self.assertFalse(policy(engine.LEGACY['version']))
+
+    def test_rollout_reader_preserves_v2_core_and_activates_the_compatible_default(self):
+        self.assertEqual(engine.VERSION, ROLLOUT_VERSION)
+        self.assertEqual(engine.ROLLOUT['version'], ROLLOUT_VERSION)
+        self.assertEqual(engine.ROLLOUT['framework_id'], engine.CATALOG['framework_id'])
+        self.assertEqual(list(engine.ROLLOUT['definitions']), list(engine.CATALOG['definitions']))
+        self.assertEqual(engine.ROLLOUT['extra_questions'], engine.CATALOG['extra_questions'])
+        self.assertEqual(len(OPTIONAL_REGISTRATIONS), 57)
+        registered = dict(OPTIONAL_REGISTRATIONS)
+        for id, definition in engine.CATALOG['definitions'].items():
+            with self.subTest(definition=id):
+                rollout = engine.ROLLOUT['definitions'][id]
+                native_group_count = len(definition['groups'])
+                self.assertEqual({**rollout, 'groups': rollout['groups'][:native_group_count]}, definition)
+                groups = rollout['groups'][native_group_count:]
+                self.assertEqual(engine.current_version(id), engine.VERSION)
+                if id not in registered:
+                    self.assertEqual(groups, [])
+                    continue
+                self.assertEqual(len(groups), 1)
+                self.assertEqual(groups[0]['id'], 'implementation_context')
+                self.assertEqual(len(groups[0]['questions']), 1)
+                question = groups[0]['questions'][0]
+                self.assertEqual(question['id'], registered[id])
+                self.assertEqual(question['type'], 'text')
+                self.assertTrue(question['optional'])
+                self.assertIsNone(question.get('condition'))
+        existing = [q for q in engine._questions('A.8.24', ROLLOUT_VERSION)
+                    if q['id'] == 'ISO-A.8.24-arrangement-note']
+        self.assertEqual(len(existing), 1)
+        self.assertEqual(existing[0]['type'], 'text')
+        self.assertEqual(existing[0]['prompt'], 'Which cryptographic arrangement is used? (Optional)')
+
+    def test_rollout_optional_keys_are_version_scoped_and_non_scoring(self):
+        for id, key in OPTIONAL_REGISTRATIONS:
+            with self.subTest(definition=id, question=key):
+                answers = complete(id, ROLLOUT_VERSION)
+                del answers[key]
+                before = copy.deepcopy(answers)
+                engine.validate_completion(id, answers, ROLLOUT_VERSION)
+                baseline = engine.result_status(id, answers, ROLLOUT_VERSION)
+                for value in ('', 'Not sure', 'Custom location — retained exactly', '\U0001f600' * 1000):
+                    reported = {**answers, key: value}
+                    snapshot = copy.deepcopy(reported)
+                    engine.validate_completion(id, reported, ROLLOUT_VERSION)
+                    self.assertEqual(engine.result_status(id, reported, ROLLOUT_VERSION), baseline)
+                    self.assertEqual(reported, snapshot)
+                    for version in (engine.LEGACY['version'], engine.V2['version']):
+                        self.assert_rejected(lambda: engine.validate_answers(id, {key: value}, version), 422)
+                for value in ('x' * 2001, '\U0001f600' * 1001, {}, True):
+                    self.assert_rejected(lambda: engine.validate_answers(id, {key: value}, ROLLOUT_VERSION), 422)
+                self.assert_rejected(lambda: engine.validate_answers('4.1', {key: 'Cross-record value'}, ROLLOUT_VERSION), 422)
+                self.assertEqual(answers, before)
+
+    def test_rollout_retains_v2_completion_and_native_status_for_all_definitions(self):
+        for id in engine.CATALOG['definitions']:
+            answers = complete(id)
+            key = next(q['id'] for q in engine._active_questions(id, answers) if q['type'] == 'select')
+            for value in engine.CHOICES:
+                with self.subTest(definition=id, answer=value):
+                    reported = {**answers, key: value}
+                    snapshot = copy.deepcopy(reported)
+                    engine.validate_completion(id, reported, engine.V2['version'])
+                    engine.validate_completion(id, reported, ROLLOUT_VERSION)
+                    self.assertEqual(engine.result_status(id, reported, ROLLOUT_VERSION),
+                                     engine.result_status(id, reported, engine.V2['version']))
+                    self.assertEqual(reported, snapshot)
+
+    def test_native01_native02_preserve_proposal_without_a_reviewer_decision(self):
+        for scenario, parent, detail in (('NATIVE01', 'additional_gap', 'gaps'),
+                                        ('NATIVE02', 'additional_confirmation', 'unknowns')):
+            for version in (engine.V2['version'], ROLLOUT_VERSION):
+                with self.subTest(scenario=scenario, version=version):
+                    reported = {**complete('A.8.13', version), parent: 'Yes',
+                                detail: 'Specific reported work remains unresolved.'}
+                    before = copy.deepcopy(reported)
+                    engine.validate_completion('A.8.13', reported, version)
+                    self.assertEqual(engine.result_status('A.8.13', reported, version), 'addressed')
+                    self.assertEqual(reported, before)
+
+    def test_unpatched_active_default_exposes_every_optional_context_field(self):
+        added = 0
+        for id in engine.CATALOG['definitions']:
+            with self.subTest(definition=id):
+                self.assertEqual(engine.current_version(id), ROLLOUT_VERSION)
+                answers = complete(id, engine.VERSION)
+                context = [q for group in engine.ROLLOUT['definitions'][id]['groups']
+                           if group['id'] == 'implementation_context' for q in group['questions']]
+                added += len(context)
+                for question in context:
+                    answers[question['id']] = 'Exact current context: ' + question['id']
+                engine.validate_completion(id, answers)
+                self.assertEqual(engine.result_status(id, answers), 'addressed')
+        self.assertEqual(added, 57)
+
     def test_explicit_v1_retains_historical_uncertainty_semantics(self):
         self.assertEqual(engine.LEGACY['version'], 'iso27001-omni-1')
         for id in engine.LEGACY['definitions']:
@@ -34,7 +155,9 @@ class IsoGuidedTests(unittest.TestCase):
             operation()
         self.assertEqual(error.exception.status_code, status)
 
+    @patch.object(engine, 'VERSION', 'iso27001-omni-2')
     def test_three_part_catalog_exact_123_ids_and_separate_version(self):
+        # Original current-V2 characterization; the real unpatched default is checked above.
         self.assertEqual(engine.VERSION, 'iso27001-omni-2')
         self.assertEqual(engine.CATALOG['framework_id'], 'iso-27001')
         self.assertEqual(set(engine.CATALOG['definitions']), {d['id'] for d in ISO['requirements']})
@@ -187,7 +310,7 @@ let source = fs.readFileSync(root + '/frontend/src/lib/isoGuidedAssessment.js', 
 const inline = fs.readFileSync(root + '/frontend/src/lib/inlineAssessment.js', 'utf8');
 const inlineUrl = 'data:text/javascript;base64,' + Buffer.from(inline).toString('base64');
 source = source.replace(/from ['"]\\.\\/inlineAssessment['"]/g, 'from ' + JSON.stringify(inlineUrl));
-for (const [name, file] of [['isms', 'guidedIsoIsms'], ['organizational', 'guidedIsoOrganizationalPeople'], ['technology', 'guidedIsoPhysicalTechnology'], ['currentCatalog', 'guidedIsoV2']]) {
+for (const [name, file] of [['isms', 'guidedIsoIsms'], ['organizational', 'guidedIsoOrganizationalPeople'], ['technology', 'guidedIsoPhysicalTechnology'], ['currentCatalog', 'guidedIsoV2'], ['rolloutCatalog', 'guidedIso27001Rollout1']]) {
   source = source.replace(`import ${name} from '@catalogs/${file}.json';`, 'const ' + name + ' = ' + fs.readFileSync(root + '/shared/catalogs/' + file + '.json', 'utf8') + ';');
 }
 const engine = await import('data:text/javascript;base64,' + Buffer.from(source).toString('base64'));

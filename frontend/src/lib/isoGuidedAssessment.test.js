@@ -1,9 +1,12 @@
 import native from '@catalogs/iso27001.json';
-import {isoGuidedCatalog,isoGuidedEnabled,isoQuestions,isoGroups,isoGuidedResult,isoInlineNarrative,validateIsoAnswers,validateIsoCompletion} from './isoGuidedAssessment';
-const answersFor=id=>{
+import v2Catalog from '@catalogs/guidedIsoV2.json';
+import {isoGuidedCatalog as activeIsoGuidedCatalog,isoGuidedRolloutCatalog,isoGuidedEnabled,isoQuestions,isoGroups,isoGuidedResult,isoInlineNarrative,validateIsoAnswers,validateIsoCompletion,isoUsesIntentGates,isoUsesInlineSentences} from './isoGuidedAssessment';
+// Keep original historical fixtures on their exact question set; activation is checked separately below.
+const isoGuidedCatalog=v2Catalog;
+const answersFor=(id,version=isoGuidedCatalog.version)=>{
   const answers={};
   for(let pass=0;pass<30;pass++){
-    const missing=isoQuestions(id,answers).filter(q=>!(q.id in answers));
+    const missing=isoQuestions(id,answers,version).filter(q=>!(q.id in answers));
     if(!missing.length)break;
     for(const q of missing)answers[q.id]=q.type==='text'?'':q.type==='context'?'Relevant':q.optional?'No':'Yes';
   }
@@ -125,3 +128,103 @@ test('inline partial practice is a limitation rather than a control in place and
   expect(narrative.split('\n\nControls in place')[1]).not.toContain(partial.topic);expect(narrative).toContain('Approved scoped procedure and operator responsibilities.');expect(narrative).toContain('Reported gap:');
   expect(isoGuidedResult('A.8.13',answers).gaps.join(' ')).toContain('finance database');
 });
+
+const rolloutVersion='iso27001-assessment-rollout-1';
+const optionalRegistrations=[
+  ...['6.1.2','6.1.3','7.2','7.3','7.5.3','9.2.2','9.3.3','10.2'].map(id=>[id,`SPEC-ISO-${id}-tool-context`]),
+  ...['A.5.9','A.5.12','A.5.13','A.5.15','A.5.16','A.5.17','A.5.18','A.5.19','A.5.20','A.5.21','A.5.22','A.5.23','A.5.24','A.5.25','A.5.26','A.5.27','A.5.28','A.5.29','A.5.30','A.5.34','A.6.3','A.6.7','A.6.8','A.8.1','A.8.2','A.8.3','A.8.4','A.8.5','A.8.7','A.8.8','A.8.9','A.8.12','A.8.13','A.8.15','A.8.16','A.8.18','A.8.19','A.8.20','A.8.21','A.8.22','A.8.23','A.8.25','A.8.26','A.8.27','A.8.28','A.8.29','A.8.30','A.8.31','A.8.32'].map(id=>[id,`ISO-${id}-tool-location-context`]),
+];
+
+test('rollout reader adds exactly 57 optional text keys while V2 remains immutable',()=>{
+  expect(isoGuidedCatalog).toEqual(v2Catalog);
+  expect(isoGuidedCatalog.version).toBe('iso27001-omni-2');
+  expect(activeIsoGuidedCatalog).toBe(isoGuidedRolloutCatalog);
+  expect(isoGuidedRolloutCatalog.version).toBe(rolloutVersion);
+  expect(Object.keys(isoGuidedRolloutCatalog.definitions)).toEqual(Object.keys(v2Catalog.definitions));
+  expect(isoGuidedRolloutCatalog.extra_questions).toEqual(v2Catalog.extra_questions);
+  expect(optionalRegistrations).toHaveLength(57);
+  const expected=new Map(optionalRegistrations);
+  for(const [id,definition] of Object.entries(v2Catalog.definitions)){
+    const rollout=isoGuidedRolloutCatalog.definitions[id],newGroups=rollout.groups.slice(definition.groups.length);
+    expect({...rollout,groups:rollout.groups.slice(0,definition.groups.length)}).toEqual(definition);
+    if(!expected.has(id)){expect(newGroups).toEqual([]);continue;}
+    expect(newGroups).toHaveLength(1);expect(newGroups[0].id).toBe('implementation_context');
+    expect(newGroups[0].questions).toHaveLength(1);
+    expect(newGroups[0].questions[0]).toMatchObject({id:expected.get(id),type:'text',optional:true});
+    expect(newGroups[0].questions[0].condition??null).toBeNull();
+  }
+  const existing=isoQuestions('A.8.24',{},rolloutVersion).filter(q=>q.id==='ISO-A.8.24-arrangement-note');
+  expect(existing).toHaveLength(1);expect(existing[0]).toMatchObject({type:'text',prompt:'Which cryptographic arrangement is used? (Optional)'});
+});
+
+test('the unmodified ISO default completes all 123 definitions and exposes all 57 optional context fields',()=>{
+  expect(activeIsoGuidedCatalog.version).toBe(rolloutVersion);
+  let optionalCount=0;
+  for(const row of native.requirements){
+    const answers=answersFor(row.id,activeIsoGuidedCatalog.version);
+    const context=isoGroups(row.id,answers).find(group=>group.id==='implementation_context');
+    for(const question of context?.questions||[]){optionalCount++;answers[question.id]='Exact current optional context: '+question.id;}
+    expect(()=>validateIsoCompletion(row.id,answers)).not.toThrow();
+    const result=isoGuidedResult(row.id,answers);
+    expect(result.version).toBe(rolloutVersion);expect(result.status).toBe('addressed');
+    for(const question of context?.questions||[])expect(result.narrative).toContain(answers[question.id]);
+  }
+  expect(optionalCount).toBe(57);
+});
+
+test('saved ISO wording and intent policies identify versions independently of the current default',()=>{
+  for(const policy of [isoUsesIntentGates,isoUsesInlineSentences]){
+    expect(policy()).toBe(true);expect(policy('iso27001-omni-1')).toBe(false);
+    expect(policy('iso27001-omni-2')).toBe(true);expect(policy(rolloutVersion)).toBe(true);
+    expect(policy('iso27001-unknown')).toBe(false);
+  }
+});
+
+test('rollout optional context is version-scoped, optional, length-bounded and non-scoring',()=>{
+  for(const [id,key] of optionalRegistrations){
+    const answers=answersFor(id,rolloutVersion),baseline=isoGuidedResult(id,answers,rolloutVersion);
+    delete answers[key];const before=JSON.stringify(answers);expect(()=>validateIsoCompletion(id,answers,rolloutVersion)).not.toThrow();
+    expect(isoGuidedResult(id,answers,rolloutVersion)).toEqual(baseline);
+    for(const value of ['','Not sure','Custom location — retained exactly','😀'.repeat(1000)]){
+      const reported={...answers,[key]:value},snapshot=JSON.stringify(reported);
+      validateIsoCompletion(id,reported,rolloutVersion);
+      expect(isoGuidedResult(id,reported,rolloutVersion).status).toBe(baseline.status);
+      expect(JSON.stringify(reported)).toBe(snapshot);
+      expect(()=>validateIsoAnswers(id,{[key]:value},'iso27001-omni-1')).toThrow();
+      expect(()=>validateIsoAnswers(id,{[key]:value},v2Catalog.version)).toThrow();
+    }
+    for(const value of ['x'.repeat(2001),'😀'.repeat(1001),{},true])expect(()=>validateIsoAnswers(id,{[key]:value},rolloutVersion)).toThrow();
+    expect(()=>validateIsoAnswers('4.1',{[key]:'Cross-record value'},rolloutVersion)).toThrow();
+    expect(JSON.stringify(answers)).toBe(before);
+  }
+});
+
+test('old V1 and V2 wording and native outcomes survive explicit rollout reads',()=>{
+  for(const row of native.requirements){
+    const answers=answersFor(row.id,v2Catalog.version),v2=isoGuidedResult(row.id,answers,v2Catalog.version),next=isoGuidedResult(row.id,answers,rolloutVersion);
+    expect({...next,version:v2Catalog.version}).toEqual(v2);
+    expect(isoInlineNarrative(row.id,answers,rolloutVersion)).toBe(isoInlineNarrative(row.id,answers,v2Catalog.version));
+  }
+  const answers=answersFor('4.1'),first=isoQuestions('4.1',answers).find(q=>q.type==='select');
+  answers[first.id+'_detail']='Exact saved sentence.';
+  const legacy={...answers};delete legacy.additional_gap;delete legacy.additional_confirmation;
+  expect(isoGuidedResult('4.1',legacy,'iso27001-omni-1').basis[0]).toContain('Exact saved sentence..');
+  expect(isoGuidedResult('4.1',answers,v2Catalog.version).basis[0]).toContain('Exact saved sentence.');
+  expect(isoGuidedResult('4.1',answers,v2Catalog.version).basis[0]).not.toContain('Exact saved sentence..');
+});
+
+for(const [scenario,parent,detail,kind] of [['NATIVE01','additional_gap','gaps','gap'],['NATIVE02','additional_confirmation','unknowns','verification']]){
+  test(`${scenario}: preserve native proposal and reported signals separately from a reviewer Apply decision`,()=>{
+    for(const version of [v2Catalog.version,rolloutVersion]){
+      const answers={...answersFor('A.8.13',version),[parent]:'Yes',[detail]:'Specific reported work remains unresolved.'},before=JSON.stringify(answers);
+      validateIsoCompletion('A.8.13',answers,version);
+      const result=isoGuidedResult('A.8.13',answers,version);
+      expect(result.status).toBe('addressed');
+      expect(result.signals).toEqual([{questionId:detail,kind,text:answers[detail]}]);
+      expect(result[detail]).toEqual([answers[detail]]);
+      expect(result.narrative).toContain(answers[detail]);
+      expect(result.nextSteps).toEqual([(kind==='gap'?'Address the reported gap: ':'Confirm the reported information: ')+answers[detail]]);
+      expect(JSON.stringify(answers)).toBe(before);
+    }
+  });
+}

@@ -1,6 +1,8 @@
 import nativeCatalog from '@catalogs/soc2.json';
-import {socGuidedCatalog, socGuidedEnabled, socQuestions, socGroups, validateSocAnswers, validateSocCompletion, socGuidedResult, socInlineSummary} from './socGuidedAssessment';
+import socGuidedCatalog from '@catalogs/guidedSoc2.json';
+import {socGuidedCatalog as activeSocGuidedCatalog, socRolloutCatalog, socUsesIntentGates, socUsesInlineSentences, socGuidedEnabled, socQuestions, socGroups, validateSocAnswers, validateSocCompletion, socGuidedResult, socInlineSummary} from './socGuidedAssessment';
 
+// Original V1/V2 characterization fixtures stay bound to their immutable V2 source.
 const ids = Object.keys(socGuidedCatalog.definitions);
 const version = 'soc2-omni-2';
 const allQuestions = id => socGuidedCatalog.definitions[id].groups.flatMap(group => group.questions);
@@ -256,4 +258,121 @@ test('inline supported-control summaries stay bounded while full answers remain 
   const text=socInlineSummary(id,answers,version,'Synthetic client','2026-10-13');
   expect(text.length).toBeLessThanOrEqual(20000);expect(text).toContain('full response retained in the interview');
   for(const question of allQuestions(id))expect(answers[question.id+'_detail']).toHaveLength(2000);
+});
+
+test('rollout activation retains the immutable historical catalog and feature semantics', () => {
+  expect(socGuidedCatalog.version).toBe('soc2-omni-2');
+  expect(activeSocGuidedCatalog).toBe(socRolloutCatalog);
+  expect(socRolloutCatalog.version).toBe('soc2-assessment-rollout-1');
+  expect(Object.keys(socRolloutCatalog.definitions)).toEqual(ids);
+  expect(socRolloutCatalog.extra_questions).toEqual(socGuidedCatalog.extra_questions);
+  expect(Object.values(socRolloutCatalog.definitions).reduce((count, definition) =>
+    count + definition.groups.at(-1).questions.length, 0)).toBe(220);
+  for (const savedVersion of ['soc2-omni-2', 'soc2-assessment-rollout-1']) {
+    expect(socUsesIntentGates(savedVersion)).toBe(true);
+    expect(socUsesInlineSentences(savedVersion)).toBe(true);
+  }
+  for (const savedVersion of ['soc2-omni-1', 'foreign-version']) {
+    expect(socUsesIntentGates(savedVersion)).toBe(false);
+    expect(socUsesInlineSentences(savedVersion)).toBe(false);
+  }
+});
+
+test('the unmodified active default completes every SOC criterion and exposes all 220 optional context fields', () => {
+  expect(activeSocGuidedCatalog.version).toBe('soc2-assessment-rollout-1');
+  let optionalCount=0;
+  for(const id of ids){
+    const answers={};
+    for(let pass=0;pass<30;pass++){
+      const missing=socQuestions(id,answers).filter(question=>!(question.id in answers));
+      if(!missing.length)break;
+      for(const question of missing)answers[question.id]=question.type==='text'?'':question.type==='context'?'Relevant':question.optional?'No':'Yes';
+    }
+    const context=socGroups(id,answers).find(group=>group.id==='implementation_context');
+    expect(context).toBeTruthy();
+    optionalCount+=context.questions.length;
+    for(const question of context.questions)answers[question.id]='Exact current optional context: '+question.id;
+    expect(()=>validateSocCompletion(id,answers)).not.toThrow();
+    const result=socGuidedResult(id,answers);
+    expect(result.version).toBe(activeSocGuidedCatalog.version);expect(result.status).toBe('addressed');
+    for(const question of context.questions)expect(result.narrative).toContain(answers[question.id]);
+  }
+  expect(optionalCount).toBe(220);
+});
+
+test.each(ids)('%s rollout preserves native groups and appends only optional text context before shared extras', id => {
+  const prior = socGuidedCatalog.definitions[id], current = socRolloutCatalog.definitions[id];
+  expect(current.groups.slice(0, -1)).toEqual(prior.groups);
+  for (const field of ['title', 'category', 'objective', 'source_page']) expect(current[field]).toEqual(prior[field]);
+  const context = current.groups.at(-1);
+  expect(context.id).toBe('implementation_context');
+  expect(context.title).toBe('Implementation context');
+  expect(context.questions.slice(0, 3).map(question => question.id)).toEqual([
+    id + '-implementation-method', id + '-responsible-owner', id + '-operating-schedule',
+  ]);
+  for (const question of context.questions) {
+    expect(question.type).toBe('text');
+    expect(question.optional).toBe(true);
+    expect(question.condition).toBeUndefined();
+    expect(question.default).toBeUndefined();
+  }
+  const questions = socQuestions(id, {}, socRolloutCatalog.version), keys = questions.map(question => question.id);
+  expect(new Set(keys).size).toBe(keys.length);
+  expect(keys.indexOf(context.questions[0].id)).toBeGreaterThan(keys.indexOf(prior.groups[0].questions[0].id));
+  expect(keys.indexOf(context.questions.at(-1).id)).toBeLessThan(keys.indexOf('additional_gap'));
+});
+
+test.each(ids)('%s rollout optional context stays blank, strictly bounded and neutral to readiness', id => {
+  const rolloutVersion = socRolloutCatalog.version, answers = complete(id);
+  const optional = socRolloutCatalog.definitions[id].groups.at(-1).questions;
+  const supplied = Object.fromEntries(optional.map(question => [question.id, 'Other source — scope unconfirmed; reported by the owner.']));
+  const combined = {...answers, ...supplied}, before = JSON.stringify(combined);
+  expect(() => validateSocCompletion(id, answers, rolloutVersion)).not.toThrow();
+  expect(() => validateSocCompletion(id, combined, rolloutVersion)).not.toThrow();
+  const baseline = socGuidedResult(id, answers, version), output = socGuidedResult(id, combined, rolloutVersion);
+  for (const field of ['status', 'basis', 'gaps', 'unknowns', 'nextSteps', 'signals']) expect(output[field]).toEqual(baseline[field]);
+  expect(output.narrative).toContain(supplied[optional[0].id]);
+  expect(output.answers.some(answer => answer.answer === supplied[optional[0].id])).toBe(true);
+  expect(JSON.stringify(combined)).toBe(before);
+  expect(socGuidedResult(id, supplied, rolloutVersion).status).toBe('not_assessed');
+  expect(() => validateSocCompletion(id, supplied, rolloutVersion)).toThrow(/Answer each/);
+  for (const question of optional) {
+    expect(() => validateSocAnswers(id, {[question.id]: ''}, rolloutVersion)).not.toThrow();
+    expect(() => validateSocAnswers(id, {[question.id]: '😀'.repeat(1000)}, rolloutVersion)).not.toThrow();
+    for (const value of [true, [], {}, 'x'.repeat(2001), '😀'.repeat(1001)]) {
+      expect(() => validateSocAnswers(id, {[question.id]: value}, rolloutVersion)).toThrow(/Invalid SOC/);
+    }
+    for (const priorVersion of ['soc2-omni-1', 'soc2-omni-2']) {
+      expect(() => validateSocAnswers(id, {[question.id]: 'Retained custom source'}, priorVersion)).toThrow(/Invalid SOC/);
+    }
+  }
+  expect(() => validateSocAnswers(id, {[id + '-unregistered-context']: 'Unknown'}, rolloutVersion)).toThrow(/Invalid SOC/);
+});
+
+test.each(ids)('%s rollout retains V2 wording and native NATIVE01/02 proposal/signals without overriding status', id => {
+  const answers = complete(id), detailKey = firstPractice(id).id + '_detail';
+  answers[detailKey] = 'A reported practice with punctuation.';
+  expect(socGuidedResult(id, answers, socRolloutCatalog.version).narrative).toBe(socGuidedResult(id, answers, version).narrative);
+  for (const savedVersion of [version, socRolloutCatalog.version]) {
+    for (const extra of [
+      {additional_gap: 'Yes', gaps: 'A substantive scoped practice is missing.'},
+      {additional_confirmation: 'Yes', unknowns: 'Confirm the unresolved coverage.'},
+      {additional_gap: 'Yes', gaps: 'A substantive scoped practice is missing.', additional_confirmation: 'Yes', unknowns: 'Confirm the unresolved coverage.'},
+    ]) {
+      const supplied = {...answers, ...extra}, before = JSON.stringify(supplied);
+      validateSocCompletion(id, supplied, savedVersion);
+      const result = socGuidedResult(id, supplied, savedVersion);
+      // Characterize the held native concern; presentation must not silently repair scoring.
+      expect(result.status).toBe('addressed');
+      expect(result.signals.map(signal => [signal.questionId, signal.kind])).toEqual([
+        ...(extra.gaps ? [['gaps', 'gap']] : []), ...(extra.unknowns ? [['unknowns', 'verification']] : []),
+      ]);
+      for (const key of ['gaps', 'unknowns'].filter(key => extra[key])) {
+        expect(result[key]).toContain(extra[key]);
+        expect(result.narrative).toContain(extra[key]);
+        expect(() => validateSocCompletion(id, {...supplied, [key]: ' \n'}, savedVersion)).toThrow(/Describe/);
+      }
+      expect(JSON.stringify(supplied)).toBe(before);
+    }
+  }
 });

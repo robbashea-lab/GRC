@@ -2,13 +2,19 @@ import isms from '@catalogs/guidedIsoIsms.json';
 import organizational from '@catalogs/guidedIsoOrganizationalPeople.json';
 import technology from '@catalogs/guidedIsoPhysicalTechnology.json';
 import currentCatalog from '@catalogs/guidedIsoV2.json';
+import rolloutCatalog from '@catalogs/guidedIso27001Rollout1.json';
 import {formatInlineSummary,inlineSentence} from './inlineAssessment';
 const legacyCatalog = {version: 'iso27001-omni-1', framework_id: 'iso-27001',
   definitions: {...isms.definitions, ...organizational.definitions, ...technology.definitions}};
-const catalog=currentCatalog;
+const catalog=rolloutCatalog;
 
 export const isoGuidedCatalog = catalog;
-const versions = {[catalog.version]: catalog,[legacyCatalog.version]:legacyCatalog};
+export const isoGuidedRolloutCatalog = rolloutCatalog;
+const versions = {[currentCatalog.version]: currentCatalog,[legacyCatalog.version]:legacyCatalog,[rolloutCatalog.version]:rolloutCatalog};
+// Narrative wording belongs to its saved question version, not the current default.
+const inlineSentenceVersions = new Set([currentCatalog.version, rolloutCatalog.version]);
+export const isoUsesInlineSentences = (version=catalog.version) => inlineSentenceVersions.has(version);
+export const isoUsesIntentGates = (version=catalog.version) => inlineSentenceVersions.has(version);
 const choices = ['Yes', 'Partially', 'No', 'Not sure'];
 const contextChoices = ['Relevant', 'Not relevant here', 'Not sure'];
 const extraQuestions = [
@@ -91,7 +97,7 @@ export function validateIsoCompletion(id, answers, version = catalog.version) {
 export function isoGuidedResult(id, answers, version = catalog.version, clientName = 'The organization', inlineNarrative = false) {
   validateIsoAnswers(id, answers, version);
   const definition = definitionFor(id, version), active = activeQuestions(id, answers, version);
-  const sentence=fragment=>version===catalog.version?inlineSentence(fragment):fragment+'.';
+  const sentence=fragment=>isoUsesInlineSentences(version)?inlineSentence(fragment):fragment+'.';
   const basis = [], gaps = [], unknowns = [], nextSteps = [], signals = [], breakdown = [];
   let meaningful = false, confirmedNo = false, substantive = 0;
   const addSignal = (kind, question, message) => {
@@ -129,16 +135,16 @@ export function isoGuidedResult(id, answers, version = catalog.version, clientNa
   const additionalContext = isoExtraQuestions(answers,version).filter(question=>['gaps','unknowns'].includes(question.id)).map(question => text(answers[question.id])).filter(Boolean);
   if (additionalContext.length) breakdown.push(`Additional reported context (optional notes; separate from the selected-answer outcome)\n${additionalContext.map(context => `- ${concise(context)}`).join('\n')}`);
   const status = confirmedNo ? 'needs_attention' : !meaningful || version!==legacyCatalog.version&&unknowns.length&&!gaps.length ? 'not_assessed' : gaps.length||unknowns.length ? 'in_progress' : 'addressed';
-  if(version!==legacyCatalog.version)for(const [key,kind] of [['gaps','gap'],['unknowns','verification']])if(answers[key==='gaps'?'additional_gap':'additional_confirmation']==='Yes'&&text(answers[key])){
+  if(isoUsesIntentGates(version))for(const [key,kind] of [['gaps','gap'],['unknowns','verification']])if(answers[key==='gaps'?'additional_gap':'additional_confirmation']==='Yes'&&text(answers[key])){
     const message=text(answers[key]);signals.push({questionId:key,kind,text:message});(kind==='gap'?gaps:unknowns).push(message);nextSteps.push((kind==='gap'?'Address the reported gap: ':'Confirm the reported information: ')+message);
   }
   const position = {addressed: 'practices addressing', in_progress: 'partial or unresolved practices for', needs_attention: 'confirmed deficiencies affecting', not_assessed: 'an unconfirmed implementation position for'}[status];
   const overview = `${clientName} reports ${position} ${id} — ${definition.title} within the ISMS scope. This is reported implementation, not independent verification or certification.`;
   const actions = [...new Set(nextSteps)];
   const narrative = inlineNarrative ? formatInlineSummary({
-    paragraph: [overview, ...additionalContext.map(context => `Additional reported context: ${concise(context)}`)].map(fragment=>version===catalog.version?inlineSentence(fragment):fragment).join(' '),
+    paragraph: [overview, ...additionalContext.map(context => `Additional reported context: ${concise(context)}`)].map(fragment=>isoUsesInlineSentences(version)?inlineSentence(fragment):fragment).join(' '),
     controls: basis,
-    limitations: [...gaps.map(gap=>'Reported gap: '+concise(gap)),...unknowns.map(unknown=>'Requires confirmation: '+concise(unknown))].map(fragment=>version===catalog.version?inlineSentence(fragment):fragment).join(' ')||'The reported practices remain subject to separate evidence verification.',
+    limitations: [...gaps.map(gap=>'Reported gap: '+concise(gap)),...unknowns.map(unknown=>'Requires confirmation: '+concise(unknown))].map(fragment=>isoUsesInlineSentences(version)?inlineSentence(fragment):fragment).join(' ')||'The reported practices remain subject to separate evidence verification.',
   }) : `OVERVIEW\n${overview}\n\nIMPLEMENTATION BREAKDOWN\n${breakdown.join('\n\n') || 'No practices have been reported.'}\n\nITEMS TO ADDRESS\n${actions.length ? actions.map(action => `- ${concise(action)}`).join('\n') : 'No confirmation or remediation actions were derived from the selected substantive answers.'}${additionalContext.length?'\nReview the optional reported context above separately; it does not change the proposed status.':''}`;
   if (narrative.length > 20000) throw new Error('The generated write-up exceeds 20,000 characters. Shorten the interview details before reviewing it.');
   return {version, status, narrative, basis, gaps, unknowns, nextSteps: actions, evidence: text(answers.evidence) ? [text(answers.evidence)] : [],

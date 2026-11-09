@@ -1,9 +1,13 @@
 import {useCallback,useEffect,useId,useLayoutEffect,useRef,useState} from 'react';
-import {AlertCircle,CheckCircle2,Clock,Minus,Search} from 'lucide-react';
+import {AlertCircle,CheckCircle2,ChevronDown,Clock,Minus,Search} from 'lucide-react';
 import {isoGuideEntry} from './IsoRequirementGuide';
 import IsoGuidedAssessor from './IsoGuidedAssessor';
 import IsoAuditGuide from './IsoAuditGuide';
+import IsoAuditMethodologyGuide,{auditMethodClarification} from './IsoAuditMethodologyGuide';
+import {isoGuidedEnabled} from '@/lib/isoGuidedAssessment';
 import AssessmentLayout,{AssessmentChecklist,AssessmentRequirement} from './AssessmentLayout';
+import AssessmentRequirementDisclosure from './AssessmentRequirementDisclosure';
+import {assessmentRolloutEntry} from '@/lib/assessmentRolloutPresentation';
 import isoCriteria from '@catalogs/operatorGuidance/isoAssessmentCriteria.json';
 import RemediationTickets from './RemediationTickets';
 import TicketAssignment from './TicketAssignment';
@@ -14,6 +18,9 @@ import {ProgramVisualSummary,ProgramVisualColumns,ProgramVisualGroup} from './Pr
 import './IsoAssessment.css';
 import './IsoAuditProgram.css';
 import './BrawndoCisSafeguard.css';
+import './BrawndoCisVisualSafeguard.css';
+import './BrawndoSafeguard11.css';
+import './BrawndoAssessmentPilot.css';
 import {useRescueFocus} from '@/lib/focusRescue';
 import {useSearchParams} from 'react-router-dom';
 import api,{formatError} from '@/lib/api';
@@ -34,6 +41,8 @@ import {EvidenceCatalogPicker,EvidenceDownload} from './EvidencePanel';
 import RecordDrawer from './RecordDrawer';
 import {SCHEMAS} from '@/lib/schemas';
 import {AlertDialog,AlertDialogContent,AlertDialogTitle,AlertDialogDescription,AlertDialogFooter,AlertDialogCancel,AlertDialogAction} from './ui/alert-dialog';
+import {Dialog,DialogContent,DialogTitle,DialogDescription} from './ui/dialog';
+import {DropdownMenu,DropdownMenuTrigger,DropdownMenuContent,DropdownMenuItem} from './ui/dropdown-menu';
 
 const SELECT='block w-full border border-line rounded p-2 bg-surface-card text-sm';
 const content=value=><p className="whitespace-pre-wrap text-sm">{value}</p>;
@@ -94,6 +103,8 @@ function AuditItemWorkspace({review,centralReview=review,item,position,previous,
   const {user}=useAuth(),initial=review.iso_audit.items[item.key]||blankAuditItem();
   const [form,setForm]=useState(initial),[saved,setSaved]=useState(initial),[error,setError]=useState(''),[busy,setBusy]=useState(false),[feedback,setFeedback]=useState('');
   const [version,setVersion]=useState(review.updated_at),[finding,setFinding]=useState(null),[nested,setNested]=useState(null),[pending,setPending]=useState(null),[related,setRelated]=useState(null),[evidence,setEvidence]=useState([]),[relatedRevision,setRelatedRevision]=useState(0);
+  const [detailsView,setDetailsView]=useState(null),[surface,setSurface]=useState(null);
+  const detailsTrigger=useRef(null),detailsDestination=useRef(false),detailsHeading=useRef(null),notesField=useRef(null);
   const oid=review.occurrence_id||occurrenceId(review),writable=!frozen&&writableReview(user,review),dirty=JSON.stringify(form)!==JSON.stringify(saved);
   const put=(k,v)=>{setFeedback('');setForm(old=>({...old,[k]:v}));};
   const leave=useCallback(fn=>{if(busy)return;if(dirty||finding)setPending(()=>fn);else fn();},[busy,dirty,finding]);
@@ -136,30 +147,45 @@ function AuditItemWorkspace({review,centralReview=review,item,position,previous,
     }catch(e){setError(formatError(e));}finally{setBusy(false);}
   }
   const source=sourcePresentation(frameworkDefinition('iso-27001',item.definition_id)),criteria=isoCriteria.requirements[item.definition_id],guide=isoGuideEntry(item.definition_id);
+  const presentation=assessmentRolloutEntry('iso-27001',item.key,{module:'internal_audit',packageKey:review.iso_audit.package_key});
+  const nativeRequirement=<AssessmentRequirement heading={item.definition_id.startsWith('A.')?'Annex A control & reference':'ISMS requirement & reference'} text={source.text||guide?.plain} official={!!source.text}/>;
   const linkedFindings=(related?.findings||[]).filter(f=>form.finding_ids.includes(f.finding_id));
   const disabled=!writable||busy;
-  return <><AssessmentShell ariaModal testId="iso-audit-workpaper" title={'ISO audit · '+item.reference+' — '+item.title} description={auditPackage(review.iso_audit.package_key).title+' · '+item.area+' · Cycle '+review.iso_audit.cycle}
+  const openCentralReview=()=>setNested({kind:'reviews',record:centralReview,initialValues:frozen?{occurrence:review}:undefined});
+  const returnToDetails=event=>{event.preventDefault();detailsTrigger.current?.focus({preventScroll:true});};
+  const auditContext=<><p>{auditQuarter(review.due_date)} · Due {review.due_date?.slice(0,10)}</p><p>Auditor: {users.find(u=>u.user_id===review.owner_id)?.name||'Historical / unassigned'}</p><details><summary>Scope &amp; objectivity</summary>{content(review.scope||'Scope not recorded')}{content(review.audit_independence||'Objectivity not recorded')}</details><Button variant="outline" size="sm" onClick={openCentralReview}>Open central Review</Button><p className="text-xs">Audit progress and results do not update implementation assessments or close remediation.</p><details><summary>Methodology source</summary><p className="text-xs">{isoAuditCatalog.source.filename} · {auditPackage(review.iso_audit.package_key).source_sheet} · row {item.source_row}. User-provided audit guidance, not official ISO text.</p></details></>;
+  const detailsMenu=<DropdownMenu onOpenChange={value=>{if(value)detailsDestination.current=false;}}>
+    <DropdownMenuTrigger asChild><Button ref={detailsTrigger} className="gn-button gn-details-trigger" variant="outline" disabled={busy}>Assessment details<ChevronDown className="gn-icon" aria-hidden="true"/></Button></DropdownMenuTrigger>
+    <DropdownMenuContent className="gn-details-menu" portalContainer={surface||undefined} align="end" onCloseAutoFocus={event=>{if(detailsDestination.current)event.preventDefault();}}>
+      <DropdownMenuItem disabled={busy} onSelect={()=>{detailsDestination.current=true;setDetailsView('context');}}>Audit context &amp; central Review</DropdownMenuItem>
+      <DropdownMenuItem disabled={busy} onSelect={()=>{detailsDestination.current=true;setDetailsView('notes');}}>Auditor notes</DropdownMenuItem>
+      <DropdownMenuItem disabled>Interview history</DropdownMenuItem>
+    </DropdownMenuContent>
+  </DropdownMenu>;
+  const summary=`Examine ${item.reference} against the agreed audit criteria and record an independent conclusion. ${item.intent}`;
+  return <><AssessmentShell ariaModal testId="iso-audit-workpaper" className="brawndo-cis-visual-safeguard brawndo-safeguard11 brawndo-assessment-pilot gn-window" title={'ISO audit · '+item.reference+' — '+item.title} description={auditPackage(review.iso_audit.package_key).title+' · '+item.area+' · Cycle '+review.iso_audit.cycle}
+    surfaceRef={setSurface} navigationActions={detailsMenu}
     onEscapeKeyDown={e=>{if(document.activeElement?.closest('[data-testid="iso-audit-workpaper"] [data-testid="iso-guided-assessment"] .omni-workspace-window'))e.preventDefault();}}
-    status={<span className="text-sm">{AUDIT_STATUSES[saved.status]} · {AUDIT_RESULTS[saved.result]||'Result not recorded'}{frozen?' · Historical workpaper':''}</span>}
+    status={<><span className="gn-tag">{AUDIT_STATUSES[saved.status]}</span><span className="gn-tag gn-neutral">{AUDIT_RESULTS[saved.result]||'Result not recorded'}</span>{frozen&&<span className="gn-tag gn-neutral">Historical workpaper</span>}</>}
     position={position} previous={previous?()=>leave(previous):null} next={next?()=>leave(next):null} close={()=>leave(onClose)} busy={busy} returnSelector={`[data-audit-item="${item.key}"]`}
-    footer={<><div className="min-w-0 flex-1">{error&&<p role="alert" className="text-sm text-semantic-critical">{error}</p>}<p role="status" className="text-sm">{feedback||'Audit progress is separate from the result.'}{dirty&&' · Unsaved workpaper changes'}</p>{finding&&<p className="text-xs">Finish or cancel the Finding draft before Save & next.</p>}</div><Button variant="ghost" disabled={busy} onClick={()=>leave(onClose)}>Close assessment</Button>{writable&&<><Button variant="outline" disabled={busy} onClick={save}>Save assessment</Button>{next&&<Button disabled={busy||!!finding} onClick={async()=>{if(await save())next();}}>Save & next</Button>}</>}</>}>
-    <IsoGuidedAssessor clientId={review.client_id} configuration={configuration} programLabel="Internal Audit" programContent={({close})=><IsoAuditGuide review={review} item={item} historical={frozen} onOpen={()=>{close();setNested({kind:'reviews',record:centralReview,initialValues:frozen?{occurrence:review}:undefined});}}/>}/>
-    <AssessmentLayout criteriaSummary="Omnisciente guidance for assessing this requirement. These are not additional ISO requirements." criteriaTitle="ISO assessment criteria" reference={`ISO/IEC 27001:2022 · ${item.definition_id}`} key={review.client_id+':'+review.review_id+':'+oid+':'+item.key}
-      summary={`Examine ${item.reference} against the agreed audit criteria and record an independent conclusion. ${item.intent}`}
-      requirement={<details className="iso-audit-source"><summary>{item.definition_id.startsWith('A.')?'Annex A control & reference':'ISMS requirement & reference'}</summary><AssessmentRequirement heading={item.definition_id.startsWith('A.')?'Annex A control & reference':'ISMS requirement & reference'} text={source.text||guide?.plain} official={!!source.text} trigger={criteria?.trigger} source={source.url} label="Official ISO source"/></details>}
+    footer={<><div className="min-w-0 flex-1">{error&&<p role="alert" className="text-sm text-semantic-critical">{error}</p>}<p role="status" className="text-sm">{feedback||'Audit progress is separate from the result.'}{dirty&&' · Unsaved workpaper changes'}</p>{finding&&<p className="text-xs">Finish or cancel the Finding draft before Save & next.</p>}</div><Button className="gn-button" variant="ghost" disabled={busy} onClick={()=>leave(onClose)}>Close assessment</Button>{writable&&<><Button className="gn-button" variant="outline" disabled={busy} onClick={save}>Save assessment</Button>{next&&<Button className="gn-button gn-primary" disabled={busy||!!finding} onClick={async()=>{if(await save())next();}}>Save & next</Button>}</>}</>}>
+    <AssessmentLayout guidedWorkflow criteriaSummary="Omnisciente guidance for assessing this requirement. These are not additional ISO requirements." criteriaTitle="ISO assessment criteria" reference={`ISO/IEC 27001:2022 · ${item.definition_id}`} key={review.client_id+':'+review.review_id+':'+oid+':'+item.key}
+      summary={summary}
+      interview={()=><IsoAuditMethodologyGuide enabled={isoGuidedEnabled(review.client_id,user,'iso-27001',configuration)} review={review} item={item} summary={summary} historical={frozen} busy={busy} onOpen={openCentralReview}/>}
+      requirement={<AssessmentRequirementDisclosure detailsClassName="iso-audit-source" frameworkLabel="ISO 27001" reference={`ISO/IEC 27001:2022 · ${item.definition_id}`} text={presentation?.requirement?.text??nativeRequirement} trigger={presentation?.requirement?.trigger??criteria?.trigger} source={source.url?{url:source.url,label:'Official ISO source'}:undefined}/>}
       checklist={<AssessmentChecklist title={`${item.reference} checklist`} items={criteria?.coverage==='verified'?criteria.criteria:[]} value={form.assessment_checks||[]} disabled={disabled} onChange={value=>put('assessment_checks',value)}/>}
       findings={<AssessmentStep title="Findings"><p className="text-xs text-ink-secondary">Observations and Nonconformities need a shared Finding before package closure. Completing the audit does not complete remediation.</p>
       <RemediationTickets records={{findings:linkedFindings,tasks:(related?.tasks||[]).filter(t=>form.finding_ids.includes(t.finding_id)),reviews:[centralReview],framework_assessments:related?.framework_assessments||[]}} clientId={review.client_id} users={users} onOpen={setNested} disabled={busy}/>
       {writable&&!finding&&<><Button size="sm" variant="outline" disabled={busy} onClick={()=>setFinding({title:item.reference+' — '+(AUDIT_RESULTS[form.result]||'Audit gap'),description:form.notes,remediation_title:'Address '+item.reference+' audit gap',severity:'medium',request_id:recordUuid()})}>Raise Finding</Button><label className="block mt-3">Link an existing package Finding<select aria-label="Link audit Finding" className={SELECT} value="" disabled={busy} onChange={e=>put('finding_ids',[...new Set([...form.finding_ids,e.target.value])])}><option value="">Select Finding</option>{(related?.findings||[]).filter(f=>!form.finding_ids.includes(f.finding_id)).map(f=><option key={f.finding_id} value={f.finding_id}>{f.title}</option>)}</select></label></>}
       {finding&&<fieldset disabled={busy} className="space-y-3 brawndo-inset"><p>Origin: ISO audit · {item.reference} — {item.title} · {auditPackage(review.iso_audit.package_key).title} · Cycle {review.iso_audit.cycle}</p><label>Severity<select aria-label="Finding severity" className={SELECT} value={finding.severity} onChange={e=>setFinding({...finding,severity:e.target.value})}>{['low','medium','high','critical'].map(value=><option key={value}>{value}</option>)}</select></label>{[['title','Finding title'],['description','Finding description'],['remediation_title','Corrective action']].map(([k,label])=><label className="block" key={k}>{label}{k==='description'?<Textarea aria-label={label} value={finding[k]} onChange={e=>setFinding({...finding,[k]:e.target.value})}/>:<Input aria-label={label} value={finding[k]} onChange={e=>setFinding({...finding,[k]:e.target.value})}/>}</label>)}<TicketAssignment clientId={review.client_id} users={users} {...{finding,setFinding}} defaultOwner={review.owner_id} disabled={busy}/><Button disabled={busy||!finding.title.trim()||!finding.remediation_title.trim()} onClick={createFinding}>Create Finding & Action</Button><Button variant="ghost" onClick={()=>setFinding(null)}>Cancel</Button></fieldset>}
     </AssessmentStep>}
-      review={[item.verify,item.inspect,item.questions].filter(Boolean)} outcome={[item.intent]}>
+      review={[auditMethodClarification(review,item,frozen),item.verify,item.inspect,item.questions].filter(Boolean)} outcome={[item.intent]}>
     <div className="assessment-implementation">    <AssessmentStep title="Audit progress & result"><fieldset disabled={disabled} className="space-y-4">
-      <div className="grid sm:grid-cols-2 gap-4"><label>Audit progress<select aria-label="Audit progress" className={SELECT} value={form.status} onChange={e=>put('status',e.target.value)}>{Object.entries(AUDIT_STATUSES).map(([k,v])=><option key={k} value={k}>{v}</option>)}</select></label>
-        <label>Audit result<select aria-label="Audit result" className={SELECT} value={form.result} onChange={e=>put('result',e.target.value)}><option value="">Not assessed</option>{Object.entries(AUDIT_RESULTS).map(([k,v])=><option key={k} value={k}>{v}</option>)}</select></label></div>
+      <div className="grid sm:grid-cols-2 gap-4"><label>Audit progress<select aria-label="Audit progress" className={SELECT+' gn-answer'} value={form.status} onChange={e=>put('status',e.target.value)}>{Object.entries(AUDIT_STATUSES).map(([k,v])=><option key={k} value={k}>{v}</option>)}</select></label>
+        <label>Audit result<select aria-label="Audit result" className={SELECT+' gn-answer'} value={form.result} onChange={e=>put('result',e.target.value)}><option value="">Not assessed</option>{Object.entries(AUDIT_RESULTS).map(([k,v])=><option key={k} value={k}>{v}</option>)}</select></label></div>
       <p className="text-xs text-ink-secondary">Reviewed means the examination was performed. It counts as complete only when its result is recorded. N/A requires documented justification; Annex A applicability remains in the SoA.</p>
-      {form.status==='not_applicable'&&<label className="block">N/A rationale<Textarea aria-label="Audit N/A rationale" value={form.na_rationale} maxLength={4000} onChange={e=>put('na_rationale',e.target.value)}/></label>}
-      </fieldset></AssessmentStep><div><AssessmentStep title="Auditor notes"><fieldset disabled={disabled}><label className="block">Auditor notes<Textarea aria-label="Auditor notes" className="brawndo-narrative" rows={5} maxLength={20000} value={form.notes} onChange={e=>put('notes',e.target.value)}/></label>
+      {form.status==='not_applicable'&&<label className="block">N/A rationale<Textarea className="gn-field" aria-label="Audit N/A rationale" value={form.na_rationale} maxLength={4000} onChange={e=>put('na_rationale',e.target.value)}/></label>}
+      </fieldset></AssessmentStep><div><AssessmentStep title="Auditor notes"><fieldset disabled={disabled}><label className="block"><span className="sr-only">Auditor notes</span><Textarea aria-label="Auditor notes" className="gn-field" rows={6} maxLength={20000} value={form.notes} onChange={e=>put('notes',e.target.value)}/></label>
     </fieldset></AssessmentStep>
 </div></div>
     <AssessmentStep title="Evidence & validation"><p className="text-xs text-ink-secondary">Workpaper evidence selections save with this assessment. Library files are not copied or changed.</p>
@@ -167,8 +193,18 @@ function AuditItemWorkspace({review,centralReview=review,item,position,previous,
       {!form.evidence_ids.length&&<p>No evidence linked to this workpaper.</p>}
       {writable&&<EvidenceCatalogPicker clientId={review.client_id} linkedIds={form.evidence_ids} disabled={busy} onLink={id=>put('evidence_ids',[...new Set([...form.evidence_ids,id])])}/>}
     </AssessmentStep>
-    <details><summary>Audit context</summary><h3>Audit context</h3><p>{auditQuarter(review.due_date)} · Due {review.due_date?.slice(0,10)}</p><p>Auditor: {users.find(u=>u.user_id===review.owner_id)?.name||'Historical / unassigned'}</p><details><summary>Scope & objectivity</summary>{content(review.scope||'Scope not recorded')}{content(review.audit_independence||'Objectivity not recorded')}</details><Button variant="outline" size="sm" onClick={()=>setNested({kind:'reviews',record:centralReview,initialValues:frozen?{occurrence:review}:undefined})}>Open central Review</Button><p className="text-xs">Audit progress and results do not update implementation assessments or close remediation.</p><details><summary>Methodology source</summary><p className="text-xs">{isoAuditCatalog.source.filename} · {auditPackage(review.iso_audit.package_key).source_sheet} · row {item.source_row}. User-provided audit guidance, not official ISO text.</p></details></details>
+    <details><summary>Audit context</summary><h3>Audit context</h3>{auditContext}</details>
     </AssessmentLayout>
+    <Dialog open={!!detailsView} onOpenChange={value=>{if(!value)setDetailsView(null);}}>
+      <DialogContent aria-modal="true" portalContainer={surface||undefined} className="brawndo-assessment-pilot brawndo-pilot-child-dialog gn-dialog-box gn-wording-box" overlayClassName="brawndo-assessment-pilot brawndo-pilot-child-overlay gn-dialog-layer" showCloseButton={false}
+        onOpenAutoFocus={event=>{event.preventDefault();(detailsView==='notes'&&!disabled?notesField.current:detailsHeading.current)?.focus({preventScroll:true});}}
+        onCloseAutoFocus={returnToDetails} onEscapeKeyDown={event=>event.stopPropagation()} onPointerDownOutside={event=>event.preventDefault()}>
+        <DialogTitle ref={detailsHeading} tabIndex={-1}>{detailsView==='notes'?'Auditor notes':'Audit context'}</DialogTitle>
+        <DialogDescription>{detailsView==='notes'?'These are the same workpaper draft notes. Use Save assessment to retain changes.':'The selected native audit Review and occurrence remain authoritative.'}</DialogDescription>
+        {detailsView==='notes'?<Textarea ref={notesField} className="gn-field" aria-label="Auditor notes in assessment details" rows={6} maxLength={20000} disabled={disabled} value={form.notes} onChange={event=>put('notes',event.target.value)}/>:auditContext}
+        <div className="gn-dialog-actions"><Button className="gn-button" variant="outline" onClick={()=>setDetailsView(null)}>Back to assessment</Button></div>
+      </DialogContent>
+    </Dialog>
   </AssessmentShell><AlertDialog open={!!pending} onOpenChange={v=>{if(!v)cancelLeave();}}><AlertDialogContent><AlertDialogTitle>Leave unsaved changes?</AlertDialogTitle><AlertDialogDescription>The saved audit workpaper is unchanged. Keep editing or discard this draft.</AlertDialogDescription><AlertDialogFooter><AlertDialogCancel>Keep editing</AlertDialogCancel><AlertDialogAction onClick={()=>{const fn=pending;setPending(null);externalClosePending.current=false;fn?.();}}>Discard changes</AlertDialogAction></AlertDialogFooter></AlertDialogContent></AlertDialog>
     {nested&&<RecordDrawer {...nested} open clientId={review.client_id} users={users} schema={SCHEMAS[nested.kind]?.fields} onOpenChange={v=>{if(!v)setNested(null);}} onSaved={()=>{setRelatedRevision(n=>n+1);if(nested.kind==='reviews')setFeedback('Central Review changed. Close and reopen the package to load its latest cycle before editing further.');}}/>}
   </>;

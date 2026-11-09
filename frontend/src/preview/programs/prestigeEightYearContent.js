@@ -1,5 +1,6 @@
 import {activeDefinitions} from '../../lib/frameworks';
-import {socGuidedCatalog, validateSocCompletion, socGuidedResult} from '../../lib/socGuidedAssessment';
+import socGuidedCatalog from '@catalogs/guidedSoc2.json';
+import {validateSocCompletion, socGuidedResult} from '../../lib/socGuidedAssessment';
 
 // Uninstalled synthetic current facts, not historical interviews or verified Evidence.
 export const PRESTIGE_CURRENT_AS_OF = '2026-11-02';

@@ -1,9 +1,19 @@
 import catalog from '@catalogs/guidedSoc2.json';
 import legacyCatalog from '@catalogs/guidedSoc2V1.json';
+import rolloutCatalog from '@catalogs/guidedSoc2Rollout1.json';
 import {formatInlineSummary,inlineSentence} from './inlineAssessment';
 
-export const socGuidedCatalog = catalog;
-const versions = {[catalog.version]: catalog,[legacyCatalog.version]:legacyCatalog};
+// New reviews use rollout context; retained versions keep their original definitions.
+export const socGuidedCatalog = rolloutCatalog;
+export const socRolloutCatalog = rolloutCatalog;
+const versions = {[catalog.version]: catalog,[legacyCatalog.version]:legacyCatalog,[rolloutCatalog.version]:rolloutCatalog};
+const versionFeatures = {
+  [legacyCatalog.version]: {intentGates:false,inlineSentences:false},
+  [catalog.version]: {intentGates:true,inlineSentences:true},
+  [rolloutCatalog.version]: {intentGates:true,inlineSentences:true},
+};
+export const socUsesIntentGates = version => versionFeatures[version]?.intentGates === true;
+export const socUsesInlineSentences = version => versionFeatures[version]?.inlineSentences === true;
 const positions = {addressed: 'practices addressing', in_progress: 'partial or unresolved practices for', needs_attention: 'confirmed deficiencies affecting', not_assessed: 'an unconfirmed implementation position for'};
 const choices = ['Yes', 'Partially', 'No', 'Not sure'];
 const contextChoices = ['Relevant', 'Outside the selected system', 'Not sure'];
@@ -15,13 +25,13 @@ const extraQuestions = [
 const text = value => value?.trim() || '';
 const concise = value => value.length > 500 ? `${value.slice(0, 500)}… (full response retained in the interview)` : value;
 
-export function socExtraQuestions(answers={},version=catalog.version,all=false){
+export function socExtraQuestions(answers={},version=socGuidedCatalog.version,all=false){
   const questions=versions[version]?.extra_questions||extraQuestions;
   return questions.filter(question=>all||!question.condition||answers[question.condition.id]===question.condition.equals);
 }
 
 function definitionFor(id, version) {
-  const source = versions[version || catalog.version];
+  const source = versions[version || socGuidedCatalog.version];
   if (!source || !Object.hasOwn(source.definitions, id)) throw new Error('SOC question set is not available.');
   return source.definitions[id];
 }
@@ -55,16 +65,16 @@ export function socGuidedEnabled(clientId, user, frameworkKey, configuration = {
   return Object.hasOwn(catalog.definitions, definitionId) && categories.includes(catalog.definitions[definitionId].category);
 }
 
-export function socQuestions(id, answers = {}, version = catalog.version) {
+export function socQuestions(id, answers = {}, version = socGuidedCatalog.version) {
   return [...activeQuestions(id, answers, version), ...socExtraQuestions(answers,version)];
 }
 
-export function socGroups(id, answers = {}, version = catalog.version) {
+export function socGroups(id, answers = {}, version = socGuidedCatalog.version) {
   const active = new Set(activeQuestions(id, answers, version).map(question => question.id));
   return normalizedGroups(id, version).map(group => ({...group, questions: group.questions.filter(question => active.has(question.id))})).filter(group => group.questions.length > 0);
 }
 
-export function validateSocAnswers(id, answers, version = catalog.version) {
+export function validateSocAnswers(id, answers, version = socGuidedCatalog.version) {
   const questions = new Map([...normalizedGroups(id, version).flatMap(group => group.questions), ...socExtraQuestions(answers,version,true)].map(question => [question.id, question]));
   if (!answers || typeof answers !== 'object' || Array.isArray(answers)) throw new Error('Invalid SOC interview answers.');
   for (const [key, value] of Object.entries(answers)) {
@@ -76,7 +86,7 @@ export function validateSocAnswers(id, answers, version = catalog.version) {
   }
 }
 
-export function validateSocCompletion(id, answers, version = catalog.version) {
+export function validateSocCompletion(id, answers, version = socGuidedCatalog.version) {
   validateSocAnswers(id, answers, version);
   for(const question of socExtraQuestions(answers,version))if(question.condition&&!text(answers[question.id]))throw new Error('Describe the additional reported work before reviewing the summary.');
   for (const question of activeQuestions(id, answers, version)) {
@@ -88,10 +98,10 @@ export function validateSocCompletion(id, answers, version = catalog.version) {
   }
 }
 
-export function socGuidedResult(id, answers, version = catalog.version, clientName = 'The organization') {
+export function socGuidedResult(id, answers, version = socGuidedCatalog.version, clientName = 'The organization') {
   validateSocAnswers(id, answers, version);
   const definition = definitionFor(id, version), active = activeQuestions(id, answers, version);
-  const sentence=fragment=>version===catalog.version?inlineSentence(fragment):fragment+'.';
+  const sentence=fragment=>socUsesInlineSentences(version)?inlineSentence(fragment):fragment+'.';
   const basis = [], gaps = [], unknowns = [], nextSteps = [], signals = [], breakdown = [];
   let meaningful = false, confirmedNo = false, substantive = 0;
   const addSignal = (kind, question, message) => {
@@ -144,12 +154,12 @@ export function socGuidedResult(id, answers, version = catalog.version, clientNa
 
 
 // The inline wording is presentation; the existing evaluator remains authoritative.
-export function socInlineSummary(id, answers, version = catalog.version, clientName = 'The organization', date) {
+export function socInlineSummary(id, answers, version = socGuidedCatalog.version, clientName = 'The organization', date) {
   const result = socGuidedResult(id, answers, version, clientName), definition = definitionFor(id, version);
   return formatInlineSummary({
     paragraph: `${clientName} reports ${positions[result.status]} ${id} — ${definition.title} within the selected system. This is reported readiness, not evidence verification or an auditor opinion.`,
     controls: result.basis.map(concise),
-    limitations: [...result.gaps.map(gap=>'Reported gap: '+concise(gap)),...result.unknowns.map(unknown=>'Requires confirmation: '+concise(unknown))].map(fragment=>version===catalog.version?inlineSentence(fragment):fragment).join(' '),
+    limitations: [...result.gaps.map(gap=>'Reported gap: '+concise(gap)),...result.unknowns.map(unknown=>'Requires confirmation: '+concise(unknown))].map(fragment=>socUsesInlineSentences(version)?inlineSentence(fragment):fragment).join(' '),
     date,
   });
 }
