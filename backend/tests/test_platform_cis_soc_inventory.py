@@ -294,6 +294,10 @@ class PlatformCisSocInventoryTests(unittest.IsolatedAsyncioTestCase):
         current_vectors = [vector for vector in self.vectors if vector['framework'] == 'soc-2' and vector['scenario'] == 'adequate']
         self.assertEqual(len(current_vectors), 61)
         self.assertEqual({vector['id'] for vector in current_vectors}, {row['id'] for row in SOC['requirements']})
+        current_lifecycles = [vector for vector in self.vectors if vector['framework'] == 'soc-2']
+        expected_lifecycles = {(row['id'], scenario) for row in SOC['requirements'] for scenario in ('adequate', 'unknown')}
+        self.assertEqual(len(current_lifecycles), 122)
+        self.assertEqual({(vector['id'], vector['scenario']) for vector in current_lifecycles}, expected_lifecycles)
         supplied_context, fields = {}, 0
         for vector in current_vectors:
             with self.subTest(current_soc_criterion=vector['id']):
@@ -330,24 +334,43 @@ class PlatformCisSocInventoryTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(fields, 220)
         self.ledger['rollout_optional_context_writes'] = len(current_vectors)
         self.ledger['rollout_optional_context_fields'] = fields
-        # Reuse the original full native lifecycle assertions on an unpatched
-        # current-version criterion, beyond merely checking a version label.
+        # Every actual-current SOC vector runs the original native lifecycle
+        # assertions; historical V2 coverage is not substituted for current proof.
+        visited = set()
+        for vector in current_lifecycles:
+            with self.subTest(current_soc_criterion=vector['id'], scenario=vector['scenario']):
+                self.assertEqual(vector['version'], 'soc2-assessment-rollout-1')
+                row = rows[(vector['client'], vector['id'])]
+                path = '/api/framework_assessments/' + row['framework_assessment_id']
+                if vector['scenario'] == 'adequate':
+                    # Native restart explicitly archives incomplete progress;
+                    # ordinary checkpoints do not archive every intermediate revision.
+                    before_restart = await self.request('GET', path + '/guided-assessment')
+                    self.assertEqual(before_restart['revision'], 1)
+                    restarted = await self.request('PUT', path + '/guided-assessment', json={
+                        'version': before_restart['version'], 'answers': {}, 'step': 0, 'completed': False,
+                        'narrative': '', 'summary_review': None, 'result': None, 'expected_revision': before_restart['revision'],
+                        'restart': True, 'base_assessment_token': before_restart['current_assessment_token'],
+                        'base_scope_fingerprint': before_restart['current_scope_fingerprint']})
+                    self.assertEqual(restarted['revision'], 2)
+                    self.assertEqual(restarted['answers'], {})
+                foreign_before = await server.db.framework_assessments.find(
+                    {'definition_id': vector['id'], 'client_id': {'$ne': row['client_id']}}, {'_id': 0}).to_list(None)
+                await self.run_vector(vector, row, await self.request('GET', path))
+                foreign_after = await server.db.framework_assessments.find(
+                    {'definition_id': vector['id'], 'client_id': {'$ne': row['client_id']}}, {'_id': 0}).to_list(None)
+                self.assertEqual(foreign_after, foreign_before)
+                if vector['scenario'] == 'adequate':
+                    archived = (await self.request('GET', path + '/guided-assessment/history'))['items']
+                    self.assertEqual(next(snapshot for snapshot in archived if snapshot['revision'] == 1)['answers'], supplied_context[vector['id']])
+                visited.add((vector['id'], vector['scenario']))
+        self.assertEqual(visited, expected_lifecycles)
+        self.assertEqual(self.ledger['native_writes'], 122)
+        self.assertEqual(self.ledger['explicit_rebases'], 61)
+        self.ledger['unique_definitions'] = len({id for id, _scenario in visited})
         vector = next(vector for vector in current_vectors if vector['id'] == 'CC1.1')
         row = rows[(vector['client'], vector['id'])]
         path = '/api/framework_assessments/' + row['framework_assessment_id']
-        # Native restart explicitly archives incomplete progress; ordinary
-        # checkpoints do not promise an archive of each intermediate revision.
-        before_restart = await self.request('GET', path + '/guided-assessment')
-        self.assertEqual(before_restart['revision'], 1)
-        restarted = await self.request('PUT', path + '/guided-assessment', json={
-            'version': before_restart['version'], 'answers': {}, 'step': 0, 'completed': False,
-            'narrative': '', 'summary_review': None, 'result': None, 'expected_revision': before_restart['revision'],
-            'restart': True, 'base_assessment_token': before_restart['current_assessment_token'],
-            'base_scope_fingerprint': before_restart['current_scope_fingerprint']})
-        self.assertEqual(restarted['revision'], 2)
-        self.assertEqual(restarted['answers'], {})
-        await self.run_vector(vector, row, await self.request('GET', path))
-        self.assertEqual(self.ledger['native_writes'], 1)
         archived = (await self.request('GET', path + '/guided-assessment/history'))['items']
         self.assertEqual(next(snapshot for snapshot in archived if snapshot['revision'] == 1)['answers'], supplied_context['CC1.1'])
         for alias in ('soc38', 'soc61'):
