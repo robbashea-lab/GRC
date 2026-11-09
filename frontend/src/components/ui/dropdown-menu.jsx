@@ -45,8 +45,8 @@ const DropdownMenuSubContent = React.forwardRef(({ className, ...props }, ref) =
 DropdownMenuSubContent.displayName =
   DropdownMenuPrimitive.SubContent.displayName
 
-const DropdownMenuContent = React.forwardRef(({ className, sideOffset = 4, ...props }, ref) => (
-  <DropdownMenuPrimitive.Portal>
+const DropdownMenuContent = React.forwardRef(({ className, sideOffset = 4, portalContainer, ...props }, ref) => (
+  <DropdownMenuPrimitive.Portal container={portalContainer}>
     <DropdownMenuPrimitive.Content
       ref={useSurfaceRef(ref)}
       sideOffset={sideOffset}

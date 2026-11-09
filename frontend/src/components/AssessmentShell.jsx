@@ -1,4 +1,4 @@
-import {useRef} from 'react';
+import {useCallback,useRef} from 'react';
 import {X} from 'lucide-react';
 import {focusFallback,focusLost,pageHeading} from '@/lib/focusRescue';
 import {Dialog,DialogClose,DialogContent,DialogTitle,DialogDescription} from './ui/dialog';
@@ -14,12 +14,13 @@ function exposed(element){
 
 /** Presentation only. Callers own persistence, native conclusions and leave guards. */
 export default function AssessmentShell({open=true,title,description,status,position,
-  previous,next,close,busy,children,context,footer,crumbs,ariaModal,testId='framework-assessment-workspace',returnSelector,onEscapeKeyDown,className='',closeInNavigation=false}) {
+  previous,next,close,busy,children,context,footer,crumbs,ariaModal,testId='framework-assessment-workspace',returnSelector,onEscapeKeyDown,className='',closeInNavigation=false,surfaceRef,navigationActions}) {
   // Next / Save & next can remount while focus is still inside the old drawer.
   // Only a page control, not that drawer's disappearing content, is an opener.
   const heading=useRef(null),surface=useRef(null),opener=useRef(document.activeElement?.closest?.('[data-assessment-shell]')?null:document.activeElement);
+  const bindSurface=useCallback(node=>{surface.current=node;surfaceRef?.(node);},[surfaceRef]);
   return <Dialog open={open} onOpenChange={value=>{if(!value)close();}}>
-    <DialogContent ref={surface} className={`brawndo-cis-assessment bg-surface-card ${className}`} data-testid={testId} aria-modal={ariaModal?'true':undefined}
+    <DialogContent ref={surfaceRef?bindSurface:surface} className={`brawndo-cis-assessment bg-surface-card ${className}`} data-testid={testId} aria-modal={ariaModal?'true':undefined}
       {...(closeInNavigation?{showCloseButton:false}:{})}
       onEscapeKeyDown={event=>{
         onEscapeKeyDown?.(event);
@@ -57,6 +58,7 @@ export default function AssessmentShell({open=true,title,description,status,posi
           <Button size="sm" variant="outline" disabled={!previous||busy} onClick={previous}>Previous</Button>
           <span className="text-xs text-ink-secondary tabular-nums">{position?.replace(' in framework order','')}</span>
           <Button size="sm" variant="outline" disabled={!next||busy} onClick={next}>Next</Button>
+          {navigationActions}
           {closeInNavigation&&<DialogClose type="button" className="brawndo-assessment-navigation-close"><X className="h-4 w-4" aria-hidden="true"/><span className="sr-only">Close</span></DialogClose>}
         </nav>
       </header>
