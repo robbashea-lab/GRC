@@ -118,3 +118,85 @@ test.each([false,true])('1.1 follows native group order across coverage, source-
     await click('Continue');expect(props.onNext).toHaveBeenLastCalledWith(coverageGroup,omniGroups(props.id,props.answers,props.version),'attributes');
   }
 });
+
+test('opening the retained pilot focuses its current question without resetting the matrix row or answers',async()=>{
+  configure('1.1');
+  const coverage=visibleQuestions('1.1',{inventory:'Yes'},props.version).find(question=>question.id==='coverage');
+  props={...props,assessmentConcept:true,pilotGuideOpen:false,step:coverage.id,answers:{
+    inventory:'Yes',coverage:Object.fromEntries(coverage.rows.map((row,index)=>[row,index===1?'Not sure':'Yes'])),
+    coverage_detail:'Keep this unsaved matrix context.'}};
+  const before=JSON.parse(JSON.stringify(props.answers));
+  await render();
+  await click('Continue');
+  expect(container.querySelector('select').getAttribute('aria-label')).toBe(coverage.rows[1]);
+  container.tabIndex=-1;
+  for(let count=0;count<2;count++){
+    props={...props,pilotGuideOpen:false};await render();
+    container.focus();expect(document.activeElement).toBe(container);
+    props={...props,pilotGuideOpen:true};await render();
+    expect(container.querySelector('fieldset').dataset.questionId).toBe(coverage.id);
+    expect(container.querySelector('select').getAttribute('aria-label')).toBe(coverage.rows[1]);
+    expect(container.querySelector('select').value).toBe(before.coverage[coverage.rows[1]]);
+    expect(props.answers).toEqual(before);
+    expect(props.put).not.toHaveBeenCalled();
+    expect(props.detail).not.toHaveBeenCalled();
+    expect(props.setStep).not.toHaveBeenCalled();
+    expect(props.onNext).not.toHaveBeenCalled();
+    expect(document.activeElement).toBe(container.querySelector('legend'));
+  }
+});
+
+test('reopening the pilot retains response review and focuses its existing review heading',async()=>{
+  configure('1.1');
+  const answers={inventory:'Yes',system:'Retained inventory register',inventory_detail:'Retained notes'};
+  const last=visibleQuestions('1.1',answers,props.version).at(-1);
+  props={...props,assessmentConcept:true,pilotGuideOpen:true,answers,step:last.id};
+  await render();await click('Review responses');
+  const review=container.querySelector('.cis-answer-review');
+  const before=review.textContent;
+  props={...props,pilotGuideOpen:false};await render();
+  container.tabIndex=-1;container.focus();
+  expect(document.activeElement).toBe(container);
+  props={...props,pilotGuideOpen:true};await render();
+  expect(container.querySelector('.cis-answer-review')).toBe(review);
+  expect(review.textContent).toBe(before);
+  expect(props.answers).toEqual(answers);
+  expect(props.put).not.toHaveBeenCalled();
+  expect(props.detail).not.toHaveBeenCalled();
+  expect(props.setStep).not.toHaveBeenCalled();
+  expect(props.onNext).not.toHaveBeenCalled();
+  const heading=container.querySelector('h3.gn-question');
+  expect(heading.textContent).toBe('Review responses');
+  expect(document.activeElement).toBe(heading);
+});
+
+test('an unchanged pilot rerender or closing does not steal focus from its answer field',async()=>{
+  configure('1.1');
+  props={...props,assessmentConcept:true,pilotGuideOpen:true};
+  await render();
+  const answer=container.querySelector('select');
+  answer.focus();expect(document.activeElement).toBe(answer);
+  props={...props,answers:{...props.answers}};await render();
+  expect(document.activeElement).toBe(answer);
+  props={...props,pilotGuideOpen:false};await render();
+  expect(document.activeElement).toBe(answer);
+  expect(props.put).not.toHaveBeenCalled();
+  expect(props.onNext).not.toHaveBeenCalled();
+});
+
+test.each([
+  ['native 1.1', '1.1', false, false],
+  ['another safeguard', '1.3', true, false],
+  ['default closed pilot prop', '1.1', true, true],
+])('%s keeps its established focus on unrelated open-state rerenders',async(label,id,assessmentConcept,omitOpen)=>{
+  configure(id);
+  props={...props,assessmentConcept,...(!omitOpen?{pilotGuideOpen:false}:{})};
+  await render();
+  container.tabIndex=-1;container.focus();
+  expect(document.activeElement).toBe(container);
+  props={...props,...(!omitOpen?{pilotGuideOpen:true}:{})};await render();
+  expect(document.activeElement).toBe(container);
+  expect(props.put).not.toHaveBeenCalled();
+  expect(props.detail).not.toHaveBeenCalled();
+  expect(props.onNext).not.toHaveBeenCalled();
+});

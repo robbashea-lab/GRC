@@ -18,13 +18,17 @@ const REQUIREMENT_HIGHLIGHTS={
 };
 
 // The native question index and original matrix keys remain the persistence contract.
-export default function CisSequentialInterview({id,answers,version,step,setStep,put,detail,blocked,busy,onNext,onPause,onSaveClose,onSaveProgress,inventoryContext,visualReference=false,safeguard11=false,boundedGuideCorrections=false,assessmentConcept=false}){
+export default function CisSequentialInterview({id,answers,version,step,setStep,put,detail,blocked,busy,onNext,onPause,onSaveClose,onSaveProgress,inventoryContext,visualReference=false,safeguard11=false,boundedGuideCorrections=false,assessmentConcept=false,pilotGuideOpen=false}){
   // Native groups can reorder catalog questions (for example exclusion rationale).
   const nativeGroups=omniGroups(id,answers,version),questions=nativeGroups.flatMap(group=>group.questions);
   const index=Math.max(0,questions.findIndex(question=>question.id===step));
   const question=questions[index],heading=useRef(null),fieldId=useId();
   const [rowIndex,setRowIndex]=useState(0),[review,setReview]=useState(false);
   useEffect(()=>{setRowIndex(0);heading.current?.focus({preventScroll:true});},[step]);
+  // Opening the retained pilot hands off focus without resetting its question row.
+  useEffect(()=>{
+    if(assessmentConcept===true&&id==='1.1'&&pilotGuideOpen===true)heading.current?.focus({preventScroll:true});
+  },[assessmentConcept,id,pilotGuideOpen]);
   if(!question)return <p>No questions are available for this saved question set.</p>;
   const nativeGroupIndex=nativeGroups.findIndex(group=>group.ids.includes(question.id)),nativeGroup=nativeGroups[nativeGroupIndex];
   const note=nativeGroup?.note||question.id,title=nativeCisQuestionTitle(id,question);

@@ -97,8 +97,22 @@ async function loadSafeguard(id = '1.1', selectedClient = 'demo_brawndo') {
 }
 
 async function render(visualReference = true, onManage) {
-  await nativeAction(() => root.render(<FrameworkDrawer open visualReference={visualReference}
+  const startupRoutes = new Set([base + '/related', '/clients/' + clientId + '/members',
+    '/contacts', '/comments', base + '/activity', '/frameworks/' + record.framework_key,
+    base + '/guided-assessment']);
+  let nextRead = getSpy.mock.results.length;
+  // Commit first: descendant effects can start required reads after root.render returns.
+  await act(async () => root.render(<FrameworkDrawer open visualReference={visualReference}
     record={record} clientId={clientId} onOpenChange={onClose} onManage={onManage}/>));
+  while (true) {
+    const first = nextRead;
+    nextRead = getSpy.mock.results.length;
+    const reads = getSpy.mock.calls.slice(first, nextRead).flatMap(([url], offset) =>
+      startupRoutes.has(url) ? [getSpy.mock.results[first + offset].value] : []);
+    if (!reads.length) return;
+    // Await only this render's known startup reads; preserve native failure handling.
+    await act(async () => { await Promise.allSettled(reads); });
+  }
 }
 
 async function chooseAssessmentDetails(label) {
@@ -646,4 +660,104 @@ test.each([
   expect(button(guide(), 'Save progress')).toBeUndefined();
   expect(putSpy).not.toHaveBeenCalled();
   await assertAssessmentUnchanged();
+});
+
+test('the real pilot launcher hands focus to the retained question on first opening and reopening without requests or writes', async () => {
+  await loadSafeguard();
+  await render();
+  expect(guide().hidden).toBe(true);
+  expect(questionId()).toBe('inventory');
+  const readsBefore=getSpy.mock.calls.length;
+  for(let count=0;count<2;count++){
+    const launcher=button(surface(),'Resume guided assessment')||button(surface(),'Begin guided assessment');
+    expect(launcher).toBeTruthy();
+    launcher.focus();
+    expect(document.activeElement).toBe(launcher);
+    await openInterview();
+    expect(questionId()).toBe('inventory');
+    expect(guide().querySelector('fieldset select').value).toBe('');
+    expect(document.activeElement).toBe(guide().querySelector('fieldset legend'));
+    await click(surface(),'Pause & return');
+    expect(guide().hidden).toBe(true);
+  }
+  expect(getSpy).toHaveBeenCalledTimes(readsBefore);
+  for(const spy of writes())expect(spy).not.toHaveBeenCalled();
+  await assertAssessmentUnchanged();
+});
+
+
+
+test('the pilot render waits for its required interview read without enabling the entry early', async () => {
+  const nativeRead = api.get.bind(api);
+  await loadSafeguard();
+  const savedResponse = await api.get(base + '/guided-assessment');
+  let releaseRead, readStarted, heldRequests = 0, renderFinished = false;
+  const pendingRead = new Promise(resolve => { releaseRead = resolve; });
+  const requested = new Promise(resolve => { readStarted = resolve; });
+  getSpy.mockImplementation((url, options) => {
+    if (url === base + '/guided-assessment' && heldRequests === 0) {
+      heldRequests++;
+      readStarted();
+      return pendingRead;
+    }
+    return nativeRead(url, options);
+  });
+  const mounting = render();
+  mounting.then(() => { renderFinished = true; }, () => { renderFinished = true; });
+  try {
+    const requestedBeforeCompletion = await Promise.race([
+      requested.then(() => true),
+      mounting.then(() => false),
+    ]);
+    expect(requestedBeforeCompletion).toBe(true);
+    const entry = button(surface(), 'Review implementation');
+    expect(entry).toBeTruthy();
+    expect(entry.disabled).toBe(true);
+    expect(renderFinished).toBe(false);
+    for (const spy of writes()) expect(spy).not.toHaveBeenCalled();
+    releaseRead(savedResponse);
+    await mounting;
+    expect(renderFinished).toBe(true);
+    expect(button(surface(), 'Review implementation').disabled).toBe(false);
+    expect(questionId()).toBe('inventory');
+    expect(heldRequests).toBe(1);
+    for (const spy of writes()) expect(spy).not.toHaveBeenCalled();
+    await assertAssessmentUnchanged();
+  } finally {
+    releaseRead(savedResponse);
+    await Promise.allSettled([mounting]);
+  }
+});
+
+test('the real pilot Pause returns focus only after its launcher is visible without requests or writes', async () => {
+  await loadSafeguard();
+  await render();
+  const launcher=button(surface(),'Begin guided assessment');
+  expect(launcher).toBeTruthy();
+  expect(launcher.closest('[hidden]')).toBeNull();
+  expect(document.activeElement).not.toBe(launcher);
+  const focusStates=[];
+  // Observe the real focus event; JSDOM itself permits focus on hidden elements.
+  const recordFocus=()=>focusStates.push({launcherHidden:!!launcher.closest('[hidden]'),interviewHidden:guide().hidden});
+  launcher.addEventListener('focus',recordFocus);
+  const readsBefore=getSpy.mock.calls.length;
+  try{
+    for(let cycle=0;cycle<2;cycle++){
+      await openInterview();
+      expect(document.activeElement).toBe(guide().querySelector('fieldset legend'));
+      expect(launcher.closest('[hidden]')).not.toBeNull();
+      await click(surface(),'Pause & return');
+      expect(guide().hidden).toBe(true);
+      expect(document.activeElement).toBe(launcher);
+      expect(focusStates).toHaveLength(cycle+1);
+      expect(focusStates.at(-1)).toEqual({launcherHidden:false,interviewHidden:true});
+      expect(questionId()).toBe('inventory');
+      expect(guide().querySelector('fieldset select').value).toBe('');
+    }
+    expect(getSpy).toHaveBeenCalledTimes(readsBefore);
+    for(const spy of writes())expect(spy).not.toHaveBeenCalled();
+    await assertAssessmentUnchanged();
+  }finally{
+    launcher.removeEventListener('focus',recordFocus);
+  }
 });
