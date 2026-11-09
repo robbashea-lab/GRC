@@ -7,6 +7,13 @@ import {createPrestigeCurrentModel} from './prestigeCurrentModel';
 import {createPrestigeEightYearHistory} from './prestigeEightYearHistory';
 import {PRESTIGE_VENDOR_FACTS, PRESTIGE_AI_FACTS} from './prestigeEightYearRegisters';
 
+// This suite reconstructs immutable V2-authored history under its original native
+// current-version context; unpatched rollout defaults are exercised separately.
+jest.mock('../../lib/socGuidedAssessment',()=>({
+  ...jest.requireActual('../../lib/socGuidedAssessment'),
+  socGuidedCatalog:jest.requireActual('@catalogs/guidedSoc2.json'),
+}));
+
 const CID = 'demo_prestige', CLOCK = new Date('2026-11-02T12:00:00.000Z');
 const MARKER = 'prestige_eight_year_history_fixture';
 const options = {clock: CLOCK, purpose: 'eight_year_history_source_qa'};

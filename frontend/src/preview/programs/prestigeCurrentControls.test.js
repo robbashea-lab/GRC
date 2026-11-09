@@ -6,6 +6,13 @@ import {preparePrestigeNativeOnboarding} from './prestigeNativeOnboarding';
 import {createPrestigeCurrentModel} from './prestigeCurrentModel';
 import {createPrestigeCurrentControlDesigns} from './prestigeCurrentControls';
 
+// Reconstruct the immutable authored-V2 source under its historical current-version
+// context; native design commands and every original assertion remain unchanged.
+jest.mock('../../lib/socGuidedAssessment',()=>({
+  ...jest.requireActual('../../lib/socGuidedAssessment'),
+  socGuidedCatalog:jest.requireActual('@catalogs/guidedSoc2.json'),
+}));
+
 const CID = 'demo_prestige', clock = new Date('2026-11-02T12:00:00.000Z');
 const options = {clock, purpose: 'current_control_designs_source_qa'};
 const copy = value => JSON.parse(JSON.stringify(value));

@@ -3,6 +3,7 @@ import {createRoot} from 'react-dom/client';
 import FrameworkDrawer from './FrameworkDrawer';
 import api from '@/lib/api';
 import {cisContext} from '../testUtils/cisExperience';
+import * as rolloutPresentation from '@/lib/assessmentRolloutEligibility';
 
 let mockAuth, mockOrg, mockGuideProps;
 jest.mock('@/context/AuthContext', () => ({useAuth: () => mockAuth}));
@@ -115,6 +116,7 @@ beforeEach(() => {
 afterEach(async () => {
   await act(async () => root.unmount());
   host.remove();
+  jest.restoreAllMocks();
   jest.clearAllMocks();
 });
 
@@ -222,7 +224,9 @@ test('the generic framework fallback retains native owner, contacts, comments, h
 test.each([
   'safeguard 1.2', 'indirect source opener', 'other client', 'standard mode',
   'IG2', 'IG3', 'old framework version', 'other route', 'selected-client mismatch', 'Org identity mismatch',
-])('%s retains the original ordered six context reads outside the exact pilot', async scenario => {
+])('legacy appearance compatibility: %s retains the original ordered six context reads outside the exact pilot', async scenario => {
+  // The rollout supersedes appearance exclusions, not this original read boundary.
+  if (scenario !== 'old framework version') jest.spyOn(rolloutPresentation, 'assessmentRolloutEligible').mockReturnValue(false);
   let props = {};
   if (scenario === 'safeguard 1.2') {
     native = {...native, definition_id: '1.2'};
@@ -265,6 +269,8 @@ test.each([
 
 test.each(['IG2', 'unselected', 'unconfigured', 'current identity mismatch'])(
   'fresh workspace %s restores all three detail reads before publishing context', async scenario => {
+    // IG2 is now a rollout surface; the other cases still exercise real denial.
+    if (scenario === 'IG2') jest.spyOn(rolloutPresentation, 'assessmentRolloutEligible').mockReturnValue(false);
     workspaceOverride = data => scenario === 'IG2' ? {...data, configuration: {implementation_group: 2}}
       : scenario === 'unselected' ? {...data, selected: false}
         : scenario === 'unconfigured' ? {...data, configured: false}
@@ -313,6 +319,45 @@ test.each(['contacts', 'comments', 'activity'])('a restored %s detail read failu
   expect(surface().querySelector('[aria-label="Current implementation"]').disabled).toBe(true);
   expect(button(surface(), 'Save assessment').disabled).toBe(true);
   expect(mockGuideProps).toBeNull();
+  expectNoWrites();
+});
+
+test('current rollout indirect entry keeps the original six reads and dirty form without the legacy appearance exclusion', async () => {
+  const props = {visualReference: false};
+  const before = copy(native);
+  await render(props);
+  expect(readPaths()).toEqual(orderedAllPaths());
+  expect(surface().classList.contains('brawndo-assessment-pilot')).toBe(true);
+  const signal = api.get.mock.calls[0][1].signal;
+  const draft = 'Current rollout indirect entry retains this unsaved native draft.';
+  await edit(surface().querySelector('[aria-label="Current implementation"]'), draft);
+  await render({...props, record: {...record}});
+  expect(readPaths()).toEqual(orderedAllPaths());
+  expect(signal.aborted).toBe(false);
+  expect(surface().querySelector('[aria-label="Current implementation"]').value).toBe(draft);
+  expect(mockGuideProps.current.framework_assessment_id).toBe(record.framework_assessment_id);
+  expect(native).toEqual(before);
+  expectNoWrites();
+});
+
+test('current rollout restores detail reads for a fresh IG2 scope before enabling its presentation', async () => {
+  workspaceOverride = data => ({...data, configuration: {implementation_group: 2}});
+  const pending = [];
+  api.get.mockImplementation((path, config) => detailPaths().includes(path)
+    ? new Promise(resolve => pending.push({path, config, resolve}))
+    : Promise.resolve({data: copy(response(path))}));
+  await render();
+  expect(readPaths()).toEqual(fallbackPaths());
+  const signal = api.get.mock.calls[0][1].signal;
+  expect(api.get.mock.calls.every(([, config]) => config.signal === signal)).toBe(true);
+  expect(surface().querySelector('[aria-label="Current implementation"]').disabled).toBe(true);
+  expect(mockGuideProps).toBeNull();
+  await act(async () => pending.forEach(item => item.resolve({data: copy(response(item.path))})));
+  expect(readPaths()).toEqual(fallbackPaths());
+  expect(surface().classList.contains('brawndo-assessment-pilot')).toBe(true);
+  expect(mockGuideProps.configuration.implementation_group).toBe(2);
+  expect(mockGuideProps.current.framework_assessment_id).toBe(record.framework_assessment_id);
+  expect(surface().querySelector('[aria-label="Current implementation"]').disabled).toBe(false);
   expectNoWrites();
 });
 

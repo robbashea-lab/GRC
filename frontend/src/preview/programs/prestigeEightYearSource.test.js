@@ -9,6 +9,13 @@ import {PRESTIGE_OPERATING_BUNDLE_KEYS} from './prestigeOperatingArtifacts';
 import {demoCurrentPositions, portfolioReportingRequest, readPortfolioStore} from '../portfolioReporting';
 import {getPrestigeDemoScenarioContext} from './prestigePreparedHistory';
 
+// Replay the exact immutable V2-authored source-generation contract only in this
+// suite. Actual materialized startup/current rollout coverage remains unpatched.
+jest.mock('../../lib/socGuidedAssessment',()=>({
+  ...jest.requireActual('../../lib/socGuidedAssessment'),
+  socGuidedCatalog:jest.requireActual('@catalogs/guidedSoc2.json'),
+}));
+
 const CID = 'demo_prestige', CLOCK = new Date('2026-11-08T00:00:00.000Z');
 const historicalDates = ['2018-11-02', '2019-10-18', '2020-10-23', '2022-04-01',
   '2022-10-21', '2023-11-17', '2024-10-18', '2025-10-17'];

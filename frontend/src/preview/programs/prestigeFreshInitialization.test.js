@@ -5,7 +5,9 @@ import {clearFileCache} from '../evidenceStorage';
 import {stable} from '../commandRequests';
 import {activeDefinitions, activePlans, FRAMEWORKS} from '../../lib/frameworks';
 import {namedDemoClient} from '../../lib/demoClients';
+import {socGuidedCatalog} from '../../lib/socGuidedAssessment';
 import * as fixtureInstaller from './prestigeEightYearFixture';
+import prestigeEightYearFixtureData from './prestigeEightYearFixtureData.json';
 import {getPrestigeDemoScenarioContext} from './prestigePreparedHistory';
 
 const CID = 'demo_prestige', PROGRAM = CID + ':soc-2';
@@ -119,6 +121,28 @@ test('real native fresh entry and save/read keep the qualified historical proof 
     expect(owned(cold, kind)).toHaveLength(count);
   for (const pointId of expectedPoints)
     expect(cold.portfolio_reporting.snapshots.filter(row => row.snapshot_id === pointId)).toHaveLength(1);
+});
+
+test('unpatched rollout defaults preserve the materialized authored-V2 personal interviews across cold reload without grafting new questions',()=>{
+  expect(socGuidedCatalog.version).toBe('soc2-assessment-rollout-1');
+  const warm=readStore();
+  const ownGuided=db=>Object.fromEntries(Object.entries(db.guided_assessment_pilot||{}).filter(([,draft])=>draft.client_id===CID));
+  // The installer copies these authored native identities verbatim; do not derive
+  // the preservation oracle from already-initialized records.
+  expect(ownGuided(warm)).toEqual(prestigeEightYearFixtureData.payload.guided.guided_assessment_pilot);
+  expect(owned(warm,'framework_assessments')).toEqual(prestigeEightYearFixtureData.payload.collections.framework_assessments);
+  const before=clone(ownGuided(warm));expect(Object.keys(before)).toHaveLength(38);
+  const definitions=new Map(owned(warm,'framework_assessments').map(row=>[row.framework_assessment_id,row.definition_id]));
+  for(const draft of Object.values(before)){
+    expect(draft.version).toBe('soc2-omni-2');expect(typeof draft.narrative).toBe('string');expect(draft.narrative.trim().length).toBeGreaterThan(0);
+    expect(Object.keys(draft.answers).length).toBeGreaterThan(0);
+    const id=definitions.get(draft.assessment_id);expect(id).toBeDefined();
+    const context=socGuidedCatalog.definitions[id].groups.find(group=>group.id==='implementation_context');expect(context).toBeDefined();
+    for(const question of context.questions)expect(Object.hasOwn(draft.answers,question.id)).toBe(false);
+  }
+  const saved=sessionStorage.getItem(STORE_KEY);clearFileCache();
+  const cold=readStore();expect(ownGuided(cold)).toEqual(before);expect(sessionStorage.getItem(STORE_KEY)).toBe(saved);
+  expect(owned(cold,'framework_assessments')).toEqual(owned(warm,'framework_assessments'));
 });
 
 test('a retained pre-refresh session keeps visitor notes and onboarding draft without adding the new fixture', () => {
