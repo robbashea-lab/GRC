@@ -87,7 +87,16 @@ test.each([
     expect(result(id,hidden).narrative).not.toContain(notes.gaps);expect(result(id,hidden).narrative).not.toContain(notes.unknowns);
   }
   const actual={...answers,additional_gap:'Yes',gaps:'The selected service has a reported coverage gap.',additional_confirmation:'Yes',unknowns:'Confirm the location of supporting records.'};
-  validate(id,actual);const output=result(id,actual);expect(output.status).toBe('addressed');
+  validate(id,actual);const output=result(id,actual);expect(output.status).toBe('needs_attention');
+  expect(catalog.version).toBe(framework==='soc-2'?'soc2-assessment-rollout-2':'iso27001-assessment-rollout-2');
+  // Preserve the original historical proposal oracle under its saved versions.
+  const rolloutVersion=framework==='soc-2'?'soc2-assessment-rollout-1':'iso27001-assessment-rollout-1';
+  for(const version of [historicalVersion,rolloutVersion]){
+    validate(id,actual,version);const historicalOutput=result(id,actual,version);
+    expect(historicalOutput.status).toBe('addressed');
+    expect(historicalOutput.signals).toEqual(output.signals);
+    expect(generatedItems(row,{answers:actual,version}).map(item=>({questionId:item.question_id,kind:item.kind,text:item.text}))).toEqual(historicalOutput.signals);
+  }
   expect(output.signals).toEqual([{questionId:'gaps',kind:'gap',text:actual.gaps},{questionId:'unknowns',kind:'verification',text:actual.unknowns}]);
   expect(generatedItems(row,{answers:actual,version:catalog.version}).map(item=>({questionId:item.question_id,kind:item.kind,text:item.text}))).toEqual(output.signals);
   expect(()=>validate(id,{...actual,gaps:''})).toThrow('Describe the additional reported work');
