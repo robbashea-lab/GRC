@@ -1,0 +1,61 @@
+name: CI348 metadata readiness only (not release qualification)
+
+on:
+  push:
+    branches: [codex/ci348-readiness-20261110]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci348-metadata-readiness-once
+  cancel-in-progress: false
+
+jobs:
+  metadata:
+    name: Metadata only — no tests, fixture or diagnostic
+    runs-on: ubuntu-24.04
+    timeout-minutes: 6
+    steps:
+      - name: Read reviewed driver revision
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          ref: ${{ github.sha }}
+          path: driver
+          persist-credentials: false
+      - name: Read unchanged subject revision
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          ref: 3394388b3a3a1c3ae6ee67f70edb19f7c04fcfbb
+          path: subject
+          persist-credentials: false
+      - name: Select existing pinned runtime
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '22.23.4'
+      - name: Capture bounded allowlisted readiness metadata
+        id: readiness
+        timeout-minutes: 1
+        run: node driver/diagnostics/ci348/readiness.cjs
+        env:
+          CI: 'true'
+          NODE_OPTIONS: ''
+          NODE_PATH: ''
+          NODE_V8_COVERAGE: ''
+          CI348_WORKSPACE: ${{ github.workspace }}
+          CI348_SUMMARY_ROOT: ${{ runner.temp }}/ci348-readiness-${{ github.run_id }}-${{ github.run_attempt }}
+          CI348_DRIVER_SHA: ${{ github.sha }}
+          CI348_RUN_ID: ${{ github.run_id }}
+          CI348_ATTEMPT: ${{ github.run_attempt }}
+          CI348_EVENT: ${{ github.event_name }}
+          CI348_REF: ${{ github.ref }}
+          CI348_REPOSITORY: ${{ github.repository }}
+          CI348_REPOSITORY_PRIVATE: ${{ github.event.repository.private }}
+      - name: Preserve only the explicit safe summary
+        if: ${{ always() && steps.readiness.outputs.safe_summary_written == 'true' }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: ci348-metadata-readiness-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/ci348-readiness-${{ github.run_id }}-${{ github.run_attempt }}/safe-summary.json
+          if-no-files-found: error
+          retention-days: 7

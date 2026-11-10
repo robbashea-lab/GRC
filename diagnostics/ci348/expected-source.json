@@ -1,0 +1,19 @@
+{
+  "base": "3394388b3a3a1c3ae6ee67f70edb19f7c04fcfbb",
+  "tree": "ba698e9c43519d79cc38bc061d7b13e40f6089c3",
+  "testBlob": "e1b8d5ed891cdea2e130cec76c1bd6b80005a3ab",
+  "inputs": {
+    "frontend/package.json": "c6e047752edf0ab73252053b564b181b5391a241cbc8911a937c9660600aa427",
+    "frontend/yarn.lock": "10019eddc8c2c5c5c772086e821f672aa5533fec1c12792eef271a4e9b1fb77a",
+    "frontend/craco.config.js": "4bd212feea77b84357b30ef0e7c00d7fa196b6f7d26ed08a54c32e1ff0b4a2d6",
+    "frontend/src/preview/store.js": "00cda1126ff28622b3ad10dbc54cb04c8eee8b3e6f27b00dc2aa8d17f2bf83ca",
+    "frontend/src/preview/commandRequests.js": "58bab36ea85497bc2930b07122b38fedc098e405cb400734dadb8149aea6a33b",
+    "frontend/src/preview/programs/prestigeEightYearSource.js": "087eb556e6c8d44198c4984a482ea3ac86eec1662fb77303a5ca7555036b17a7",
+    "frontend/src/preview/programs/prestigeEightYearFixture.js": "b50a9148803e914877a873db05a40450c15d378fb54d3eb261b28ba44914801e",
+    "frontend/src/preview/programs/prestigeOperatingArtifacts.js": "725e764387b4711fd222962a04cb93597eac845477e331d87109ca8493594a2a",
+    "frontend/src/preview/programs/prestigePreparedHistory.js": "559715880bd375ab87b6122055529c2977c832e3efd008d8b57d587a60db851d",
+    "frontend/src/lib/socGuidedAssessment.js": "210d532f6798fc89d18325792eefaf52f90bff53e540ca0dfb1e17a7f3c64fce",
+    "shared/catalogs/guidedSoc2.json": "28cea805b825dcaef97fb5a44691c3c28cf21af00e6fa1583ee0b2aeb5c277e7"
+  },
+  "meaning": "Expected source bytes only; NOT a target or execution admission"
+}
