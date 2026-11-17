@@ -29,6 +29,8 @@ import {
   ClipboardList, ShieldCheck, Lock, Search,
 } from "lucide-react";
 import NotificationBell from "@/components/NotificationBell";
+import PortfolioReferenceChrome from './PortfolioReferenceChrome';
+import {enhancedPortfolioEligible} from '@/lib/enhancedPortfolio';
 import {
   DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem,
   DropdownMenuSeparator,
@@ -323,6 +325,7 @@ function LayoutContents() {
   const clientSurface=currentClientId&&(pathname==='/reviews'||pilot&&pathname==='/systems'
     ||!isCisReference(currentClientId,user,currentClient)&&!sharedBody)
     &&!['/clients','/admin','/platform'].some(path=>pathname.startsWith(path));
+  if(enhancedPortfolioEligible({user,pathname,authLoading:auth.loading,authError:auth.error}))return <ComplianceProvider><PortfolioReferenceChrome adminItems={PLATFORM_NAV.filter(item=>!item.section)}><Outlet/></PortfolioReferenceChrome></ComplianceProvider>;
   const content=<div className={'app-shell min-h-screen flex bg-surface-app '+(pathname==='/clients'?'governara-portfolio-shell':'governara-operational-shell')}>
       <Sidebar />
       <main className="app-workspace flex-1 min-w-0">

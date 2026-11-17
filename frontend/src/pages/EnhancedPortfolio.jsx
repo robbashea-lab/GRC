@@ -1,3 +1,4 @@
+import { Search, ChevronRight, ArrowUpRight } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import api, { formatError, PREVIEW_MODE } from '@/lib/api';
@@ -14,6 +15,7 @@ import { enhancedPortfolioEligible, filterPortfolio, PORTFOLIO_KPIS, portfolioKp
 import { PortfolioStatusBar, formatPortfolioDate } from '@/components/PortfolioReports';
 import EnhancedPortfolioHistory from '@/components/EnhancedPortfolioHistory';
 import './EnhancedPortfolio.css';
+import './PortfolioReference.css';
 
 // Portfolio appearance is independent of the currently selected operational client.
 export default function EnhancedPortfolioBoundary({
@@ -27,7 +29,7 @@ export default function EnhancedPortfolioBoundary({
     authError: auth.error
   });
   if (location.pathname === '/clients' && (auth.loading || auth.error)) {
-    return <section className="enhanced-portfolio"><p className="ep-empty" role={auth.error ? 'alert' : 'status'}>{auth.error ? 'Portfolio unavailable' : 'Loading client portfolio…'}</p></section>;
+    return <section className="enhanced-portfolio"><p className="ep-empty" role={auth.error ? 'alert' : 'status'}>{auth.error ? 'Portfolio unavailable' : 'Loading client portfolio.'}</p></section>;
   }
   const identity = JSON.stringify([auth.user?.user_id, auth.user?.role, auth.user?.workspace_mode, !!auth.user?.all_clients, [...(auth.user?.client_ids || [])].sort()]);
   return eligible ? <EnhancedPortfolio key={identity} user={auth.user} /> : children;
@@ -39,13 +41,13 @@ export function EnhancedPortfolio({
     {
       switchClient
     } = useOrg();
-  const [theme, setTheme] = useBrawndoTheme();
+  const [theme, setTheme] = useBrawndoTheme('dark');
   useBrawndoPortalTheme(true, theme);
   const [preferences, updatePreferences, restoreScroll] = usePortfolioView(user);
   const state = {
     search: preferences.search || '', mine: !!preferences.mine,
     framework: preferences.framework === 'all' ? '' : preferences.framework || '',
-    sort: preferences.enhancedSort || 'attention', view: preferences.enhancedView || 'clients',
+    sort: ['attention','name'].includes(preferences.enhancedSort) ? preferences.enhancedSort : 'attention', view: preferences.enhancedView || 'clients',
     kpi: PORTFOLIO_KPIS.some(([key]) => key === preferences.enhancedKpi) ? preferences.enhancedKpi : null,
   };
   const update = useCallback(patch => {
@@ -165,48 +167,52 @@ export function EnhancedPortfolio({
     map.get(id).clients.push(client);
     return map;
   }, new Map()).entries()];
-  return <section className="enhanced-portfolio" data-theme={theme}>
-    <header className="ep-heading"><div><h1>Client portfolio</h1><p>{report.loading ? "Loading client portfolio…" : report.error ? "Portfolio unavailable" : <>{clients.length} clients · {programs.length} programs · as of {formatPortfolioDate(asOf)}</>}</p></div><div className="ep-segment" role="group" aria-label="Theme">{['light', 'dark'].map(value => <button key={value} type="button" aria-pressed={theme === value} onClick={() => setTheme(value)}>{value === 'light' ? 'Light' : 'Dark'}</button>)}</div></header>
-    <div className="ep-kpis" role="group" aria-label="Portfolio summary">{PORTFOLIO_KPIS.map(([key, label, help]) => <button key={key} type="button" className="ep-kpi" aria-pressed={state.kpi === key} disabled={!data || key === 'notstarted' && portfolioKpiValue(key, base, asOf) == null} onClick={() => update({
-        kpi: state.kpi === key ? null : key
-      })}><span>{label}</span><strong>{data ? portfolioKpiValue(key, base, asOf) ?? '—' : '—'}</strong><small>{key === "notstarted" && data && portfolioKpiValue(key, base, asOf) == null ? "Onboarding state unavailable" : help}</small></button>)}</div>
-    <div className="ep-box"><div className="ep-toolbar">
-      <input ref={search} type="search" placeholder="Search client, lead or framework…" aria-label="Search clients" value={state.search} onChange={event => update({
-          search: event.target.value
-        })} />
-      <div className="ep-segment" role="group" aria-label="Scope">{[[false, 'All clients'], [true, 'Assigned to me']].map(([value, label]) => <button key={label} type="button" aria-pressed={state.mine === value} onClick={() => update({
-            mine: value
-          })}>{label}</button>)}</div>
-      <select aria-label="Framework" value={state.framework} onChange={event => update({
-          framework: event.target.value
-        })}><option value="">All frameworks</option>{frameworks.map(([key, label]) => <option key={key} value={key}>{label}</option>)}</select>
-      <label>Sort <select aria-label="Sort clients" value={state.sort} onChange={event => update({
-            sort: event.target.value
-          })}><option value="attention">Needs attention first</option><option value="name">Client name A–Z</option><option value="next">Next key date</option></select></label>
-      <div className="ep-segment" role="group" aria-label="View">{[['clients', 'Clients'], ['leads', 'By lead']].map(([value, label]) => <button key={value} type="button" aria-pressed={state.view === value} onClick={() => update({
-            view: value
-          })}>{label}</button>)}</div>
+  return <section className="enhanced-portfolio portfolio-reference wrap" data-theme={theme}>
+    <header className="ep-heading page-head">
+      <div style={{flex:'1 1 360px'}}><h1 className="page-title">Client portfolio</h1><p className="page-sub grad">{report.loading ? 'Loading client portfolio.' : report.error ? 'Portfolio unavailable' : <>{clients.length} clients · {programs.length} programs · as of {formatPortfolioDate(asOf)}</>}</p></div>
+      <div className="ep-segment seg" role="group" aria-label="Theme">{['light', 'dark'].map(value => <button key={value} type="button" aria-pressed={theme === value} aria-checked={theme === value} onClick={() => setTheme(value)}>{value === 'light' ? 'Light' : 'Dark'}</button>)}</div>
+    </header>
+    <div className="ep-kpis panel kpi" role="group" aria-label="Portfolio summary">{PORTFOLIO_KPIS.map(([key, label, help]) => {
+      const value = data ? portfolioKpiValue(key, base, asOf) : null;
+      return <button key={key} type="button" className="ep-kpi kpi-cell" aria-pressed={state.kpi === key} disabled={!data || key === 'notstarted' && value == null} onClick={() => update({kpi:state.kpi === key ? null : key})}>
+        <span className="kpi-label">{label}</span><strong className="kpi-value num" style={{color:value && ['attention','overdue'].includes(key) ? 'var(--kpi-alert)' : key === 'notstarted' ? value ? 'var(--warn)' : 'var(--faint)' : undefined}}>{value == null ? '—' : value}</strong>
+        <small className="kpi-cap">{key === 'notstarted' ? value == null ? 'Onboarding state unavailable' : 'Clients awaiting program onboarding' : help}</small>
+      </button>;
+    })}</div>
+    <div className="ep-box panel">
+      <div className="ep-toolbar toolbar">
+        <label className="field ep-search"><Search size={15} aria-hidden="true" /><input ref={search} type="search" placeholder="Search client, lead or framework…" aria-label="Search clients" value={state.search} onChange={event => update({search:event.target.value})} /></label>
+        <div className="ep-segment seg" role="group" aria-label="Scope">{[[false, 'All clients'], [true, 'Assigned to me']].map(([value, label]) => <button key={label} type="button" aria-pressed={state.mine === value} aria-checked={state.mine === value} onClick={() => update({mine:value})}>{label}</button>)}</div>
+        <select className="select" aria-label="Framework" value={state.framework} onChange={event => update({framework:event.target.value})}><option value="">All frameworks</option>{frameworks.map(([key, label]) => <option key={key} value={key}>{label}</option>)}</select>
+        <label className="sort-label">Sort <select className="select" aria-label="Sort clients" value={state.sort} onChange={event => update({sort:event.target.value})}><option value="attention">Needs attention first</option><option value="name">Client name A–Z</option></select></label>
+        <div className="ep-segment seg" role="group" aria-label="View">{[['clients', 'Clients'], ['leads', 'By lead']].map(([value, label]) => <button key={value} type="button" aria-pressed={state.view === value} aria-checked={state.view === value} onClick={() => update({view:value})}>{label}</button>)}</div>
+      </div>
+      {report.loading ? <p className="ep-empty empty" role="status">Loading client portfolio.</p> : report.error ? <div className="ep-empty empty" role="alert"><p>{report.error}</p><button type="button" className="ep-button ghost" onClick={load}>Retry</button></div> : state.view === 'clients' ? <div className="scroll-x"><div className="ep-table" role="table" aria-label="Client portfolio">
+        <div className="ep-columns thead" role="row">{['Client', 'Programs', 'GRC lead'].map(label => <span role="columnheader" key={label}>{label}</span>)}<span role="columnheader" aria-label="Client overview" /></div>
+        <div role="rowgroup">{visible.map(client => {
+          const visiblePrograms = programs.filter(program => program.client_id === client.client_id && (!state.framework || program.program_key === state.framework));
+          const lead = grcLead(client), first = visiblePrograms[0];
+          return <div className="ep-row trow" role="row" key={client.client_id} data-client-id={client.client_id} onClick={event=>{if(!event.target.closest('button,a,input,select'))preview(client,first,{currentTarget:event.currentTarget.querySelector('.ep-client-link')});}}>
+            <div className="ep-client" role="cell"><button type="button" className="client ep-client-link" aria-label={`Open ${client.name} overview`} onClick={event => preview(client, first, event)}><ClientMark client={client} /><span className="ep-client-copy"><span className="client-name">{client.name}</span><span className={`client-ind${client.industry ? '' : ' unset'}`}>{client.industry || 'Industry not set'}</span></span></button></div>
+            <div className="ep-programs" role="cell">{visiblePrograms.map(program => <ProgramCell key={programIdentity(program)} client={client} program={program} onPreview={event => preview(client, program, event)} />)}{!visiblePrograms.length && <button type="button" className="no-prog" onClick={() => enter(client,'/onboarding')}><span style={{fontWeight:600}}>No program yet</span><span className="prog-cap" style={{color:'var(--accent)'}}>Start GRC Program Onboarding →</span></button>}</div>
+            <div className="ep-lead lead" role="cell"><span className={`av${!client.grc_lead_id && !client.assigned_owner_id ? ' none' : ''}`} aria-hidden="true">{lead.name === 'Unassigned' ? '?' : lead.name.split(' ').map(part => part[0]).slice(0, 2).join('')}</span><span className={`ellip${lead.name === 'Unassigned' ? ' lead-name none' : ''}`}>{lead.name}</span></div>
+            <div role="cell"><button type="button" className="ep-preview chev" aria-label={`Preview ${client.name} implementation`} onClick={event => preview(client, first, event)}><ChevronRight size={16} aria-hidden="true" /></button></div>
+          </div>;
+        })}</div>
+      </div></div> : <div className="ep-leads leads">{groups.map(([id, group]) => <div className={`ep-lead-card lead-card${id === 'unassigned' ? ' unassigned' : ''}`} key={id}>
+        <header className="ep-group-heading"><span className={`av${id === 'unassigned' ? ' none' : ''}`} aria-hidden="true">{id === 'unassigned' ? '?' : group.lead.split(' ').map(part => part[0]).slice(0,2).join('')}</span><span><b>{group.lead}</b><small className="sub">{group.clients.length} clients</small></span></header>
+        <dl className="ep-lead-numbers lead-stats">{[['overdue', 'Overdue'], ['attention', 'Need attention'], ['due30', 'Due in 30 days']].map(([key, label]) => <div key={key}><dt>{label}</dt><dd className="num">{portfolioKpiValue(key, group.clients, asOf)}</dd></div>)}</dl>
+        <div className="ep-tags">{group.clients.map(client => <button className="pill-btn" key={client.client_id} type="button" onClick={event => preview(client, programs.find(program => program.client_id === client.client_id), event)}><ClientMark client={client}/>{client.name}</button>)}</div>
+      </div>)}</div>}
+      {!report.loading && !report.error && !visible.length && <div className="ep-empty empty">{state.mine && !state.search.trim() && !state.framework && !state.kpi
+        ? <>No clients are currently assigned to you. <button type="button" className="ep-button ghost" onClick={() => update({mine:false})}>Show all clients</button></>
+        : <>No clients match the selected filters. <button type="button" className="ep-button ghost" onClick={clear}>Clear filters</button></>}</div>}
+      <footer className="gt-foot"><span>Showing {visible.length} of {base.length} matching clients</span><span style={{marginLeft:'auto'}}>Assessment progress, not a compliance determination. Percentages aren't comparable across frameworks, so there's no portfolio-wide ranking by %.</span></footer>
     </div>
-    {report.loading ? <p className="ep-empty" role="status">Loading client portfolio…</p> : report.error ? <div className="ep-empty" role="alert"><p>{report.error}</p><button type="button" className="ep-button" onClick={load}>Retry</button></div> : state.view === 'clients' ? <div role="table" aria-label="Client portfolio"><div className="ep-columns" role="row">{['Client', 'Programs', 'GRC lead'].map(label => <span role="columnheader" key={label}>{label}</span>)}</div><div role="rowgroup">{visible.map(client => {
-            const visiblePrograms = programs.filter(program => program.client_id === client.client_id && (!state.framework || program.program_key === state.framework));
-            const lead = grcLead(client),
-              first = visiblePrograms[0];
-            return <div className="ep-row" role="row" key={client.client_id} data-client-id={client.client_id}>
-        <div className="ep-client" role="cell"><ClientMark client={client} /><div><button type="button" className="ep-client-link" onClick={() => enter(client)}>{client.name}</button><small>{client.industry || 'Not set'}</small></div></div>
-        <div className="ep-programs" role="cell">{visiblePrograms.map(program => <ProgramCell key={programIdentity(program)} client={client} program={program} onPreview={event => preview(client, program, event)} />)}{!visiblePrograms.length && <><small>No enabled programs</small><button type="button" className="ep-link" onClick={event => preview(client, null, event)}>View existing work</button></>}</div>
-        <div className="ep-lead" role="cell"><span aria-hidden="true">{lead.name.split(' ').map(part => part[0]).slice(0, 2).join('')}</span>{lead.name}<button type="button" className="ep-preview" aria-label={`Preview ${client.name} implementation`} onClick={event => preview(client, first, event)}>›</button></div>
-      </div>;
-          })}</div></div> : <div className="ep-leads">{groups.map(([id, group]) => <div className="ep-lead-card" key={id}><header><b>{group.lead}</b><small>{group.clients.length} clients</small></header><div className="ep-lead-numbers">{[['overdue', 'Overdue'], ['attention', 'Need attention'], ['due30', 'Due in 30 days']].map(([key, label]) => <div key={key}><b>{portfolioKpiValue(key, group.clients, asOf)}</b><small>{label}</small></div>)}</div><div className="ep-tags">{group.clients.map(client => <button key={client.client_id} type="button" onClick={() => enter(client)}>{client.name}</button>)}</div></div>)}</div>}
-    {!report.loading && !report.error && !visible.length && <div className="ep-empty">{state.mine && !state.search.trim() && !state.framework && !state.kpi
-      ? <>No clients are currently assigned to you. <button type="button" className="ep-button" onClick={() => update({mine:false})}>Show all clients</button></>
-      : <>No clients match the selected filters. <button type="button" className="ep-button" onClick={clear}>Clear filters</button></>}</div>}
-    <footer><span>Showing {visible.length} of {base.length} matching clients</span><span>Assessment progress, not a compliance determination. Percentages aren't comparable across frameworks, so there's no portfolio-wide ranking by %.</span></footer></div>
-    {selectionAvailable && <EnhancedPortfolioHistory client={selected} programs={selectedPrograms} selected={selection.programId} onSelect={programId => setSelection(previous => ({
-      ...previous,
-      programId
-    }))} asOf={asOf} refreshToken={report.revision} onClose={() => setSelection(null)} onCloseAutoFocus={restoreFocus} onNavigate={path => enter(selected, path)} theme={theme} />}
+    {selectionAvailable && <EnhancedPortfolioHistory client={selected} programs={selectedPrograms} selected={selection.programId} onSelect={programId => setSelection(previous => ({...previous, programId}))} asOf={asOf} refreshToken={report.revision} onClose={() => setSelection(null)} onCloseAutoFocus={restoreFocus} onNavigate={path => enter(selected, path)} theme={theme} />}
   </section>;
 }
+
 function ProgramCell({
   client,
   program,
@@ -219,5 +225,5 @@ function ProgramCell({
   const progressLabel = percentage == null ? 'Implementation unavailable' : `${percentage.toFixed(1)}%, ${current.implemented} of ${current.denominator} implemented`;
   const assessedLabel = assessed == null ? 'Assessment unavailable' : `Assessed ${assessed} of ${current.denominator}`;
   const statusLabel = valid ? applicableCounts(current).map(value => `${value.count} ${value.label}`).join(', ') : 'Status counts unavailable';
-  return <button type="button" className="ep-program" onClick={onPreview} aria-haspopup="dialog" aria-label={`${client.name} ${program.program_label} implementation history; ${progressLabel}; ${assessedLabel}; ${statusLabel}`}><span className="ep-framework">{program.program_label}</span><span className="ep-progress">{percentage == null ? '—' : `${percentage.toFixed(1)}%`} <small>{valid ? `${current.implemented}/${current.denominator}` : ''}</small></span><PortfolioStatusBar snapshot={current} /><span className="ep-assessed">{assessed == null ? 'Implementation unavailable' : `Assessed ${assessed} of ${current.denominator}`}</span></button>;
+  return <button type="button" className="ep-program prog" onClick={onPreview} aria-haspopup="dialog" aria-label={`${client.name} ${program.program_label} implementation history; ${progressLabel}; ${assessedLabel}; ${statusLabel}`}><span className="prog-top"><span className="ep-framework chip">{program.program_label}</span><span className="prog-open">View history <ArrowUpRight size={12} aria-hidden="true" /></span><span className="ep-progress prog-pct num">{percentage == null ? '-' : `${percentage.toFixed(1)}%`} <small className="prog-frac num">{valid ? `${current.implemented}/${current.denominator}` : ''}</small></span></span><PortfolioStatusBar snapshot={current} /><span className="ep-assessed prog-cap">{assessed == null ? 'Implementation unavailable' : `Assessed ${assessed} of ${current.denominator}`}</span></button>;
 }

@@ -23,19 +23,35 @@ beforeEach(()=>{
 });
 afterEach(async()=>{await act(async()=>root.unmount());container.remove();});
 
-test.each(clients)('the authorized $client_id mark is shared by Portfolio and client context without changing the avatar wrapper',async client=>{
+test.each(clients)('the authorized $client_id Portfolio mark uses the supplied artwork exception while other native callers remain unchanged',async client=>{
   await act(async()=>root.render(<><ClientMark client={client}/><span className="bsb-client-mark" aria-hidden="true"><ClientIdentityMark client={client}/></span></>));
   expect(container.querySelector('.ep-avatar').getAttribute('aria-hidden')).toBe('true');
   const portfolio=container.querySelector('.ep-avatar'), selector=container.querySelector('.bsb-client-mark');
+  const referenceFile=['brawndo.png','initech.png','krusty-krab.png','dunder-mifflin.svg','prestige-worldwide.jpg'][ids.indexOf(client.client_id)];
+  expect(portfolio.querySelector('img').getAttribute('src')).toBe('/client-logos-reference/'+referenceFile);
+  expect(portfolio.querySelector('img').getAttribute('alt')).toBe('');
+  expect(portfolio.querySelector('img').style.objectFit).toBe('contain');
+  expect(fs.statSync(path.join(__dirname,'../../public/client-logos-reference',referenceFile)).size).toBeGreaterThan(0);
   if(client.client_id==='demo_brawndo'){
-    expect(portfolio.querySelector('path').getAttribute('d')).toBe('M23.5 5 11 22.5h8.2L15.8 35 29 16.6h-8.4L23.5 5z');
-    expect(selector.querySelector('path').outerHTML).toBe(portfolio.querySelector('path').outerHTML);
-    expect(portfolio.querySelector('svg').getAttribute('viewBox')).toBe('0 0 40 40');
+    expect(selector.querySelector('path').getAttribute('d')).toBe('M23.5 5 11 22.5h8.2L15.8 35 29 16.6h-8.4L23.5 5z');
+    expect(selector.querySelector('svg').getAttribute('viewBox')).toBe('0 0 40 40');
   }else{
-    expect(selector.querySelector('img').getAttribute('src')).toBe(portfolio.querySelector('img').getAttribute('src'));
+    expect(selector.querySelector('img').getAttribute('src')).toBe(demoClientLogoSource(context(client)));
     expect(selector.querySelector('img').getAttribute('alt')).toBe('');
     expect(selector.querySelector('img').style.objectFit).toBe('contain');
   }
+});
+
+test('Portfolio artwork fails closed for genuine clients and falls back to initials on image failure',async()=>{
+  await act(async()=>root.render(<ClientMark client={clients[1]}/>));
+  await act(async()=>container.querySelector('img').dispatchEvent(new Event('error')));
+  expect(container.querySelector('img')).toBeNull();expect(container.textContent).toBe('I');
+  mockOrg={clients:[]};
+  await act(async()=>root.render(<ClientMark client={clients[2]}/>));
+  expect(container.querySelector('img')).toBeNull();expect(container.textContent).toBe('T');
+  mockOrg={clients};mockAuth={workspaceMode:'standard',user:{user_id:'operator',workspace_mode:'standard',role:'platform_admin'}};
+  await act(async()=>root.render(<ClientMark client={clients[0]}/>));
+  expect(container.querySelector('img')).toBeNull();expect(container.textContent).toBe('B');
 });
 
 test.each([

@@ -158,7 +158,7 @@ const workDisclosure = (title, dialog = document.querySelector('[data-testid="en
 };
 const workDetails = button => document.getElementById(button.getAttribute('aria-controls'));
 
-test.each(['demo', 'standard'])('Portfolio keeps only Client, Programs and GRC lead cells for every framework in %s mode', async mode => {
+test.each(['demo', 'standard'])('Portfolio keeps Client, Programs and GRC lead columns plus an overview action for every framework in %s mode', async mode => {
   mockAuth = {user: {user_id: 'operator', role: 'platform_admin', workspace_mode: mode}, workspaceMode: mode};
   const futureClient = {...client, client_id: 'future_client', name: 'Future client', assigned_owner_id: null, grc_lead_id: null, grc_lead: null};
   const clients = [client, futureClient];
@@ -169,10 +169,10 @@ test.each(['demo', 'standard'])('Portfolio keeps only Client, Programs and GRC l
     : {clients: clients.map(row => ({...row, metric_items: row.client_id === CID ? currentWork : {past_due: [], due_30d: [], due_31_90d: []}}))}}));
   await act(async () => root.render(<EnhancedPortfolioBoundary><p>Legacy Portfolio</p></EnhancedPortfolioBoundary>));
   const table = host.querySelector('[role="table"][aria-label="Client portfolio"]');
-  expect([...table.querySelectorAll('[role="columnheader"]')].map(node => node.textContent)).toEqual(['Client', 'Programs', 'GRC lead']);
+  expect([...table.querySelectorAll('[role="columnheader"]')].map(node => node.textContent || node.getAttribute('aria-label'))).toEqual(['Client', 'Programs', 'GRC lead', 'Client overview']);
   const rows = [...table.querySelectorAll('[data-client-id]')];
   expect(rows).toHaveLength(2);
-  rows.forEach(row => expect(row.querySelectorAll(':scope > [role="cell"]')).toHaveLength(3));
+  rows.forEach(row => expect(row.querySelectorAll(':scope > [role="cell"]')).toHaveLength(4));
   const row = table.querySelector(`[data-client-id="${CID}"]`);
   expect(row.querySelector('.ep-client').textContent).toContain('BrawndoBeverage');
   expect(row.querySelector('.ep-avatar')).toBeTruthy();
@@ -186,19 +186,20 @@ test.each(['demo', 'standard'])('Portfolio keeps only Client, Programs and GRC l
   });
   expect(row.querySelector('.ep-lead').textContent).toContain('Morgan Ellis');
   expect(row.querySelector('.ep-lead > span').textContent).toBe('ME');
-  expect(row.querySelector('.ep-lead .ep-preview').getAttribute('aria-label')).toBe('Preview Brawndo implementation');
+  expect(row.querySelector(':scope > [role="cell"]:nth-child(4) .ep-preview').getAttribute('aria-label')).toBe('Preview Brawndo implementation');
   expect(table.querySelector('[data-client-id="future_client"] .ep-lead').textContent).toContain('Unassigned');
-  expect(table.querySelector('[data-client-id="future_client"] .ep-programs').textContent).toContain('No enabled programs');
+  expect(table.querySelector('[data-client-id="future_client"] .ep-programs').textContent).toContain('No program yet');
   expect(table.textContent).not.toMatch(/Needs attention|Needs a lead|Insufficient history|Real native action|Nothing scheduled/);
   expect(table.querySelector('.ep-attention,.ep-trends,.ep-key-date')).toBeNull();
   expect(host.querySelectorAll('.ep-kpi')).toHaveLength(4);
   expect([...host.querySelectorAll('.ep-kpi > span')].map(node => node.textContent)).toEqual(['Needs attention', 'Overdue items', 'Due in 30 days', 'Not started']);
   expect(host.querySelectorAll('.ep-kpi strong')[1].textContent).toBe('1');
-  expect(host.querySelector('select[aria-label="Sort clients"]').textContent).toContain('Next key date');
+  expect(host.querySelectorAll('.ep-kpi strong')[3].textContent).toBe('0');
+  expect([...host.querySelector('select[aria-label="Sort clients"]').options].map(option=>option.value)).toEqual(['attention','name']);
   expect(api.post).not.toHaveBeenCalled(); expect(api.patch).not.toHaveBeenCalled();
 });
 
-test.each(['name', 'next'])('named Demo Portfolio sort control applies %s and keeps it after the lead-view round trip', async sort => {
+test.each(['name'])('named Demo Portfolio sort control applies %s and keeps it after the lead-view round trip', async sort => {
   const rows = [
     ['demo_prestige', 'Prestige Worldwide', '2026-10-21'],
     ['demo_krusty_krab', 'The Krusty Krab', '2026-10-25'],
@@ -217,9 +218,7 @@ test.each(['name', 'next'])('named Demo Portfolio sort control applies %s and ke
   expect(visibleIds()).toEqual(canonical);
   const select = host.querySelector('select[aria-label="Sort clients"]');
   await act(async () => {select.value = sort; select.dispatchEvent(new Event('change', {bubbles: true}));});
-  const expected = sort === 'name'
-    ? ['demo_brawndo', 'demo_dunder', 'demo_initech', 'demo_prestige', 'demo_krusty_krab']
-    : ['demo_prestige', 'demo_dunder', 'demo_initech', 'demo_krusty_krab', 'demo_brawndo'];
+  const expected = ['demo_brawndo', 'demo_dunder', 'demo_initech', 'demo_prestige', 'demo_krusty_krab'];
   expect(select.value).toBe(sort);
   expect(visibleIds()).toEqual(expected);
   await click('By lead'); await click('Clients');
@@ -238,9 +237,17 @@ test('native work, consistent lead/KPI filters and exact navigation survive miss
   expect(host.textContent).toContain('Morgan Ellis');
   expect(host.textContent).toContain('Brawndo');
   await click('Clients');
-  await click('Brawndo');
+  const clientOpener = host.querySelector('[aria-label="Open Brawndo overview"]');
+  clientOpener.focus();
+  await act(async () => clientOpener.click());
+  expect(document.querySelector('[data-testid="enhanced-portfolio-history"]')).toBeTruthy();
+  expect(mockSwitch).not.toHaveBeenCalled();
+  expect(mockNavigate).not.toHaveBeenCalled();
+  await click('Open client portal');
   expect(mockSwitch).toHaveBeenCalledWith(CID);
   expect(mockNavigate).toHaveBeenCalledWith('/dashboard?client_id=demo_brawndo');
+  await closedPreview();
+  expect(document.activeElement).toBe(clientOpener);
   await act(async()=>host.querySelector('.ep-framework').click());
   expect(document.querySelector('[data-testid="enhanced-portfolio-history"]')).toBeTruthy();
   expect(mockNavigate).toHaveBeenCalledTimes(1);
@@ -253,8 +260,9 @@ test('native work, consistent lead/KPI filters and exact navigation survive miss
   expect(dialog).toBeTruthy();
   expect(dialog.querySelector('[aria-label="Recorded work facts"]')).toBeNull();
   expect(dialog.textContent).not.toMatch(/Latest retained completion|Native completed review|Scheduled recurring reviews|Retained completion history is partial/);
-  expect(workDisclosure('Overdue').getAttribute('aria-expanded')).toBe('false');
-  await act(async () => workDisclosure('Overdue').click());
+  expect(workDisclosure('Overdue').getAttribute('aria-expanded')).toBe('true');
+  expect(workDetails(workDisclosure('Overdue')).hidden).toBe(false);
+  expect(workDisclosure('Next 30 days').getAttribute('aria-expanded')).toBe('false');
   expect(workDetails(workDisclosure('Overdue')).textContent).toContain('Real native action');
   expect(document.body.textContent).not.toMatch(/gone quiet|scheduling gap|monitoring policy/i);
   await act(async () => dialog.querySelector('.ep-work-item').click());
@@ -262,18 +270,19 @@ test('native work, consistent lead/KPI filters and exact navigation survive miss
   expect(api.post).not.toHaveBeenCalled();
   expect(api.patch).not.toHaveBeenCalled();
 });
-test('all four native history ranges, status view, genuine table and live current refresh agree', async () => {
+test('all four native history ranges, line readout and live current refresh agree within the reference modal', async () => {
   await act(async () => root.render(<EnhancedPortfolio user={{
     user_id: 'u'
   }} />));
   await act(async () => host.querySelector('.ep-progress').click());
   expect(api.get.mock.calls.filter(([path]) => path.endsWith('/history')).map(([, options]) => options.params.range).sort()).toEqual(['12m', '1m', '3m', '6m']);
-  await click('View data');
-  await click('All statuses');
   const dialog = document.querySelector('[data-testid="enhanced-portfolio-history"]');
-  expect(dialog.querySelector('.ep-history-data').textContent).toContain('20.0%');
+  expect(dialog.querySelector('.ph-chart .ph-readout').textContent).toContain('20.0%');
+  expect(dialog.querySelector('.ph-chart svg title').textContent).toBe('Implementation history');
+  expect(dialog.querySelector('.ep-history-actions,.ep-history-data,.ep-history-caption')).toBeNull();
+  expect(dialog.querySelector('.ep-forecast-track > div > i').style.width).toBe('20%');
+  expect(dialog.querySelector('.ep-forecast-track svg')).toBeNull();
   expect(dialog.textContent).not.toContain('NaN');
-  expect(dialog.querySelector('.ep-history-actions [aria-pressed]').getAttribute('aria-pressed')).toBe('true');
   current = {
     ...program,
     current: position(3)
@@ -284,7 +293,8 @@ test('all four native history ranges, status view, genuine table and live curren
   });
   expect(dialog.querySelector('.ep-current strong').textContent).toBe('30.0%');
   expect(dialog.querySelector('.ep-periods [aria-pressed="true"]').textContent).toContain('3 months');
-  expect(dialog.querySelector('.ep-history-data').textContent).toContain('30.0%');
+  expect(dialog.querySelector('.ph-chart .ph-readout').textContent).toContain('30.0%');
+  expect(dialog.querySelector('.ep-forecast-track > div > i').style.width).toBe('30%');
 });
 test('incomplete or foreign operational payload fails visibly without retaining old records', async () => {
   api.get.mockRejectedValueOnce(new Error('Reporting unavailable'));
@@ -342,13 +352,15 @@ test('missing program retains operational preview and native record navigation',
   await act(async () => root.render(<EnhancedPortfolio user={{
     user_id: 'u'
   }} />));
-  expect(host.textContent).toContain('No enabled programs');
-  await click('View existing work');
+  expect(host.textContent).toContain('No program yet');
+  await act(async () => host.querySelector('.no-prog').click());
+  expect(mockNavigate).toHaveBeenLastCalledWith('/onboarding?client_id=demo_brawndo');
+  await act(async () => host.querySelector('.ep-client-link').click());
   const dialog = document.querySelector('[data-testid="enhanced-portfolio-history"]');
   expect(dialog.querySelector('[aria-label="Recorded work facts"]')).toBeNull();
-  expect(workDisclosure('Overdue').getAttribute('aria-expanded')).toBe('false');
+  expect(workDisclosure('Overdue').getAttribute('aria-expanded')).toBe('true');
   expect(workDisclosure('Next 30 days').getAttribute('aria-expanded')).toBe('false');
-  await act(async () => workDisclosure('Overdue').click());
+  expect(workDetails(workDisclosure('Overdue')).hidden).toBe(false);
   expect(workDetails(workDisclosure('Overdue')).textContent).toContain('Real native action');
   expect(dialog.textContent).toContain('No enabled program is recorded');
   await act(async () => dialog.querySelector('.ep-work-item').click());
@@ -565,7 +577,7 @@ test('the whole tile accessible name retains percentage, implemented/assessed an
   for(const count of position().included_counts)expect(name).toContain(count.count+' '+count.label);
 });
 
-test('work disclosures start collapsed, expand independently and retain exact native Review occurrence navigation', async () => {
+test('work disclosures open Overdue by default, toggle independently and retain exact native Review occurrence navigation', async () => {
   const review = {...item, key: 'review:annual', entity_type: 'review', entity_id: 'annual-review',
     occurrence_id: 'occurrence-2026-10-22', title: 'Exact scheduled review', due_date: '2026-10-22',
     overdue: false, type: 'Review'};
@@ -583,14 +595,19 @@ test('work disclosures start collapsed, expand independently and retain exact na
     expect(button.tagName).toBe('BUTTON');
     expect(button.type).toBe('button');
     expect(button.disabled).toBe(false);
-    expect(button.getAttribute('aria-expanded')).toBe('false');
-    expect(workDetails(button).hidden).toBe(true);
+    expect(button.getAttribute('aria-expanded')).toBe(String(button === overdue));
+    expect(workDetails(button).hidden).toBe(button !== overdue);
     expect(button.textContent).toContain('1');
     expect(button.querySelector('button,a,input,select,textarea')).toBeNull();
   }
   // jsdom checks the native button and hidden subtree contract; browser QA covers actual key activation/tab order.
   overdue.focus();
   expect(document.activeElement).toBe(overdue);
+  await act(async () => overdue.click());
+  expect(overdue.getAttribute('aria-expanded')).toBe('false');
+  expect(overdueDetails.hidden).toBe(true);
+  expect(upcoming.getAttribute('aria-expanded')).toBe('false');
+  expect(upcomingDetails.hidden).toBe(true);
   await act(async () => overdue.click());
   expect(overdue.getAttribute('aria-expanded')).toBe('true');
   expect(overdueDetails.hidden).toBe(false);
@@ -599,6 +616,9 @@ test('work disclosures start collapsed, expand independently and retain exact na
   expect(overdueDetails.textContent).toContain('Real native action');
   expect(overdueDetails.textContent).toContain('Frito');
   expect(overdueDetails.textContent).toContain('3 days overdue');
+  const workIdentity = overdueDetails.querySelector('.acc-item-main');
+  expect([...workIdentity.children].map(node => node.className)).toEqual(['item-type', 'item-title acc-item-title', 'item-owner']);
+  expect([...workIdentity.children].map(node => node.textContent)).toEqual(['Action item', 'Real native action', 'Frito']);
   await act(async () => upcoming.click());
   expect(overdueDetails.hidden).toBe(false);
   expect(upcomingDetails.hidden).toBe(false);
@@ -621,15 +641,15 @@ test('closing and reopening the same program resets both disclosures and restore
   await act(async () => opener.click());
   await act(async () => workDisclosure('Overdue').click());
   await act(async () => workDisclosure('Next 30 days').click());
-  expect(workDisclosure('Overdue').getAttribute('aria-expanded')).toBe('true');
+  expect(workDisclosure('Overdue').getAttribute('aria-expanded')).toBe('false');
   expect(workDisclosure('Next 30 days').getAttribute('aria-expanded')).toBe('true');
   await closedPreview();
   expect(document.querySelector('[data-testid="enhanced-portfolio-history"]')).toBeNull();
   expect(document.activeElement).toBe(opener);
   await act(async () => opener.click());
   for (const title of ['Overdue', 'Next 30 days']) {
-    expect(workDisclosure(title).getAttribute('aria-expanded')).toBe('false');
-    expect(workDetails(workDisclosure(title)).hidden).toBe(true);
+    expect(workDisclosure(title).getAttribute('aria-expanded')).toBe(String(title === 'Overdue'));
+    expect(workDetails(workDisclosure(title)).hidden).toBe(title !== 'Overdue');
   }
 });
 
@@ -639,6 +659,7 @@ test('a normal native refresh updates counts and implementation data without res
   const overdue = workDisclosure('Overdue');
   const detailsId = overdue.getAttribute('aria-controls');
   await act(async () => overdue.click());
+  await act(async () => workDisclosure('Next 30 days').click());
   currentWork = {...currentWork, past_due: [item, {...item, key: 'task2', entity_id: 'task2', title: 'Another native action'}]};
   current = {...program, current: position(3)};
   await act(async () => {
@@ -647,12 +668,13 @@ test('a normal native refresh updates counts and implementation data without res
   });
   expect(workDisclosure('Overdue')).toBe(overdue);
   expect(overdue.getAttribute('aria-controls')).toBe(detailsId);
-  expect(overdue.getAttribute('aria-expanded')).toBe('true');
+  expect(overdue.getAttribute('aria-expanded')).toBe('false');
   expect(overdue.textContent).toContain('2');
-  expect(workDetails(overdue).hidden).toBe(false);
+  expect(workDetails(overdue).hidden).toBe(true);
   expect(workDetails(overdue).querySelectorAll('.ep-work-item')).toHaveLength(2);
   expect(workDetails(overdue).textContent).toContain('Another native action');
-  expect(workDisclosure('Next 30 days').getAttribute('aria-expanded')).toBe('false');
+  expect(workDisclosure('Next 30 days').getAttribute('aria-expanded')).toBe('true');
+  expect(workDetails(workDisclosure('Next 30 days')).hidden).toBe(false);
   expect(document.querySelector('.ep-current strong').textContent).toBe('30.0%');
   expect(api.post).not.toHaveBeenCalled();
   expect(api.patch).not.toHaveBeenCalled();
@@ -679,24 +701,27 @@ test('changing actual program or client identity resets disclosures and never re
   for (const context of contexts) {
     await act(async () => renderPreview(context));
     const overdue = workDisclosure('Overdue');
-    expect(overdue.getAttribute('aria-expanded')).toBe('false');
+    expect(overdue.getAttribute('aria-expanded')).toBe('true');
+    expect(workDetails(overdue).hidden).toBe(false);
     expect(workDisclosure('Next 30 days').getAttribute('aria-expanded')).toBe('false');
     expect(overdue.getAttribute('aria-controls')).not.toBe(previousId);
     previousId = overdue.getAttribute('aria-controls');
-    await act(async () => overdue.click());
-    await act(async () => workDisclosure('Next 30 days').click());
     expect(workDetails(overdue).textContent).toContain(context[0] === other ? 'Other client native work' : 'Real native action');
     if (context[0] === other) {
       expect(document.querySelector('[data-testid="enhanced-portfolio-history"]').textContent).not.toContain('Real native action');
       await act(async () => workDetails(overdue).querySelector('.ep-work-item').click());
       expect(mockNavigate).toHaveBeenLastCalledWith('/action-items?id=other-task&client_id=new_authorized');
     }
+    await act(async () => overdue.click());
+    expect(workDetails(overdue).hidden).toBe(true);
+    await act(async () => workDisclosure('Next 30 days').click());
+    expect(workDetails(workDisclosure('Next 30 days')).hidden).toBe(false);
   }
   expect(api.post).not.toHaveBeenCalled();
   expect(api.patch).not.toHaveBeenCalled();
 });
 
-test('collapsed counts and expanded lists preserve every native item and the existing inclusive 30-day boundary', async () => {
+test('disclosure counts and visible lists preserve every native item and the existing inclusive 30-day boundary', async () => {
   const many = Array.from({length: 100}, (_, index) => ({...item,
     key: 'task:' + index, entity_id: 'task-' + index, title: 'Native action ' + (index + 1)}));
   const upcoming = (key, due_date) => ({...item, key, entity_id: key, title: key, due_date, overdue: false});
@@ -710,11 +735,11 @@ test('collapsed counts and expanded lists preserve every native item and the exi
   await act(async () => host.querySelector('.ep-program').click());
   expect(workDisclosure('Overdue').textContent).toContain('100');
   expect(workDisclosure('Next 30 days').textContent).toContain('2');
-  await act(async () => workDisclosure('Overdue').click());
+  expect(workDetails(workDisclosure('Overdue')).hidden).toBe(false);
   await act(async () => workDisclosure('Next 30 days').click());
   const actions = [...workDetails(workDisclosure('Overdue')).querySelectorAll('.ep-work-item')];
   expect(actions).toHaveLength(100);
-  expect(actions.map(button => button.querySelector('span:nth-child(2)').firstChild.textContent)).toEqual(many.map(row => row.title));
+  expect(actions.map(button => button.querySelector('.acc-item-main .acc-item-title').textContent)).toEqual(many.map(row => row.title));
   const due = workDetails(workDisclosure('Next 30 days'));
   expect(due.querySelectorAll('.ep-work-item')).toHaveLength(2);
   expect(due.textContent).toContain('due today');
@@ -747,9 +772,9 @@ test.each(['demo', 'standard'])('a newly authorized non-CIS program uses compact
     expect(button.textContent).toContain('0');
     expect(button.classList.contains('ep-red')).toBe(false);
     expect(button.classList.contains('ep-amber')).toBe(false);
-    expect(button.getAttribute('aria-expanded')).toBe('false');
-    expect(workDetails(button).hidden).toBe(true);
-    await act(async () => button.click());
+    expect(button.getAttribute('aria-expanded')).toBe(String(title === 'Overdue'));
+    expect(workDetails(button).hidden).toBe(title !== 'Overdue');
+    if (title !== 'Overdue') await act(async () => button.click());
     expect(workDetails(button).querySelectorAll('.ep-work-item')).toHaveLength(0);
     expect(workDetails(button).textContent).toContain(title === 'Overdue' ? 'Nothing overdue.' : 'Nothing due.');
   }
@@ -775,5 +800,6 @@ test('pending native work coverage stays loading rather than showing compact fal
   await act(async () => resolveOperations({data: {clients: [{...client, metric_items: currentWork}]}}));
   await act(async () => host.querySelector('.ep-program').click());
   expect(workDisclosure('Overdue').textContent).toContain('1');
-  expect(workDisclosure('Overdue').getAttribute('aria-expanded')).toBe('false');
+  expect(workDisclosure('Overdue').getAttribute('aria-expanded')).toBe('true');
+  expect(workDetails(workDisclosure('Overdue')).hidden).toBe(false);
 });

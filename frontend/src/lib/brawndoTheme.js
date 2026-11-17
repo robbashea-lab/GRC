@@ -4,14 +4,14 @@ import {useEffect,useState} from 'react';
 // converted pages). Per-browser convenience only; never state that must persist.
 export const THEME_KEY='omnisciente:brawndo-dashboard-theme';
 const EVENT='omnisciente:brawndo-theme';
-export function readTheme(){try{return localStorage.getItem(THEME_KEY)==='dark'?'dark':'light';}catch{return 'light';}}
-export function useBrawndoTheme(){
-  const [theme,setThemeState]=useState(readTheme);
+export function readTheme(fallback='light'){try{const saved=localStorage.getItem(THEME_KEY);return ['dark','light'].includes(saved)?saved:fallback;}catch{return fallback;}}
+export function useBrawndoTheme(fallback='light'){
+  const [theme,setThemeState]=useState(()=>readTheme(fallback));
   useEffect(()=>{
-    const sync=()=>setThemeState(readTheme());
+    const sync=()=>setThemeState(readTheme(fallback));
     window.addEventListener(EVENT,sync);window.addEventListener('storage',sync);
     return()=>{window.removeEventListener(EVENT,sync);window.removeEventListener('storage',sync);};
-  },[]);
+  },[fallback]);
   const setTheme=next=>{try{localStorage.setItem(THEME_KEY,next);}catch{/* preference only */}setThemeState(next);window.dispatchEvent(new Event(EVENT));};
   return [theme,setTheme];
 }

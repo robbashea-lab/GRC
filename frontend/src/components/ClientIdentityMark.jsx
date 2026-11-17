@@ -13,12 +13,21 @@ export function demoClientLogoSource({client, trustedDemo, workspaceMode, user, 
 }
 
 // The caller retains its existing avatar geometry and visible accessible client name.
-export default function ClientIdentityMark({client, fallback = '—'}) {
+const PORTFOLIO_LOGOS = {
+  demo_brawndo:'/client-logos-reference/brawndo.png',
+  demo_initech:'/client-logos-reference/initech.png',
+  demo_krusty_krab:'/client-logos-reference/krusty-krab.png',
+  demo_dunder:'/client-logos-reference/dunder-mifflin.svg',
+  demo_prestige:'/client-logos-reference/prestige-worldwide.jpg',
+};
+
+export default function ClientIdentityMark({client, fallback = '—', portfolio = false}) {
   const auth = useAuth() || {}, org = useOrg() || {};
   const gradient = useId().replace(/:/g, '');
   const [failedSource, setFailedSource] = useState(null);
-  const source = demoClientLogoSource({client, trustedDemo: PREVIEW_MODE, workspaceMode: auth.workspaceMode,
+  const eligibleSource = demoClientLogoSource({client, trustedDemo: PREVIEW_MODE, workspaceMode: auth.workspaceMode,
     user: auth.user, clients: org.clients, loading: auth.loading || org.loading, error: auth.error || org.error});
+  const source = eligibleSource && portfolio ? PORTFOLIO_LOGOS[client.client_id] || eligibleSource : eligibleSource;
   if (source === 'brawndo') return <svg aria-hidden="true" viewBox="0 0 40 40" style={{width:'100%',height:'100%',display:'block',borderRadius:'inherit'}}><defs><linearGradient id={gradient} x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#2fbf3a"/><stop offset="1" stopColor="#0d6b1f"/></linearGradient></defs><rect width="40" height="40" rx="9" fill={`url(#${gradient})`}/><path d="M23.5 5 11 22.5h8.2L15.8 35 29 16.6h-8.4L23.5 5z" fill="#f5f50f" stroke="#0b3d12" strokeWidth="1.2" strokeLinejoin="round"/></svg>;
   if (source && source !== failedSource) return <img src={source} alt="" aria-hidden="true"
     style={{width:'100%',height:'100%',objectFit:'contain',display:'block',borderRadius:'inherit'}} onError={()=>setFailedSource(source)}/>;
