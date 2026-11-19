@@ -25,7 +25,7 @@ test.each(['demo', 'standard'].flatMap(mode => [
 ]))('%s %s receives common appearance without gaining framework capability', (mode, _label, framework, completed) => {
   const context = contextFor(mode, framework, completed), before = JSON.stringify(context);
   expect(sharedClientPrograms(context.currentClient)).toEqual([]);
-  expect(sharedExperienceEligible(context)).toBe(false);
+  expect(sharedExperienceEligible(context)).toBe(true);
   expect(sharedPresentationEligible(context)).toBe(true);
   for (const [pathname, gate, surface] of [
     ['/calendar', brawndoDemoCalendar, 'calendar'], ['/reviews', brawndoDemoReviewsGate, 'reviews'],
@@ -46,8 +46,16 @@ test.each(['demo', 'standard'].flatMap(mode => [
     loadedClientId: context.currentClientId, profileClientId: context.currentClientId,
     handoffClientId: context.currentClientId, nativeDraft: {completed: false, requirements: {}},
   })).toBe(true);
-  // Existing operational drawer variants must not be activated as an appearance workaround.
-  expect(brawndoFullRecordEligible({...context, pathname: '/risks', clientId: context.currentClientId})).toBe(false);
+  // Common native drawers preserve General-GRC operations without granting a framework program.
+  expect(brawndoFullRecordEligible({...context, pathname: '/risks', clientId: context.currentClientId})).toBe(true);
+  expect(brawndoFullRecordEligible({...context, pathname: '/risks', clientId: 'foreign'})).toBe(false);
+  expect(brawndoFullRecordEligible({...context, pathname: '/risks', clientId: context.currentClientId,
+    record:{risk_id:'retained-foreign-risk',client_id:'foreign'}})).toBe(false);
+  const retained={risk_id:'retained-native-risk',client_id:context.currentClientId,history:[{at:'2026-10-01',note:'Original native history'}]};
+  const beforeRecord=JSON.stringify(retained);
+  expect(brawndoFullRecordEligible({...context,pathname:'/risks',clientId:context.currentClientId,record:retained})).toBe(true);
+  expect(JSON.stringify(retained)).toBe(beforeRecord);
+  expect(sharedClientPrograms(context.currentClient)).toEqual([]);
   expect(JSON.stringify(context)).toBe(before);
 });
 

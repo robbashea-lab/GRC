@@ -172,7 +172,7 @@ test('Prestige SOC 2 uses scoped progress and category-first hierarchy without p
  expect(workspace.querySelector('.lg').textContent).toContain('13.2%5 of 38');
  expect(workspace.querySelectorAll('[data-testid^="soc-category-"]')).toHaveLength(3);expect(workspace.querySelector('[data-testid="soc-category-security"]').textContent).toContain('Security — Common Criteria33');
  expect(workspace.querySelector('.soc-criteria-register').textContent).not.toMatch(/Processing Integrity|Privacy/);
- await act(async()=>buttons('Dark')[0].click());expect(workspace.dataset.theme).toBe('dark');await act(async()=>buttons('Light')[0].click());expect(workspace.dataset.theme).toBe('light');
+ expect(workspace.dataset.theme).toBe('dark');await act(async()=>buttons('Light')[0].click());expect(workspace.dataset.theme).toBe('light');await act(async()=>buttons('Dark')[0].click());expect(workspace.dataset.theme).toBe('dark');
  await act(async()=>[...workspace.querySelectorAll('.lg button')].find(b=>b.textContent.startsWith('Not assessed')).click());
  expect(workspace.querySelectorAll('[data-testid^="requirement-"]')).toHaveLength(3);expect(crumbs()).toEqual(['SOC 2','Not assessed']);
  await act(async()=>container.querySelector('[aria-label="Clear search and filters"]').click());expect(crumbs()).toEqual(['SOC 2']);

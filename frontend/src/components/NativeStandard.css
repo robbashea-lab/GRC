@@ -1211,6 +1211,12 @@ html[data-native-standard] .ui-sheet{border-radius:0;width:min(600px,100%);max-w
 html[data-native-standard] :is(.ui-dialog,.ui-sheet) :is(input:not([type=checkbox]):not([type=radio]),textarea,button[role=combobox],select){border:1px solid var(--input-bd);border-radius:12px;min-height:40px;background:var(--input);color:var(--text);font-family:var(--font)}
 html[data-native-standard] :is(.ui-dialog,.ui-sheet) .ui-button{min-height:40px;height:auto;border-radius:12px;font:500 14px/1.45 var(--font);padding:8px 14px}
 html[data-native-standard] :is(.ui-dialog,.ui-sheet) .ui-button.bg-primary{background:var(--cta);color:var(--cta-fg);border:0}
+/* The native Review Guide also lives outside the shell in Radix portals. */
+html[data-native-standard] :is(.ui-dialog,.ui-sheet) [aria-label="Review guide"] .chip-row{display:flex;flex-wrap:wrap;gap:5px}
+html[data-native-standard] :is(.ui-dialog,.ui-sheet) [aria-label="Review guide"] .mini-chip{font-size:11px;font-weight:500;padding:1px 7px;border-radius:6px;border:1px solid var(--divider);background:var(--surface-2);color:var(--muted);white-space:nowrap}
+html[data-native-standard] :is(.ui-dialog,.ui-sheet) [aria-label="Review guide"] .occ-l{font-size:10px;font-weight:600;letter-spacing:.12em;color:var(--label)}
+html[data-native-standard] :is(.ui-dialog,.ui-sheet) [aria-label="Review guide"] .cta{min-height:40px;padding:0 16px;border:0;border-radius:12px;background:var(--cta);color:var(--cta-fg);font-weight:600;display:inline-flex;align-items:center;gap:8px;box-shadow:0 10px 30px -12px rgba(133,196,255,.55);cursor:pointer}
+html[data-native-standard] :is(.ui-dialog,.ui-sheet) [aria-label="Review guide"] .cta:disabled{cursor:not-allowed;opacity:.5}
 html[data-native-standard] .ui-menu{border-radius:14px;padding:6px}
 html[data-native-standard] .native-notifications{width:min(340px,calc(100vw - 24px))}
 html[data-native-standard] .native-notification-error{padding:12px;color:var(--alert)}

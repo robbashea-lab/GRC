@@ -3,6 +3,7 @@ import {previewAdapter} from './commandTestAdapter';
 import {buildLegacyDemoStore,readStore,saveStore} from './store';
 import {buildDemoStore} from './demoSeed';
 import {ids} from './store';
+import {currentReviewCompletion} from '../testUtils/r4ReviewFixture';
 const api=axios.create({adapter:previewAdapter}),cid='demo_brawndo';
 beforeEach(async()=>{localStorage.clear();sessionStorage.clear();await api.post('/demo/enter');});
 const active=r=>!['completed','cancelled'].includes(r.status);
@@ -29,7 +30,7 @@ test('a second active Review for a Policy is rejected on create and on relink',a
   const p=readStore().policies.find(x=>x.client_id===cid);
   await expect(api.post('/reviews',{client_id:cid,policy_id:p.policy_id,title:'Duplicate',review_type:'policy',recurrence:'annual',due_date:'2026-12-01'})).rejects.toMatchObject({message:'This Policy already has an active Review; open it instead.'});
   const other=(await api.post('/reviews',{client_id:cid,title:'Unlinked review',review_type:'policy',recurrence:'annual',due_date:'2026-12-01'})).data;
-  await expect(api.patch('/reviews/'+other.review_id,{policy_id:p.policy_id})).rejects.toBeTruthy();
+  await expect(api.patch('/reviews/'+other.review_id,{policy_id:p.policy_id,expected_updated_at:other.updated_at??null,expected_occurrence_id:other.current_occurrence_id})).rejects.toBeTruthy();
 });
 test('policy Review completion keeps its cycle, records history and leaves approval alone; its Finding stays visible',async()=>{
   // Create a disposable optional draft and its native annual Review independently
@@ -41,8 +42,23 @@ test('policy Review completion keeps its cycle, records history and leaves appro
   const task=readStore().tasks.find(t=>t.finding_id===finding.finding_id);
   await api.patch('/tasks/'+task.task_id,{status:'done'});
   expect((await api.get('/findings/'+finding.finding_id)).data.status).toBe('remediated');
-  const done=(await api.post(`/reviews/${review.review_id}/complete`,{occurrence_id:review.current_occurrence_id})).data;
+  const body=await currentReviewCompletion(api,review.review_id,{
+    expectedOccurrenceId:review.current_occurrence_id,
+    resultForStep:step=>{
+      const performed={
+        'Review notes':['Exception','SYNTHETIC QA: the BYOD omission remains under Finding '+finding.finding_id+'; completed Action work has not independently validated the Policy.'],
+        'Approved version':['Exception','SYNTHETIC QA: the Policy is still Draft; no approval is claimed for the corrective work.'],
+        'Communication record':['N/A','SYNTHETIC QA: no approved change was communicated to a workforce in this fixture.'],
+        'Next review':['Pass','SYNTHETIC QA: checked the recorded annual schedule; native completion calculates its next cycle.']
+      }[step.support];
+      expect(performed).toBeDefined();
+      return {step_id:step.step_id,result:performed[0],reason:performed[1]};
+    },
+    supportingReference:'SYNTHETIC QA completed policy result: BYOD/approval follow-up remains in native Finding '+finding.finding_id+'.'
+  });
+  const done=(await api.post(`/reviews/${review.review_id}/complete`,body)).data;
   expect(done.occurrence).toMatchObject({due_date:expect.stringContaining(due),outcome:'findings_raised'});
+  expect(done.occurrence.checklist_outcome).toBe('Exceptions noted');
   const next=new Date(Date.UTC(+due.slice(0,4)+1,+due.slice(5,7)-1,+due.slice(8,10))).toISOString().slice(0,10);
   expect(done.review.due_date.slice(0,10)).toBe(next);
   const policy=(await api.get('/policies/'+draft.policy_id)).data;

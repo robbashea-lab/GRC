@@ -18,7 +18,7 @@ jest.mock('react-router-dom', () => {
 }, {virtual:true});
 
 const client = {client_id:'unfamiliar-native-id', name:'Acorn Audit', status:'active'};
-let host, root;
+let host, root, previousTitle;
 const render = () => act(async () => root.render(<NativeStandardShell><p>Native record controller</p></NativeStandardShell>));
 const click = element => act(async () => element.click());
 const key = (element, value) => act(async () => element.dispatchEvent(new KeyboardEvent('keydown', {key:value, bubbles:true, cancelable:true})));
@@ -32,6 +32,7 @@ async function search(value) {
   return input;
 }
 beforeEach(() => {
+  previousTitle = document.title;
   global.IS_REACT_ACT_ENVIRONMENT = true; jest.useFakeTimers(); localStorage.clear(); mockNavigate.mockReset();
   mockPath = '/clients';
   mockAuth = {user:{user_id:'native-owner', role:'super_admin', name:'Native Owner'}, logout:jest.fn().mockResolvedValue(true)};
@@ -39,7 +40,30 @@ beforeEach(() => {
   api.get.mockReset(); api.get.mockImplementation(path => Promise.resolve({data:path === '/dashboard' ? {client_id:client.client_id, kpis:{overdue_reviews:2}, items:[{key:'review:actual', kind:'reviews', id:'actual', title:'Asset review', occurrence_id:'current-cycle'}]} : path.endsWith('/iv-setup') ? {outstanding_count:3} : []}));
   host = document.createElement('div'); document.body.appendChild(host); root = createRoot(host);
 });
-afterEach(async () => {await act(async () => root.unmount()); host.remove(); jest.useRealTimers(); localStorage.clear();});
+afterEach(async () => {await act(async () => root.unmount()); host.remove(); jest.useRealTimers(); localStorage.clear(); document.title = previousTitle;});
+
+test('protected route titles use native labels and only the resolved current client', async () => {
+  document.title = 'Omnisciente | Prestige Worldwide';
+  await render(); expect(document.title).toBe('Portfolio | GoverNara');
+  mockPath = '/dashboard'; await render(); expect(document.title).toBe('Dashboard · Acorn Audit | GoverNara');
+  mockOrg.loading = true; await render(); expect(document.title).toBe('Dashboard | GoverNara');
+  mockOrg.loading = false; mockOrg.currentClient = {...client,client_id:'next-client',name:'Current native client'}; mockOrg.currentClientId = 'next-client';
+  mockPath = '/compliance/cmmc'; await render(); expect(document.title).toBe('CMMC Level 2 · Current native client | GoverNara');
+  mockPath = '/admin/users'; await render(); expect(document.title).toBe('Users & Access | GoverNara');
+  mockPath = '/account'; mockAuth.user.role = 'client_readonly'; await render(); expect(document.title).toBe('My Account | GoverNara');
+});
+
+test('protected title cleanup cannot overwrite the public Login title owner', async () => {
+  mockPath = '/dashboard'; await render();
+  document.title = 'GoverNara Sign In';
+  await act(async () => root.render(null));
+  expect(document.title).toBe('GoverNara Sign In');
+});
+
+test('ending a protected workspace clears its client title instead of restoring legacy HTML branding', async () => {
+  document.title = 'Omnisciente | Prestige Worldwide'; mockPath = '/dashboard'; await render();
+  await act(async () => root.render(null)); expect(document.title).toBe('GoverNara');
+});
 
 test('one protected shell serves unfamiliar clients and every configured framework without changing native children', async () => {
   mockPath = '/dashboard'; await render();

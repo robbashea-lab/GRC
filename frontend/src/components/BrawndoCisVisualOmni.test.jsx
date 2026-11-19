@@ -38,7 +38,7 @@ test('target popup preserves the native recommendation population, order and res
   expect(document.querySelectorAll('.cis-omni-owl')).toHaveLength(1);
   expect(button('Show next steps')).toBeTruthy();await click('Show next steps');
   expect([...document.querySelectorAll('.omni-recommendation h4')].map(node=>node.textContent)).toEqual(expected.map(row=>row.title));
-  expect(document.querySelector('.cis-omni-program-window').style.width).toBe('360px');
+  expect(document.querySelector('.cis-omni-program-window').style.width).toBe('380px');
   await click('Resume safeguard 1.2');
   expect(onSelect).toHaveBeenCalledWith(expect.objectContaining({framework_assessment_id:'visual-1.2',action:'resume'}));
   expect(api.get).not.toHaveBeenCalled();expect(api.put).not.toHaveBeenCalled();expect(props.onSaveAssessment).not.toHaveBeenCalled();

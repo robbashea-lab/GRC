@@ -2,15 +2,17 @@ import React,{act} from 'react';
 import {createRoot} from 'react-dom/client';
 import RemediationTicketDrawer from './RemediationTicketDrawer';
 import api from '@/lib/api';
+import {workSubmissionPatch} from '@/lib/r4Remediation';
 
 const mockUser={user_id:'detail-admin',role:'super_admin',workspace_mode:'demo'};
+const mockWorker={user_id:'detail-work-submitter',role:'platform_admin',status:'active',client_ids:['demo_brawndo']};
 const initialTask={task_id:'detail-action',client_id:'demo_brawndo',finding_id:'detail-finding',title:'Native Action',status:'open',priority:'medium',description:'Saved plan',resolution:'',assignee_id:null,due_date:null,updated_at:'task-v1'};
 const initialFinding={finding_id:'detail-finding',client_id:'demo_brawndo',title:'Native Finding',description:'Saved issue',status:'open',primary_task_id:'detail-action',updated_at:'finding-v1'};
 let mockTasks,mockFindings,mockFullRecord,mockEvidenceTotal;
 const mockLoad=jest.fn();
 jest.mock('@/lib/brawndoFullRecord',()=>({useBrawndoFullRecord:()=>mockFullRecord}));
 jest.mock('@/context/AuthContext',()=>({useAuth:()=>({user:mockUser})}));
-jest.mock('@/lib/useActionRegisterData',()=>({useActionRegisterData:()=>({data:{tasks:mockTasks,findings:mockFindings},users:[],loading:false,error:'',load:mockLoad})}));
+jest.mock('@/lib/useActionRegisterData',()=>({useActionRegisterData:()=>({data:{tasks:mockTasks,findings:mockFindings},users:[mockUser,mockWorker],loading:false,error:'',load:mockLoad})}));
 jest.mock('@/lib/api',()=>({__esModule:true,default:{get:jest.fn(),post:jest.fn(),patch:jest.fn()},formatError:error=>error.message}));
 jest.mock('./EvidencePanel',()=>{
   const {useEffect}=require('react');
@@ -167,7 +169,11 @@ test('pending validation uses real Finding state and exposes no unsupported Send
   expect(document.querySelector('.bad-state-card').textContent).not.toContain('previous-validator');
   expect(document.querySelector('.bad-state-card').textContent).not.toContain('Earlier completed cycle');
   expect(document.body.textContent).not.toContain('Send back');
-  expect(document.querySelector('[aria-label="Actual resolution"]').disabled).toBe(false);
+  expect(document.querySelector('[aria-label="Actual resolution"]').disabled).toBe(true);
+  for(const label of ['Action title','Responsible owner','Due date','Planned action'])expect(document.querySelector('[aria-label="'+label+'"]').disabled).toBe(true);
+  for(const label of ['Priority','Work status'])for(const option of document.querySelectorAll('[aria-label="'+label+'"] button'))expect(option.disabled).toBe(true);
+  const save=button('Save changes',document.querySelector('.ticket-footer'));expect(save.disabled).toBe(true);
+  await act(async()=>save.click());expect(api.patch).not.toHaveBeenCalled();
 });
 
 test('standalone completed work does not claim a validated Finding',async()=>{
@@ -175,6 +181,8 @@ test('standalone completed work does not claim a validated Finding',async()=>{
   expect(document.querySelector('.bad-state-card').textContent).toContain('Work completed');
   expect(document.querySelector('.bad-state-card').textContent).not.toContain('Validated and closed');
   expect(button('Validate and complete')).toBeUndefined();expect(button('Reopen ticket')).toBeUndefined();
+  expect(document.querySelector('[aria-label="Planned action"]').disabled).toBe(true);
+  expect(button('Save changes',document.querySelector('.ticket-footer')).disabled).toBe(true);
 });
 
 test.each(['accepted','accept'])('accepted Finding reads native %s history without manufacturing completed progress',async action=>{
@@ -187,8 +195,14 @@ test.each(['accepted','accept'])('accepted Finding reads native %s history witho
 });
 
 test.each(['validate','accept'])('native %s command retains Work and comment drafts without co-saving them',async operation=>{
-  if(operation==='validate'){mockTasks=[{...initialTask,status:'done'}];mockFindings=[{...initialFinding,status:'remediated'}];}
-  await render();await change('Actual resolution','Unsaved Work resolution');
+  await render();expect(document.querySelector('[aria-label="Actual resolution"]').disabled).toBe(false);
+  await change('Actual resolution','Unsaved Work resolution');
+  if(operation==='validate'){
+    // This known new submission arrives after the validator began an editable draft.
+    mockTasks=[{...initialTask,status:'done',updated_at:'submitted-v2',...workSubmissionPatch(initialTask,{status:'done'},mockWorker.user_id,'2026-10-18T12:00:00Z')}];
+    mockFindings=[{...initialFinding,status:'remediated'}];
+    await render();expect(document.querySelector('[aria-label="Actual resolution"]').disabled).toBe(true);
+  }
   await click('Activity');await change('Ticket comment','Unposted comment');await click('Overview');
   await change(operation==='validate'?'Validation rationale':'Acceptance rationale','Decision rationale');
   await click(operation==='validate'?'Validate and close':'Accept issue');
@@ -237,7 +251,8 @@ test('unmarked Finding keeps its native presentation without new state metadata'
   expect(document.body.textContent).not.toContain('Validated by');
   expect(document.body.textContent).not.toContain('Work completed by retained-actor');
   expect(button('Reopen ticket')).toBeTruthy();
-  expect(button('Save changes',taskForm('detail-action'))).toBeTruthy();
+  expect(button('Save changes',taskForm('detail-action'))).toBeUndefined();
+  expect(document.querySelector('[aria-label="Planned action"]').disabled).toBe(true);
   expect(document.querySelector('[aria-label="Due date"]').closest('label').textContent).toBe('Due date (optional)');
   expect(document.querySelector('[aria-label="Planned action"]').hasAttribute('placeholder')).toBe(false);
 });

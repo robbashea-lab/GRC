@@ -2,6 +2,7 @@ import axios from 'axios';
 import {previewAdapter} from './commandTestAdapter';
 import {dashboard,portfolio} from './summaries';
 import {seedStore,readStore,saveStore} from './store';
+import {currentReviewCompletion} from '../testUtils/r4ReviewFixture';
 const api=axios.create({adapter:previewAdapter});
 beforeEach(()=>{sessionStorage.clear();localStorage.clear();});
 test('Finding related Review retains originating occurrence and current evidence stays separate',async()=>{
@@ -11,7 +12,15 @@ test('Finding related Review retains originating occurrence and current evidence
   const occurrence_id=review.current_occurrence_id;
   const {data:finding}=await api.post(`/reviews/${review.review_id}/create-finding`,{occurrence_id,title:'Access gap',remediation_title:'Review privileged accounts',severity:'high'});
   await api.post('/evidence',{client_id:client.client_id,linked_type:'review',linked_id:review.review_id,occurrence_id,filename:'access.txt',content_base64:'eA=='});
-  const {data:done}=await api.post(`/reviews/${review.review_id}/complete`,{occurrence_id});
+  const body=await currentReviewCompletion(api,review.review_id,{
+    expectedOccurrenceId:occurrence_id,
+    resultForStep:step=>({step_id:step.step_id,result:'Exception',reason:'SYNTHETIC QA: the current access check retains the recorded Access gap under Finding '+finding.finding_id+'; no real account inspection is claimed.'}),
+    supportingReference:'SYNTHETIC QA completed-result record: Access gap retained in Finding '+finding.finding_id+'.'
+  });
+  // A custom zero-step guide still retains this occurrence's explicitly recorded gap.
+  body.outcome='Exceptions noted';
+  const {data:done}=await api.post(`/reviews/${review.review_id}/complete`,body);
+  expect(done.occurrence.checklist_outcome).toBe('Exceptions noted');
   const {data:related}=await api.get('/related',{params:{entity_type:'findings',entity_id:finding.finding_id}});
   expect(related.reviews[0].linked_occurrence).toEqual({period:'Q3 2026',status:'completed'});
   const {data:current}=await api.get('/related',{params:{entity_type:'reviews',entity_id:review.review_id,occurrence_id:done.review.current_occurrence_id}});
@@ -35,7 +44,25 @@ test('policy completion retains history, synchronizes dates, and leaves approval
   const {data:policy}=await api.post('/policies',{client_id:client.client_id,title:'Security Policy'});
   let {data:review}=await api.post('/reviews',{client_id:client.client_id,title:'Annual Policy Review',review_type:'policy',policy_id:policy.policy_id,recurrence:'annual',due_date:'2026-09-30'});
   for(const next of ['2027-09-30','2028-09-30']) {
-    const {data:result}=await api.post(`/reviews/${review.review_id}/complete`,{occurrence_id:review.current_occurrence_id});
+    const {data:finding}=await api.post(`/reviews/${review.review_id}/create-finding`,{
+      occurrence_id:review.current_occurrence_id,title:'SYNTHETIC policy approval remains outstanding',
+      remediation_title:'Retain the separate native policy approval follow-up'
+    });
+    const body=await currentReviewCompletion(api,review.review_id,{
+      expectedOccurrenceId:review.current_occurrence_id,
+      resultForStep:step=>{
+        const performed={
+          'Review notes':['N/A','SYNTHETIC QA: this record-lifecycle fixture does not compare Policy content with actual practice or framework requirements; outstanding approval is assessed separately.'],
+          'Approved version':['Exception','SYNTHETIC QA: Policy remains Draft; Finding '+finding.finding_id+' records the outstanding approval.'],
+          'Communication record':['N/A','SYNTHETIC QA: no approved version or workforce communication occurred in this fixture.'],
+          'Next review':['Pass','SYNTHETIC QA: verified the saved annual cadence; native completion advances its date.']
+        }[step.support];
+        expect(performed).toBeDefined();
+        return {step_id:step.step_id,result:performed[0],reason:performed[1]};
+      },
+      supportingReference:'SYNTHETIC QA completed policy result: draft status reviewed; unresolved approval retained in Finding '+finding.finding_id+'.'
+    });
+    const {data:result}=await api.post(`/reviews/${review.review_id}/complete`,body);
     review=result.review;
     const {data:policies}=await api.get('/policies',{params:{client_id:client.client_id}});
     expect(policies[0].last_reviewed_at).toBe(result.occurrence.completed_at);
@@ -50,7 +77,7 @@ test('rescheduling a central Risk Review updates the same Risk in the demo',asyn
   const {data:client}=await api.post('/clients',{name:'Risk scheduling audit'});
   const {data:risk}=await api.post('/risks',{client_id:client.client_id,title:'Exposure',next_review:'2026-09-30',review_cadence:'annual'});
   const {data:reviews}=await api.get('/reviews',{params:{client_id:client.client_id}});
-  await api.patch('/reviews/'+reviews[0].review_id,{due_date:'2026-10-31',expected_occurrence_id:reviews[0].current_occurrence_id});
+  await api.patch('/reviews/'+reviews[0].review_id,{due_date:'2026-10-31',expected_occurrence_id:reviews[0].current_occurrence_id,expected_updated_at:reviews[0].updated_at??null});
   const {data:risks}=await api.get('/risks',{params:{client_id:client.client_id}});
   expect(risks[0].risk_id).toBe(risk.risk_id);
   expect(risks[0].next_review).toBe('2026-10-31');

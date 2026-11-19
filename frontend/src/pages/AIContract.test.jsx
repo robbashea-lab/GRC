@@ -24,6 +24,13 @@ const input=(label,value)=>act(async()=>{
  node.dispatchEvent(new Event(node.tagName==='SELECT'?'change':'input',{bubbles:true}));
 });
 const mine=async()=>(await api.get('/ai_systems',{params:{client_id:mockClient}})).data;
+function useScopedActor(clientId,role){
+ const db=readStore(),actor={user_id:'synthetic_ai_contract_'+role+'_'+clientId,
+  name:'Synthetic AI metadata actor',email:'ai-'+role+'-'+clientId+'@example.test',
+  role,status:'active',workspace_mode:'demo',client_ids:[clientId],all_clients:false};
+ expect(db.users.some(user=>user.user_id===actor.user_id)).toBe(false);
+ db.users.push(actor);db.user=actor;saveStore(db);mockUser=actor;
+}
 beforeEach(async()=>{
  global.IS_REACT_ACT_ENVIRONMENT=true;sessionStorage.clear();localStorage.clear();mockClient='demo_prestige';
  mockUser=(await api.post('/demo/enter')).data.user;
@@ -55,27 +62,37 @@ test('SOC shared presentation retains approved metadata through native create/ed
  expect(updated.approval_history).toBeUndefined();
 });
 
-test.each(['demo_dunder','demo_prestige'])('%s retains shared metadata editing but cannot gain a CIS approval command',async clientId=>{
+test.each(['demo_dunder','demo_prestige'])('%s retains administrator metadata editing while a scoped contributor gains no write or approval authority',async clientId=>{
  mockClient=clientId;
  const row=(await api.post('/ai_systems',{client_id:mockClient,name:'Canonical Prestige AI'})).data;
  await act(async()=>root.render(<AIGovernance/>));
- expect(container.querySelector('[data-testid="ai-system-view-pending"]')).toBeNull();
- expect(container.textContent).not.toMatch(/Approval not recorded|Permitted Data|Data permissions not established/);
+ expect(container.querySelector('[data-testid="ai-system-view-pending"]')).not.toBeNull();
+ expect(container.textContent).toContain('Data permissions not established');
  await click(container.querySelector('[aria-label="Open Canonical Prestige AI"]')||buttons('Canonical Prestige AI')[0]);
- expect(document.body.textContent).not.toMatch(/Approval Status|Proposed Uses & Approval Conditions/);
+ expect(document.body.textContent).toMatch(/Approval Status|Proposed Uses & Approval Conditions/);
  expect(document.querySelector('[aria-label="Environment / Account Type"]')).not.toBeNull();
  await input('Environment / Account Type','Managed training account');
  await click(buttons('Data & Access')[0]);
  expect(document.querySelector('[aria-label="Data, integrations & account settings"]')).not.toBeNull();
  await input('Data, integrations & account settings','Training settings retained');
  await click(buttons('Oversight & Review')[0]);
- expect(buttons('Schedule Review')).toHaveLength(1);expect(buttons('Record Decision')).toHaveLength(0);
- expect(document.querySelector('[aria-label="Decision"]')).toBeNull();
+ expect(buttons('Schedule Review')).toHaveLength(1);expect(buttons('Record Decision')).toHaveLength(1);
+ expect(document.querySelector('[aria-label="Decision"]').closest('fieldset').disabled).toBe(true);
  await click(buttons('Save Changes')[0]);
  const saved=(await mine()).find(record=>record.ai_system_id===row.ai_system_id);
  expect(saved).toMatchObject({environment:'Managed training account',data_settings:'Training settings retained'});
  expect(saved.approval_history).toBeUndefined();
- await expect(api.post('/ai_systems/'+row.ai_system_id+'/approval',{status:'approved',note:'Unsupported',expected_updated_at:row.updated_at})).rejects.toThrow('Approval decisions require a configured CIS program');
+ await act(async()=>root.render(null));
+ useScopedActor(clientId,'client_contributor');
+ await act(async()=>root.render(<AIDrawer open clientId={mockClient} record={saved} onOpenChange={jest.fn()}/>));
+ expect(document.querySelector('[aria-label="Environment / Account Type"]').closest('fieldset').disabled).toBe(true);
+ expect(buttons('Save Changes')).toHaveLength(0);
+ await click(buttons('Oversight & Review')[0]);
+ expect(buttons('Record Decision')).toHaveLength(0);expect(document.querySelector('[aria-label="Decision"]')).toBeNull();
+ await expect(api.patch('/ai_systems/'+row.ai_system_id,{environment:'Forbidden contributor edit',expected_updated_at:saved.updated_at})).rejects.toMatchObject({response:{status:403}});
+ expect((await mine()).find(record=>record.ai_system_id===row.ai_system_id)).toEqual(saved);
+ await expect(api.post('/ai_systems/'+row.ai_system_id+'/approval',{status:'approved',note:'Contributor cannot approve this saved scope',expected_updated_at:saved.updated_at})).rejects.toMatchObject({response:{status:403}});
+ expect((await mine()).find(record=>record.ai_system_id===row.ai_system_id).approval_history).toBeUndefined();
 });
 
 test('Brawndo keeps its explicit pilot fields, pending view and administrator approval workflow',async()=>{
@@ -104,6 +121,20 @@ test('standard identity presentation sends the approved shared metadata contract
  expect(Object.keys(post.mock.calls.find(([path])=>path==='/ai_systems')[1]).sort()).toEqual(['client_id',...AI_KEYS,...AI_PILOT_KEYS].sort());
  expect(post.mock.calls.find(([path])=>path==='/ai_systems')[1].technical_owner_id).toBe(candidate.user_id);
  expect(buttons('Record Decision')).toHaveLength(0);
+});
+
+test('Technical Owner visibility does not grant a read-only actor AI creation permission',async()=>{
+ const candidate=(await api.get(`/clients/${mockClient}/assignees`,{params:{limit:50,offset:0}})).data.items[0];
+ expect(candidate).toBeTruthy();
+ useScopedActor(mockClient,'client_readonly');
+ const before=await mine(),post=jest.spyOn(api,'post');
+ await act(async()=>root.render(<AIDrawer open clientId={mockClient} onOpenChange={jest.fn()}/>));
+ const technicalOwner=document.querySelector('[aria-label="Technical Owner"]');
+ expect(technicalOwner).not.toBeNull();expect(technicalOwner.closest('fieldset').disabled).toBe(true);
+ expect(buttons('Create AI System')).toHaveLength(0);expect(buttons('Record Decision')).toHaveLength(0);
+ expect(post).not.toHaveBeenCalled();
+ await expect(api.post('/ai_systems',{client_id:mockClient,name:'Forbidden technical-owner creation',technical_owner_id:candidate.user_id})).rejects.toMatchObject({response:{status:403}});
+ expect(await mine()).toEqual(before);
 });
 
 test.each(['demo','standard'].flatMap(mode=>[null,'general','hipaa','nist-csf-2','cmmc'].map(framework=>[mode,framework])))(

@@ -123,6 +123,16 @@ test('native platform-wide access remains distinct from the viewer membership ex
   expect(context(db)).not.toBeNull(); db.user.role = 'client_viewer'; expect(context(db)).toBeNull();
   db.user.client_ids = [CID]; expect(context(db)).not.toBeNull();
   db.user.client_ids = CID; expect(context(db)).toBeNull();
+  for (const role of ['platform_admin', 'client_viewer']) {
+    Object.assign(db.user, {role, all_clients: false});
+    for (const client_ids of [CID, CID + '_foreign', [CID + '_foreign'], null, undefined, false, {0: CID, length: 1}]) {
+      db.user.client_ids = client_ids;
+      const before = JSON.stringify(db);
+      expect(context(db)).toBeNull();
+      expect(JSON.stringify(db)).toBe(before);
+    }
+    db.user.client_ids = [CID]; expect(context(db)).not.toBeNull();
+  }
 });
 
 test('genuine later native observations, current baseline dates and scope/head changes preserve the original proof', () => {

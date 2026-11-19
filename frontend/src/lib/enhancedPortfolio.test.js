@@ -1,4 +1,4 @@
-import { enhancedPortfolioEligible, operationalItems, clientAttention, portfolioKpiValue, filterPortfolio } from './enhancedPortfolio';
+import { enhancedPortfolioEligible, operationalItems, clientAttention, portfolioKpiValue, filterPortfolio, onboardingState } from './enhancedPortfolio';
 const asOf = '2026-10-20T12:00:00Z';
 const gate = () => ({
   preview: true,
@@ -31,6 +31,27 @@ const state = changes => ({
   kpi: '',
   sort: 'name',
   ...changes
+});
+test('native saved completion and explicit projection replace the Demo-only monitoring dependency',()=>{
+  const base={client_id:'normal-native',name:'Native client',assigned_owner_id:'lead1'};
+  for(const proof of [
+    {onboarding_baseline:{completed:true,updated_at:asOf}},
+    {initial_program_baseline:{state:{completed:true},completed_at:asOf}},
+    {onboarding_state:'complete'}
+  ]){
+    const row={...base,...proof},before=JSON.stringify(row);
+    expect(onboardingState(row)).toBe('complete');expect(portfolioKpiValue('notstarted',[row],asOf)).toBe(0);
+    expect(clientAttention(row,asOf).label).toBe('On track');expect(JSON.stringify(row)).toBe(before);
+  }
+  expect(onboardingState({...base,onboarding_baseline:{completed:false,updated_at:'2026-10-19T12:00:00Z'}})).toBe('in_progress');
+  for(const row of [base,{...base,status:'active'},{...base,frameworks:[{key:'cis-ig1'}]},
+    {...base,onboarding_baseline:{completed:false}},{...base,onboarding_baseline:{completed:'false'}},
+    {...base,onboarding_state:'unknown',onboarding_baseline:{completed:true}}, {...base,onboarding_state:'unverified'}]){
+    expect(onboardingState(row)).toBe('unknown');expect(portfolioKpiValue('notstarted',[row],asOf)).toBeNull();
+  }
+  const pending={...base,onboarding_state:'not_started'};
+  expect(portfolioKpiValue('notstarted',[pending],asOf)).toBe(1);
+  expect(filterPortfolio([pending,{...base,client_id:'finished',onboarding_state:'complete'}],[],state({kpi:'notstarted'}),'lead1',asOf)).toEqual([pending]);
 });
 test('Portfolio uses the authorized internal identity and route, independent of operational selection or mode', () => {
   for (const mode of ['demo', 'standard']) {

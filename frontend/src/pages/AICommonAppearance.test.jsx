@@ -5,6 +5,7 @@ import api from '@/lib/api';
 import {cisClient} from '@/testUtils/cisExperience';
 import {frameworkDashboardFixture} from '@/testUtils/frameworkDashboard';
 import {sharedProgramProjection} from '@/preview/clientRelationships';
+import {aiProjection,catalog} from '@/lib/aiGovernance';
 
 let mockAuth, mockOrg, mockNativeProps, host, root;
 jest.mock('@/context/AuthContext', () => ({useAuth: () => mockAuth}));
@@ -28,6 +29,12 @@ jest.mock('@/components/AIIntake', () => ({useAIIntake: () => ({}), AIIntakeView
 
 const id = 'arbitrary-common-AI-client';
 const row = {ai_system_id: 'existing-system', client_id: id, name: 'Existing native AI system', status: 'active'};
+const lowScreening=Object.fromEntries(catalog.questions.map(question=>[question.key,!!question.protective]));
+function projectedRow(record,nextReview,risks=[]) {
+  const saved={...row,owner_id:'operator',screening:{...lowScreening},...record};
+  const reviews=nextReview?[{client_id:id,ai_system_id:saved.ai_system_id,status:'not_started',due_date:nextReview}]:[];
+  return aiProjection(saved,reviews,risks);
+}
 beforeEach(() => {
   global.IS_REACT_ACT_ENVIRONMENT = true;
   mockAuth = {workspaceMode: 'standard', user: {user_id: 'operator', role: 'super_admin'}, loading: false};
@@ -108,15 +115,19 @@ test.each(['demo','standard'])('%s genuinely empty clients offer guided onboardi
   expect(api.post).not.toHaveBeenCalled();expect(api.patch).not.toHaveBeenCalled();
 });
 
-test.each(['demo','standard'])('%s Needing attention uses saved alerts rather than inferring an alert from a tier',async mode=>{
-  context(mode,null);
+test.each(['demo','standard'].flatMap(mode=>[null,'general','cis-ig1','iso-27001','soc-2','hipaa','nist-csf-2','cmmc'].map(framework=>[mode,framework])))('%s %s Needing attention uses native alerts rather than inferring an alert from a tier',async(mode,framework)=>{
+  context(mode,framework);
+  const nextReview=new Date(Date.now()+10*86400000).toISOString().slice(0,10);
+  const assessedRisk={risk_id:'assessed-ai-risk',client_id:id,status:'open',likelihood_score:2,impact_score:2};
+  const highQuestion=catalog.questions.find(question=>question.high).key;
   const records=[
-    {...row,ai_system_id:'low-alert',name:'Saved low alert',risk_tier:'low',alerts:[{key:'owner',label:'AI Owner Missing'}]},
-    {...row,ai_system_id:'high-no-alert',name:'Saved high without alerts',risk_tier:'high',alerts:[]},
-    {...row,ai_system_id:'retired-alert',name:'Historical alert',status:'retired',alerts:[{key:'owner'}]},
+    projectedRow({ai_system_id:'low-alert',name:'Saved low alert',owner_id:null},nextReview),
+    projectedRow({ai_system_id:'high-no-alert',name:'Saved high without alerts',screening:{...lowScreening,[highQuestion]:true},oversight_notes:'Synthetic documented oversight',related_links:[{kind:'risks',id:assessedRisk.risk_id}]},nextReview,[assessedRisk]),
+    projectedRow({ai_system_id:'retired-alert',name:'Historical alert',status:'retired',owner_id:null},nextReview),
   ],get=api.get.getMockImplementation();
   api.get.mockImplementation(path=>path==='/ai_systems'?Promise.resolve({data:records}):get(path));
   const before=JSON.stringify(records);await render();
+  expect(records[0].risk_tier).toBe('low');expect(records[1].risk_tier).toBe('high');expect(records[1].alerts).toEqual([]);
   const attention=host.querySelector('[aria-label="Needing attention 1"]');expect(attention).not.toBeNull();
   await click(attention);
   expect([...host.querySelectorAll('.system-name strong')].map(node=>node.textContent)).toEqual(['Saved low alert']);
@@ -126,24 +137,25 @@ test.each(['demo','standard'])('%s Needing attention uses saved alerts rather th
 test.each(['demo','standard'].flatMap(mode=>['cis-ig1','iso-27001','soc-2'].map(framework=>[mode,framework])))(
   '%s %s preserves the approved Brawndo attention card, filters and register',async(mode,framework)=>{
     context(mode,framework);
-    const yesterday=new Date(Date.now()-86400000).toISOString().slice(0,10);
+    const yesterday=new Date(Date.now()-86400000).toISOString().slice(0,10),future=new Date(Date.now()+10*86400000).toISOString().slice(0,10);
+    const highQuestion=catalog.questions.find(question=>question.high).key;
     const records=[
-      {...row,ai_system_id:'high-without-alert',name:'High without a saved alert',risk_tier:'high',alerts:[]},
-      {...row,ai_system_id:'low-with-alert',name:'Low with a saved alert',risk_tier:'low',alerts:[{key:'owner'}]},
-      {...row,ai_system_id:'pending-low',name:'Pending low',risk_tier:'low',approval_status:'pending_assessment',alerts:[]},
-      {...row,ai_system_id:'overdue-low',name:'Overdue low',risk_tier:'low',next_review:yesterday,alerts:[]},
-      {...row,ai_system_id:'uncertain',name:'Screening not assessed',alerts:[]},
-      {...row,ai_system_id:'retired-high',name:'Retired high',risk_tier:'high',status:'retired',alerts:[]},
+      projectedRow({ai_system_id:'high-with-alert',name:'High with a native alert',screening:{...lowScreening,[highQuestion]:true},oversight_notes:'Synthetic documented oversight'},future),
+      projectedRow({ai_system_id:'low-without-alert',name:'Low without a native alert'},future),
+      projectedRow({ai_system_id:'pending-low',name:'Pending low',owner_id:null,approval_status:'pending_assessment'},future),
+      projectedRow({ai_system_id:'overdue-low',name:'Overdue low'},yesterday),
+      projectedRow({ai_system_id:'uncertain',name:'Screening not assessed',screening:{}},future),
+      projectedRow({ai_system_id:'retired-high',name:'Retired high',status:'retired',screening:{...lowScreening,[highQuestion]:true}},future),
     ],get=api.get.getMockImplementation();
     api.get.mockImplementation(path=>path==='/ai_systems'?Promise.resolve({data:records}):get(path));
     const before=JSON.stringify(records);await render();
-    expect([...host.querySelectorAll('.metric-label')].map(node=>node.textContent)).toEqual(['AI systems','High risk','Pending approval','Needing attention']);
-    expect([...host.querySelectorAll('.filter-chip')].map(node=>node.dataset.testid)).toEqual(['active','due','high','third','customer','pending'].map(value=>'ai-system-view-'+value));
-    expect([...host.querySelectorAll('.table-scroll .register-headings th')].map(node=>node.textContent)).toEqual(['AI system','Screening','Approval','Owner','Risk register','Expand']);
+    expect([...host.querySelectorAll('.klabel')].map(node=>node.textContent)).toEqual(['AI systems','High risk','Awaiting approval','Review due in 30 days']);
+    expect([...host.querySelectorAll('.filter-chip')].map(node=>node.dataset.testid)).toEqual(['active','due','high','third','customer','pending','attention'].map(value=>'ai-system-view-'+value));
+    expect([...host.querySelectorAll('.table-scroll .register-headings th')].map(node=>node.textContent)).toEqual(['AI system','Screening','Approval','Owner','Next review','Risk register','Expand']);
     expect(host.textContent).not.toContain('More controls');
     const attention=host.querySelector('[aria-label="Needing attention 4"]');expect(attention).not.toBeNull();
     await click(attention);
-    expect([...host.querySelectorAll('.system-name strong')].map(node=>node.textContent)).toEqual(['High without a saved alert','Pending low','Overdue low','Screening not assessed']);
+    expect([...host.querySelectorAll('.system-name strong')].map(node=>node.textContent)).toEqual(['High with a native alert','Pending low','Overdue low','Screening not assessed']);
     expect(JSON.stringify(records)).toBe(before);expect(api.post).not.toHaveBeenCalled();expect(api.patch).not.toHaveBeenCalled();
   });
 
@@ -164,26 +176,34 @@ test.each(['demo','standard'].flatMap(mode=>[null,'general','hipaa','nist-csf-2'
   await click(host.querySelector('[data-testid=ai-system-view-due]'));
   expect([...host.querySelectorAll('.system-name strong')].map(node=>node.textContent)).toEqual(['Missing native date','Overdue native date']);
   expect(host.querySelector('[data-testid=ai-system-view-due] span').textContent).toBe('2');
+  await click([...host.querySelectorAll('[aria-label="AI summary"] button')].find(node=>node.textContent.includes('Review due in 30 days')));
+  expect([...host.querySelectorAll('.system-name strong')].map(node=>node.textContent)).toEqual(['Future native date']);
+  expect(host.querySelector('[aria-label="AI summary"] button[aria-pressed="true"] .kvalue').textContent).toBe('1');
   expect(JSON.stringify(records)).toBe(before);expect(api.post).not.toHaveBeenCalled();expect(api.patch).not.toHaveBeenCalled();
 });
 
 test.each(['demo','standard'].flatMap(mode=>[
   [mode,'product_model','Native synthetic model'],[mode,'environment','Native synthetic plan'],[mode,'purposes','Customer-Facing'],
+  [mode,'owner_id','Native owner search'],[mode,'related_links','native-risk-search-id'],
 ]))('%s retained generic AI retains native %s search without changing saved fields',async(mode,field,query)=>{
   context(mode,null);
-  const record={...row,[field]:field==='purposes'?[query]:query},get=api.get.getMockImplementation();
-  api.get.mockImplementation(path=>path==='/ai_systems'?Promise.resolve({data:[record]}):get(path));
+  const value=field==='purposes'?[query]:field==='related_links'?[{kind:'risks',id:query}]:field==='owner_id'?'saved-owner':query;
+  const record={...row,[field]:value},get=api.get.getMockImplementation(),before=JSON.stringify(record);
+  api.get.mockImplementation(path=>path==='/ai_systems'?Promise.resolve({data:[record]}):path===`/clients/${id}/members`?Promise.resolve({data:[{user_id:'saved-owner',name:'Native owner search'}]}):get(path));
   await render();
   await act(async()=>{const input=host.querySelector('[data-testid=ai-system-search]');Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,'value').set.call(input,query);input.dispatchEvent(new Event('input',{bubbles:true}));});
   expect([...host.querySelectorAll('.system-name strong')].map(node=>node.textContent)).toEqual([record.name]);
+  expect(JSON.stringify(record)).toBe(before);
   expect(api.post).not.toHaveBeenCalled();expect(api.patch).not.toHaveBeenCalled();
 });
 
-test.each(['demo','standard'])('%s retained generic AI keeps recorded screening and native High/Customer predicates',async mode=>{
+test.each(['demo','standard'])('%s renders supplied screening values without reclassification and keeps native High/Customer predicates',async mode=>{
   context(mode,null);
+  // Defensive DTO boundary: Critical and the retained non-boolean flag are not current canonical API outputs.
+  // Keep their no-reclassification assertions separate from the real aiProjection fixtures above.
   const records=[
-    {...row,ai_system_id:'saved-high',name:'Recorded high',risk_tier:'high',answers:{},screening:{customer_facing:'reported'}},
-    {...row,ai_system_id:'saved-low',name:'Recorded low',risk_tier:'low',answers:{}},
+    {...row,ai_system_id:'saved-high',name:'Recorded high',risk_tier:'high',answers:{},screening:{...lowScreening,employment:true,customer_facing:'reported'}},
+    {...row,ai_system_id:'saved-low',name:'Recorded low',risk_tier:'low',answers:{},screening:{...lowScreening}},
     {...row,ai_system_id:'saved-critical',name:'Recorded critical',risk_tier:'critical'},
     {...row,ai_system_id:'unknown-tier',name:'Unscreened record'},
   ];
@@ -204,8 +224,8 @@ test.each(['demo','standard'].flatMap(mode=>['cis-ig1','iso-27001','soc-2'].map(
   context(mode,framework);
   const day=Date.parse(new Date().toISOString().slice(0,10)+'T12:00:00Z');
   const records=[
-    {...row,ai_system_id:'enrolled-missing',name:'Enrolled missing date',risk_tier:'high',answers:{},product_model:'Only native field query'},
-    {...row,ai_system_id:'enrolled-future',name:'Enrolled future date',risk_tier:'low',next_review:new Date(day+10*86400000).toISOString().slice(0,10)},
+    projectedRow({ai_system_id:'enrolled-missing',name:'Enrolled missing date',risk_tier:'high',answers:{},product_model:'Only native field query',onboarding_screening:{schema_version:0,catalog_version:'retained-legacy',answers:{},scope:{}}}),
+    projectedRow({ai_system_id:'enrolled-future',name:'Enrolled future date'},new Date(day+10*86400000).toISOString().slice(0,10)),
   ];
   const get=api.get.getMockImplementation();
   api.get.mockImplementation(path=>path==='/ai_systems'?Promise.resolve({data:records}):get(path));
@@ -213,8 +233,30 @@ test.each(['demo','standard'].flatMap(mode=>['cis-ig1','iso-27001','soc-2'].map(
   expect(host.querySelector('.system-row td:nth-child(2)').textContent).toBe('Needs assessment');
   expect(host.querySelector('[data-testid=ai-system-view-high] span').textContent).toBe('0');
   await click(host.querySelector('[data-testid=ai-system-view-due]'));
-  expect([...host.querySelectorAll('.system-name strong')].map(node=>node.textContent)).toEqual(['Enrolled future date']);
+  expect([...host.querySelectorAll('.system-name strong')].map(node=>node.textContent)).toEqual(['Enrolled missing date']);
   expect(host.querySelector('[data-testid=ai-system-view-due] span').textContent).toBe('1');
+  await click([...host.querySelectorAll('[aria-label="AI summary"] button')].find(node=>node.textContent.includes('Review due in 30 days')));
+  expect([...host.querySelectorAll('.system-name strong')].map(node=>node.textContent)).toEqual(['Enrolled future date']);
+  expect(host.querySelector('[aria-label="AI summary"] button[aria-pressed="true"] .kvalue').textContent).toBe('1');
   expect(host.querySelector('.archive-toggle')).not.toBeNull();
+  expect(JSON.stringify(records)).toBe(before);expect(api.post).not.toHaveBeenCalled();expect(api.patch).not.toHaveBeenCalled();
+});
+
+test.each(['demo','standard'])('%s archived inclusion and inactive-only remain separate native controls',async mode=>{
+  context(mode,null);
+  const records=[
+    projectedRow({ai_system_id:'active-system',name:'Active native record'}),
+    projectedRow({ai_system_id:'retired-system',name:'Retained retired record',status:'retired'}),
+  ],get=api.get.getMockImplementation();
+  api.get.mockImplementation(path=>path==='/ai_systems'?Promise.resolve({data:records}):get(path));
+  const before=JSON.stringify(records);await render();
+  const names=()=>[...host.querySelectorAll('.system-name strong')].map(node=>node.textContent);
+  expect(names()).toEqual(['Active native record']);
+  await click(host.querySelector('.archive-toggle input[type="checkbox"]'));
+  expect(names()).toEqual(['Active native record','Retained retired record']);
+  await click(host.querySelector('[data-testid=ai-system-view-inactive]'));
+  expect(names()).toEqual(['Retained retired record']);
+  await click(host.querySelector('[data-testid=ai-system-view-due]'));
+  expect(names()).toEqual(['Active native record']);
   expect(JSON.stringify(records)).toBe(before);expect(api.post).not.toHaveBeenCalled();expect(api.patch).not.toHaveBeenCalled();
 });

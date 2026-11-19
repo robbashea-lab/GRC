@@ -81,6 +81,15 @@ test.each(SCENARIOS)('$cid fixture history is qualified by actual native assessm
   const db=seedStore(new Date(NOW)),context=getCisDemoScenarioContext(db,cid,NOW);
   expect(context).toMatchObject({version:CIS_SHOWCASE_VERSION,client_id:cid,program_id:cid+':cis-ig1'});
   expect(context.point_ids).toHaveLength(6);
+  const originalIds=clone(db.user.client_ids);
+  for(const client_ids of [cid,cid+'_foreign',[cid+'_foreign'],null,undefined,false,{0:cid,length:1}]){
+    db.user.client_ids=client_ids;
+    const before=JSON.stringify(db);
+    expect(getCisDemoScenarioContext(db,cid,NOW)).toBeNull();
+    expect(JSON.stringify(db)).toBe(before);
+  }
+  db.user.client_ids=originalIds;
+  expect(getCisDemoScenarioContext(db,cid,NOW)).toEqual(context);
   const rows=recordsFor(db,cid),points=db.portfolio_reporting.snapshots.filter(row=>context.point_ids.includes(row.snapshot_id));
   expect(points).toHaveLength(6);
   for(const row of rows){

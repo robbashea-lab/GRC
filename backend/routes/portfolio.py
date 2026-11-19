@@ -5,6 +5,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from management_obligations import METRICS, calendar_day, load_records, management_model, owner_ids, portfolio_item, program_status
 from grc_rules import represented_finding
 from client_relationships import project
+from client_profile import recorded_onboarding_state
 import portfolio_overview
 import portfolio_activity
 import authorization
@@ -22,6 +23,12 @@ async def clients_directory(include_archived: bool = Query(False), user: Dict = 
     query.update(authorization.scope(user))
     clients = await db.clients.find(query, {"_id": 0}).to_list(None)
     await require_settled_population(db, authorization.scope(user), clients)
+    # Legacy six-step completion lives in the audit log. One scoped distinct read
+    # supplies proof without loading audit history per client or writing on GET.
+    legacy_ids = [c['client_id'] for c in clients if not c.get('_configuration_lock') and recorded_onboarding_state(c) != 'complete']
+    legacy_completed = set(await db.audit_logs.distinct('client_id', {'client_id': {'$in': legacy_ids}, 'action': 'onboarding-complete'})) if legacy_ids else set()
+    onboarding = {c['client_id']: 'unknown' if c.get('_configuration_lock') else
+                  recorded_onboarding_state(c, legacy_completed=c['client_id'] in legacy_completed) for c in clients}
     clients = await project(db, clients)
     client_ids = [c["client_id"] for c in clients]
     now = datetime.now(timezone.utc).isoformat()
@@ -70,7 +77,7 @@ async def clients_directory(include_archived: bool = Query(False), user: Dict = 
                     workload(uid)["client_ids"].add(cid)
         major = sorted([r for r in m["work"] if r["kind"] == "reviews" and r["day"] is not None and r["day"] >= day and r["record"].get("review_type") in ("risk", "risk_assessment", "vendor", "policy", "access", "penetration_test", "bcp_dr", "incident_response", "awareness")], key=lambda r: r["day"])
         activity = latest.get(cid)
-        rows.append({**c, "client_status": c.get("status", "active"), "program_status": program_status(c, m),
+        rows.append({**c, "onboarding_state": onboarding[cid], "client_status": c.get("status", "active"), "program_status": program_status(c, m),
             "grc_lead_id": c.get("assigned_owner_id"),
             **m["counts"], "metric_items": items, "critical_high_issues": len(extra['critical_high_issues']),
             "frameworks": portfolio_overview.frameworks(c, records['requirements']),

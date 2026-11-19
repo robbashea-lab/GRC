@@ -19,12 +19,12 @@ const click=node=>act(async()=>node.click());
 const button=name=>[...document.querySelectorAll('button')].find(b=>b.textContent===name);
 const input=(node,value)=>act(async()=>{Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,'value').set.call(node,value);node.dispatchEvent(new Event('input',{bubbles:true}));});
 const submit=()=>act(async()=>document.querySelector('.contact-workspace-form').dispatchEvent(new Event('submit',{bubbles:true,cancelable:true})));
-beforeEach(()=>{global.IS_REACT_ACT_ENVIRONMENT=true;mockClient='a';mockAdditional=false;mockUser.role='super_admin';container=document.createElement('div');document.body.appendChild(container);root=createRoot(container);
+beforeEach(()=>{global.IS_REACT_ACT_ENVIRONMENT=true;localStorage.clear();sessionStorage.clear();mockClient='a';mockAdditional=false;mockUser.role='super_admin';container=document.createElement('div');document.body.appendChild(container);root=createRoot(container);
   api.get.mockImplementation(async path=>({data:path==='/contacts'?[row,{...row,contact_id:'old',name:'Former',status:'inactive'}]:path==='/contacts/c'?row:[]}));
   api.post.mockImplementation(async(path,body)=>({data:path==='/contacts'?{...body,contact_id:'c',updated_at:'version-1'}:{user:{user_id:'u'},simulated:true}}));
   api.patch.mockImplementation(async(path,body)=>({data:{...row,...body,updated_at:'version-2'}}));
 });
-afterEach(async()=>{await act(async()=>root.unmount());container.remove();jest.clearAllMocks();});
+afterEach(async()=>{await act(async()=>root.unmount());container.remove();localStorage.clear();sessionStorage.clear();jest.clearAllMocks();});
 test('directory has only contact columns, search/access/archive controls; legacy governance UX is absent',async()=>{
   await act(async()=>root.render(<Contacts/>));
   expect([...container.querySelectorAll('thead th')].map(n=>n.textContent)).toEqual(['Contact','Job Title','Email','Phone','Platform Access','Actions']);
@@ -75,7 +75,11 @@ test('the approved Contacts header is the default for existing and future client
 test('additional presentation keeps the full native workspace and uses actual contact/access facts',async()=>{
   mockAdditional=true;await act(async()=>root.render(<Contacts/>));
   expect(container.querySelector('.bac-page')).toBeTruthy();expect(container.querySelectorAll('.bac-segments button')).toHaveLength(3);
-  expect(container.querySelector('h1').textContent).toBe('Brawndo Contacts');expect(container.querySelector('.ba-page-head p').textContent).toBe('People · 1 contact');expect(container.querySelector('.bac-card > h2').classList.contains('sr-only')).toBe(true);expect(container.querySelector('button[aria-label="Switch to dark mode"]')).toBeTruthy();
+  expect(container.querySelector('h1').textContent).toBe('Brawndo Contacts');expect(container.querySelector('.ba-page-head p').textContent).toBe('People · 1 contact');
+  const heading=container.querySelector('.bac-card .panel-head #bac-heading');
+  expect(heading.textContent).toBe('Contacts directory');expect(heading.classList.contains('sr-only')).toBe(false);
+  expect(heading.closest('section').getAttribute('aria-labelledby')).toBe(heading.id);
+  expect(container.querySelector('button[aria-label="Switch to light mode"]')).toBeTruthy();
   expect(container.textContent).toContain('Primary contact');expect(container.textContent).not.toMatch(/Security Lead|HR Lead|Administrator|Reassign|Export CSV/);
   expect(container.querySelector('.bac-access').textContent).toBe('No access');
   await click(button('Person'));expect(document.querySelector('#contact-name').value).toBe('Person');expect(document.querySelector('#contact-email').value).toBe('person@example.test');expect(document.querySelector('#contact-phone')).toBeTruthy();expect(document.body.textContent).toContain('Existing contact notes');expect(button('Save Changes')).toBeTruthy();

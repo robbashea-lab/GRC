@@ -6,6 +6,7 @@ import {checkDemoFileSize} from '../lib/demoStorageErrors';
 import {fileBytes} from './evidenceStorage';
 import {auditEvidenceIds} from '../lib/isoAudit';
 import {EVIDENCE_AREAS,evidenceFolders,folderCounts} from '../lib/evidenceRepository';
+import {clientAccess} from './assignmentEligibility';
 
 export const areas=EVIDENCE_AREAS;
 // Shared by normal Demo uploads and explicit synthetic fixture construction.
@@ -64,7 +65,7 @@ export function evidenceReferences(db,e){
   refs.sort((a,b)=>priority[a.origin]-priority[b.origin]).forEach(r=>{const key=JSON.stringify([r.kind,r.id,r.occurrence_id]);if(!unique.has(key))unique.set(key,r);});return [...unique.values()];
 }
 
-export const evidenceAccess=(user,cid)=>user.role==='super_admin'||user.role==='platform_admin'&&user.all_clients===true||user.client_ids?.includes(cid);
+export const evidenceAccess=clientAccess;
 export function evidencePage(db,params){
   const cid=params.client_id;
   if(!evidenceAccess(db.user,cid))throw new Error('Forbidden for this client');

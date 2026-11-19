@@ -295,7 +295,7 @@ test('configured SOC program guide uses local circular presentation and keeps na
   await open();
   const panel=guide.querySelector('.omni-workspace-window');
   expect(panel.classList.contains('cis-omni-program-window')).toBe(true);
-  expect(parseFloat(panel.style.width)).toBe(360);
+  expect(parseFloat(panel.style.width)).toBe(380);
   expect(document.body.textContent).toContain('3 criteria in the configured SOC 2 scope');
   await act(async()=>guide.querySelector('[aria-label="Minimize Omnibot Guide"]').click());
   expect(guide.querySelector('.omni-workspace-window')).toBeNull();

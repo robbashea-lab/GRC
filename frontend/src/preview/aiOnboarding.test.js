@@ -1,13 +1,14 @@
 import axios from 'axios';
 import {previewAdapter} from './adapter';
 import {readStore,saveStore} from './store';
-import {applyTool,blankDraft,snapshot,onboardingPayload,annualDate} from '../lib/aiOnboarding';
+import {applyTool,blankDraft,refreshProposal,snapshot,onboardingPayload,annualDate} from '../lib/aiOnboarding';
 const api=axios.create({adapter:previewAdapter});
 const cid='demo_brawndo';
 const key='ai-onboarding-fixture-0001';
 const add=body=>api.post('/ai_systems/onboard',body,{headers:{'Idempotency-Key':key}});
 function payload(mode='none'){
-  const draft=applyTool(blankDraft('2026-10-25'),0);
+  // This is a distinct owned deployment, not the existing seeded ChatGPT use.
+  const draft=refreshProposal({...applyTool(blankDraft('2026-10-25'),0),name:'Synthetic onboarding ChatGPT deployment'});
   draft.vendor={...draft.vendor,mode};
   draft.confirmations=Object.fromEntries(['details','screening','risk'].map(step=>[step,snapshot(draft,step)]));
   return onboardingPayload(cid,draft);
@@ -28,7 +29,7 @@ test('one final command persists native linked records and exactly replays witho
   await expect(add({...body,ai:{...body.ai,name:'Changed intent'}})).rejects.toThrow(/different data/);
 });
 
-test.each(['demo_dunder','demo_prestige'])('native shared onboarding for %s retains existing records, reloads exact links and preserves approval denials',async clientId=>{
+test.each(['demo_dunder','demo_prestige'])('native shared onboarding for %s retains existing records, reloads exact links and preserves approval authority',async clientId=>{
   const before=readStore(),body={...payload('create'),client_id:clientId};
   const first=(await add(body)).data;
   expect((await add(body)).data).toEqual(first);
@@ -44,19 +45,22 @@ test.each(['demo_dunder','demo_prestige'])('native shared onboarding for %s reta
   expect(after.reviews.filter(row=>row.ai_system_id===first.ai_system_id)).toHaveLength(1);
   expect(after.reviews.find(row=>row.review_id===first.review_id)).toMatchObject({client_id:clientId,recurrence:'annual'});
   expect(after.risks.find(row=>row.risk_id===first.risk_id)).toMatchObject({client_id:clientId,likelihood_score:body.risk.likelihood,impact_score:body.risk.impact});
-  await expect(api.post('/ai_systems/'+first.ai_system_id+'/approval',{status:'approved',note:'Not authorized by this rollout',expected_updated_at:reloaded.updated_at})).rejects.toThrow(/configured CIS/);
+  const approved=(await api.post('/ai_systems/'+first.ai_system_id+'/approval',{status:'approved',note:'Synthetic approval of this recorded deployment',expected_updated_at:reloaded.updated_at})).data;
+  expect(approved.approval_status).toBe('approved');expect(approved.approval_history).toHaveLength(1);
   const patch={schema_version:1,catalog_version:'2026-10-25',answers:{...reloaded.onboarding_screening.answers,managed:!reloaded.onboarding_screening.answers.managed},reviewed:true};
-  const reviewed=(await api.patch('/ai_systems/'+first.ai_system_id,{expected_updated_at:reloaded.updated_at,onboarding_screening:patch})).data;
+  const reviewed=(await api.patch('/ai_systems/'+first.ai_system_id,{expected_updated_at:approved.updated_at,onboarding_screening:patch})).data;
   expect(reviewed.onboarding_screening.history).toEqual([reloaded.onboarding_screening]);
   expect(reviewed.onboarding_screening.answers).toEqual(patch.answers);
+  expect(reviewed.approval_status).toBe('pending_assessment');expect(reviewed.approval_history).toEqual(approved.approval_history);
   const db=readStore();db.user.role='client_readonly';saveStore(db);
   const frozen=readStore().ai_systems;
   await expect(api.post('/ai_systems/onboard',body,{headers:{'Idempotency-Key':key+'-denied'}})).rejects.toThrow();
+  await expect(api.post('/ai_systems/'+first.ai_system_id+'/approval',{status:'approved',note:'Denied readonly attempt',expected_updated_at:reviewed.updated_at})).rejects.toThrow();
   expect(readStore().ai_systems).toEqual(frozen);
 });
 
 test.each([null,'general','hipaa','iso-27001','soc-2'].flatMap(framework=>['approved','approved_with_conditions'].map(status=>[framework,status])))(
-  'retained %s AI %s cannot acquire changed approval boundaries after CIS retirement',async(framework,status)=>{
+  'retained %s AI %s requires reassessment of changed approval boundaries after CIS retirement',async(framework,status)=>{
     const body=payload();body.ai.restrictions='Use only the recorded managed training environment';
     const created=(await add(body)).data.ai_system;
     const approved=(await api.post('/ai_systems/'+created.ai_system_id+'/approval',{
@@ -68,13 +72,26 @@ test.each([null,'general','hipaa','iso-27001','soc-2'].flatMap(framework=>['appr
     saveStore(db);
     const noop=(await api.patch('/ai_systems/'+created.ai_system_id,{environment:approved.environment,expected_updated_at:approved.updated_at})).data;
     expect(noop.approval_status).toBe(status);expect(noop.approval_history).toEqual(approved.approval_history);
-    const before=readStore().ai_systems;
-    await expect(api.patch('/ai_systems/'+created.ai_system_id,{environment:'Different unapproved account',expected_updated_at:noop.updated_at})).rejects.toThrow(/recorded AI approval scope/);
-    const screening={schema_version:1,catalog_version:'2026-10-25',reviewed:true,
-      answers:{...noop.onboarding_screening.answers,managed:!noop.onboarding_screening.answers.managed}};
-    await expect(api.patch('/ai_systems/'+created.ai_system_id,{onboarding_screening:screening,expected_updated_at:noop.updated_at})).rejects.toThrow(/recorded AI approval scope/);
+    const changed=(await api.patch('/ai_systems/'+created.ai_system_id,{environment:'Different unapproved account',expected_updated_at:noop.updated_at})).data;
+    expect(changed.environment).toBe('Different unapproved account');expect(changed.approval_status).toBe('pending_assessment');
+    expect(changed.approval_history).toEqual(approved.approval_history);expect(changed.approval_history[0].scope.environment).toBe(approved.environment);
+    let before=readStore().ai_systems;
+    await expect(api.patch('/ai_systems/'+created.ai_system_id,{environment:'Stale alternate account',expected_updated_at:noop.updated_at})).rejects.toThrow(/changed/);
     expect(readStore().ai_systems).toEqual(before);
-    await expect(api.post('/ai_systems/'+created.ai_system_id+'/approval',{status,note:'No new authority',expected_updated_at:noop.updated_at})).rejects.toThrow(/configured CIS/);
+    const reapproved=(await api.post('/ai_systems/'+created.ai_system_id+'/approval',{status,note:'Synthetic reassessment of the changed environment',expected_updated_at:changed.updated_at})).data;
+    expect(reapproved.approval_status).toBe(status);expect(reapproved.approval_history).toHaveLength(2);
+    expect(reapproved.approval_history.slice(0,1)).toEqual(approved.approval_history);
+    const screening={schema_version:1,catalog_version:'2026-10-25',reviewed:true,
+      answers:{...reapproved.onboarding_screening.answers,managed:!reapproved.onboarding_screening.answers.managed}};
+    const reviewed=(await api.patch('/ai_systems/'+created.ai_system_id,{onboarding_screening:screening,expected_updated_at:reapproved.updated_at})).data;
+    expect(reviewed.approval_status).toBe('pending_assessment');expect(reviewed.approval_history).toEqual(reapproved.approval_history);
+    expect(reviewed.onboarding_screening.history).toEqual([approved.onboarding_screening]);
+    before=readStore().ai_systems;
+    await expect(api.patch('/ai_systems/'+created.ai_system_id,{onboarding_screening:screening,expected_updated_at:reapproved.updated_at})).rejects.toThrow(/changed/);
+    expect(readStore().ai_systems).toEqual(before);
+    const final=(await api.post('/ai_systems/'+created.ai_system_id+'/approval',{status,note:'Synthetic reassessment of reviewed screening',expected_updated_at:reviewed.updated_at})).data;
+    expect(final.approval_status).toBe(status);expect(final.approval_history).toHaveLength(3);
+    expect(final.approval_history.slice(0,2)).toEqual(reapproved.approval_history);
   });
 test('invalid or unauthorized requests retain no partial native records',async()=>{
   const before=readStore(),body=payload('create');body.risk.likelihood=5;
@@ -86,8 +103,8 @@ test('invalid or unauthorized requests retain no partial native records',async()
   expect(readStore().ai_systems).toEqual(before.ai_systems);
 });
 test('completed replay is framework independent but rechecks actual client availability and returns current native projection',async()=>{
-  const body=payload(),first=(await add(body)).data,db=readStore();
-  db.ai_systems.find(row=>row.ai_system_id===first.ai_system_id).name='Native saved edit';saveStore(db);
+  const body=payload(),first=(await add(body)).data;
+  await api.patch('/ai_systems/'+first.ai_system_id,{name:'Native saved edit',expected_updated_at:first.ai_system.updated_at});
   expect((await add(body)).data.ai_system.name).toBe('Native saved edit');
   const withdrawn=readStore();withdrawn.requirements=withdrawn.requirements.filter(row=>row.client_id!==cid||row.baseline_key!=='cis-ig1');saveStore(withdrawn);
   const before=readStore();
@@ -120,8 +137,13 @@ test.each([null,'general','hipaa','nist-csf-2','cmmc'].flatMap(framework=>['acti
     expect(readStore().clients.find(row=>row.client_id===clientId)).toEqual(client);
     const update=(await api.patch('/ai_systems/'+first.ai_system_id,{environment:'Saved synthetic account',expected_updated_at:reloaded[0].updated_at})).data;
     expect(update.environment).toBe('Saved synthetic account');
+    const prior=readStore().ai_systems;
+    const approved=(await api.post('/ai_systems/'+first.ai_system_id+'/approval',{status:'approved',note:'Synthetic approval of this exact deployment',expected_updated_at:update.updated_at})).data;
+    expect(approved.approval_status).toBe('approved');expect(approved.approval_history).toHaveLength(1);
+    expect(readStore().ai_systems.filter(row=>row.ai_system_id!==first.ai_system_id)).toEqual(prior.filter(row=>row.ai_system_id!==first.ai_system_id));
+    const readonly=readStore();readonly.user.role='client_readonly';saveStore(readonly);
     const frozen=readStore().ai_systems;
-    await expect(api.post('/ai_systems/'+first.ai_system_id+'/approval',{status:'approved',note:'No expanded approval authority',expected_updated_at:update.updated_at})).rejects.toThrow(/configured CIS/);
+    await expect(api.post('/ai_systems/'+first.ai_system_id+'/approval',{status:'approved',note:'Denied readonly attempt',expected_updated_at:approved.updated_at})).rejects.toThrow();
     expect(readStore().ai_systems).toEqual(frozen);
   });
 

@@ -4,8 +4,8 @@ import ClientWorkDashboard from './ClientWorkDashboard';
 jest.mock('react-router-dom',()=>({Link:({to,children,...rest})=><a href={to} {...rest}>{children}</a>}),{virtual:true});
 jest.mock('@/lib/api',()=>({formatError:e=>e.message}));
 let root,container;
-beforeEach(()=>{global.IS_REACT_ACT_ENVIRONMENT=true;container=document.createElement('div');document.body.appendChild(container);root=createRoot(container);});
-afterEach(async()=>{await act(async()=>root.unmount());container.remove();});
+beforeEach(()=>{global.IS_REACT_ACT_ENVIRONMENT=true;localStorage.clear();container=document.createElement('div');document.body.appendChild(container);root=createRoot(container);});
+afterEach(async()=>{await act(async()=>root.unmount());container.remove();localStorage.clear();});
 const items=Array.from({length:30},(_,i)=>({key:`tasks:${i}`,id:String(i),kind:'tasks',title:`Action ${i}`,type:'Action Item',status:'open',owner:'Unassigned',unassigned:true,source_label:'Manual / Internal',due_date:'2026-09-01'}));
 const queue={as_of:'2026-09-27',groups:{all:{total:30,items:items.slice(0,9)},pastDue:{total:30,items:items.slice(0,9)},due30:{total:0,items:[]},unassigned:{total:30,items:items.slice(0,9)}}};
 test('rapid search changes dispatch one settled request and clearing cancels pending work',async()=>{
@@ -121,10 +121,13 @@ test('tile context tolerates undated or untyped items and the theme choice persi
   await act(async()=>root.render(<ClientWorkDashboard queue={q} programs={[]} filter="all" onFilter={()=>{}} onOpen={()=>{}} loadDetail={()=>{}}/>));
   expect(container.textContent).not.toMatch(/undefined|null|NaN|\d{4,}d late/);
   const toggle=container.querySelector('.bd-theme');
+  expect(container.querySelector('.bdash').dataset.theme).toBe('dark');
+  await act(async()=>toggle.click());
+  expect(container.querySelector('.bdash').dataset.theme).toBe('light');
+  expect(localStorage.getItem('omnisciente:brawndo-dashboard-theme')).toBe('light');
   await act(async()=>toggle.click());
   expect(container.querySelector('.bdash').dataset.theme).toBe('dark');
   expect(localStorage.getItem('omnisciente:brawndo-dashboard-theme')).toBe('dark');
-  await act(async()=>toggle.click());localStorage.clear();
 });
 test('CIS card derives gaps from linked work and links each count to its filtered workspace',async()=>{
   const rows=[{status:'in_progress',work:{open_findings:1,direct_findings:0}},{status:'addressed',last_assessed:new Date().toISOString(),work:{evidence_count:0}},{status:'needs_attention',work:{direct_findings:1}}];

@@ -2,10 +2,29 @@ import axios from 'axios';
 import {previewAdapter} from './adapter';
 import {readStore} from './store';
 import {nextPolicyReview} from '../lib/brawndoPolicies';
+import {currentReviewCompletion} from '../testUtils/r4ReviewFixture';
 const api=axios.create({adapter:previewAdapter}),cid='demo_brawndo';
 beforeEach(async()=>{localStorage.clear();sessionStorage.clear();await api.post('/demo/enter');});
 const create=async(client=cid)=>(await api.post('/policies',{client_id:client,title:'Synthetic QA Policy',status:'draft',presence:'needs_confirmation',version:'1'})).data;
 const source=p=>api.post(`/policies/${p.policy_id}/approval-subject`,{version:'1',external_reference:'https://example.test/synthetic-policy',external_version:'demo-v1'});
+const scheduleCompletion=review=>currentReviewCompletion(api,review.review_id,{
+  expectedOccurrenceId:review.current_occurrence_id,
+  supportingReference:'SYNTHETIC policy schedule regression '+review.review_id+': recorded native cadence; no policy approval or communication is asserted.',
+  resultForStep:(step,{review:current})=>{
+    const unperformed={
+      'policy_rec:record:1':'SYNTHETIC schedule-only fixture does not compare policy content with operating practice or framework requirements.',
+      'policy_rec:record:2':'SYNTHETIC fixture preserves the draft version; no new approval is performed or asserted.',
+      'policy_rec:record:3':'SYNTHETIC fixture makes no workforce communication claim.',
+    };
+    if(step.step_id==='policy_rec:record:4'){
+      if(current.recurrence==='none')return {step_id:step.step_id,result:'N/A',reason:'SYNTHETIC one-time Review has no recurring next review date.'};
+      expect(current.next_review_date).toBeTruthy();
+      return {step_id:step.step_id,result:'Pass',reason:''};
+    }
+    if(!Object.hasOwn(unperformed,step.step_id))throw new Error('Unexpected Policy schedule fixture step '+step.step_id);
+    return {step_id:step.step_id,result:'N/A',reason:unperformed[step.step_id]};
+  },
+});
 test('draft has no dates; recorded external approval defaults next date without inventing history',async()=>{
   const p=await create();expect(p.next_review_date).toBeFalsy();expect(p.last_reviewed_at).toBeFalsy();expect(p.approved_at).toBeFalsy();
   await expect(api.patch('/policies/'+p.policy_id,{status:'approved'})).rejects.toBeTruthy();
@@ -27,7 +46,7 @@ test('Brawndo policy review keeps the scheduled cycle on completion, records the
   const p=await create(),review=(await api.post('/reviews',{client_id:cid,policy_id:p.policy_id,title:'Synthetic policy review',review_type:'policy',recurrence:'annual',due_date:'2024-02-29'})).data;
   const before=readStore().reviews.length;
   await expect(api.post(`/policies/${p.policy_id}/verify`,{status:'draft',next_review_date:'2099-01-01'})).rejects.toBeTruthy();
-  const result=(await api.post(`/reviews/${review.review_id}/complete`,{occurrence_id:review.current_occurrence_id})).data;
+  const result=(await api.post(`/reviews/${review.review_id}/complete`,await scheduleCompletion(review))).data;
   const policy=(await api.get('/policies/'+p.policy_id)).data;
   expect(policy.next_review_date.slice(0,10)).toBe('2025-02-28');
   expect(policy.last_reviewed_at).toBe(result.occurrence.completed_at);expect(readStore().reviews.length).toBe(before);
@@ -42,7 +61,7 @@ test('other clients keep their original policy import and review behavior',async
 
 test.each([['quarterly',null,'2025-04-30'],['custom',45,'2025-03-17'],['none',null,null]])('policy review keeps the %s schedule anchored to the due date',async(cadence,days,expected)=>{
   const p=await create(),review=(await api.post('/reviews',{client_id:cid,policy_id:p.policy_id,title:'Synthetic override review',review_type:'policy',recurrence:cadence,custom_recurrence_days:days,due_date:'2025-01-31'})).data;
-  const result=(await api.post(`/reviews/${review.review_id}/complete`,{occurrence_id:review.current_occurrence_id})).data;
+  const result=(await api.post(`/reviews/${review.review_id}/complete`,await scheduleCompletion(review))).data;
   expect(result.occurrence.next_review_date?.slice(0,10)??null).toBe(expected);
   expect((await api.get('/policies/'+p.policy_id)).data.next_review_date?.slice(0,10)??null).toBe(expected);
   expect((await api.get('/reviews/'+review.review_id)).data.occurrences).toHaveLength(1);

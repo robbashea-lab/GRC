@@ -15,9 +15,11 @@ test('shared programs use finalized tenant enrollment, deduplicate and never rew
     {requirement_id:'a-soc',client_id:'a',baseline_key:'soc-2',baseline_response:'applies'},
     {requirement_id:'b-cis',client_id:'b',baseline_key:'cis-ig1',baseline_response:'applies'},
     {requirement_id:'a-hipaa',client_id:'a',baseline_key:'hipaa',baseline_response:'applies'},
+    {requirement_id:'a-nist',client_id:'a',baseline_key:'nist-csf-2',baseline_response:'applies'},
+    {requirement_id:'a-cmmc',client_id:'a',baseline_key:'cmmc',baseline_response:'applies'},
   ];
   const before=JSON.stringify({db,client});
-  expect(clientProjection(db,client).shared_programs).toEqual(['iso-27001','soc-2'].map(key=>({
+  expect(clientProjection(db,client).shared_programs).toEqual(['hipaa','iso-27001','soc-2','nist-csf-2','cmmc'].map(key=>({
     client_id:'a',program_id:`a:${key}`,framework_key:key,version:frameworkCatalog(key).version,selected:true,
   })));
   expect(clientProjection(db,client).cis_program.selected).toBe(false);

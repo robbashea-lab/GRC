@@ -5,6 +5,7 @@ import {versionForSafeguard,visibleQuestions} from '@/lib/guidedAssessment';
 import {focusedResult} from '@/lib/focusedOmni';
 import {localCalendarDate} from '@/lib/calendarView';
 import api from '@/lib/api';
+import serviceCatalog from '@catalogs/r4ServicesTools.json';
 
 // Real parent/guide rendering with controlled read timing and modeled CAS.
 // No network, Mongo, hosted authentication or role-enforcement proof.
@@ -149,6 +150,13 @@ test('in-flight summary progress response cannot initiate native PATCH after con
 
 test('queued older joined context response cannot supersede the later confirmed native receipt',async()=>{
   const tokenC='2026-10-11T12:02:00Z';
+  const read=api.get.getMockImplementation(),contextPath=`/framework_assessments/${native.framework_assessment_id}/service-context`;
+  // This scoped fixture has no saved Services profile or applicable activity enrollment.
+  // Mirror read_context's empty saved context and authoritative base Tool Catalog.
+  const serviceContext={client_id:native.client_id,expected_client_updated_at:null,
+    services:{areas:{},custom_tools:[],preset:null,exclusions:{}},candidates:[],selected_activity_id:null,
+    catalog:serviceCatalog.tools.map(tool=>({...copy(tool),updated_at:null}))};
+  api.get.mockImplementation((path,...args)=>path===contextPath?Promise.resolve({data:copy(serviceContext)}):read(path,...args));
   await render();await typeAndCloseSummary();holdRefresh=true;await nativeSave();expect(pending).toHaveLength(1);const older=pending.shift();
   let finishNative;
   api.patch.mockImplementationOnce((_path,body)=>new Promise(resolve=>{
@@ -157,4 +165,25 @@ test('queued older joined context response cannot supersede the later confirmed 
   }));
   await value('[aria-label="Current implementation"]','SYNTHETIC native receipt C.');await click('Save assessment',container);expect(finishNative).toBeDefined();await act(async()=>finishNative());expect(native.last_saved).toBe(tokenC);expect(pending).toHaveLength(1);const savedNative=copy(native);
   await open();expect(document.querySelector('[aria-label="Known gaps or uncertainties"]').value).toBe(detail);await click('Save & close',workspace());expect(interview.revision).toBe(1);expect(interview.base_assessment_token).toBe(tokenC);expect(native).toEqual(savedNative);expect(nativeHistory).toHaveLength(2);expect(api.post).not.toHaveBeenCalled();expect(api.delete).not.toHaveBeenCalled();
+});
+
+test('queued older joined context failure cannot withdraw the later confirmed native receipt',async()=>{
+  const tokenC='2026-10-11T12:02:00Z';
+  const read=api.get.getMockImplementation(),contextPath=`/framework_assessments/${native.framework_assessment_id}/service-context`;
+  const serviceContext={client_id:native.client_id,expected_client_updated_at:null,
+    services:{areas:{},custom_tools:[],preset:null,exclusions:{}},candidates:[],selected_activity_id:null,
+    catalog:serviceCatalog.tools.map(tool=>({...copy(tool),updated_at:null}))};
+  api.get.mockImplementation((path,...args)=>path===contextPath?Promise.resolve({data:copy(serviceContext)}):read(path,...args));
+  await render();await typeAndCloseSummary();holdRefresh=true;await nativeSave();expect(pending).toHaveLength(1);const older=pending.shift();
+  let finishNative;
+  api.patch.mockImplementationOnce((_path,body)=>new Promise(resolve=>{
+    expect(body.expected_last_assessed).toBe(tokenB);
+    finishNative=()=>{const {expected_last_assessed,...fields}=body;nativeHistory.push(copy(native));native={...native,...copy(fields),last_saved:tokenC,assessment_history:copy(nativeHistory)};resolve({data:copy(native)});queueMicrotask(()=>older.reject(new Error('SYNTHETIC older joined read failed after receipt C')));};
+  }));
+  await value('[aria-label="Current implementation"]','SYNTHETIC native receipt C.');await click('Save assessment',container);expect(finishNative).toBeDefined();await act(async()=>finishNative());
+  expect(native.last_saved).toBe(tokenC);expect(pending).toHaveLength(1);const savedNative=copy(native);
+  expect(container.textContent).not.toContain('SYNTHETIC older joined read failed after receipt C');
+  await open();expect(document.querySelector('[aria-label="Known gaps or uncertainties"]').value).toBe(detail);await click('Save & close',workspace());
+  expect(interview.revision).toBe(1);expect(interview.base_assessment_token).toBe(tokenC);expect(interview.answers.inventory_detail).toBe(detail);
+  expect(native).toEqual(savedNative);expect(nativeHistory).toHaveLength(2);expect(api.post).not.toHaveBeenCalled();expect(api.delete).not.toHaveBeenCalled();
 });

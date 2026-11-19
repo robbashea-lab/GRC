@@ -134,13 +134,15 @@ test('a client without CIS enrollment receives common presentation and keeps nat
   expect(host.querySelector('.filter-button')).not.toBeNull();
   expect(api.get).toHaveBeenCalledWith('/tasks', expect.objectContaining({params: {client_id: 'demo_dunder'}}));
   expect(cisClientProgram(mockOrg.currentClient)).toBeNull();
-  expect(brawndoFullRecordEligible({...mockAuth, ...mockOrg, pathname: '/risks', selectedClientId: 'demo_dunder', clientId: 'demo_dunder', record: risks[0]})).toBe(false);
+  const nativeContext={...mockAuth, ...mockOrg, pathname: '/risks', selectedClientId: 'demo_dunder', clientId: 'demo_dunder', record: risks[0]};
+  expect(brawndoFullRecordEligible(nativeContext)).toBe(true);
+  expect(brawndoFullRecordEligible({...nativeContext,record:{...risks[0],client_id:'foreign-client'}})).toBe(false);
   expect(host.querySelector('tbody .risk-id').textContent).toBe('RISK-001');
   await click(host.querySelector('tbody .risk-title'));
-  // The established non-enrolled drawer shows the saved title, not the full-record ID heading.
-  expect(riskDrawer().classList.contains('brawndo-risk-workflow')).toBe(false);
+  // General-GRC records use the same complete native editor without enrolling a program.
+  expect(riskDrawer().classList.contains('brawndo-risk-workflow')).toBe(true);
   expect(riskDrawer().querySelector('[aria-label="Title"]').value).toBe('Native recovery risk');
-  expect(riskDrawer().querySelector('[aria-label="Description"]').value).toBe('Saved native risk description.');
+  expect(riskDrawer().querySelector('[aria-label="Risk description"]').value).toBe('Saved native risk description.');
   expect(api.get).toHaveBeenCalledWith('/risks/risk-native/activity');
   noWrites();
 });

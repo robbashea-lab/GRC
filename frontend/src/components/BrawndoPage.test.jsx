@@ -20,24 +20,24 @@ test('optional page-theme presentation uses the native preference and keeps defa
     await render(false);
     const nativeCommand = host.querySelector('[data-native-command]');
     expect(host.querySelectorAll('.bpage-actions button')).toHaveLength(2);
-    expect(host.querySelector('[aria-label="Switch to dark mode"]').getAttribute('aria-pressed')).toBe('false');
-    await act(async () => host.querySelector('[aria-label="Switch to dark mode"]').click());
-    expect(localStorage.getItem(THEME_KEY)).toBe('dark');
+    expect(host.querySelector('[aria-label="Switch to light mode"]').getAttribute('aria-pressed')).toBe('true');
+    await act(async () => host.querySelector('[aria-label="Switch to light mode"]').click());
+    expect(localStorage.getItem(THEME_KEY)).toBe('light');
 
     await render(true);
     expect(host.querySelectorAll('.bpage-actions button')).toHaveLength(2);
-    expect(host.querySelector('[aria-label="Switch to light mode"]')).toBeNull();
-    const themeAction = host.querySelector('[aria-label="Switch to light theme"]');
-    expect(themeAction.textContent).toBe('Light');
+    expect(host.querySelector('[aria-label="Switch to dark mode"]')).toBeNull();
+    const themeAction = host.querySelector('[aria-label="Switch to dark theme"]');
+    expect(themeAction.textContent).toBe('Dark');
     await act(async () => themeAction.click());
-    expect(localStorage.getItem(THEME_KEY)).toBe('light');
-    expect(host.querySelector('[aria-label="Switch to dark theme"]').textContent).toBe('Dark');
+    expect(localStorage.getItem(THEME_KEY)).toBe('dark');
+    expect(host.querySelector('[aria-label="Switch to light theme"]').textContent).toBe('Light');
     expect(host.querySelector('[data-native-command]')).toBe(nativeCommand);
     await act(async () => nativeCommand.click()); expect(command).toHaveBeenCalledTimes(1);
 
     await render(false);
     expect(host.querySelector('.surface-theme-action')).toBeNull();
-    expect(host.querySelector('[aria-label="Switch to dark mode"]').getAttribute('aria-pressed')).toBe('false');
+    expect(host.querySelector('[aria-label="Switch to light mode"]').getAttribute('aria-pressed')).toBe('true');
     expect(host.querySelector('[data-native-command]')).toBe(nativeCommand);
   } finally {
     await act(async () => root.unmount()); host.remove();

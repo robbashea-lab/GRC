@@ -2,7 +2,7 @@ import React,{act} from 'react';
 import {createRoot} from 'react-dom/client';
 import RecordDrawer from './RecordDrawer';
 import api from '@/lib/api';
-import {buildLegacyDemoStore,saveStore} from '../preview/store';
+import {buildLegacyDemoStore,readStore,saveStore} from '../preview/store';
 
 let mockUser={user_id:'demo_admin',role:'super_admin'};
 jest.mock('@/context/AuthContext',()=>({useAuth:()=>({user:mockUser})}));
@@ -44,6 +44,20 @@ const text=async(surface,label,value)=>act(async()=>{
   Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype,'value').set.call(node,value);
   node.dispatchEvent(new Event('input',{bubbles:true}));
 });
+async function completeAsDistinctWorker(record,changes){
+  const db=readStore(),validator=db.user,worker={user_id:'source-refresh-worker',name:'Synthetic source work submitter',email:'source-refresh-worker@example.invalid',role:'platform_admin',status:'active',client_ids:[record.client_id]};
+  if(!db.users.some(user=>user.user_id===worker.user_id))db.users.push(worker);
+  expect(record.assignee_id).not.toBe(validator.user_id);
+  db.user=worker;saveStore(db);
+  try{return await api.patch('/tasks/'+record.task_id,{...changes,status:'done',expected_updated_at:record.updated_at});}
+  finally{const current=readStore();current.user=validator;saveStore(current);}
+}
+async function closeInitialWork(){
+  await completeAsDistinctWorker(task,{resolution:'Synthetic completed work retained on reopen.'});
+  const ready=(await api.get('/findings/'+task.finding_id)).data;
+  await api.post('/findings/'+task.finding_id+'/validate',{request_id:'initial-independent-validation',expected_updated_at:ready.updated_at,rationale:'Synthetic verified corrective work'});
+  task=(await api.get('/tasks/'+task.task_id)).data;finding=(await api.get('/findings/'+task.finding_id)).data;
+}
 
 beforeAll(()=>Object.defineProperty(globalThis,'crypto',{value:require('crypto').webcrypto,configurable:true}));
 beforeEach(async()=>{
@@ -53,8 +67,7 @@ beforeEach(async()=>{
   saveStore(buildLegacyDemoStore(),{resetFiles:true});
   await api.post('/demo/enter');
   task=(await api.get('/tasks',{params:{client_id:'demo_brawndo'}})).data.find(row=>row.task_id==='demo_brawndo_cis_action_1.1');
-  await api.patch('/tasks/'+task.task_id,{status:'done',description:'Synthetic saved corrective plan.',resolution:'Synthetic completed work retained on reopen.'});
-  await api.post('/findings/'+task.finding_id+'/validate',{rationale:'Synthetic verified corrective work'});
+  await api.patch('/tasks/'+task.task_id,{description:'Synthetic saved corrective plan.',expected_updated_at:task.updated_at});
   task=(await api.get('/tasks/'+task.task_id)).data;
   finding=(await api.get('/findings/'+task.finding_id)).data;
   assessment=(await api.get('/framework_assessments/'+finding.framework_assessment_id)).data;
@@ -67,15 +80,21 @@ test.each([false,true])('returning from the same source ticket reopen refreshes 
   const onSaved=jest.fn(),onClose=jest.fn();
   await act(async()=>root.render(<RecordDrawer open kind="tasks" record={task} clientId={task.client_id} onSaved={onSaved} onOpenChange={onClose}/>));
   const original=container.querySelector('[data-testid="remediation-ticket-drawer"]');
-  expect(original.textContent).toContain('Completed');
   const planned=original.querySelector('[aria-label="Planned action"]'),savedPlan=planned.value;
   if(withDraft)await text(original,'Planned action','Unsaved parent action draft stays here.');
+  // The parent keeps B's editable draft while a distinct worker submits actual work.
+  await completeAsDistinctWorker(task,{resolution:'Synthetic completed work retained on reopen.'});
   await click(original,'CIS Controls v8.1 Assessment → Safeguard 1.1');
   const source=container.querySelector('[data-testid="brawndo-cis-assessment"]');
   await openFindingsTab(source);
   const sourceTicket=source.querySelector('[data-ticket-id="finding:'+finding.finding_id+'"]');
   await act(async()=>sourceTicket.querySelector('button').click());
   const nested=[...container.querySelectorAll('[data-testid="remediation-ticket-drawer"]')].at(-1);
+  await text(nested,'Validation rationale','Synthetic verified corrective work');await click(nested,'Validate and complete');
+  task=(await api.get('/tasks/'+task.task_id)).data;finding=(await api.get('/findings/'+task.finding_id)).data;
+  expect(original.textContent).toContain('Completed');
+  // The following callback assertions concern the source-side Reopen, after setup validation.
+  onSaved.mockClear();
   expect(onSaved).not.toHaveBeenCalled();
   await click(nested,'Reopen ticket');
   expect(nested.textContent).toContain('Ticket reopened. Previous completed work and decisions are retained.');
@@ -105,7 +124,8 @@ test.each([
   [false,null],
   [true,null],
   [true,'Synthetic source-side planned action.'],
-])('same-child Source completion keeps the parent draft, refreshes native lifecycle, and handles actual field conflicts (validated=%s, sourcePlan=%s)',async(validated,sourcePlan)=>{
+])('same-child Source completion or validation keeps the parent draft and completed-work immutability (validated=%s, sourcePlan=%s)',async(validated,sourcePlan)=>{
+  await closeInitialWork();
   await api.post('/findings/'+finding.finding_id+'/reopen',{request_id:'same-child-round-trip',expected_updated_at:finding.updated_at});
   const reopened=(await api.get('/findings/'+finding.finding_id)).data;
   const editing=(await api.get('/tasks/'+reopened.primary_task_id)).data;
@@ -113,14 +133,18 @@ test.each([
   await act(async()=>root.render(<RecordDrawer open kind="tasks" record={editing} clientId={editing.client_id} onOpenChange={()=>{}}/>));
   const original=container.querySelector('[data-testid="remediation-ticket-drawer"]');
   await text(original.querySelector('[data-ticket-task="'+editing.task_id+'"]'),'Planned action',localPlan);
+  // B's Auth/draft remains mounted. Only A's external request owns this completion;
+  // B is restored before opening Source and records the nested validation itself.
+  if(validated)await completeAsDistinctWorker(editing,{...(sourcePlan?{description:sourcePlan}:{}),resolution:'Synthetic source-side completed work.'});
   await click(original,'CIS Controls v8.1 Assessment → Safeguard 1.1');
   const source=container.querySelector('[data-testid="brawndo-cis-assessment"]');
   await openFindingsTab(source);
   await act(async()=>source.querySelector('[data-ticket-id="finding:'+finding.finding_id+'"] button').click());
   const nested=[...container.querySelectorAll('[data-testid="remediation-ticket-drawer"]')].at(-1),innerWork=nested.querySelector('[data-ticket-task="'+editing.task_id+'"]');
-  if(sourcePlan)await text(innerWork,'Planned action',sourcePlan);
-  await text(innerWork,'Actual resolution','Synthetic source-side completed work.');
-  await click(innerWork,'Complete work');
+  if(!validated){
+    await text(innerWork,'Actual resolution','Synthetic source-side completed work.');
+    await click(innerWork,'Complete work');
+  }
   if(validated){await text(nested,'Validation rationale','Synthetic source-side validation.');await click(nested,'Validate and complete');}
   await close(nested);await close(source);
   const returned=container.querySelector('[data-testid="remediation-ticket-drawer"]'),work=returned.querySelector('[data-ticket-task="'+editing.task_id+'"]');
@@ -130,31 +154,42 @@ test.each([
   expect(work.querySelector('[aria-label="Work status"]').value).toBe('done');
   expect(work.querySelector('[aria-label="Work status"]').disabled).toBe(true);
   expect(work.querySelector('[aria-label="Actual resolution"]').value).toBe('Synthetic source-side completed work.');
-  expect(button(work,'Save changes').disabled).toBe(false);
+  expect(work.querySelector('[aria-label="Planned action"]').disabled).toBe(true);
+  expect(button(work,'Save changes')).toBeUndefined();
   const leaving=new Event('beforeunload',{cancelable:true});window.dispatchEvent(leaving);expect(leaving.defaultPrevented).toBe(true);
   const current=(await api.get('/tasks/'+editing.task_id)).data,beforeFinding=(await api.get('/findings/'+finding.finding_id)).data;
   expect(current.description??'').toBe(sourcePlan??editing.description??'');
   const saved=jest.spyOn(api,'patch');
   try{
-    await click(work,'Save changes');
-    expect(saved).toHaveBeenLastCalledWith('/tasks/'+editing.task_id,{description:localPlan,expected_updated_at:sourcePlan?editing.updated_at:current.updated_at},expect.anything());
+    expect(saved).not.toHaveBeenCalled();
+    const rejected=api.patch('/tasks/'+editing.task_id,{description:localPlan,expected_updated_at:current.updated_at});
+    await expect(rejected).rejects.toMatchObject({response:{data:{detail:expect.stringMatching(/historical evidence|new corrective work/i)}}});
+    expect(saved).toHaveBeenLastCalledWith('/tasks/'+editing.task_id,{description:localPlan,expected_updated_at:current.updated_at});
     const after=(await api.get('/tasks/'+editing.task_id)).data;
     expect(after.status).toBe('done');expect(after.resolution).toBe('Synthetic source-side completed work.');
-    if(sourcePlan){expect(after.description).toBe(sourcePlan);expect(work.querySelector('[aria-label="Planned action"]').value).toBe(localPlan);expect(work.querySelector('[role="alert"]').textContent).toMatch(/changed|conflict/i);}
-    else {expect(after.description).toBe(localPlan);expect(button(work,'Save changes').disabled).toBe(true);}
+    expect(after).toEqual(current);expect(after.description??'').toBe(sourcePlan??editing.description??'');
+    expect(work.querySelector('[aria-label="Planned action"]').value).toBe(localPlan);
+    expect(button(work,'Save changes')).toBeUndefined();
   }finally{saved.mockRestore();}
   const afterFinding=(await api.get('/findings/'+finding.finding_id)).data;
   for(const field of ['status','validated_at','decision_history'])expect(afterFinding[field]).toEqual(beforeFinding[field]);
   const retained=(await api.get('/tasks/'+task.task_id)).data;
   expect(retained.status).toBe('done');expect(retained.resolution).toBe(task.resolution);
+  expect(retained).toEqual(task);
   const afterAssessment=(await api.get('/framework_assessments/'+finding.framework_assessment_id)).data;
   for(const field of ['status','implementation','verification','last_saved','assessment_history'])expect(afterAssessment[field]).toEqual(assessment[field]);
   expect((await api.get('/evidence',{params:{client_id:editing.client_id}})).data).toEqual(evidence);
 },30000);
 
 test('unconfirmed Action recovery retains a newer local plan and uses only its new delta after acknowledging the original request',async()=>{
-  await act(async()=>root.render(<RecordDrawer open kind="tasks" record={task} clientId={task.client_id} onOpenChange={()=>{}}/>));
-  const work=container.querySelector('[data-ticket-task="'+task.task_id+'"]'),originalPatch=api.patch.bind(api);
+  await closeInitialWork();
+  // Historical completed work stays immutable; recovery edits its native new corrective Action.
+  await api.post('/findings/'+finding.finding_id+'/reopen',{request_id:'unconfirmed-open-work',expected_updated_at:finding.updated_at});
+  const reopened=(await api.get('/findings/'+finding.finding_id)).data;
+  const editing=(await api.get('/tasks/'+reopened.primary_task_id)).data;
+  expect(editing.task_id).not.toBe(task.task_id);expect(editing.status).toBe('open');
+  await act(async()=>root.render(<RecordDrawer open kind="tasks" record={editing} clientId={editing.client_id} onOpenChange={()=>{}}/>));
+  const work=container.querySelector('[data-ticket-task="'+editing.task_id+'"]'),originalPatch=api.patch.bind(api);
   const transport=jest.spyOn(api,'patch').mockImplementationOnce(async(...args)=>{await originalPatch(...args);throw new Error('Synthetic lost response after commit.');});
   try{
     await text(work,'Planned action','Synthetic first planned action.');await click(work,'Save changes');
@@ -165,18 +200,38 @@ test('unconfirmed Action recovery retains a newer local plan and uses only its n
     expect(transport.mock.calls[1][0]).toBe(request[0]);expect(transport.mock.calls[1][1]).toEqual(request[1]);
     expect(transport.mock.calls[1][2].headers['Idempotency-Key']).toBe(request[2].headers['Idempotency-Key']);
     expect(work.querySelector('[aria-label="Planned action"]').value).toBe('Synthetic newer retained planned action.');
-    const acknowledged=(await api.get('/tasks/'+task.task_id)).data;
+    const acknowledged=(await api.get('/tasks/'+editing.task_id)).data;
     expect(acknowledged.description).toBe('Synthetic first planned action.');
     expect(button(work,'Retry unconfirmed save')).toBeUndefined();
     await click(work,'Save changes');
-    expect(transport).toHaveBeenLastCalledWith('/tasks/'+task.task_id,{description:'Synthetic newer retained planned action.',expected_updated_at:acknowledged.updated_at},expect.anything());
-    expect((await api.get('/tasks/'+task.task_id)).data).toMatchObject({status:'done',description:'Synthetic newer retained planned action.',resolution:task.resolution});
+    expect(transport).toHaveBeenLastCalledWith('/tasks/'+editing.task_id,{description:'Synthetic newer retained planned action.',expected_updated_at:acknowledged.updated_at},expect.anything());
+    const saved=(await api.get('/tasks/'+editing.task_id)).data;
+    expect(saved).toMatchObject({status:'open',description:'Synthetic newer retained planned action.'});expect(saved.resolution).toBe(editing.resolution);
+    expect((await api.get('/tasks/'+task.task_id)).data).toEqual(task);
     const after=(await api.get('/findings/'+finding.finding_id)).data;
-    for(const field of ['status','validated_at','decision_history'])expect(after[field]).toEqual(finding[field]);
+    for(const field of ['status','validated_at','decision_history'])expect(after[field]).toEqual(reopened[field]);
+    // A fresh read of accepted done work must still allow its exact lost-response acknowledgment.
+    transport.mockImplementationOnce(async(...args)=>{await originalPatch(...args);throw new Error('Synthetic lost completion response after commit.');});
+    await text(work,'Actual resolution','Synthetic accepted submitted work.');await click(work,'Complete work');
+    const completionRequest=transport.mock.calls.at(-1),submitted=(await api.get('/tasks/'+editing.task_id)).data;
+    expect(submitted.status).toBe('done');expect(submitted.resolution).toBe('Synthetic accepted submitted work.');
+    await act(async()=>root.render(null));
+    await act(async()=>root.render(<RecordDrawer open kind="tasks" record={submitted} clientId={submitted.client_id} onOpenChange={()=>{}}/>));
+    const recovered=container.querySelector('[data-ticket-task="'+editing.task_id+'"]');
+    expect(recovered.querySelector('[aria-label="Actual resolution"]').disabled).toBe(true);
+    expect(button(recovered,'Save changes')).toBeUndefined();
+    expect(button(recovered,'Retry unconfirmed save').disabled).toBe(false);
+    await click(recovered,'Retry unconfirmed save');
+    expect(transport.mock.calls.at(-1)[0]).toBe(completionRequest[0]);expect(transport.mock.calls.at(-1)[1]).toEqual(completionRequest[1]);
+    expect(transport.mock.calls.at(-1)[2].headers['Idempotency-Key']).toBe(completionRequest[2].headers['Idempotency-Key']);
+    expect((await api.get('/tasks/'+editing.task_id)).data).toEqual(submitted);
+    expect((await api.get('/tasks/'+task.task_id)).data).toEqual(task);
+    expect(button(recovered,'Retry unconfirmed save')).toBeUndefined();
   }finally{transport.mockRestore();}
 },30000);
 
 test('refreshed Work keeps the existing read-only field and command restrictions',async()=>{
+  await closeInitialWork();
   mockUser={user_id:'demo_admin',role:'client_readonly'};
   const writes=jest.spyOn(api,'patch');
   try{

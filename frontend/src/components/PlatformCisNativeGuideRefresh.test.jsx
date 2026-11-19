@@ -3,6 +3,7 @@ import {createRoot} from 'react-dom/client';
 import FrameworkDrawer from './FrameworkDrawer';
 import {versionForSafeguard} from '@/lib/guidedAssessment';
 import api from '@/lib/api';
+import serviceCatalog from '@catalogs/r4ServicesTools.json';
 
 // API responses model the existing server's revision/base checks; this is
 // rendered integration evidence, not Mongo durability or hosted authentication.
@@ -30,7 +31,7 @@ async function value(selector,next){
   const target=document.querySelector(selector);expect(target).toBeTruthy();
   await act(async()=>{Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype,'value').set.call(target,next);target.dispatchEvent(new Event('input',{bubbles:true}));});
 }
-async function render(){await act(async()=>root.render(<FrameworkDrawer open record={record} clientId={record.client_id} onOpenChange={()=>{}}/>));}
+async function render(){await act(async()=>root.render(<FrameworkDrawer open record={record} clientId={record.client_id} onOpenChange={()=>{}}/>));expect(api.get).toHaveBeenCalledWith(`/framework_assessments/${record.framework_assessment_id}/service-context`);}
 async function open(){
   const launcher=document.querySelector('.cis-guided-launch button');expect(launcher).toBeTruthy();expect(launcher.disabled).toBe(false);
   if(launcher.getAttribute('aria-expanded')!=='true')await act(async()=>launcher.click());
@@ -50,7 +51,10 @@ beforeEach(()=>{
   native={client_id:'synthetic-native-guide',framework_key:'cis-ig1',framework_assessment_id:'synthetic-native-1.1',definition_id:'1.1',title:'Inventory',status:'not_assessed',verification:'not_verified',implementation:'',technology:'Preserved native technology',notes:'Preserved native notes',owner_id:null,na_rationale:'',last_saved:tokenA,assessment_history:[]};
   record=copy(native);nativeHistory=[];interviewHistory=[];liveFingerprint=fingerprint;implementationGroup=1;
   interview={client_id:native.client_id,assessment_id:native.framework_assessment_id,user_id:'native-guide-qa',version:versionForSafeguard('1.1'),revision:0,answers:{},step:0,completed:false,narrative:'',result:null,base_assessment_token:tokenA,base_scope_fingerprint:fingerprint};
-  api.get.mockImplementation(async path=>({data:path.endsWith('/guided-assessment/history')?{items:copy(interviewHistory),next_before_revision:null}:path.endsWith('/guided-assessment')?readInterview():path.endsWith('/related')?{reviews:[],evidence:[],findings:[],tasks:[],risks:[],policies:[]}:path.startsWith('/frameworks/')?{configuration:{implementation_group:implementationGroup},assessments:[copy(native)],work:{[native.framework_assessment_id]:{context_complete:true,open_findings:0,open_actions:0,overdue_reviews:0,priority_records:[]}}}:[]}));
+  api.get.mockImplementation(async path=>({data:path===`/framework_assessments/${native.framework_assessment_id}/service-context`?{
+    client_id:native.client_id,expected_client_updated_at:null,services:{areas:{},custom_tools:[],preset:null,exclusions:{}},
+    candidates:[],selected_activity_id:null,catalog:serviceCatalog.tools.map(tool=>({...copy(tool),updated_at:null}))
+  }:path.endsWith('/guided-assessment/history')?{items:copy(interviewHistory),next_before_revision:null}:path.endsWith('/guided-assessment')?readInterview():path.endsWith('/related')?{reviews:[],evidence:[],findings:[],tasks:[],risks:[],policies:[]}:path.startsWith('/frameworks/')?{configuration:{implementation_group:implementationGroup},assessments:[copy(native)],work:{[native.framework_assessment_id]:{context_complete:true,open_findings:0,open_actions:0,overdue_reviews:0,priority_records:[]}}}:[]}));
   api.patch.mockImplementation(async(_path,body)=>{
     if(body.expected_last_assessed!==native.last_saved)throw new Error('Assessment changed since it was opened; reload before saving');
     const {expected_last_assessed,...fields}=body;
@@ -118,14 +122,16 @@ test('a scope change is not silently adopted by the first-write refresh',async()
 
 test('a native writer after the refresh read remains protected by the server base guard',async()=>{
   await render();await nativeSave();await open();await answer();const read=api.get.getMockImplementation();
-  api.get.mockImplementationOnce(async(...args)=>{const response=await read(...args);native={...native,implementation:'Winner after refresh read',last_saved:tokenC};return response;});
+  let interposed=false;
+  api.get.mockImplementation(async(path,...args)=>{const response=await read(path,...args);if(!interposed&&path===`/framework_assessments/${native.framework_assessment_id}/guided-assessment`){interposed=true;native={...native,implementation:'Winner after refresh read',last_saved:tokenC};}return response;});
   await click('Save & close',workspace());expect(document.querySelector('[role="alert"]')?.textContent).toBe(conflict);expect(interview.revision).toBe(0);
+  expect(interposed).toBe(true);
   expect(native.implementation).toBe('Winner after refresh read');expect(document.querySelector('[aria-label="Known gaps or uncertainties"]').value).toContain('Synthetic uncertainty');expect(api.patch).toHaveBeenCalledTimes(1);
 });
 
 test('leaving the assessment identity while its first-write refresh is pending cannot write the old interview',async()=>{
   await render();await nativeSave();await open();await answer();const read=api.get.getMockImplementation();let finish;
-  api.get.mockImplementationOnce((...args)=>new Promise(resolve=>{finish=async()=>resolve(await read(...args));}));
+  api.get.mockImplementation((path,...args)=>path===`/framework_assessments/${native.framework_assessment_id}/guided-assessment`&&!finish?new Promise(resolve=>{finish=async()=>resolve(await read(path,...args));}):read(path,...args));
   await click('Save & close',workspace());expect(finish).toBeDefined();
   const nextRecord={...record,framework_assessment_id:'synthetic-native-other'};
   await act(async()=>root.render(<FrameworkDrawer key="different-assessment" open record={nextRecord} clientId={nextRecord.client_id} onOpenChange={()=>{}}/>));

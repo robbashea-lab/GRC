@@ -7,6 +7,11 @@ import cis from '@catalogs/cisIG1.json';
 const clientRoles = ['client_grc_manager', 'client_contributor', 'client_readonly'];
 const roles = ['super_admin', 'platform_admin', ...clientRoles];
 const memberActorFields = ['accepted_by', 'closed_by', 'validated_by', 'verified_by', 'approved_by', 'completed_by', 'assessed_by'];
+const clientIds = user => Array.isArray(user?.client_ids) ? user.client_ids : [];
+const validateAccessFields = body => {
+  if (body.client_ids != null && !Array.isArray(body.client_ids)) throw new Error('Client memberships must be an array of client IDs');
+  if (body.all_clients != null && typeof body.all_clients !== 'boolean') throw new Error('All-client access must be a boolean');
+};
 const admin = (db, cid) => {
   if (!['super_admin', 'platform_admin'].includes(db.user.role) || cid && !clientAccess(db.user, cid)) throw new Error('Not authorized to manage accounts for this client');
 };
@@ -14,7 +19,7 @@ const manageable = (db, target) => {
   admin(db);
   if (db.user.role === 'super_admin') return;
   if (!clientRoles.includes(target.role) ||
-      !target.client_ids?.some(cid => clientAccess(db.user, cid))) throw new Error('Not authorized to manage this user');
+      !clientIds(target).some(cid => clientAccess(db.user, cid))) throw new Error('Not authorized to manage this user');
 };
 const simulate = (db, user) => {
   if (user.status !== 'invited') throw new Error('Only pending invitations can be resent');
@@ -25,6 +30,7 @@ const simulate = (db, user) => {
 };
 function createAccount(db, body) {
   admin(db);
+  validateAccessFields(body);
   if (!roles.includes(body.role) || db.user.role !== 'super_admin' && !clientRoles.includes(body.role)) throw new Error('Not authorized for this role');
   const client_ids = [...new Set(body.client_ids || [])];
   if (body.all_clients && (db.user.role !== 'super_admin' || body.role !== 'platform_admin')) throw new Error('Only a Super Admin can grant internal all-client access');
@@ -51,14 +57,14 @@ export function identityRequest(db, path, method, params, body) {
       for(const v of [c.owner_id,c.created_by,...(c.history||[]).flatMap(h=>[h.owner_id,h.changed_by]),...(c.legacy_sources||[]).map(s=>s.by),...(c.observations||[]).flatMap(o=>[o.by,o.design_snapshot?.owner_id])])if(typeof v==='string'&&v)referenced.add(v);
     }
     const minimal = clientRoles.includes(db.user.role);
-    return db.users.filter(u => u.client_ids?.includes(id) || referenced.has(u.user_id))
+    return db.users.filter(u => clientIds(u).includes(id) || referenced.has(u.user_id))
       .sort((a, b) => (a.name || a.email || '').toLowerCase().localeCompare((b.name || b.email || '').toLowerCase()))
       .map(u => {
-        const orphaned = !u.client_ids?.includes(id);
+        const orphaned = !clientIds(u).includes(id);
         const assignment_eligible=eligible(u,id);
         if (minimal) return { user_id: u.user_id, name: u.name || 'Former user', status: u.status || 'active', ...(orphaned ? {orphaned: true} : {}) };
         return { user_id: u.user_id, name: u.name, email: u.email, status: u.status, role: u.role,
-          client_ids: (u.client_ids || []).filter(cid => clientAccess(db.user, cid)), assignment_eligible, ...(orphaned ? {orphaned: true} : {}) };
+          client_ids: clientIds(u).filter(cid => clientAccess(db.user, cid)), assignment_eligible, ...(orphaned ? {orphaned: true} : {}) };
       });
   }
   if (kind === 'clients' && action === 'contact-accounts' && method === 'get') {
@@ -105,19 +111,21 @@ export function identityRequest(db, path, method, params, body) {
     return { ...counts, total, items, truncated: total > items.length };
   }
   admin(db);
-  if (!id && method === 'get') return db.users.filter(u => db.user.role === 'super_admin' || clientRoles.includes(u.role) && u.client_ids?.some(cid => clientAccess(db.user, cid))).map(u => ({
+  if (!id && method === 'get') return db.users.filter(u => db.user.role === 'super_admin' || clientRoles.includes(u.role) && clientIds(u).some(cid => clientAccess(db.user, cid))).map(u => ({
     user_id: u.user_id, name: u.name, email: u.email, role: u.role, status: u.status, last_login_at: u.last_login_at, updated_at:u.updated_at, all_clients:u.all_clients,
-    client_ids: db.user.role === 'platform_admin' && db.user.client_ids?.length ? (u.client_ids || []).filter(cid => db.user.client_ids.includes(cid)) : u.client_ids,
+    client_ids: db.user.role === 'platform_admin' && clientIds(db.user).length ? clientIds(u).filter(cid => clientIds(db.user).includes(cid)) : u.client_ids,
   }));
   if (!id && method === 'post') return createAccount(db, body);
+  if (method !== 'get') validateAccessFields(body);
   const target = record(db, 'users', id);
   manageable(db, target);
   if(method==='patch'&&Object.prototype.hasOwnProperty.call(body,'expected_updated_at')&&body.expected_updated_at!==(target.updated_at??null))throw new Error('Record changed since it was opened; reload before saving');
-  const foreign = (target.client_ids || []).filter(cid => !clientAccess(db.user, cid));
+  const foreign = clientIds(target).filter(cid => !clientAccess(db.user, cid));
   if (method === 'patch' && action === 'client-memberships') {
+    if (!Array.isArray(body.client_ids)) throw new Error('Client memberships must be an array of client IDs');
     if (body.all_clients != null && (typeof body.all_clients !== 'boolean' || db.user.role !== 'super_admin' || body.all_clients && target.role !== 'platform_admin')) throw new Error('Only a Super Admin can grant internal all-client access');
     for (const cid of body.client_ids || []) { admin(db, cid); record(db, 'clients', cid); }
-    const preserved = (target.client_ids || []).filter(cid => !clientAccess(db.user, cid));
+    const preserved = clientIds(target).filter(cid => !clientAccess(db.user, cid));
     const desired = [...new Set([...body.client_ids, ...preserved])];
     if (target.role === 'platform_admin' && !desired.length && db.user.role !== 'super_admin') throw new Error('Removing the last membership would grant global internal scope');
     const previous = target.client_ids;
@@ -140,8 +148,8 @@ export function identityRequest(db, path, method, params, body) {
   if (body.status && !['active', 'disabled', 'invited'].includes(body.status)) throw new Error('Invalid account status');
   if (target.user_id === db.user.user_id && (body.role || body.status === 'disabled')) throw new Error('You cannot change your own role or disable yourself');
   if ((target.status === 'invited' || target.invitation_requested_at) && body.status === 'active') throw new Error('The account must complete its invitation before activation');
-  if (body.client_ids) for (const cid of new Set([...(target.client_ids || []), ...body.client_ids])) {
-    if ((target.client_ids || []).includes(cid) !== body.client_ids.includes(cid)) admin(db, cid);
+  if (body.client_ids) for (const cid of new Set([...clientIds(target), ...body.client_ids])) {
+    if (clientIds(target).includes(cid) !== body.client_ids.includes(cid)) admin(db, cid);
   }
   if ((body.role || target.role) === 'platform_admin' && !(body.client_ids || target.client_ids)?.length && db.user.role !== 'super_admin') throw new Error('Only a Super Admin can authorize global internal scope');
   if (body.all_clients != null && (db.user.role !== 'super_admin' || body.all_clients && (body.role || target.role) !== 'platform_admin')) throw new Error('Only a Super Admin can grant internal all-client access');

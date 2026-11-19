@@ -58,8 +58,8 @@ const outcome = o => o.checklist_outcome || nativeOutcome(o);
 const evaluationFields=[['conclusion','Reviewer conclusion',20000],['tested_scope','Scope examined',4000],['tested_period','Period examined',4000],['no_evidence_reason','Supporting records / reason no separate artifact is appropriate',4000]];
 
 export default function ReviewDrawer({open,onOpenChange,record,clientId,onSaved,onRiskLinked,initialValues,reviewsPilot=false}) {
-  const {user,workspaceMode,error:authError} = useAuth();
-  const {currentClient,currentClientId,error:orgError}=useOrg()||{};
+  const {user,workspaceMode,loading:authLoading,error:authError} = useAuth();
+  const {currentClient,currentClientId,loading:orgLoading,error:orgError}=useOrg()||{};
   const pilot=isReferenceWorkflow(clientId,user,currentClient) && (!record || record.client_id===clientId);
   const opener=useRef(null),heading=useRef(null),cisBriefOpener=useRef(null),historyLinkedReturn=useRef(null);
   const [pending,setPending]=useState(null);
@@ -72,10 +72,15 @@ export default function ReviewDrawer({open,onOpenChange,record,clientId,onSaved,
   const [confirmComplete,setConfirmComplete]=useState(false);
   const [evaluation,setEvaluation]=useState({});
   const [completionGuide,setCompletionGuide]=useState(null);
+  const [guideRevisionAcknowledgment,setGuideRevisionAcknowledgment]=useState(null);
   const guideBaseline=useRef(null);
-  const updateGuide=useCallback(value=>{
+  const updateGuide=useCallback((value,acknowledgment)=>{
     if(!value){guideBaseline.current=null;setCompletionGuide(null);return;}
     if(!guideBaseline.current||guideBaseline.current.occurrence_id!==value.occurrence_id)guideBaseline.current=value;
+    else if(acknowledgment?.owner===reviewRevisionOwner.current
+      &&guideBaseline.current.occurrence_id===acknowledgment.occurrence_id
+      &&guideBaseline.current.expected_updated_at===acknowledgment.previous_updated_at)
+      guideBaseline.current={...guideBaseline.current,expected_updated_at:acknowledgment.updated_at};
     setCompletionGuide(value);
   },[]);
   const savedGuide=useCallback(value=>{
@@ -126,6 +131,17 @@ export default function ReviewDrawer({open,onOpenChange,record,clientId,onSaved,
     selectedClient(),new URLSearchParams(window.location.search).get('client_id'),record?.client_id,record?.review_id,
     record&&occurrenceId(record),record?.status,current?.client_id,current?.review_id,oid,initialValues?.occurrence?.occurrence_id]);
   const focusAllowed=open&&writable&&!frozen&&!busy&&!authError&&!orgError;
+  const reviewRevisionOwner=useRef(null);
+  reviewRevisionOwner.current=JSON.stringify([focusIdentity,open,user?.status,user?.client_ids,user?.all_clients,authError,orgError]);
+  const readClientId=record?.client_id||clientId;
+  const readIdentity=JSON.stringify([user?.user_id,user?.role,user?.status,user?.workspace_mode,workspaceMode,user?.client_ids,user?.all_clients,
+    clientId,readClientId,currentClientId,currentClient?.client_id,currentClient?.status,currentClient?.archived,currentClient?.archived_at,
+    selectedClient(),new URLSearchParams(window.location.search).get('client_id'),authLoading,authError,orgLoading,orgError]);
+  const readOwner=useRef(null);
+  // Returning to an earlier identity must not revive that owner's older requests.
+  if(readOwner.current?.identity!==readIdentity)readOwner.current={identity:readIdentity,available:!authLoading&&!authError&&!orgLoading&&!orgError
+    &&currentClientId===readClientId&&currentClient?.client_id===readClientId};
+  const readScope=readOwner.current;
   const previousDetail=committedDetail.current,activeField=document.activeElement;
   // Snapshot the outgoing native field before the presentation branch replaces its DOM.
   const focusReceipt=previousDetail?.presentation!==workflowPresentation&&previousDetail?.identity===focusIdentity
@@ -155,14 +171,21 @@ export default function ReviewDrawer({open,onOpenChange,record,clientId,onSaved,
     setTab('Overview'); setSelected(initialValues?.occurrence || null); setRiskDraft(null);setRiskNext("");setRiskOutcome("Reviewed — No Change"); riskBase.current=null; setHistory([]); setComments([]); setActivity([]); setRelated({});
     setComment(''); setFinding(null); setLinked(null); setMembers([]);setPending(null);
     setEvaluation({});
-    setCompletionGuide(null);guideBaseline.current=null;
-    const version = generation.current;
+    setCompletionGuide(null);guideBaseline.current=null;setGuideRevisionAcknowledgment(null);
     setBasisLoading(pilot ? !!record : true);setBasisError('');
-    api.get(`/clients/${record?.client_id || clientId}/members`).then(({data}) => { if (generation.current === version) setMembers(data); }).catch(e => toast.error(formatError(e)));
     setPolicies([]);
-    api.get('/policies',{params:{client_id:record?.client_id || clientId}}).then(({data})=>{if(generation.current===version)setPolicies(data);}).catch(e=>toast.error(formatError(e)));
     return () => { sequence.current++;historyLinkedReturn.current=null; };
   }, [open,record,clientId,initialValues?.occurrence,pilot]);
+
+  useEffect(()=>{
+    if(!open)return;
+    const version=generation.current,owner=readScope;
+    const accepted=()=>version===generation.current&&owner===readOwner.current&&owner.available;
+    // Withdraw read projections on a scope change; keep native form, Risk and checklist drafts mounted.
+    setMembers([]);setPolicies([]);setHistory([]);setRelated({});setComments([]);setActivity([]);setBasisLoading(pilot?!!record:true);setBasisError('');
+    api.get(`/clients/${readClientId}/members`).then(({data})=>{if(accepted())setMembers(data);}).catch(error=>{if(accepted())toast.error(formatError(error));});
+    api.get('/policies',{params:{client_id:readClientId}}).then(({data})=>{if(accepted())setPolicies(data);}).catch(error=>{if(accepted())toast.error(formatError(error));});
+  },[open,record,clientId,readClientId,initialValues?.occurrence,pilot,readScope]);
 
   function changeConfiguration(key,value) {
     if (key === 'recurrence') recurrenceEdited.current=true;
@@ -174,9 +197,9 @@ export default function ReviewDrawer({open,onOpenChange,record,clientId,onSaved,
 
   const reload = useCallback(async (options) => {
     if (!open || !rid || !oid) return {ok:false};
-    const version = generation.current;
-    const accepted=()=>version===generation.current&&(!options?.accept||options.accept());
-    if(!accepted())return {ok:false};
+    const version = generation.current,owner=readScope;
+    const accepted=()=>version===generation.current&&owner===readOwner.current&&owner.available&&(!options?.accept||options.accept());
+    if(owner!==readOwner.current||options?.accept&&!options.accept())return {ok:false};
     try {
       const [h,r,c,a] = await Promise.all([
         api.get(`/reviews/${current.review_id}/history`),
@@ -188,9 +211,9 @@ export default function ReviewDrawer({open,onOpenChange,record,clientId,onSaved,
       setHistory(h.data); setRelated(r.data);setBasisError('');
       if(current.risk_id) {const risk=r.data.risks?.find(x=>x.risk_id===current.risk_id); if(risk){const next={likelihood_score:risk.likelihood_score,impact_score:risk.impact_score,assessment_rationale:risk.assessment_rationale||'',treatment:risk.treatment||''},base=riskBase.current;setRiskDraft(previous=>previous&&base?Object.fromEntries(Object.keys(next).map(k=>[k,previous[k]!==base[k]?previous[k]:next[k]])):next);riskBase.current=next;}} setEvidenceVersion(v=>v+1); setComments(c.data); setActivity(a.data);
       return {ok:true};
-    } catch(e) { if (accepted()) {setBasisError(formatError(e));toast.error(formatError(e));} return {ok:false}; }
+    } catch(e) { const error=formatError(e);if (accepted()) {setBasisError(error);if(!options?.quiet)toast.error(error);} return {ok:false,error}; }
     finally {if(accepted())setBasisLoading(false);}
-  }, [open,rid,oid,current?.review_id,current?.risk_id,selected]);
+  }, [open,rid,oid,current?.review_id,current?.risk_id,selected,readScope]);
   // Scope resolution resets the detail state above even when Review IDs stay the same.
   useEffect(() => { reload(); },[reload,pilot]);
   // Only the new linked-Risk command requires confirmed parent refresh before success.
@@ -219,6 +242,35 @@ export default function ReviewDrawer({open,onOpenChange,record,clientId,onSaved,
     setBusy(true);
     try { await fn(); } catch(e) { toast.error(formatError(e)); } finally { setBusy(false); }
   };
+  async function uploadEvidence(files) {
+    if(!files.length)return;
+    const owner=reviewRevisionOwner.current,version=generation.current;
+    const accepted=()=>owner===reviewRevisionOwner.current&&version===generation.current;
+    await run(async()=>{
+      let confirmed=0;
+      try{
+        for(const file of files){
+          if(!accepted())return;
+          const content=await fileData(file);
+          if(!accepted())return;
+          await api.post('/evidence',{client_id:cid,linked_type:'review',linked_id:rid,occurrence_id:oid,
+            filename:file.name,mime_type:file.type,content_base64:content});
+          confirmed++;
+          if(!accepted())return;
+        }
+        const refreshed=await reload({accept:accepted,quiet:true});
+        if(!accepted())return;
+        if(!refreshed.ok){
+          toast.error(`${confirmed} file${confirmed===1?'':'s'} uploaded, but this occurrence’s Evidence list could not be refreshed. Check the list before uploading again.${refreshed.error?' '+refreshed.error:''}`);
+          return;
+        }
+        toast.success('Evidence attached');
+      }catch(error){
+        if(!accepted())return;
+        toast.error(`${confirmed?`${confirmed} file${confirmed===1?'':'s'} uploaded. `:''}The remaining upload could not be confirmed. Check this occurrence’s Evidence list before uploading again. ${formatError(error)}`);
+      }
+    });
+  }
   function changes() {
     const fields = admin ? [...configFields.map(f => f.name),'notes','governance_context'] : ['notes'];
     return Object.fromEntries(fields.map(k => [k,k === 'custom_recurrence_days' ? (form[k] ? Number(form[k]) : null) : form[k] || null])
@@ -248,12 +300,39 @@ export default function ReviewDrawer({open,onOpenChange,record,clientId,onSaved,
       setCurrent(data); setForm({...data,due_date:data.due_date?.slice(0,10) || ''}); onSaved?.(); return data;
     }
     if (Object.keys(patch).length) {
+      const owner=reviewRevisionOwner.current,version=generation.current;
       const {data} = await updateRecord(`/reviews/${current.review_id}`,{...patch,expected_occurrence_id:occurrenceId(current),expected_updated_at:current.updated_at??null});
+      acknowledgeReviewRevision(current,data,owner,version);
       setCurrent(data); onSaved?.(); return data;
     }
     return current;
   }
+  function acknowledgeReviewRevision(previous,saved,owner,version,expected=previous.updated_at??null) {
+    if(owner!==reviewRevisionOwner.current||version!==generation.current)
+      throw new Error('This Review owner changed before its save was confirmed. Reopen the current Review before continuing.');
+    if(saved?.client_id!==previous.client_id||saved?.review_id!==previous.review_id||occurrenceId(saved)!==occurrenceId(previous)
+      ||Object.hasOwn(saved,'updated_at')&&saved.updated_at!==null&&(typeof saved.updated_at!=='string'||!saved.updated_at))
+      throw new Error('The saved Review identity or revision could not be confirmed. Reopen this Review before continuing.');
+    if(Object.hasOwn(saved,'updated_at')&&saved.updated_at!==expected)
+      setGuideRevisionAcknowledgment(prior=>{
+        // Metadata + Start may both finish before the Guide consumes the first acknowledgment.
+        const pendingOwnRevision=prior?.owner===owner&&prior.review_id===saved.review_id&&prior.client_id===saved.client_id
+          &&prior.occurrence_id===occurrenceId(saved)&&prior.updated_at===expected
+          &&guideBaseline.current?.expected_updated_at===prior.previous_updated_at;
+        return {owner,client_id:saved.client_id,review_id:saved.review_id,occurrence_id:occurrenceId(saved),
+          previous_updated_at:pendingOwnRevision?prior.previous_updated_at:expected,updated_at:saved.updated_at};
+      });
+  }
+  async function retryChanges() {
+    const owner=reviewRevisionOwner.current,version=generation.current,previous=current,request=updateRecord.pendingRequest();
+    if(request?.[0]!==`/reviews/${previous.review_id}`||request[1]?.expected_occurrence_id!==occurrenceId(previous)
+      ||!Object.hasOwn(request[1],'expected_updated_at'))throw new Error('The original Review save could not be verified. Reopen this Review before retrying.');
+    const {data}=await updateRecord.retry();
+    acknowledgeReviewRevision(previous,data,owner,version,request[1].expected_updated_at);
+    setCurrent(data);await reload();onSaved?.();toast.success('Saved');
+  }
   const lifecycle = action => run(async () => {
+    const owner=reviewRevisionOwner.current,version=generation.current;
     if(draftProtected&&(comment.trim()||finding)) throw new Error('Post or discard the unfinished comment or Finding before starting or completing this Review.');
     // Completion never silently saves configuration before a denied conclusion.
     // Keep the existing explicit Save changes/Cancel controls authoritative.
@@ -270,8 +349,11 @@ export default function ReviewDrawer({open,onOpenChange,record,clientId,onSaved,
     }
     if(acceptedRetry&&acceptedRetry.request.occurrence_id!==occurrenceId(saved))throw new Error('The accepted completion belongs to another occurrence; reload this Review.');
     const payload=acceptedRetry?acceptedRetry.request:{occurrence_id:occurrenceId(saved),...(action==='complete'?{...evaluation,...completionPayload(completionGuide)}:{}),...(action==='complete'&&saved.risk_id&&!hasException?{risk_assessment:riskDraft?Object.fromEntries(Object.entries(riskDraft).filter(([k,v])=>(v??'')!==(riskBase.current?.[k]??''))):{},risk_outcome:riskOutcome,...(pilot&&riskNext?{risk_next_review:riskNext}:{})}:{})};
+    if(action==='start'&&(owner!==reviewRevisionOwner.current||version!==generation.current))
+      throw new Error('This Review owner changed before its save was confirmed. Reopen the current Review before continuing.');
     const {data} = await api.post(`/reviews/${saved.review_id}/${action}`,payload);
     const updated = data.review || data;
+    if(action==='start')acknowledgeReviewRevision(saved,updated,owner,version);
     setCurrent(updated); setForm({...updated,due_date:updated.due_date?.slice(0,10) || ''});
     if (data.occurrence) setHistory(items => [data.occurrence,...items.filter(o => o.occurrence_id !== data.occurrence.occurrence_id)]);
     setSelected(null); setRiskNext(''); setComment(''); onSaved?.();
@@ -298,7 +380,7 @@ export default function ReviewDrawer({open,onOpenChange,record,clientId,onSaved,
   // Ordinary concept Reviews need no legacy Related tab. Preserve access where real extra native relationships exist.
   const extraRelationships=remediation.standaloneTasks.length||['policies','vendors','risks'].some(kind=>related[kind]?.length);
   const visibleTabs=workflowPresentation&&!extraRelationships?tabs.filter(value=>value!=='Related'):tabs;
-  const evidenceUpload=!frozen&&writable?<Input className={workflowPresentation?'review-workflow-file-input':'mt-2'} aria-label="Choose files" type="file" multiple disabled={busy} data-testid="drawer-evidence-input" onChange={e=>{const files=Array.from(e.target.files);run(async()=>{for(const file of files)await api.post('/evidence',{client_id:cid,linked_type:'review',linked_id:rid,occurrence_id:oid,filename:file.name,mime_type:file.type,content_base64:await fileData(file)});await reload();toast.success('Evidence attached');});}}/>:null;
+  const evidenceUpload=!frozen&&writable?<Input className={workflowPresentation?'review-workflow-file-input':'mt-2'} aria-label="Choose files" type="file" multiple disabled={busy} data-testid="drawer-evidence-input" onChange={e=>uploadEvidence(Array.from(e.target.files||[]))}/>:null;
   const evidenceHeader=linkButton=>evidenceUpload?<div className="review-workflow-upload"><span className="review-workflow-upload-icon" aria-hidden="true"><Upload size={20}/></span><strong>Attach evidence to {shown?.period||derived.period||'this occurrence'}</strong><p className="review-workflow-help">Choose files. Exports, screenshots, sign-off emails.</p><div className="review-workflow-upload-controls"><label className="review-workflow-file-choice"><span>Choose files</span>{evidenceUpload}</label>{linkButton}</div></div>:linkButton;
   return <Dialog open={open} onOpenChange={close}>
     <DialogContent ref={detailSurface} aria-modal="true" {...{
@@ -359,7 +441,7 @@ export default function ReviewDrawer({open,onOpenChange,record,clientId,onSaved,
           {selected && <p className="text-sm">{selected.status==='cancelled'?'Cancelled':<>Completed {date(selected.completed_at || selected.completion_date)} by {selected.completed_by_name || person(selected.completed_by)} · {outcome(selected)}</>}</p>}
         </>}
         {/* Keep this occurrence's local checklist mounted across tabs, without saving it. */}
-        {current&&<div hidden={tab!=='Overview'}>{frozen?<ReviewCompletionRecord occurrence={selected||current.occurrences?.find(item=>item.occurrence_id===oid)||current}/>:<ReviewCompletionGuide key={cid+':'+rid+':'+oid} reviewId={rid} guide={completionGuide} onChange={updateGuide} onSaved={savedGuide} disabled={!writable||busy}/>}</div>}
+        {current&&<div hidden={tab!=='Overview'}>{frozen?<ReviewCompletionRecord occurrence={selected||current.occurrences?.find(item=>item.occurrence_id===oid)||current}/>:<ReviewCompletionGuide key={cid+':'+rid+':'+oid} reviewId={rid} record={current} guide={completionGuide} revisionAcknowledgment={guideRevisionAcknowledgment} revisionOwner={reviewRevisionOwner.current} onChange={updateGuide} onSaved={savedGuide} disabled={!writable||busy}/>}</div>}
         {tab === 'Overview' && <>
           {current && !frozen && writable && <div className="review-workflow-actions flex flex-wrap gap-2">
             {!workflowPresentation&&current.status !== 'in_progress' && <Button size="sm" variant="outline" disabled={busy || current.status === 'needs_scheduling'} data-testid="review-start" onClick={() => lifecycle('start')}>Start Review</Button>}
@@ -418,7 +500,7 @@ export default function ReviewDrawer({open,onOpenChange,record,clientId,onSaved,
           {activity.map(a => <div key={a.log_id || a.audit_id} className="border-b border-line py-2 text-sm"><div className="text-xs text-ink-help">{new Date(a.at).toLocaleString()} · {a.meta?.by_name || a.user_name || a.user_email}</div><p>{a.action}{a.meta?.task_id ? ` · ${a.meta.task_id}` : a.meta?.finding_id ? ` · ${a.meta.finding_id}` : ''}{a.meta?.filename ? ` · ${a.meta.filename}` : ''}{a.meta?.due_date ? ` · ${date(a.meta.due_date)}` : ''}</p></div>)}
         </>)}
       </div>
-      <div className="review-workflow-footer px-6 py-3 border-t border-line bg-surface-subtle flex shrink-0 justify-end gap-2">{workflowPresentation&&<span className="review-workflow-feedback">{busy?'Working…':dirty?'Unsaved changes':'No unsaved changes'}</span>}{updateRecord.unconfirmed()&&<><p role="status">Save is unconfirmed. Retry the original save before another edit.</p><Button size="sm" disabled={busy||!writable} onClick={()=>run(async()=>{const {data}=await updateRecord.retry();setCurrent(data);await reload();onSaved?.();toast.success('Saved');})}>Retry unconfirmed save</Button></>}<Button variant="outline" size="sm" onClick={() => close(false)}>Close</Button>{!frozen && (current ? writable : admin) && (workflowPresentation||['Overview','Requirements'].includes(tab)) && <Button size="sm" data-testid="drawer-save" disabled={busy || !form.title?.trim() || !form.review_type || workflowPresentation&&current&&!Object.keys(changes()).length} onClick={() => run(async () => { await saveChanges(); await reload(); toast.success('Saved'); })}>{current ? 'Save changes' : 'Create'}</Button>}</div>
+      <div className="review-workflow-footer px-6 py-3 border-t border-line bg-surface-subtle flex shrink-0 justify-end gap-2">{workflowPresentation&&<span className="review-workflow-feedback">{busy?'Working…':dirty?'Unsaved changes':'No unsaved changes'}</span>}{updateRecord.unconfirmed()&&<><p role="status">Save is unconfirmed. Retry the original save before another edit.</p><Button size="sm" disabled={busy||!writable} onClick={()=>run(retryChanges)}>Retry unconfirmed save</Button></>}<Button variant="outline" size="sm" onClick={() => close(false)}>Close</Button>{!frozen && (current ? writable : admin) && (workflowPresentation||['Overview','Requirements'].includes(tab)) && <Button size="sm" data-testid="drawer-save" disabled={busy || !form.title?.trim() || !form.review_type || workflowPresentation&&current&&!Object.keys(changes()).length} onClick={() => run(async () => { await saveChanges(); await reload(); toast.success('Saved'); })}>{current ? 'Save changes' : 'Create'}</Button>}</div>
     </DialogContent>
     {<AlertDialog open={!!pending} onOpenChange={v=>{if(!v)setPending(null);}}>
       <AlertDialogContent><AlertDialogTitle>Leave unsaved changes?</AlertDialogTitle>

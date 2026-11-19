@@ -8,15 +8,22 @@ jest.mock('react-router-dom',()=>({Link:({to,children})=><a href={to}>{children}
 let root,container;
 beforeEach(()=>{global.IS_REACT_ACT_ENVIRONMENT=true;container=document.createElement('div');document.body.append(container);root=createRoot(container);api.get.mockResolvedValue({data:{completed:true,client:{client_id:'a'},records:{requirements:[],framework_assessments:[]}}});api.patch.mockResolvedValue({data:{ok:true}});});
 afterEach(async()=>{await act(async()=>root.unmount());container.remove();jest.clearAllMocks();});
-test('applicability selection previews effects before any write; placeholder claims are restrained',async()=>{
+test('applicability selection previews native CMMC initialization and preserves records before any write',async()=>{
   await act(async()=>root.render(<ProgramConfiguration clientId="a"/>));
   const select=container.querySelector('select[aria-label*="CMMC"]');
   await act(async()=>{select.value='applies';select.dispatchEvent(new Event('change',{bubbles:true}));});
   expect(api.patch).not.toHaveBeenCalled();
-  expect(document.querySelector('[role="dialog"]').textContent).toContain('not implemented');
+  const dialog=document.querySelector('[role="dialog"]');
+  expect(dialog.textContent).toContain('initialize missing requirement assessments');
+  expect(dialog.textContent).toContain('Existing assessment results, Review owners and dates remain intact.');
+  expect(dialog.textContent).not.toContain('not implemented');
+  const level=dialog.querySelector('select[aria-label="CMMC level"]');
+  expect([...level.options].map(option=>option.textContent)).toEqual(['Level 1 · 17 mapped checks','Level 2 · 110 mapped checks']);
+  await act(async()=>{level.value='1';level.dispatchEvent(new Event('change',{bubbles:true}));});
+  expect(api.patch).not.toHaveBeenCalled();
   const confirm=Array.from(document.querySelectorAll('button')).find(b=>b.textContent==='Confirm Program Change');
   await act(async()=>confirm.click());
-  expect(api.patch).toHaveBeenCalledWith('/onboarding/programs/cmmc',expect.objectContaining({client_id:'a',applicability:'applies',expected_updated_at:null}));
+  expect(api.patch).toHaveBeenCalledWith('/onboarding/programs/cmmc',expect.objectContaining({client_id:'a',applicability:'applies',cmmc_level:1,expected_updated_at:null}));
 });
 
 test('client profile owns SOC scope without program dates; saving preserves legacy dates and supports retry',async()=>{

@@ -4,6 +4,7 @@ import FrameworkDrawer from './FrameworkDrawer';
 import api from '@/lib/api';
 import {cisContext} from '../testUtils/cisExperience';
 import * as rolloutPresentation from '@/lib/assessmentRolloutEligibility';
+import {genericGuidedVersion} from '@/lib/genericGuidedAssessment';
 
 let mockAuth, mockOrg, mockGuideProps;
 jest.mock('@/context/AuthContext', () => ({useAuth: () => mockAuth}));
@@ -22,9 +23,15 @@ let root, host, clientId, record, native, users, contacts, comments, activity, r
 const base = () => '/framework_assessments/' + record.framework_assessment_id;
 const memberPath = () => '/clients/' + clientId + '/members';
 const frameworkPath = () => '/frameworks/' + record.framework_key;
+const servicePath = () => base() + '/service-context';
+const guidedPath = () => base() + '/guided-assessment';
 const surface = () => document.querySelector('[data-testid="brawndo-cis-assessment"]');
 const button = (scope, name) => [...scope.querySelectorAll('button')].find(node => node.textContent.trim() === name);
-const readPaths = () => api.get.mock.calls.map(([path]) => path);
+// The new staging editor owns a separate lifecycle-guarded GET. Keep the native
+// parent's original ordered population and shared AbortSignal checks exact.
+const parentReads = () => api.get.mock.calls.filter(([path]) => path !== servicePath());
+const serviceReads = () => api.get.mock.calls.filter(([path]) => path === servicePath());
+const readPaths = () => parentReads().map(([path]) => path);
 const requiredPaths = () => [base() + '/related', memberPath(), frameworkPath()];
 const allPaths = () => [...requiredPaths(), '/contacts', '/comments', base() + '/activity'];
 const detailPaths = () => ['/contacts', '/comments', base() + '/activity'];
@@ -41,6 +48,13 @@ function workspace() {
 }
 
 function response(path) {
+  if (path === servicePath()) return {client_id: clientId, expected_client_updated_at: null,
+    catalog: [], services: {}, candidates: [], selected_activity_id: null};
+  if (record.framework_key === 'nist-csf-2' && path === guidedPath()) return {
+    client_id:clientId,assessment_id:record.framework_assessment_id,user_id:mockAuth.user.user_id,
+    version:genericGuidedVersion(record.framework_key),revision:0,answers:{},step:0,completed:false,
+    narrative:'',result:null,lineage_known:false,lineage_stale:null,
+  };
   if (path === base() + '/related') return related;
   if (path === memberPath()) return users;
   if (path === frameworkPath()) return workspace();
@@ -123,6 +137,9 @@ afterEach(async () => {
 test('the exact direct Demo Brawndo IG1 v8.1 safeguard 1.1 pilot refreshes all required context after Save', async () => {
   await render();
   expect(readPaths().sort()).toEqual(requiredPaths().sort());
+  expect(serviceReads()).toEqual([[servicePath()]]);
+  const serviceEditor=surface().querySelector('[aria-label="Services and recurring activity"]');
+  expect(serviceEditor).not.toBeNull();
   expect(mockGuideProps.people).toEqual(users);
   expect(mockGuideProps.related).toEqual(related);
   expect(mockGuideProps.current.work).toEqual(work);
@@ -136,6 +153,8 @@ test('the exact direct Demo Brawndo IG1 v8.1 safeguard 1.1 pilot refreshes all r
   await saveAssessment();
   expect(api.patch).toHaveBeenCalledTimes(1);
   expect(readPaths().sort()).toEqual(requiredPaths().sort());
+  expect(serviceReads()).toEqual([]);
+  expect(surface().querySelector('[aria-label="Services and recurring activity"]')).toBe(serviceEditor);
   expect(mockGuideProps.people).toEqual(users);
   expect(mockGuideProps.related).toEqual(related);
   expect(mockGuideProps.current).toMatchObject({implementation: 'Explicit native Save refresh.', work});
@@ -143,6 +162,18 @@ test('the exact direct Demo Brawndo IG1 v8.1 safeguard 1.1 pilot refreshes all r
   expect(api.put).not.toHaveBeenCalled();
   expect(api.post).not.toHaveBeenCalled();
   expect(api.delete).not.toHaveBeenCalled();
+});
+
+test('the separate scoped service-context read shows an empty native staging context without a write', async () => {
+  await render();
+  expect(api.get.mock.calls.map(([path]) => path)).toEqual([...requiredPaths(), servicePath()]);
+  const editor=surface().querySelector('[aria-label="Services and recurring activity"]');
+  expect(editor).not.toBeNull();
+  const activityChoice=editor.querySelector('[aria-label="Assessment recurring activity"]');
+  expect(activityChoice.value).toBe('');expect(activityChoice.options).toHaveLength(1);
+  expect(editor.querySelector('[role="alert"]')).toBeNull();
+  expect(mockGuideProps.related).toEqual(related);expect(mockGuideProps.current.work).toEqual(work);
+  expect(native).toEqual(record);expectNoWrites();
 });
 
 test('all exact-pilot required context reads share the native abort boundary and editing waits for completion', async () => {
@@ -184,6 +215,7 @@ test('same-assessment transition into Manage fetches full fresh owner, history a
     {status: 'in_progress', implementation: 'Fresh Manage history snapshot.', at: savedToken, by: 'context-owner'}]};
   await render({recordManagement: true});
   expect(readPaths().sort()).toEqual(allPaths().sort());
+  expect(serviceReads()).toEqual([]);
   const management = document.querySelector('[data-testid="framework-record-management"]');
   expect(management).toBeTruthy();
   expect(management.querySelector('[aria-label="Assessment Owner"]').textContent).toContain('Fresh Manage owner');
@@ -198,6 +230,7 @@ test('same-assessment review management retains all six original context reads',
   api.get.mockClear();
   await render({reviewManagement: true});
   expect(readPaths().sort()).toEqual(allPaths().sort());
+  expect(serviceReads()).toEqual([]);
   const management = document.querySelector('[data-testid="framework-review-management"]');
   expect(management).toBeTruthy();
   expect(management.querySelector('[aria-label="Linked governance Reviews"]')).toBeTruthy();
@@ -208,7 +241,8 @@ test('the generic framework fallback retains native owner, contacts, comments, h
   native = {...native, framework_key: 'nist-csf-2', framework_version: '2.0', definition_id: 'GV.OC-01'};
   record = copy(native);
   await render({visualReference: false});
-  expect(readPaths().sort()).toEqual(allPaths().sort());
+  expect(readPaths().sort()).toEqual([...allPaths(),guidedPath()].sort());
+  expect(serviceReads()).toEqual([[servicePath()]]);
   const generic = document.querySelector('[data-testid="framework-drawer"]');
   expect(generic).toBeTruthy();
   expect(generic.querySelector('[aria-label="Assessment Owner"]').textContent).toContain('Original resolved owner');
@@ -283,7 +317,7 @@ test.each(['IG2', 'unselected', 'unconfigured', 'current identity mismatch'])(
     expect(readPaths()).toEqual(fallbackPaths());
     expect(pending.map(item => item.path)).toEqual(detailPaths());
     const signal = api.get.mock.calls[0][1].signal;
-    expect(api.get.mock.calls.every(([, config]) => config.signal === signal)).toBe(true);
+    expect(parentReads().every(([, config]) => config.signal === signal)).toBe(true);
     expect(signal.aborted).toBe(false);
     expect(mockGuideProps).toBeNull();
     expect(surface().querySelector('[aria-label="Current implementation"]').disabled).toBe(true);
@@ -314,7 +348,7 @@ test.each(['contacts', 'comments', 'activity'])('a restored %s detail read failu
   await render();
   expect(readPaths()).toEqual(fallbackPaths());
   const signal = api.get.mock.calls[0][1].signal;
-  expect(api.get.mock.calls.every(([, config]) => config.signal === signal)).toBe(true);
+  expect(parentReads().every(([, config]) => config.signal === signal)).toBe(true);
   expect(surface().querySelector('[role="alert"]').textContent).toContain('Restored ' + kind + ' unavailable.');
   expect(surface().querySelector('[aria-label="Current implementation"]').disabled).toBe(true);
   expect(button(surface(), 'Save assessment').disabled).toBe(true);
@@ -349,7 +383,7 @@ test('current rollout restores detail reads for a fresh IG2 scope before enablin
   await render();
   expect(readPaths()).toEqual(fallbackPaths());
   const signal = api.get.mock.calls[0][1].signal;
-  expect(api.get.mock.calls.every(([, config]) => config.signal === signal)).toBe(true);
+  expect(parentReads().every(([, config]) => config.signal === signal)).toBe(true);
   expect(surface().querySelector('[aria-label="Current implementation"]').disabled).toBe(true);
   expect(mockGuideProps).toBeNull();
   await act(async () => pending.forEach(item => item.resolve({data: copy(response(item.path))})));
@@ -371,7 +405,7 @@ test('aborting while restored detail reads are pending prevents late context pub
   expect(readPaths()).toEqual(fallbackPaths());
   const signal = api.get.mock.calls[0][1].signal;
   expect(pending).toHaveLength(3);
-  expect(api.get.mock.calls.every(([, config]) => config.signal === signal)).toBe(true);
+  expect(parentReads().every(([, config]) => config.signal === signal)).toBe(true);
   expect(surface().querySelector('[aria-label="Current implementation"]').disabled).toBe(true);
   await act(async () => root.render(null));
   expect(signal.aborted).toBe(true);
@@ -390,7 +424,8 @@ test.each([
   await render(props);
   const expectedReads = visualReference ? requiredPaths() : orderedAllPaths();
   expect(readPaths()).toEqual(expectedReads);
-  expect(api.get).toHaveBeenCalledTimes(visualReference ? 3 : 6);
+  expect(parentReads()).toHaveLength(visualReference ? 3 : 6);
+  expect(serviceReads()).toEqual([[servicePath()]]);
   const signal = api.get.mock.calls[0][1].signal;
   const implementation = surface().querySelector('[aria-label="Current implementation"]');
   const originalSaved = copy(native);
@@ -401,6 +436,7 @@ test.each([
     record = copy(record);
     await render(props);
     expect(readPaths()).toEqual(expectedReads);
+    expect(serviceReads()).toEqual([[servicePath()]]);
     expect(signal.aborted).toBe(false);
     expect(surface().querySelector('[aria-label="Current implementation"]')).toBe(implementation);
     expect(implementation.value).toBe(draft);
@@ -427,7 +463,7 @@ test.each([
   const newSignal = api.get.mock.calls[0][1].signal;
   expect(newSignal).not.toBe(oldSignal);
   expect(newSignal.aborted).toBe(false);
-  expect(api.get.mock.calls.every(([, config]) => config.signal === newSignal)).toBe(true);
+  expect(parentReads().every(([, config]) => config.signal === newSignal)).toBe(true);
   expect(surface().querySelector('[aria-label="Current implementation"]').disabled).toBe(field === 'role');
   expectNoWrites();
 });

@@ -2,6 +2,7 @@ import axios from 'axios';
 import { previewAdapter } from './commandTestAdapter';
 import catalog from '@catalogs/onboardingCatalog.json';
 import { STORE_KEY } from './store';
+import {currentReviewCompletion} from '../testUtils/r4ReviewFixture';
 const api=axios.create({adapter:previewAdapter});
 const get=async(kind,cid)=>(await api.get(`/${kind}`,{params:{client_id:cid}})).data;
 const state=()=>({version:2,step:3,policies:Object.fromEntries(catalog.policies.map((r,i)=>[r.key,['yes','no','unsure'][i%3]])),requirements:Object.fromEntries(catalog.requirements.map((r,i)=>[r.key,['applies','does_not_apply','unsure'][i%3]])),reviews:catalog.reviews.map(r=>r.key),completed:false});
@@ -74,7 +75,12 @@ test('draft persistence, deselection, finalization, isolation and safe unschedul
   expect(await get('reviews',b.client_id)).toEqual([]);expect(await get('tasks',a.client_id)).toEqual([]);expect(await get('risks',a.client_id)).toEqual([]);
   const manuallyEdited=reviews[0];
   await api.patch(`/reviews/${manuallyEdited.review_id}`,{expected_occurrence_id:manuallyEdited.current_occurrence_id,title:'Manually renamed review',due_date:'2027-01-15',recurrence:'quarterly',notes:'Preserve review notes'});
-  await api.post(`/reviews/${manuallyEdited.review_id}/complete`,{occurrence_id:manuallyEdited.current_occurrence_id,spawn_next:false,conclusion:'Practice reviewed',tested_period:'Q3 2026',tested_scope:'Scope documented',checklist_confirmed:true,no_evidence_reason:'Interview only'});
+  const completion=await currentReviewCompletion(api,manuallyEdited.review_id,{
+    expectedOccurrenceId:manuallyEdited.current_occurrence_id,
+    resultForStep:step=>({step_id:step.step_id,result:'N/A',reason:'This synthetic intake-persistence case does not perform the external operational check: '+step.text}),
+    supportingReference:'Synthetic native intake and scheduled Review '+manuallyEdited.review_id+'; this case verifies saved metadata retention, not an external interview or control assessment.'
+  });
+  await api.post(`/reviews/${manuallyEdited.review_id}/complete`,{...completion,spawn_next:false,conclusion:'Practice reviewed',tested_period:'Q3 2026',tested_scope:'Scope documented',checklist_confirmed:true,no_evidence_reason:'Interview only'});
   const before=await get('reviews',a.client_id);
   await api.post('/onboarding/baseline',{client_id:a.client_id,state:s,finalize:true});
   expect(await get('policies',a.client_id)).toHaveLength(17);expect(await get('requirements',a.client_id)).toHaveLength(6);expect(await get('reviews',a.client_id)).toHaveLength(before.length);

@@ -6,6 +6,7 @@ import RecordDrawer from '@/components/RecordDrawer';
 import {SCHEMAS} from '@/lib/schemas';
 import api from '@/lib/api';
 import ClientSurface from '@/components/ClientSurface';
+import {THEME_KEY} from '@/lib/brawndoTheme';
 let mockClient='demo_prestige';
 const mockUser={user_id:'admin',role:'super_admin',workspace_mode:'demo'};
 jest.mock('@/context/AuthContext',()=>({useAuth:()=>({user:mockUser})}));
@@ -14,12 +15,12 @@ jest.mock('@/lib/api',()=>({__esModule:true,default:{get:jest.fn(),post:jest.fn(
 jest.mock('react-router-dom',()=>({Link:({children})=><span>{children}</span>,useLocation:()=>({pathname:'/policies',search:''}),useNavigate:()=>jest.fn(),useSearchParams:()=>require('react').useState(new URLSearchParams())}),{virtual:true});
 let root,container;
 beforeEach(()=>{
-  global.IS_REACT_ACT_ENVIRONMENT=true;mockClient='demo_prestige';localStorage.clear();
+  global.IS_REACT_ACT_ENVIRONMENT=true;mockClient='demo_prestige';localStorage.clear();localStorage.setItem(THEME_KEY,'light');
   container=document.createElement('div');document.body.appendChild(container);root=createRoot(container);
   api.get.mockImplementation(async path=>({data:path==='/frameworks/summary'?{client_id:mockClient,items:[{key:'soc-2',label:'SOC 2'}]}:path==='/related'?{}:path.endsWith('/approval-context')?{status:'draft',history:[],can_configure:false,can_submit:false}:[]}));
 });
 afterEach(async()=>{await act(async()=>root.unmount());container.remove();jest.clearAllMocks();});
-test.each(['reviews','policies'])('Prestige %s uses the reference register, themes and original fields',async kind=>{
+test.each(['reviews','policies'])('Prestige %s honors the saved light preference across reference clients and retains original fields',async kind=>{
   const page=()=>kind==='reviews'?<ClientSurface><RecordListPage kind={kind}/></ClientSurface>:<RecordListPage kind={kind}/>;
   await act(async()=>root.render(page()));
   expect(container.querySelector('h1').textContent).toBe(kind==='reviews'?'Reviews':'Policies');

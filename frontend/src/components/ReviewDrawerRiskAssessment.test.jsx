@@ -6,6 +6,8 @@ import {ids,readStore,saveStore} from '@/preview/store';
 import {rememberClient} from '@/lib/clientSelection';
 import {reviewExecutions} from '@/lib/brawndoDemoReviews';
 import {toast} from 'sonner';
+import {currentReviewCompletion} from '@/testUtils/r4ReviewFixture';
+import {riskTreatments} from '@/lib/brawndoRisks';
 
 let mockAuth,mockOrg;
 jest.mock('@/context/AuthContext',()=>({useAuth:()=>mockAuth}));
@@ -20,7 +22,7 @@ jest.mock('sonner',()=>({toast:{error:jest.fn(),success:jest.fn()}}));
 const clients=Object.fromEntries(['cis-ig1','iso-27001','soc-2'].map(key=>[key,`synthetic-qa005-${key}`]));
 const node=id=>document.querySelector(`[data-testid="${id}"]`);
 const button=label=>[...document.querySelectorAll('button')].find(value=>value.textContent===label);
-let root,host,onOpenChange;
+let root,host,onOpenChange,activeReview,guideReads,basisReads;
 const nativeScroll=Element.prototype.scrollIntoView;
 beforeAll(()=>{if(!nativeScroll)Element.prototype.scrollIntoView=jest.fn();});
 afterAll(()=>{if(!nativeScroll)delete Element.prototype.scrollIntoView;});
@@ -29,7 +31,7 @@ async function input(value){const field=document.querySelector('[aria-label="Rev
   Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype,'value').set.call(field,value);
   field.dispatchEvent(new Event('input',{bubbles:true}));
 });}
-async function choose(label,value){await click(document.querySelector(`[aria-label="${label}"]`));await click([...document.querySelectorAll('[role="option"]')].find(option=>option.textContent===value));}
+async function choose(label,value){const shown=label==='Risk treatment'?(riskTreatments[value]||value):value;await click(document.querySelector(`[aria-label="${label}"]`));await click([...document.querySelectorAll('[role="option"]')].find(option=>option.textContent===shown));}
 const riskRow=async risk=>(await api.get('/risks/'+risk.risk_id)).data;
 const reviewRow=async review=>(await api.get('/reviews/'+review.review_id)).data;
 const riskHistory=async risk=>(await api.get('/risks/'+risk.risk_id+'/review-history')).data;
@@ -43,10 +45,44 @@ async function fixture(framework='iso-27001',overrides={}){
   const review=(await api.post('/risks/'+risk.risk_id+'/review')).data.review;
   return {risk,review,framework};
 }
-async function renderReview({review},props={}){await act(async()=>root.render(<ReviewDrawer open record={review} clientId={review.client_id} reviewsPilot onOpenChange={onOpenChange} {...props}/>));}
-async function complete(framework){await click(node('review-complete'));
-  if(framework==='cis-ig1'){expect(node('review-complete-confirm')).toBeTruthy();await click(node('review-complete-confirmed'));}
-  else expect(node('review-complete-confirm')).toBeNull();
+async function renderReview({review},props={}){
+  activeReview=review;const start=guideReads.length,basisStart=basisReads.length;
+  await act(async()=>root.render(<ReviewDrawer open record={review} clientId={review.client_id} reviewsPilot onOpenChange={onOpenChange} {...props}/>));
+  const current=!mockOrg.loading&&!mockOrg.error&&mockOrg.currentClientId===review.client_id&&mockOrg.currentClient?.client_id===review.client_id;
+  await act(async()=>{await Promise.all([...guideReads.slice(start),...(current?basisReads.slice(basisStart):[])].map(read=>read.response));});
+}
+const riskStepIds=[1,2,3,4,5].map(number=>`risk_rec:record:${number}`);
+const riskCompletion=review=>currentReviewCompletion(api,review.review_id,{
+  expectedOccurrenceId:review.current_occurrence_id,
+  supportingReference:`SYNTHETIC Risk input-preservation run ${review.review_id}/${review.current_occurrence_id}: current scheduled next date inspected; no new approval, closure or treatment-performance attestation.`,
+  resultForStep:(step,{review:current})=>{
+    const unperformed={
+      'risk_rec:record:1':'SYNTHETIC input-preservation fixture does not assess business relevance or Risk description accuracy.',
+      'risk_rec:record:2':'SYNTHETIC fixture exercises explicit field input and retention; it does not attest a substantive likelihood/impact reassessment.',
+      'risk_rec:record:3':'SYNTHETIC fixture does not perform treatment Action progress checks.',
+      'risk_rec:record:4':'SYNTHETIC fixture makes no new acceptance or closure decision; existing decision metadata is retained.',
+    };
+    if(step.step_id==='risk_rec:record:5'){expect(current.next_review_date).toBeTruthy();return {step_id:step.step_id,result:'Pass',reason:''};}
+    if(!Object.hasOwn(unperformed,step.step_id))throw new Error('Unexpected Risk preservation fixture step '+step.step_id);
+    return {step_id:step.step_id,result:'N/A',reason:unperformed[step.step_id]};
+  },
+});
+async function complete(framework){
+  expect(Object.keys(clients)).toContain(framework);
+  const body=await riskCompletion(activeReview),guide=document.querySelector('[aria-label="Review guide"]');
+  expect(body.checklist.results.map(result=>result.step_id)).toEqual(riskStepIds);expect(guide).toBeTruthy();
+  for(const result of body.checklist.results){
+    const field=[...guide.querySelectorAll('fieldset')].find(value=>value.querySelector(`input[name="${result.step_id}"]`));
+    expect(field).toBeTruthy();
+    const label=result.result==='N/A'?'Not applicable':result.result;
+    await click([...field.querySelectorAll('label')].find(value=>value.textContent.trim()===label)?.querySelector('input'));
+    if(result.reason)await act(async()=>{const reason=field.querySelector('textarea');Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype,'value').set.call(reason,result.reason);reason.dispatchEvent(new Event('input',{bubbles:true}));});
+  }
+  await act(async()=>{const reference=[...guide.querySelectorAll('label')].find(value=>value.textContent.startsWith('Supporting result reference')).querySelector('textarea');Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype,'value').set.call(reference,body.supporting_reference);reference.dispatchEvent(new Event('input',{bubbles:true}));});
+  const post=jest.spyOn(api,'post'),start=post.mock.results.length;
+  await click(node('review-complete'));expect(node('review-complete-confirm')).toBeTruthy();expect(post.mock.calls.slice(start)).toEqual([]);await click(node('review-complete-confirmed'));
+  expect(post.mock.calls.slice(start).filter(([path])=>path===`/reviews/${activeReview.review_id}/complete`)).toHaveLength(1);
+  await act(async()=>{await Promise.allSettled(post.mock.results.slice(start).map(result=>result.value));});
 }
 function completion(post,review){return post.mock.calls.find(([path])=>path===`/reviews/${review.review_id}/complete`)?.[1];}
 function expectUnchanged(before,after){
@@ -63,6 +99,14 @@ beforeEach(async()=>{
   db.user={user_id:'synthetic-qa005-admin',name:'Synthetic reviewer',email:'reviewer@example.test',role:'platform_admin',status:'active',workspace_mode:'demo',client_ids:Object.values(clients)};
   db.users=[{...db.user}];Object.assign(db,{logs:[],notifications:[],drafts:{},baselines:{}});saveStore(db,{resetFiles:true});
   mockAuth={user:(await api.post('/demo/enter')).data.user,workspaceMode:'demo',loading:false,error:''};
+  guideReads=[];basisReads=[];activeReview=null;const get=api.get.bind(api);
+  jest.spyOn(api,'get').mockImplementation((path,...args)=>{
+    const response=get(path,...args),params=args[0]?.params;
+    if(path.endsWith('/completion-guide'))guideReads.push({path,response});
+    if(activeReview&&(path===`/reviews/${activeReview.review_id}/history`||path===`/reviews/${activeReview.review_id}/activity`
+      ||['/related','/comments'].includes(path)&&params?.entity_type==='reviews'&&params.entity_id===activeReview.review_id))basisReads.push({path,response});
+    return response;
+  });
   onOpenChange=jest.fn();host=document.createElement('div');document.body.appendChild(host);root=createRoot(host);
 });
 afterEach(async()=>{await act(async()=>root.unmount());host.remove();jest.restoreAllMocks();jest.clearAllMocks();});
@@ -92,7 +136,7 @@ test.each([['missing',{treatment:undefined}], ['null',{treatment:null,assessment
 
 test('saved legacy Monitor remains a decision and is not replaced on No Change',async()=>{
   const target=await fixture('iso-27001',{treatment:'monitor'}),post=jest.spyOn(api,'post');await renderReview(target);
-  expect(document.querySelector('[aria-label="Risk treatment"]').textContent).toBe('monitor');
+  expect(document.querySelector('[aria-label="Risk treatment"]').textContent).toBe('Monitoring (legacy treatment)');
   await complete(target.framework);expect(completion(post,target.review).risk_assessment).toEqual({});
   expect((await riskRow(target.risk)).treatment).toBe('monitor');expect((await riskHistory(target.risk))[0].outcome).toBe('Reviewed — No Change');
 });
@@ -160,32 +204,37 @@ test('a retained completed occurrence stays frozen without mutating history',asy
 
 test('late authorized CIS context reloads saved Risk details and history without changing the native occurrence',async()=>{
   const target=await fixture('cis-ig1',{assessment_rationale:'Retained native assessment',treatment:'monitor'});
-  const completed=(await api.post('/reviews/'+target.review.review_id+'/complete',{occurrence_id:target.review.current_occurrence_id,risk_assessment:{},risk_outcome:'Reviewed — No Change'})).data;
+  const completed=(await api.post('/reviews/'+target.review.review_id+'/complete',{...await riskCompletion(target.review),risk_assessment:{},risk_outcome:'Reviewed — No Change'})).data;
   target.review=completed.review;target.risk=await riskRow(target.risk);
   const authorized=mockOrg,post=jest.spyOn(api,'post'),patch=jest.spyOn(api,'patch');
+  const beforeUnavailable=await riskRow(target.risk);
   mockOrg={...authorized,currentClient:null,loading:true};await renderReview(target);
-  expect(document.querySelector('[aria-label="Review assessment rationale"]').value).toBe('Retained native assessment');
+  expect(document.querySelector('[aria-label="Review assessment rationale"]')).toBeNull();
+  expect(document.body.textContent).not.toContain('Retained native assessment');
+  expect(await riskRow(target.risk)).toEqual(beforeUnavailable);expect(post).not.toHaveBeenCalled();expect(patch).not.toHaveBeenCalled();
   mockOrg=authorized;await renderReview(target);
   expect(document.querySelector('[aria-label="Review assessment rationale"]')).toBeTruthy();
   expect(document.querySelector('[aria-label="Review assessment rationale"]').value).toBe('Retained native assessment');
   expect(document.querySelector('[aria-label="Risk treatment"]').textContent).toBe('Monitoring (legacy treatment)');
   expect(document.body.textContent).toContain('Reviewed — No Change');expect(post).not.toHaveBeenCalled();expect(patch).not.toHaveBeenCalled();
-  await click(node('review-complete'));expect(node('review-complete-confirm')).toBeTruthy();expect(post).not.toHaveBeenCalled();
-  await click(node('review-complete-confirmed'));expect(completion(post,target.review).risk_assessment).toEqual({});
+  await complete(target.framework);expect(completion(post,target.review).risk_assessment).toEqual({});
   expectUnchanged(target.risk,await riskRow(target.risk));expect(await riskHistory(target.risk)).toHaveLength(2);
 });
 
 test('late scope resolution loads current Risk information and ignores the prior in-flight related response',async()=>{
   const target=await fixture('cis-ig1',{assessment_rationale:'Old saved assessment',treatment:'monitor'}),authorized=mockOrg;
-  const originalGet=api.get.bind(api),pendingOld=[];let phase='old';
+  const originalGet=api.get.getMockImplementation(),pendingOld=[],currentReads=[];let phase='old';
   jest.spyOn(api,'get').mockImplementation(async(path,options)=>{
-    const response=await originalGet(path,options);
+    const responsePromise=originalGet(path,options);if(phase==='current')currentReads.push({path,response:responsePromise});
+    const response=await responsePromise;
     if(path==='/related'&&phase==='old')return new Promise(resolve=>pendingOld.push(()=>resolve(response)));
     return response;
   });
   mockOrg={...authorized,currentClient:null,loading:true};await renderReview(target);expect(pendingOld.length).toBeGreaterThan(0);
   target.risk=(await api.patch('/risks/'+target.risk.risk_id,{assessment_rationale:'Current saved assessment',expected_updated_at:target.risk.updated_at??null})).data;
   const post=jest.spyOn(api,'post'),patch=jest.spyOn(api,'patch');phase='current';mockOrg=authorized;await renderReview(target);
+  expect(currentReads.some(read=>read.path==='/related')).toBe(true);
+  await act(async()=>{await Promise.all(currentReads.map(read=>read.response));});
   expect(document.querySelector('[aria-label="Review assessment rationale"]')).toBeTruthy();
   expect(document.querySelector('[aria-label="Review assessment rationale"]').value).toBe('Current saved assessment');
   await act(async()=>{for(const resolve of pendingOld.splice(0))resolve();});
@@ -194,6 +243,99 @@ test('late scope resolution loads current Risk information and ignores the prior
   expect(post).not.toHaveBeenCalled();expect(patch).not.toHaveBeenCalled();
   await complete(target.framework);expect(completion(post,target.review).risk_assessment).toEqual({});
   expectUnchanged(target.risk,await riskRow(target.risk));expect((await riskHistory(target.risk))[0].outcome).toBe('Reviewed — No Change');
+});
+
+test('older native members and Policies receipts cannot publish after current client scope is denied',async()=>{
+  const owner=await fixture('cis-ig1'),cid=owner.review.client_id;
+  const policy=(await api.post('/policies',{client_id:cid,title:'SYNTHETIC private old-scope policy',status:'draft',presence:'needs_confirmation',version:'1'})).data;
+  const review=(await api.post('/reviews',{client_id:cid,title:'SYNTHETIC scope-guard Review',review_type:'policy',policy_id:policy.policy_id,
+    owner_id:mockAuth.user.user_id,recurrence:'annual',due_date:'2099-10-27'})).data;
+  const target={review,framework:'cis-ig1'},get=api.get.getMockImplementation(),held=[],denied=[];let phase='initial';
+  jest.spyOn(api,'get').mockImplementation((path,options)=>{
+    const ownerPhase=phase,response=get(path,options);
+    const adjacent=path===`/clients/${cid}/members`?'members':path==='/policies'&&options?.params?.client_id===cid?'policies':null;
+    if(ownerPhase==='denied'){denied.push({path,adjacent,response});return response;}
+    if(!adjacent)return response;
+    return response.then(value=>new Promise(resolve=>held.push({name:adjacent,value,release:()=>resolve(value)})));
+  });
+  await renderReview(target);expect(held.map(read=>read.name).sort()).toEqual(['members','policies']);
+  expect(held.find(read=>read.name==='members').value.data).toContainEqual(expect.objectContaining({user_id:mockAuth.user.user_id,name:mockAuth.user.name}));
+  expect(held.find(read=>read.name==='policies').value.data).toContainEqual(expect.objectContaining({policy_id:policy.policy_id,title:policy.title}));
+  const draft='SYNTHETIC unsaved metadata retained through read-scope withdrawal';
+  await act(async()=>{const notes=node('field-notes');Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype,'value').set.call(notes,draft);notes.dispatchEvent(new Event('input',{bubbles:true}));});
+  const db=readStore();db.user.client_ids=[];db.user.all_clients=false;
+  db.users=db.users.map(user=>user.user_id===db.user.user_id?{...user,client_ids:[],all_clients:false}:user);saveStore(db);
+  mockAuth={...mockAuth,user:{...db.user}};phase='denied';
+  const permitted=(await api.get('/clients')).data;expect(permitted).toEqual([]);
+  mockOrg={...mockOrg,currentClient:null,clients:permitted,loading:false,error:'SYNTHETIC current client is outside the authorized scope'};
+  const before=JSON.stringify(readStore()),post=jest.spyOn(api,'post'),patch=jest.spyOn(api,'patch');
+  await renderReview(target);
+  expect(denied.filter(read=>read.adjacent).map(read=>read.adjacent)).toEqual(['members','policies']);
+  let failures;
+  await act(async()=>{failures=await Promise.allSettled(denied.filter(read=>read.adjacent).map(read=>read.response));});
+  expect(failures.map(result=>[result.status,result.reason?.response?.status])).toEqual([['rejected',403],['rejected',403]]);
+  const errors=toast.error.mock.calls.length;
+  await act(async()=>{held.forEach(read=>read.release());});
+  expect(node('field-owner_id')).toBeTruthy();expect(node('field-owner_id').textContent).not.toContain(mockAuth.user.name);
+  expect(node('field-notes').value).toBe(draft);
+  await click(node('tab-requirements'));expect(node('reviews-drawer').textContent).not.toContain(policy.title);
+  expect(toast.error).toHaveBeenCalledTimes(errors);expect(post).not.toHaveBeenCalled();expect(patch).not.toHaveBeenCalled();
+  expect(JSON.stringify(readStore())).toBe(before);
+});
+
+test('a captured Activity reload cannot dispatch after its native grant owner changes',async()=>{
+  const target=await fixture('cis-ig1');await renderReview(target);
+  const draft='SYNTHETIC draft retained across a queued old Activity reload';
+  await act(async()=>{const notes=node('field-notes');Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype,'value').set.call(notes,draft);notes.dispatchEvent(new Event('input',{bubbles:true}));});
+  const interval=window.setInterval.bind(window),callbacks=[];
+  jest.spyOn(window,'setInterval').mockImplementation((callback,...args)=>{if(args[0]===10000)callbacks.push(callback);return interval(callback,...args);});
+  const activityStart=basisReads.length;await click(node('tab-activity'));
+  await act(async()=>{await Promise.all(basisReads.slice(activityStart).map(read=>read.response));});
+  expect(callbacks).toHaveLength(1);const oldReload=callbacks[0];expect(typeof oldReload).toBe('function');
+  const db=readStore();db.user.all_clients=true;
+  db.users=db.users.map(user=>user.user_id===db.user.user_id?{...user,all_clients:true}:user);saveStore(db);
+  mockAuth={...mockAuth,user:{...db.user}};
+  const currentStart=basisReads.length;await renderReview(target);
+  expect(basisReads.slice(currentStart).map(read=>read.path)).toEqual([`/reviews/${target.review.review_id}/history`,'/related','/comments',`/reviews/${target.review.review_id}/activity`]);
+  expect(callbacks).toHaveLength(2);expect(callbacks[1]).not.toBe(oldReload);
+  const before=JSON.stringify(readStore()),getCount=api.get.mock.calls.length,post=jest.spyOn(api,'post'),patch=jest.spyOn(api,'patch');let result;
+  // Invoke the real callback captured from the native interval; do not advance a clock.
+  await act(async()=>{result=await oldReload();});
+  expect(result).toEqual({ok:false});expect(api.get).toHaveBeenCalledTimes(getCount);
+  await click(node('tab-overview'));expect(node('field-notes').value).toBe(draft);
+  expect(post).not.toHaveBeenCalled();expect(patch).not.toHaveBeenCalled();expect(JSON.stringify(readStore())).toBe(before);
+});
+
+test('an older A related reply cannot replace fresh Risk facts after an A to B to A client-read round trip',async()=>{
+  const original='SYNTHETIC old A native Risk rationale',fresh='SYNTHETIC current native Risk rationale after the round trip';
+  const target=await fixture('cis-ig1',{assessment_rationale:original});await renderReview(target);
+  const authorized=mockOrg,draft='SYNTHETIC metadata draft retained across the read-owner round trip';
+  await act(async()=>{const notes=node('field-notes');Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype,'value').set.call(notes,draft);notes.dispatchEvent(new Event('input',{bubbles:true}));});
+  const get=api.get.getMockImplementation();let holdNext=true,release,captured,oldRequest;
+  jest.spyOn(api,'get').mockImplementation((path,options)=>{
+    const response=get(path,options);
+    if(holdNext&&path==='/related'&&options?.params?.entity_type==='reviews'&&options.params.entity_id===target.review.review_id){
+      holdNext=false;oldRequest=response.then(value=>{captured=value;return new Promise(resolve=>{release=()=>resolve(value);});});return oldRequest;
+    }
+    return response;
+  });
+  const oldStart=basisReads.length;await click(node('tab-activity'));
+  await act(async()=>{await Promise.all(basisReads.slice(oldStart).map(read=>read.response));});
+  expect(release).toBeDefined();expect(captured.data.risks.find(risk=>risk.risk_id===target.risk.risk_id).assessment_rationale).toBe(original);
+  // The opener Review and native generation stay unchanged; only its current
+  // client-read owner leaves A for unavailable B and then returns to exact A.
+  const unavailableStart=basisReads.length;mockOrg={...authorized,loading:true};await renderReview(target);
+  await act(async()=>{await Promise.all(basisReads.slice(unavailableStart).map(read=>read.response));});
+  target.risk=(await api.patch('/risks/'+target.risk.risk_id,{assessment_rationale:fresh,expected_updated_at:target.risk.updated_at??null})).data;
+  const currentStart=basisReads.length;mockOrg=authorized;await renderReview(target);
+  expect(basisReads.slice(currentStart).map(read=>read.path)).toEqual([`/reviews/${target.review.review_id}/history`,'/related','/comments',`/reviews/${target.review.review_id}/activity`]);
+  await click(node('tab-overview'));expect(document.querySelector('[aria-label="Review assessment rationale"]').value).toBe(fresh);
+  expect(node('field-notes').value).toBe(draft);
+  const before=JSON.stringify(readStore()),post=jest.spyOn(api,'post'),patch=jest.spyOn(api,'patch');
+  await act(async()=>{release();await oldRequest;});
+  expect(document.querySelector('[aria-label="Review assessment rationale"]').value).toBe(fresh);expect(node('field-notes').value).toBe(draft);
+  expect(post).not.toHaveBeenCalled();expect(patch).not.toHaveBeenCalled();expect(JSON.stringify(readStore())).toBe(before);
+  expect(await riskRow(target.risk)).toEqual(target.risk);
 });
 
 const historicalSummary=()=>[...document.querySelectorAll('.review-workflow-body > p.text-sm')].find(value=>value.textContent.startsWith('Completed ')||value.textContent==='Cancelled');
@@ -227,10 +369,15 @@ test('a current cancelled native Risk Review remains frozen without a completion
 });
 
 test('a genuinely completed native occurrence retains its recorded date, actor and outcome',async()=>{
-  const target=await fixture('cis-ig1'),done=(await api.post('/reviews/'+target.review.review_id+'/complete',{occurrence_id:target.review.current_occurrence_id,risk_assessment:{},risk_outcome:'Reviewed — No Change'})).data;
+  const target=await fixture('cis-ig1'),done=(await api.post('/reviews/'+target.review.review_id+'/complete',{...await riskCompletion(target.review),risk_assessment:{},risk_outcome:'Reviewed — No Change'})).data;
   target.review=done.review;const post=jest.spyOn(api,'post'),patch=jest.spyOn(api,'patch');await renderReview(target,{initialValues:{occurrence:done.occurrence}});
   const day=new Date(done.occurrence.completed_at.slice(0,10)+'T00:00:00').toLocaleDateString();
-  expect(historicalSummary().textContent).toBe(`Completed ${day} by ${done.occurrence.completed_by_name} · Reviewed — No Change`);
+  expect(done.occurrence.checklist_outcome).toBe('No exceptions noted');
+  expect(historicalSummary().textContent).toBe(`Completed ${day} by ${done.occurrence.completed_by_name} · No exceptions noted`);
+  expect(done.occurrence.outcome).toBe('Reviewed — No Change');
+  expect((await riskHistory(target.risk))[0]).toMatchObject({occurrence_id:done.occurrence.occurrence_id,outcome:'Reviewed — No Change',checklist_outcome:'No exceptions noted'});
+  const reassessment=[...document.querySelectorAll('section')].find(section=>section.querySelector('h3')?.textContent==='Risk reassessment');
+  expect(reassessment).toBeTruthy();expect(reassessment.textContent).toContain('Reviewed — No Change');
   expect(node('review-complete')).toBeNull();expect(node('drawer-save')).toBeNull();expect(post).not.toHaveBeenCalled();expect(patch).not.toHaveBeenCalled();
 });
 

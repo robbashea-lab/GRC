@@ -23,7 +23,10 @@ const rowTitles=()=>[...container.querySelectorAll('#actionRows .risk-title')].m
 function expectNoProgramCommands(){
  const context={...useOrg(),...useAuth(),pathname:'/risks',clientId:mockClient,selectedClientId:mockClient};
  expect(cisClientProgram(context.currentClient)).toBeNull();
- expect(brawndoFullRecordEligible(context)).toBe(false);
+ // Common native Risk operations do not establish a CIS enrollment.
+ expect(brawndoFullRecordEligible(context)).toBe(true);
+ expect(brawndoFullRecordEligible({...context,clientId:'foreign-client'})).toBe(false);
+ expect(brawndoFullRecordEligible({...context,record:{risk_id:'foreign-risk',client_id:'foreign-client'}})).toBe(false);
 }
 beforeEach(()=>{
  // Keep the existing UTC management day fixed, including an evening in western time zones.
@@ -68,7 +71,8 @@ test('common presentation retains native filters and client isolation without in
  expect(container.querySelector('.approved-risk-register')).not.toBeNull();
  expect(container.querySelector('tbody').textContent).not.toContain('Operational');
  expect(container.querySelectorAll('.risk-table thead th')).toHaveLength(6);
- expect(container.querySelector('[aria-label="Risk summaries"] .kpi-active strong').textContent).toBe('2');
+ const activeSummary=[...container.querySelectorAll('[aria-label="Risk summaries"] button')].find(node=>node.querySelector('.klabel')?.textContent==='Active risks');
+ expect(activeSummary.querySelector('strong').textContent).toBe('2');
  expect(api.get).toHaveBeenCalledWith('/risks',{params:{client_id:mockClient}});
  expectNoProgramCommands();expect(api.post).not.toHaveBeenCalled();
 });

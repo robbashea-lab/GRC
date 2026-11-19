@@ -6,6 +6,7 @@ import rules from '../lib/managementRules.json';
 import {managementDay} from '../lib/managementDates';
 import {representedFinding} from '../lib/grcWork';
 import {clientProjection} from './clientRelationships';
+import {recordedOnboardingState} from '../lib/clientProfile';
 import {portfolioPopulations,portfolioFrameworks,portfolioOrder,latestPortfolioActivity} from '../lib/portfolioOverview';
 import {evidenceAccess} from './evidence';
 import {dashboardPosture} from '../lib/dashboardPosture';
@@ -37,7 +38,7 @@ export function portfolio(db,includeArchived,today=new Date()) {
       attention.push(...new Map(current.map(r=>[r.kind+':'+r.id,portfolioItem(r,c,today)])).values());
     }
     const major=m.work.filter(r=>r.kind==='reviews'&&r.day>=day&&['risk','risk_assessment','vendor','policy','access','penetration_test','bcp_dr','incident_response','awareness'].includes(r.record.review_type)).sort((a,b)=>a.day-b.day)[0];
-    return {...clientProjection(db,c),client_status:c.status,program_status:managementProgramStatus(c,m),...m.counts,metric_items,
+    return {...clientProjection(db,c),onboarding_state:recordedOnboardingState(c,db.baselines?.[c.client_id]||c.onboarding_baseline,db.logs||[]),client_status:c.status,program_status:managementProgramStatus(c,m),...m.counts,metric_items,
       critical_high_issues:extra.critical_high_issues.length,frameworks:portfolioFrameworks(c.client_id,{...db.baselines?.[c.client_id],framework_settings:c.framework_settings},list(db,'requirements',c.client_id)),
       next_major_item:major?{...portfolioItem(major,c,today),review_id:major.id,review_type:major.record.review_type}:null,
       open_actions:m.counts.past_due+m.counts.due_30d,open_findings:m.activeRecords.findings.length,

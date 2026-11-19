@@ -69,8 +69,9 @@ test('uncertain Review save remains recoverable after remount without reapplying
  expect(document.body.textContent).not.toContain('Retry unconfirmed save');
 });
 
-test.each(['cis','iso','both'])('combined non-pilot %s Review keeps Notes through cancel, save and historical discard',async framework=>{
+test.each(['cis','iso','both'])('combined %s Review keeps Notes through cancel, save and historical discard',async framework=>{
   const drivers=[{framework_key:'cis-ig1',framework_plan_key:require('@/lib/frameworks').cis.review_plans[0].key},{framework_key:'iso-27001',framework_plan_key:'iso-management-review'}];
+  mockClient='synthetic-combined';rememberClient(mockClient);
   saved={...saved,client_id:'synthetic-combined',framework_drivers:framework==='both'?drivers:[drivers[framework==='iso'?1:0]]};
   const close=jest.fn(),old={...saved,occurrence_id:'old',period:'Prior period',status:'completed',notes:'Retained minutes'};
   api.get.mockImplementation(async path=>({data:path.endsWith('/completion-guide')?mockCompletionGuide(saved):path.endsWith('/history')?[old]:path.startsWith('/frameworks/')?{assessments:[]}:path==='/related'?{}:[]}));
@@ -274,12 +275,20 @@ test('centered detail preserves policy/context and guards unsaved and failed sav
   expect(window.confirm).not.toHaveBeenCalled();expect(close).toHaveBeenCalledWith(false);
 });
 test('another client retains its original Review workflow inside the shared presentation',async()=>{
+  mockClient='demo_dunder';
   const record={...saved,client_id:'demo_dunder'};
   await act(async()=>root.render(<ReviewDrawer open reviewsPilot record={record} clientId="demo_dunder" onOpenChange={()=>{}}/>));
   expect(document.querySelector('[data-testid="reviews-drawer"]').className).toContain('brawndo-cis-assessment');
   await click(document.querySelector('[data-testid="tab-requirements"]'));
-  expect(document.querySelector('[aria-label="Requirement basis"]')).toBeTruthy();
-  expect(document.querySelector('[aria-label="Requirement & Review Expectations"]')).toBeNull();
+  const expectations=document.querySelector('[aria-label="Requirement & Review Expectations"]');
+  expect(expectations).toBeTruthy();
+  expect([...expectations.querySelectorAll('h4')].map(node=>node.textContent)).toEqual(expect.arrayContaining(['Requirement Source','Review Expectation','Review Frequency']));
+  expect(expectations.textContent).toContain('Quarterly');expect(record.recurrence).toBe('quarterly');
+  expect(expectations.textContent).toContain('Review expectation not documented.');
+  expect(expectations.textContent).toContain('Linked policy unavailable');
+  expect(expectations.textContent).not.toContain('Access Control Policy');
+  expect(document.querySelector('[aria-label="Requirement basis"]')).toBeNull();
+  expect(api.patch).not.toHaveBeenCalled();expect(api.post).not.toHaveBeenCalled();
 });
 test('unfinished comments cannot be lost by completing an occurrence',async()=>{
   await act(async()=>root.render(<ReviewDrawer open reviewsPilot record={saved} clientId="demo_brawndo" onOpenChange={()=>{}}/>));

@@ -25,9 +25,15 @@ beforeEach(() => {
   assessments = [inventory, record];
   configuration = {implementation_group: 1};
   container = document.createElement('div'); document.body.appendChild(container); root = createRoot(container);
-  api.get.mockImplementation(async path => ({data:
-    path.endsWith('/related') ? {reviews: [], evidence: [], findings: [], tasks: [], risks: [], policies: []} :
-      path.startsWith('/frameworks/') ? {configuration, assessments, work: {[record.framework_assessment_id]: {context_complete: true}}} : []}));
+  api.get.mockImplementation(async path => {
+    if(path==='/framework_assessments/'+record.framework_assessment_id+'/service-context')return {data:{
+      client_id:record.client_id,expected_client_updated_at:null,catalog:[],services:{},candidates:[],selected_activity_id:null,
+    }};
+    if(path==='/framework_assessments/'+record.framework_assessment_id+'/related')return {data:{reviews: [], evidence: [], findings: [], tasks: [], risks: [], policies: []}};
+    if(path==='/frameworks/cis-ig1')return {data:{configuration, assessments, work: {[record.framework_assessment_id]: {context_complete: true}}}};
+    if(['/clients/'+record.client_id+'/members','/contacts','/comments','/framework_assessments/'+record.framework_assessment_id+'/activity'].includes(path))return {data:[]};
+    throw new Error('Unexpected inventory context read: '+path);
+  });
 });
 afterEach(async () => {await act(async () => root.unmount()); container.remove(); jest.clearAllMocks();});
 async function render(clientId = record.client_id) {await act(async () => root.render(<FrameworkDrawer open record={record} clientId={clientId} onOpenChange={() => {}}/>));}
@@ -41,7 +47,8 @@ test('1.2 receives only its client’s saved 1.1 record from the existing worksp
   expect(container.querySelector('[aria-label="Current implementation"]').value).toBe(record.implementation);
   expect(container.querySelector('input[value="not_assessed"]').checked).toBe(true);
   expect(container.querySelector('[aria-label="Saved verification"]').textContent).toBe('Not verified');
-  expect(api.get.mock.calls.map(([path]) => path)).toEqual(['/framework_assessments/handling/related', '/clients/demo_brawndo/members', '/contacts', '/comments', '/framework_assessments/handling/activity', '/frameworks/cis-ig1']);
+  expect(api.get.mock.calls.map(([path]) => path)).toEqual(['/framework_assessments/handling/related', '/clients/demo_brawndo/members', '/contacts', '/comments', '/framework_assessments/handling/activity', '/frameworks/cis-ig1', '/framework_assessments/handling/service-context']);
+  expect(container.querySelector('[aria-label="Assessment recurring activity"]').value).toBe('');
   expectNoWrites();
 });
 

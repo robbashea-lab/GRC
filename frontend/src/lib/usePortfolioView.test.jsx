@@ -26,6 +26,21 @@ test('refresh restores only validated preferences and isolates changed role/mode
   act(()=>root.render(<Harness user={{...user,role:'platform_admin',client_ids:['only-one']}}/>));
   expect(current[0]).toMatchObject({search:'',mine:false,framework:'all',sort:'name'});
 });
+test.each(['attention','name','next'])('refresh preserves the approved %s Portfolio sort without changing native sort or scope',enhancedSort=>{
+  const user={user_id:'sort-owner',role:'platform_admin',client_ids:['one']};
+  act(()=>root.render(<Harness user={user}/>));
+  act(()=>current[1]({enhancedSort,sort:'activity',mine:true,framework:'soc-2'}));
+  act(()=>root.render(<Harness user={{...user}}/>));
+  expect(current[0]).toMatchObject({enhancedSort,sort:'activity-desc',mine:true,framework:'soc-2'});
+  act(()=>root.render(<Harness user={{...user,client_ids:['different']}}/>));
+  expect(current[0]).toMatchObject({enhancedSort:'attention',sort:'name',mine:false,framework:'all'});
+});
+test('an unrecognized saved enhanced sort does not become a new native sort',()=>{
+  const user={user_id:'invalid-sort-owner',role:'super_admin',client_ids:[]};
+  act(()=>root.render(<Harness user={user}/>));act(()=>current[1]({enhancedSort:'unrecognized',sort:'progress'}));
+  act(()=>root.render(<Harness user={{...user}}/>));
+  expect(current[0]).toMatchObject({enhancedSort:'attention',sort:'progress'});
+});
 test('authorization scope change drops old filter identity values',()=>{
   const user={user_id:'a',role:'platform_admin',client_ids:['a']};
   act(()=>root.render(<Harness user={user}/>));

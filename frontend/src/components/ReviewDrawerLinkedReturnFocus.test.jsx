@@ -14,7 +14,7 @@ jest.mock('react-router-dom',()=>({Link:({children,to})=><a href={to}>{children}
 jest.mock('sonner',()=>({toast:{error:jest.fn(),success:jest.fn()}}));
 beforeAll(()=>Object.defineProperty(global,'crypto',{configurable:true,value:require('crypto').webcrypto}));
 
-let root,container,background,record,linkedFinding,onOpenChange;
+let root,container,background,record,linkedFinding,onOpenChange,mountReads,hasRendered;
 const drawer=()=>document.querySelector('[data-testid="reviews-drawer"]');
 const ticket=()=>document.querySelector('[data-testid="remediation-ticket-drawer"]');
 const heading=()=>drawer()?.querySelector('[data-review-title]');
@@ -22,7 +22,17 @@ const button=(scope,label)=>[...scope.querySelectorAll('button')].find(node=>nod
 // Allow the real native focus scopes to complete their deferred teardown.
 const flushNativeFocus=()=>act(async()=>{await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));});
 const click=async node=>{expect(node).toBeTruthy();await act(async()=>{node.focus();node.click();});};
-const render=()=>act(async()=>root.render(<ReviewDrawer open record={record} clientId={record.client_id} onOpenChange={onOpenChange}/>));
+async function render(){
+  const initial=!hasRendered,start=mountReads.length;hasRendered=true;
+  await act(async()=>root.render(<ReviewDrawer open record={record} clientId={record.client_id} onOpenChange={onOpenChange}/>));
+  if(!initial)return;
+  // Await only reads already dispatched by the actual initial mount. Do not add
+  // requests, a sleep or a retry before opening a history-linked record.
+  const issued=mountReads.slice(start);
+  expect(issued.filter(read=>read.name!=='guide').map(read=>read.name)).toEqual(['history','related','comments','activity']);
+  expect(issued.some(read=>read.name==='guide')).toBe(true);
+  await act(async()=>{await Promise.all(issued.map(read=>read.response));});
+}
 async function openHistoryTicket(){
   await render();
   expect(drawer().classList.contains('brawndo-review-workflow')).toBe(true);
@@ -40,6 +50,17 @@ beforeEach(async()=>{
   mockOrg={currentClientId:'demo_brawndo',currentClient:clients.find(client=>client.client_id==='demo_brawndo'),clients,loading:false};
   record=(await api.post('/reviews',{client_id:'demo_brawndo',title:'Linked return focus review',review_type:'access',recurrence:'quarterly',due_date:'2099-09-30'})).data;
   linkedFinding=(await api.post(`/reviews/${record.review_id}/create-finding`,{request_id:crypto.randomUUID(),title:'Recorded access exception',remediation_title:'Restore reviewed access',occurrence_id:record.current_occurrence_id})).data;
+  mountReads=[];hasRendered=false;
+  const get=api.get.bind(api);
+  jest.spyOn(api,'get').mockImplementation((path,config)=>{
+    let name;
+    if(path===`/reviews/${record.review_id}/history`)name='history';
+    if(path==='/related'&&config?.params?.entity_type==='reviews'&&config.params.entity_id===record.review_id)name='related';
+    if(path==='/comments'&&config?.params?.entity_type==='reviews'&&config.params.entity_id===record.review_id)name='comments';
+    if(path===`/reviews/${record.review_id}/activity`)name='activity';
+    if(path===`/reviews/${record.review_id}/completion-guide`)name='guide';
+    const response=get(path,config);if(name)mountReads.push({name,response});return response;
+  });
   background=document.createElement('main');background.innerHTML='<h1 tabindex="-1">Brawndo Reviews</h1>';document.body.appendChild(background);
   container=document.createElement('div');document.body.appendChild(container);root=createRoot(container);onOpenChange=jest.fn();
 });

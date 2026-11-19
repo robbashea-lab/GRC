@@ -1,7 +1,9 @@
 import axios from 'axios';
 import {previewAdapter} from './adapter';
 import soc from '@catalogs/soc2.json';
-import {reviewSchedule} from '../lib/reviewOccurrences';
+import {reviewSchedule,belongsToOccurrence} from '../lib/reviewOccurrences';
+import {currentReviewCompletion} from '../testUtils/r4ReviewFixture';
+import {readStore,saveStore} from './store';
 
 const api=axios.create({adapter:previewAdapter});
 const cid='demo_prestige';
@@ -43,7 +45,17 @@ test('a Prestige quarterly Review advances eight anchored occurrences across 24 
   let current=review;
   for(let i=0;i<8;i++){
     const expected=reviewSchedule(current).next_review_date;
-    const result=(await api.post(`/reviews/${originalId}/complete`,{occurrence_id:current.current_occurrence_id})).data;
+    const related=(await api.get('/related',{params:{entity_type:'reviews',entity_id:originalId,occurrence_id:current.current_occurrence_id}})).data;
+    const findings=(related.findings||[]).filter(row=>row.client_id===cid&&row.review_id===originalId&&belongsToOccurrence(row,current));
+    const command=await currentReviewCompletion(api,originalId,{
+      expectedOccurrenceId:current.current_occurrence_id,
+      resultForStep:step=>({step_id:step.step_id,
+        result:'N/A',
+        reason:'SYNTHETIC native cadence/history walkthrough; this fixture does not perform the external control or business decision: '+step.text}),
+      supportingReference:'SYNTHETIC QA native recurrence result for Review '+originalId+' occurrence '+current.current_occurrence_id+'; no external operation or audit opinion is asserted.'
+    });
+    if(findings.length)command.outcome='Exceptions noted';
+    const result=(await api.post(`/reviews/${originalId}/complete`,command)).data;
     expect(result.occurrence.occurrence_id).toBe(current.current_occurrence_id);
     expect(result.review.due_date).toBe(expected);
     expect(result.review.current_occurrence_id).not.toBe(current.current_occurrence_id);
@@ -63,7 +75,12 @@ test('late completion leaves each missed monthly obligation actionable rather th
     const review=(await api.post('/reviews',{client_id:cid,title:'Prestige late-cadence QA',review_type:'general',recurrence:'monthly',due_date:'2026-09-01'})).data;
     let current=review;
     for(const due of ['2026-10-01','2026-11-01','2026-12-01']){
-      current=(await api.post(`/reviews/${review.review_id}/complete`,{occurrence_id:current.current_occurrence_id})).data.review;
+      const command=await currentReviewCompletion(api,review.review_id,{
+        expectedOccurrenceId:current.current_occurrence_id,
+        resultForStep:step=>({step_id:step.step_id,result:'N/A',reason:'SYNTHETIC schedule-only case; no external operation or business decision is performed: '+step.text}),
+        supportingReference:'SYNTHETIC QA completed schedule walkthrough for '+current.current_occurrence_id+'.'
+      });
+      current=(await api.post(`/reviews/${review.review_id}/complete`,command)).data.review;
       expect(current.due_date.slice(0,10)).toBe(due);
     }
     expect(current.occurrences.map(o=>o.due_date.slice(0,10))).toEqual(['2026-09-01','2026-10-01','2026-11-01']);
@@ -86,7 +103,16 @@ test('a criterion Finding creates one Action and preserves the reverse source li
   await api.patch(`/tasks/${task.task_id}`,{status:'done'});
   const remediated=(await api.get(`/findings/${created.finding_id}`)).data;
   expect(remediated.status).toBe('remediated');
-  const validated=(await api.post(`/findings/${created.finding_id}/validate`,{rationale:'QA validation'})).data;
+  const identityStore=readStore(),worker=identityStore.user;
+  const validator={user_id:'synthetic_prestige_validator',name:'Synthetic independent validator',email:'prestige-validator@example.test',
+    role:'platform_admin',status:'active',client_ids:[cid],all_clients:false,workspace_mode:'demo'};
+  identityStore.users.push(validator);identityStore.user=validator;saveStore(identityStore);
+  let validated;
+  try{
+    const ready=(await api.get(`/findings/${created.finding_id}`)).data;
+    validated=(await api.post(`/findings/${created.finding_id}/validate`,{rationale:'QA validation',expected_updated_at:ready.updated_at??null})).data;
+    expect(validated.validated_by).toBe(validator.user_id);expect(validated.validated_by).not.toBe(worker.user_id);
+  }finally{const restored=readStore();restored.user=worker;saveStore(restored);}
   expect(validated.status).toBe('closed');
   const historical=(await api.get(`/framework_assessments/${row.framework_assessment_id}/related`)).data;
   expect(historical.findings.find(f=>f.finding_id===created.finding_id).status).toBe('closed');

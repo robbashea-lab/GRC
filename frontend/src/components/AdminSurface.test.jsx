@@ -10,12 +10,13 @@ beforeEach(() => {
 afterEach(async () => { await act(async () => root.unmount()); });
 test('Admin uses the shared theme and portal controls without unsupported security claims', async () => {
   await act(async () => root.render(<AdminSurface><AdminSecurity /></AdminSurface>));
-  expect(host.querySelector('.admin-surface').dataset.theme).toBe('light');
-  expect(document.documentElement.dataset.brawndoPortal).toBe('light');
-  expect(document.documentElement.dataset.adminPresentation).toBe('true');
-  await act(async () => host.querySelector('[aria-label="Switch to dark mode"]').click());
   expect(host.querySelector('.admin-surface').dataset.theme).toBe('dark');
   expect(document.documentElement.dataset.brawndoPortal).toBe('dark');
+  expect(document.documentElement.dataset.adminPresentation).toBe('true');
+  await act(async () => host.querySelector('[aria-label="Switch to light mode"]').click());
+  expect(host.querySelector('.admin-surface').dataset.theme).toBe('light');
+  expect(document.documentElement.dataset.brawndoPortal).toBe('light');
+  expect(localStorage.getItem('omnisciente:brawndo-dashboard-theme')).toBe('light');
   expect(host.textContent).toContain('15–128 characters');
   expect(host.textContent).not.toMatch(/MFA|coming soon|future/i);
 });

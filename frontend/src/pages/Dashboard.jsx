@@ -101,7 +101,10 @@ export default function Dashboard(){
   }
   const programs=demoDashboard?frameworkDashboardPrograms(data.programs,data.programMetadata,currentClientId):[];
   const otherPrograms=data.programs.filter(value=>!['cis-ig1','iso-27001','soc-2'].includes(value.key));
-  const trackedProgramUnavailable=!programs.length&&(demoDashboard||data.programs.some(value=>['cis-ig1','iso-27001','soc-2'].includes(value.key)));
+  const trackedProgramConfigured=!!configuredCis||configuredPrograms.some(value=>['cis-ig1','iso-27001','soc-2'].includes(value.frameworkKey))
+    ||data.programs.some(value=>['cis-ig1','iso-27001','soc-2'].includes(value.key));
+  const trackedProgramUnavailable=!programs.length&&trackedProgramConfigured;
+  const noFrameworksConfigured=!data.programs.length&&Array.isArray(currentClient.shared_programs)&&!currentClient.shared_programs.length&&!configuredCis;
   const program=programs.find(value=>value.framework_key===params.get('program'))||programs[0];
   const chooseProgram=key=>{const next=new URLSearchParams(params);next.set('program',key);setParams(next);};
   return <>{demoPresentation?<BrawndoDemoDashboard key={requestKey} queue={data.queue} programs={data.programs} client={currentClient} members={data.members}
@@ -110,7 +113,7 @@ export default function Dashboard(){
       {otherPrograms.map(value=>data.programRows?.[value.key]
         ? <div key={value.key} className="bdash" style={{padding:0,minHeight:0}}><FrameworkProgramCard program={value} rows={data.programRows[value.key]} workspacePilot={pilot}/></div>
         : <section key={value.key} className="bdd-card"><header><h2>{value.label}</h2></header><p className="bdd-empty">{value.explanation} <Link to={value.to}>Open workspace</Link></p></section>)}
-      {!data.programs.length&&!demoDashboard&&<section className="bdd-card"><p className="bdd-empty">No frameworks configured. <Link to="/client-profile">Review client configuration</Link></p></section>}
+      {noFrameworksConfigured&&<section className="bdd-card"><p className="bdd-empty">No frameworks configured. <Link to="/client-profile">Review client configuration</Link></p></section>}
     </BrawndoDemoDashboard>:<ClientWorkDashboard key={requestKey} queue={data.queue} programs={data.programs} programRows={data.programRows} clientName={currentClient?.name||'Client'}
     filter={filter} onFilter={onFilter} onOpen={openItem} loadDetail={loadDetail} refreshVersion={refreshVersion} workspacePilot={pilot}/>}
     {refreshError&&<p role="alert">{refreshError} <button onClick={()=>refreshDashboard(false)}>Retry dashboard refresh</button></p>}

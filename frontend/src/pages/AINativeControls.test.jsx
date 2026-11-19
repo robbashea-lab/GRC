@@ -30,7 +30,7 @@ jest.mock('@/components/AIIntake', () => ({useAIIntake: () => ({}), AIIntakeView
 
 const menuNames = ['ID', 'AI System / Use Case', 'Owner', 'Provider', 'Purpose / Use',
   'Risk Tier', 'Status', 'Last Review', 'Next Review'];
-const headings = ['AI system', 'Screening', 'Approval', 'Owner', 'Risk register', 'Expand'];
+const headings = ['AI system', 'Screening', 'Approval', 'Owner', 'Next review', 'Risk register', 'Expand'];
 const day = offset => new Date(Date.now() + offset * 86400000).toISOString().slice(0, 10);
 const click = node => act(async () => {expect(node).toBeTruthy(); node.click();});
 const render = () => act(async () => root.render(<AIGovernance/>));
@@ -194,7 +194,8 @@ test.each(['demo', 'standard'])('%s retains native nullable member, screening an
 test.each(['demo', 'standard'].flatMap(mode => [null, 'general', 'hipaa', 'nist-csf-2', 'cmmc'].map(framework => [mode, framework])))(
   '%s %s restores only the generic inactive population and keeps table/search constraints', async (mode, framework) => {
     const id = context(mode, framework); fixtures(id); await render();
-    expect(host.querySelector('.archive-toggle input[type="checkbox"]')).toBeNull();
+    const checkbox=host.querySelector('.archive-toggle input[type="checkbox"]');
+    expect(checkbox).toBeTruthy();expect(checkbox.checked).toBe(false);
     expect(view('inactive')).toBeTruthy();
     await search('internal'); await choose('AI System / Use Case', 'A → Z');
     await click(view('inactive'));
@@ -210,7 +211,7 @@ test.each(['demo', 'standard'].flatMap(mode => [null, 'general', 'hipaa', 'nist-
 test.each(['demo', 'standard'].flatMap(mode => [1, 2, 3, 'iso-27001', 'soc-2'].map(framework => [mode, framework])))(
   '%s %s keeps enrolled include-inactive behavior with the same native table constraints', async (mode, framework) => {
     const id = context(mode, framework); fixtures(id); await render();
-    expect(view('inactive')).toBeNull();
+    expect(view('inactive')).toBeTruthy();expect(view('inactive').getAttribute('aria-pressed')).toBe('false');
     const checkbox = host.querySelector('.archive-toggle input[type="checkbox"]');
     expect(checkbox).toBeTruthy(); expect(checkbox.checked).toBe(false);
     await choose('Owner', 'Ada');
@@ -220,7 +221,7 @@ test.each(['demo', 'standard'].flatMap(mode => [1, 2, 3, 'iso-27001', 'soc-2'].m
     await click(checkbox);
     expect(rowIds()).toEqual(['AI-003', 'AI-001', 'AI-004']);
     expect([...host.querySelectorAll('.filter-chip')].map(node => node.dataset.testid)).toEqual(
-      ['active', 'due', 'high', 'third', 'customer', 'pending'].map(name => `ai-system-view-${name}`));
+      ['active', 'due', 'high', 'third', 'customer', 'pending','attention'].map(name => `ai-system-view-${name}`));
   });
 
 test('same actor/client remount retains native table state; record close preserves filters and exact identity', async () => {
@@ -254,7 +255,7 @@ test.each(['client', 'actor'])('%s change clears native table state and member c
 });
 
 test.each(['demo', 'standard'].flatMap(mode => [1, 'iso-27001', 'soc-2'].map(framework => [mode, framework])))(
-  '%s later %s enrollment replaces only the obsolete inactive view after verified context returns', async (mode, framework) => {
+  '%s later %s enrollment preserves native inactive selection after verified context returns', async (mode, framework) => {
     const id = context(mode), actor = mockAuth.user.user_id; fixtures(id); await render();
     await search('internal'); await choose('Owner', 'Ada'); await click(view('inactive'));
     expect(rowIds()).toEqual(['AI-006']);
@@ -264,11 +265,13 @@ test.each(['demo', 'standard'].flatMap(mode => [1, 'iso-27001', 'soc-2'].map(fra
     expect(view('inactive').getAttribute('aria-pressed')).toBe('true'); expect(rowIds()).toEqual(['AI-006']);
     // Same actor/client identity and saved inventory; only verified native enrollment changes.
     context(mode, framework, id, actor); await render();
-    expect(view('inactive')).toBeNull(); expect(view('active').getAttribute('aria-pressed')).toBe('true');
+    expect(view('inactive')).toBeTruthy(); expect(view('inactive').getAttribute('aria-pressed')).toBe('true');
     const checkbox = host.querySelector('.archive-toggle input[type="checkbox"]');
     expect(checkbox).toBeTruthy(); expect(checkbox.checked).toBe(false);
     expect(host.querySelector('[data-testid="ai-system-search"]').value).toBe('internal');
     expect(host.querySelector('[aria-label="Remove Owner: Ada"]')).toBeTruthy();
+    expect(rowIds()).toEqual(['AI-006']);
+    await click(view('active'));
     expect(rowIds()).toEqual(['AI-003', 'AI-001']);
   });
 

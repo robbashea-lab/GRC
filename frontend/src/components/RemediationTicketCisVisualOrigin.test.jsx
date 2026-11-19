@@ -4,7 +4,7 @@ import FrameworkDrawer from './FrameworkDrawer';
 import api from '@/lib/api';
 import {visibleQuestions} from '@/lib/guidedAssessment';
 import {omniCisSummary} from '@/lib/omniCisSummary';
-import {buildLegacyDemoStore,saveStore} from '../preview/store';
+import {buildLegacyDemoStore,readStore,saveStore} from '../preview/store';
 import * as rolloutPresentation from '@/lib/assessmentRolloutEligibility';
 
 let mockAuth,mockOrg;
@@ -68,6 +68,14 @@ async function savePersonalProgress(completed=false){
   await api.put(base+'/guided-assessment',{version,answers,step:0,completed,result,narrative:completed?'Retained exact reviewed completion.':'',expected_revision:initial.revision,
     base_assessment_token:initial.current_assessment_token,base_scope_fingerprint:initial.current_scope_fingerprint});
 }
+async function submitWorkAsDistinctWorker(){
+  const db=readStore(),validator=db.user,worker={user_id:'source-work-submitter',name:'Synthetic source work submitter',email:'source-worker@example.invalid',role:'platform_admin',status:'active',client_ids:[clientId]};
+  expect(task.assignee_id).not.toBe(validator.user_id);
+  db.users.push(worker);db.user=worker;saveStore(db);
+  try{
+    await api.patch('/tasks/'+task.task_id,{status:'done',resolution:'Synthetic completed work retained through source browsing.',expected_updated_at:task.updated_at});
+  }finally{const current=readStore();current.user=validator;saveStore(current);}
+}
 
 beforeAll(()=>Object.defineProperty(global,'crypto',{configurable:true,value:require('crypto').webcrypto}));
 describe('legacy source-appearance compatibility (rollout presentation disabled)',()=>{
@@ -92,13 +100,13 @@ afterEach(async()=>{await act(async()=>root.unmount());host.remove();jest.restor
 test.each(['Close','Escape'])('legacy source appearance: the completed ticket opens its exact native CIS source and %s restores its source opener without changing saved progress',async closeMethod=>{
   // jsdom has no layout; keep real portals, focus scopes and hidden/aria attributes.
   jest.spyOn(HTMLElement.prototype,'getClientRects').mockImplementation(function(){return this.closest('[hidden]')?[]:[{}];});
-  await savePersonalProgress(true);await render();const outer=assessments()[0];await openTicket(outer);
-  const work=ticket().querySelector('[data-ticket-task="'+task.task_id+'"]');
-  await edit(work.querySelector('[aria-label="Actual resolution"]'),'Synthetic completed work retained through source browsing.');
-  await click(work,'Complete work');expect(ticket().textContent).toContain('Pending validation');
+  // The validator owns this entire mounted journey; work was submitted by another account.
+  await savePersonalProgress(true);await submitWorkAsDistinctWorker();await render();const outer=assessments()[0];await openTicket(outer);
+  expect(ticket().textContent).toContain('Pending validation');
   await edit(ticket().querySelector('[aria-label="Validation rationale"]'),'Synthetic validation retained through source browsing.');
   await click(ticket(),'Validate and complete');expect(ticket().textContent).toContain('Completed');
   const before=await snapshot();expect(before.records[3]).toMatchObject({status:'done',resolution:'Synthetic completed work retained through source browsing.'});
+  expect(before.records[3].completed_by).toBe('source-work-submitter');expect(before.records[4].validated_by).toBe(mockAuth.user.user_id);
   expect(before.records[4].status).toBe('closed');observeWrites();
   const sourceOpener=button(ticket(),'CIS Controls v8.1 Assessment → Safeguard 1.1');
   sourceOpener.focus();expect(document.activeElement).toBe(sourceOpener);

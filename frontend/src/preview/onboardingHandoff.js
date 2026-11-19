@@ -24,7 +24,7 @@ export function handoffSnapshot(db, cid) {
     client: clientProjection(db, Object.fromEntries(['client_id','name','primary_contact_id','primary_contact','assigned_owner_id','framework_settings'].map(k => [k, client[k]]))),
     completed: !!recordedBaseline(client,db.baselines?.[cid],db.logs), records,
     people: {contacts: list(db, 'contacts', cid).length,
-      active_client_users: db.users.filter(u => u.status === 'active' && u.client_ids?.includes(cid) && !['super_admin','platform_admin'].includes(u.role)).length,
+      active_client_users: db.users.filter(u => u.status === 'active' && Array.isArray(u.client_ids) && u.client_ids.includes(cid) && !['super_admin','platform_admin'].includes(u.role)).length,
       eligible_assignees_available: !!assignmentCandidates(db, cid, {limit: 1}).items.length},
   };
 }

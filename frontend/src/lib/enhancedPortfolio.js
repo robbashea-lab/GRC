@@ -1,8 +1,16 @@
 import { assignedToUser, periodChange } from './portfolioProgress';
 import {orderNamedDemoClients} from './demoClientOrder';
 import { calendarDay, managementDay } from './managementDates';
+import {recordedOnboardingState} from './clientProfile';
 export const ENHANCED_PORTFOLIO_ENABLED = true;
 export const PORTFOLIO_KPIS = [['attention', 'Needs attention', 'Clients with a red status'], ['overdue', 'Overdue items', 'Reviews and action items'], ['due30', 'Due in 30 days', 'Reviews, follow-ups, renewals'], ['notstarted', 'Not started', 'Onboarding has not started']];
+const ONBOARDING_STATES=['complete','in_progress','not_started','unknown'];
+export function onboardingState(client) {
+  if(Object.hasOwn(client,'onboarding_state'))return ONBOARDING_STATES.includes(client.onboarding_state)?client.onboarding_state:'unknown';
+  const recorded=recordedOnboardingState(client);
+  if(recorded!=='unknown')return recorded;
+  return ONBOARDING_STATES.includes(client.monitoring?.onboarding)?client.monitoring.onboarding:'unknown';
+}
 
 // Appearance only; the native endpoints still authorize the returned client cohort.
 export function enhancedPortfolioEligible({user, pathname, authLoading, authError}) {
@@ -47,19 +55,19 @@ export function clientAttention(client, asOf) {
     label: 'Watch',
     reason: [...reasons, due7 ? `${due7} due this week` : ''].filter(Boolean).join(' · ')
   };
-  if (client.monitoring?.onboarding === 'not_started') return {
+  if (onboardingState(client) === 'not_started') return {
     level: 3,
     tone: 'gray',
     label: 'Not started',
     reason: 'Onboarding has not started'
   };
-  if (client.monitoring?.onboarding === 'in_progress') return {
+  if (onboardingState(client) === 'in_progress') return {
     level: 2,
     tone: 'amber',
     label: 'Onboarding',
     reason: 'Onboarding is in progress'
   };
-  if (client.monitoring?.onboarding !== 'complete') return {
+  if (onboardingState(client) !== 'complete') return {
     level: 3,
     tone: 'gray',
     label: 'Status unavailable',
@@ -75,12 +83,12 @@ export function clientAttention(client, asOf) {
 export function portfolioKpiValue(key, clients, asOf) {
   if (!PORTFOLIO_KPIS.some(([id]) => id === key)) return null;
   if (key === 'overdue' || key === 'due30') return clients.reduce((sum, client) => sum + operationalItems(client, asOf)[key].length, 0);
-  if (key === 'notstarted' && clients.some(client => !['complete', 'in_progress', 'not_started'].includes(client.monitoring?.onboarding))) return null;
-  return clients.filter(client => key === 'attention' ? clientAttention(client, asOf).tone === 'red' : client.monitoring?.onboarding === 'not_started').length;
+  if (key === 'notstarted' && clients.some(client => onboardingState(client)==='unknown')) return null;
+  return clients.filter(client => key === 'attention' ? clientAttention(client, asOf).tone === 'red' : onboardingState(client) === 'not_started').length;
 }
 export function filterPortfolio(clients, programs, state, userId, asOf, includeKpi = true, demoContext) {
   const query = state.search.trim().toLowerCase();
-  const rows = clients.filter(client => (!state.mine || assignedToUser(client, userId)) && (!state.framework || programs.some(program => program.client_id === client.client_id && program.program_key === state.framework)) && (!query || [client.name, client.grc_lead?.name || 'Unassigned', ...programs.filter(program => program.client_id === client.client_id).map(program => program.program_label)].join(' ').toLowerCase().includes(query)) && (!includeKpi || !state.kpi || (state.kpi === 'overdue' || state.kpi === 'due30' ? operationalItems(client, asOf)[state.kpi].length > 0 : state.kpi === 'attention' ? clientAttention(client, asOf).tone === 'red' : state.kpi === 'notstarted' && client.monitoring?.onboarding === 'not_started')));
+  const rows = clients.filter(client => (!state.mine || assignedToUser(client, userId)) && (!state.framework || programs.some(program => program.client_id === client.client_id && program.program_key === state.framework)) && (!query || [client.name, client.grc_lead?.name || 'Unassigned', ...programs.filter(program => program.client_id === client.client_id).map(program => program.program_label)].join(' ').toLowerCase().includes(query)) && (!includeKpi || !state.kpi || (state.kpi === 'overdue' || state.kpi === 'due30' ? operationalItems(client, asOf)[state.kpi].length > 0 : state.kpi === 'attention' ? clientAttention(client, asOf).tone === 'red' : state.kpi === 'notstarted' && onboardingState(client) === 'not_started')));
   const sorted = rows.sort((a, b) => (state.sort === 'attention' ? clientAttention(a, asOf).level - clientAttention(b, asOf).level : state.sort === 'next' ? (operationalItems(a, asOf).next?.due_date || '9999').localeCompare(operationalItems(b, asOf).next?.due_date || '9999') : 0) || a.name.localeCompare(b.name) || a.client_id.localeCompare(b.client_id));
   // Keep the established Demo default order; explicit user sorts must take precedence.
   return ['name', 'next'].includes(state.sort) ? sorted : orderNamedDemoClients(sorted, demoContext);

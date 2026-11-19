@@ -8,6 +8,7 @@ import api from '@/lib/api';
 import {cisClient} from '@/testUtils/cisExperience';
 import {frameworkDashboardFixture} from '@/testUtils/frameworkDashboard';
 import {FRAMEWORKS,frameworkCatalog} from '@/lib/frameworks';
+import {clientDestination} from '@/lib/clientSelection';
 let mockClient, mockPath, mockKey, mockAuth;
 jest.mock('@/context/OrgContext', () => ({ useOrg: () => ({ currentClientId: mockClient.client_id, currentClient: mockClient, clients: [mockClient] }) }));
 jest.mock('@/context/AuthContext', () => ({ useAuth: () => mockAuth }));
@@ -35,6 +36,7 @@ beforeEach(() => {
 });
 afterEach(async () => { await act(async () => root.unmount()); container.remove(); localStorage.removeItem(THEME_KEY); });
 const render = async key => { await act(async () => root.render(<Layout key={key}/>)); };
+const navigationLink = path => container.querySelector(`nav.side a[href="${clientDestination(mockClient.client_id,path)}"]`);
 
 function socWorkspace(configured=true){
   const catalog=frameworkCatalog('soc-2'),definitions=catalog.requirements,categories=['security','availability','confidentiality'];
@@ -132,7 +134,7 @@ test('loaded ISO uses one native metadata header while the sidebar retains the c
   expect(main.querySelector('.iso-program-heading p').textContent).toContain('ISO/IEC 27001:2022 · Amendment 1:2024');
   expect(main.querySelectorAll('[aria-labelledby="bcis-summary-heading"]')).toHaveLength(1);
   expect(main.querySelectorAll('button.iso-program-card')).toHaveLength(4);
-  expect(container.querySelector('[data-testid="context-header-client"]').textContent).toContain('Client A');
+  expect(container.querySelector('.side .ws-card').textContent).toContain('Client A');
   expect(JSON.stringify(frameworkCatalog('iso-27001'))).toBe(catalogBefore);
 });
 
@@ -189,7 +191,8 @@ test('ISO framework loading and its completed native read keep a single metadata
 test('direct compliance routes render client empty states and preserve existing sidebar links', async () => {
   for (const [key, label] of [['hipaa','HIPAA'],['iso-27001','ISO 27001'],['cmmc','CMMC']]) {
     mockKey = key; mockPath = `/compliance/${key}`; await render();
-    expect(container.querySelector('main').textContent).toContain(key!=='cmmc'?'Select Applies in Client Profile to initialize this program after onboarding.':'Program selected for this client. Detailed requirement assessment and mapping have not yet been configured in Omnisciente.');
+    expect(container.querySelector('main').textContent).toContain('Select Applies in Client Profile to initialize this program after onboarding.');
+    expect(container.querySelector('main').textContent).not.toContain('Detailed requirement assessment and mapping have not yet been configured');
     expect(container.querySelector('main').textContent).toContain(label);
     expect(container.querySelectorAll('main h1')).toHaveLength(1);
     if(key==='iso-27001'){
@@ -197,23 +200,24 @@ test('direct compliance routes render client empty states and preserve existing 
       expect(container.querySelector('main .bpage-eyebrow')).toBeNull();
       expect(container.querySelector('main .iso-program-heading p').textContent).toContain('ISO/IEC 27001:2022 · Amendment 1:2024');
       expect(container.querySelector('main').textContent).not.toContain('Assessment workspace · ');
-      expect(container.querySelector('[data-testid="context-header-client"]').textContent).toContain('Client A');
+      expect(container.querySelector('.side .ws-card').textContent).toContain('Client A');
     }else{
-      expect(container.querySelector('main').textContent).toContain(key!=='cmmc'?'Assessment workspace · ':'Applicability only; no assessment catalog');
+      expect(container.querySelector('main').textContent).toContain('Assessment workspace · ');
+      expect(container.querySelector('main').textContent).not.toContain('Applicability only; no assessment catalog');
       expect(container.querySelector('main .bpage-eyebrow').textContent).toBe('Client A');
     }
-    if(key!=='cmmc')expect(api.get.mock.calls.some(([path,config])=>path===`/frameworks/${key}`&&config?.params?.client_id==='a')).toBe(true);
+    expect(api.get.mock.calls.some(([path,config])=>path===`/frameworks/${key}`&&config?.params?.client_id==='a')).toBe(true);
     expect(container.querySelectorAll('[data-testid^="nav-compliance-"]')).toHaveLength(3);
   }
   for (const route of ['dashboard','calendar','reviews','action-items','risks','policies','vendors','contacts','evidence','client-profile']) {
-    expect(container.querySelector(`a[href="/${route}"]`)).toBeTruthy();
+    expect(navigationLink('/'+route)).toBeTruthy();
   }
-  expect(container.querySelector('a[href="/onboarding"]')).toBeNull();
-  expect(container.querySelector('a[href="/client-settings"]')).toBeNull();
-  expect(container.querySelector('a[href="/compliance/cis-ig1"]')).toBeNull();
+  expect(navigationLink('/onboarding')).toBeNull();
+  expect(navigationLink('/client-settings')).toBeNull();
+  expect(navigationLink('/compliance/cis-ig1')).toBeNull();
   mockClient = {client_id:'b',name:'Client B'}; await render();
   expect(container.querySelectorAll('[data-testid^="nav-compliance-"]')).toHaveLength(0);
-  expect(container.querySelector('main').textContent).toContain('not enabled');
+  expect(container.querySelector('main').textContent).toContain('Program not currently selected.');
   expect(container.querySelector('main').textContent).not.toContain('Client A');
 });
 test('failed loads show a safe error instead of a blank page', async () => {
@@ -253,11 +257,12 @@ test('enrolled CIS keeps one scoped loading header across requirement and framew
 test.each(['demo_brawndo','demo_dunder','demo_prestige','new-client'])('%s Reviews inherits shared header, theme and portal surface from Layout',async clientId=>{
   mockClient={client_id:clientId,name:'Review client'};mockPath='/reviews';
   await render();
-  expect(container.querySelector('main .client-surface').dataset.theme).toBe('light');
+  expect(container.querySelector('main .client-surface').dataset.theme).toBe('dark');
   expect(container.querySelector('main h1').textContent).toBe('Reviews');
   expect(container.querySelector('main .bpage-eyebrow').textContent).toBe('Review client');
-  await act(async()=>container.querySelector('main [aria-label="Switch to dark mode"]').click());
-  expect(container.querySelector('main .client-surface').dataset.theme).toBe('dark');
-  expect(document.documentElement.dataset.brawndoPortal).toBe('dark');
-  expect(container.querySelector('main [aria-label="Switch to light mode"]')).toBeTruthy();
+  await act(async()=>container.querySelector('main [aria-label="Switch to light mode"]').click());
+  expect(container.querySelector('main .client-surface').dataset.theme).toBe('light');
+  expect(document.documentElement.dataset.brawndoPortal).toBe('light');
+  expect(localStorage.getItem(THEME_KEY)).toBe('light');
+  expect(container.querySelector('main [aria-label="Switch to dark mode"]')).toBeTruthy();
 });

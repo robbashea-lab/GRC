@@ -4,7 +4,7 @@ import {PREVIEW_MODE} from './api';
 // Preferences survive refresh; actor, workspace mode and authorized scope isolate them.
 const views = new WeakMap();
 const empty = () => ({search: '', mine: false, framework: 'all', sort: 'name', chartView: 'line',
-  includeArchived: false, table: {filters: {}}, scroll: 0});
+  enhancedSort: 'attention', includeArchived: false, table: {filters: {}}, scroll: 0});
 
 function readPreferences(key) {
   if (!key) return empty();
@@ -15,14 +15,15 @@ function readPreferences(key) {
       framework: typeof saved.framework === 'string' ? saved.framework : 'all',
       sort: ['name','name-desc','change-desc','progress','progress-desc','activity-desc'].includes(saved.sort) ? saved.sort
         : ({change:'change-desc',activity:'activity-desc'})[saved.sort] || 'name',
+      enhancedSort: ['attention','name','next'].includes(saved.enhancedSort) ? saved.enhancedSort : 'attention',
       chartView: ['line','mix'].includes(saved.chartView) ? saved.chartView : 'line'};
   } catch { return empty(); }
 }
 
 function rememberPreferences(entry) {
   if (!entry.key) return;
-  const {search,mine,framework,sort,chartView} = entry.view;
-  try { sessionStorage.setItem(entry.key,JSON.stringify({search,mine,framework,sort,chartView})); }
+  const {search,mine,framework,sort,chartView,enhancedSort} = entry.view;
+  try { sessionStorage.setItem(entry.key,JSON.stringify({search,mine,framework,sort,chartView,enhancedSort})); }
   catch { /* Preferences are optional; assessment persistence uses its own error handling. */ }
 }
 

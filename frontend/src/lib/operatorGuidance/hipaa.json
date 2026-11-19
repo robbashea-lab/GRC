@@ -75,7 +75,12 @@
     "164.410":"Coordinate business-associate notice to the covered entity when an applicable breach is identified.",
     "164.412":"Document and manage a law-enforcement-related delay in notification when the applicable conditions are met.",
     "164.414":"Retain the administrative records and evidence supporting notification compliance or the decision that notice was not required.",
-    "164.530":"Connect relevant Privacy administration responsibilities to the security program without treating this supporting unit as a full Privacy Rule assessment."
+    "164.530":"Connect relevant Privacy administration responsibilities to the security program without treating this supporting unit as a full Privacy Rule assessment.",
+    "164.308(b)(2)":"Where the organization is a business associate using a subcontractor to handle ePHI, obtain assurances that the subcontractor will protect that information. Confirm the actual subcontractor relationship and scope rather than assuming an upstream agreement covers every downstream service.",
+    "164.314(a)(2)(i)":"For an applicable business-associate contract, check that its terms cover Security Rule duties, safeguards carried through to ePHI subcontractors, and reporting of security incidents and breaches. A signed agreement alone does not show that each relevant term is present.",
+    "164.314(a)(2)(ii)":"Where a permitted other arrangement is used, check the actual arrangement against §164.504(e)(3). An ordinary service contract or informal understanding does not automatically establish that this alternative applies.",
+    "164.314(a)(2)(iii)":"Apply the relevant business-associate contract or permitted-arrangement terms to the agreement between a business associate and its ePHI subcontractor. This downstream agreement check does not replace assessment of the organization's own business-associate arrangements.",
+    "164.314(b)(2)":"For an applicable group health plan, check that its plan documents require the sponsor's ePHI safeguards, separation, agent safeguards and incident reporting. This plan-document duty is distinct from general business-associate contracting and does not assume every plan sponsor is a business associate."
   },
   "evidence": {
     "164.302":"Entity scope decision, inventory of ePHI systems and a data-flow map showing the regulated activities assessed.",
@@ -153,7 +158,12 @@
     "164.410":"Business-associate incident notification procedure, relevant agreement terms and notice records.",
     "164.412":"Qualified-owner decision and restricted supporting correspondence for an applicable notification delay.",
     "164.414":"Administrative evidence supporting notification decisions and follow-up, with unnecessary personal data excluded.",
-    "164.530":"Relevant Privacy administration responsibilities and procedures linked to this supporting assessment, not a claim of full Privacy Rule coverage."
+    "164.530":"Relevant Privacy administration responsibilities and procedures linked to this supporting assessment, not a claim of full Privacy Rule coverage.",
+    "164.308(b)(2)":"Applicable subcontractor and ePHI scope, the executed assurance agreement or permitted arrangement, and linked safeguard terms for that subcontractor.",
+    "164.314(a)(2)(i)":"Executed business-associate contract showing the applicable Security Rule, subcontractor and incident/breach-reporting provisions, with the in-scope service and responsible parties identified.",
+    "164.314(a)(2)(ii)":"The qualifying arrangement and its documented basis under §164.504(e)(3), such as an applicable interagency agreement or law, identifying the parties and ePHI scope.",
+    "164.314(a)(2)(iii)":"Executed subcontractor agreement or qualifying arrangement, the relevant ePHI service chain, and the downstream safeguard and reporting terms assessed.",
+    "164.314(b)(2)":"Applicable group-plan amendments or provisions addressing sponsor safeguards, separation, agents and incident reporting, with records supporting the assessed plan and sponsor scope."
   },
   "groups": {
     "164.302":{"implementation":"Typical implementation maps regulated activities, ePHI locations and accountable functions into a usable scope statement. Include hosted services and relevant business-associate relationships.","evidence":"Entity/scope statement; ePHI data-flow map; systems inventory; relevant service-provider register."},

@@ -3,9 +3,11 @@ import {createRoot} from 'react-dom/client';
 import ReviewDrawer from './ReviewDrawer';
 import api from '@/lib/api';
 import * as uuid from '@/lib/recordUuid';
+import {rememberClient} from '@/lib/clientSelection';
 
-let mockUser,mockFullRecord;
-jest.mock('@/context/AuthContext',()=>({useAuth:()=>({user:mockUser})}));
+let mockUser,mockFullRecord,mockOrg;
+jest.mock('@/context/AuthContext',()=>({useAuth:()=>({user:mockUser,workspaceMode:'demo',loading:false,error:''})}));
+jest.mock('@/context/OrgContext',()=>({useOrg:()=>mockOrg}));
 jest.mock('@/lib/brawndoFullRecord',()=>({useBrawndoFullRecord:()=>mockFullRecord}));
 jest.mock('@/lib/api',()=>({__esModule:true,default:require('axios').default.create({adapter:require('../preview/adapter').previewAdapter}),formatError:e=>e.response?.data?.detail||e.message,API:'/api'}));
 jest.mock('react-router-dom',()=>({Link:({children,to})=><a href={to}>{children}</a>,useNavigate:()=>jest.fn()}),{virtual:true});
@@ -29,6 +31,10 @@ beforeEach(async()=>{
   global.IS_REACT_ACT_ENVIRONMENT=true;sessionStorage.clear();localStorage.clear();mockFullRecord=true;
   mockUser=(await api.post('/demo/enter')).data.user;
   record=(await api.post('/reviews',{client_id:'demo_brawndo',title:'Finding workflow regression',review_type:'access',recurrence:'quarterly',due_date:'2099-09-30'})).data;
+  const clients=(await api.get('/clients')).data,client=clients.find(row=>row.client_id===record.client_id);
+  expect(client).toBeDefined();
+  mockOrg={currentClientId:record.client_id,currentClient:client,clients,loading:false,error:''};
+  rememberClient(record.client_id);window.history.replaceState({},'',`/reviews?client_id=${record.client_id}`);
   container=document.createElement('div');document.body.appendChild(container);root=createRoot(container);
 });
 afterEach(async()=>{await act(async()=>root.unmount());container.remove();jest.restoreAllMocks();jest.clearAllMocks();});

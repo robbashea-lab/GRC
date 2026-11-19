@@ -91,6 +91,20 @@ test.each(['yes','no','unsure'])('native intake %s survives save and reload with
   expect(reloaded.reviews.filter(row=>row.client_id===CID).map(row=>row.occurrences)).toEqual(historical);
   expect(reloaded.evidence.filter(row=>row.client_id===CID)).toHaveLength(32);
   for(const [id,value] of Object.entries(before.ai_intake))if(id!==CID)expect(reloaded.ai_intake[id]).toEqual(value);
-  await expect(api.post('/ai_systems/'+systems[0].ai_system_id+'/approval',{status:'approved',note:'Not authorized for this program',expected_updated_at:systems[0].updated_at})).rejects.toThrow(/configured CIS program/);
+  const approvalPath='/ai_systems/'+systems[0].ai_system_id+'/approval',unchanged=sessionStorage.getItem(STORE_KEY);
+  await expect(api.post(approvalPath,{status:'approved',note:'SYNTHETIC stale decision must not apply',expected_updated_at:'stale'})).rejects.toThrow('Record changed since it was opened; reload before deciding');
+  expect(sessionStorage.getItem(STORE_KEY)).toBe(unchanged);
+  const actor=reloaded.user,contributor=reloaded.users.find(user=>user.status==='active'&&user.role==='client_contributor'&&Array.isArray(user.client_ids)&&user.client_ids.includes(CID));
+  expect(contributor).toBeTruthy();
+  const scoped=readStore();scoped.user={...contributor,workspace_mode:actor.workspace_mode};saveStore(scoped);
+  const deniedState=sessionStorage.getItem(STORE_KEY);
+  try {
+    await expect(api.post(approvalPath,{status:'approved',note:'SYNTHETIC contributor cannot make an approval decision',expected_updated_at:systems[0].updated_at})).rejects.toMatchObject({response:{status:403}});
+    expect(sessionStorage.getItem(STORE_KEY)).toBe(deniedState);
+  } finally {
+    const restored=readStore();restored.user=actor;saveStore(restored);
+  }
   expect(readStore().ai_systems.filter(row=>row.client_id===CID)).toEqual(systems);
+  expect(readStore().reviews.filter(row=>row.client_id===CID)).toEqual(reloaded.reviews.filter(row=>row.client_id===CID));
+  expect(readStore().evidence.filter(row=>row.client_id===CID)).toEqual(reloaded.evidence.filter(row=>row.client_id===CID));
 });

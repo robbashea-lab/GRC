@@ -22,10 +22,11 @@ test('canonical pilot opens fresh native Review occurrence, cancels draft, and s
  });
  api.patch.mockImplementation(async(_,patch)=>{Object.assign(record,patch);saved=true;return {data:record};});
  const button=text=>[...document.querySelectorAll('button')].find(el=>el.textContent===text);
+ const summary=label=>[...container.querySelectorAll('[aria-label="Calendar summary"] .kchip')].find(el=>el.querySelector('.klabel').textContent===label);
  const date=localCalendarDate(new Date(new Date().getFullYear(),new Date().getMonth(),new Date().getDate()+8));
  const change=async()=>{const input=document.querySelector('input[type="date"]');await act(async()=>{Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,'value').set.call(input,date);input.dispatchEvent(new Event('change',{bubbles:true}));input.dispatchEvent(new Event('input',{bubbles:true}));});};
  try {
- await act(async()=>root.render(<Calendar/>));expect(container.querySelector('.bdcal')).not.toBeNull();expect(container.querySelectorAll('.kcell')[2].querySelector('strong').textContent).toBe('1');
+ await act(async()=>root.render(<Calendar/>));expect(container.querySelector('.bdcal')).not.toBeNull();expect(summary('Due in 7 days').querySelector('strong').textContent).toBe('1');
  const chip=()=>container.querySelector('[data-testid="cal-item-review:r:occ-exact"]');
  await act(async()=>chip().click());await change();await act(async()=>button('Cancel').click());expect(api.patch).not.toHaveBeenCalled();
  record.updated_at='version-fresh';await act(async()=>chip().click());expect(document.querySelector('input[type="date"]').value).toBe(day);await change();
@@ -33,9 +34,9 @@ test('canonical pilot opens fresh native Review occurrence, cancels draft, and s
  expect(api.patch).toHaveBeenCalledTimes(1);expect(api.patch).toHaveBeenCalledWith('/reviews/r',{due_date:date+'T14:30:00-04:00',expected_updated_at:'version-fresh',expected_occurrence_id:'occ-exact',calendar_move:true},{headers:{'Idempotency-Key':expect.any(String)},pendingCommandGeneration:expect.any(Number)});
  expect(api.get.mock.calls.filter(([path])=>path==='/reviews/r')).toHaveLength(2);expect(record.recurrence).toBe('quarterly');
  // The main period has refreshed, but the independent summary read is still pending.
- expect(container.querySelectorAll('.kcell')[0].disabled).toBe(false);expect(resolveSummary).toEqual(expect.any(Function));
- for(const tile of [...container.querySelectorAll('.kcell')].slice(1,3)){expect(tile.disabled).toBe(true);expect(tile.querySelector('strong').textContent).toBe('\u2014');expect(tile.querySelector('small').textContent).toBe('Loading\u2026');}
+ expect(container.querySelector('[aria-label="Calendar summary"] .kchip').disabled).toBe(false);expect(resolveSummary).toEqual(expect.any(Function));
+ for(const tile of [summary('Overdue'),summary('Due in 7 days')]){expect(tile.disabled).toBe(true);expect(tile.querySelector('strong').textContent).toBe('\u2014');expect(tile.querySelector('small').textContent).toBe('Loading\u2026');}
  await act(async()=>resolveSummary());
- const soon=container.querySelectorAll('.kcell')[2];expect(soon.disabled).toBe(false);expect(soon.querySelector('strong').textContent).toBe('0');expect(soon.querySelector('small').textContent).toBe('Nothing due in 7 days');
+ const soon=summary('Due in 7 days');expect(soon.disabled).toBe(false);expect(soon.querySelector('strong').textContent).toBe('0');expect(soon.querySelector('small').textContent).toBe('Nothing due in 7 days');
  } finally {await act(async()=>root.unmount());container.remove();}
 });

@@ -12,6 +12,8 @@ import { portfolio } from './summaries';
 import {latestPortfolioActivity} from '../lib/portfolioOverview';
 import {getCisDemoScenarioContext} from './cisDemoHistoryContext';
 import {CIS_SHOWCASE_VERSION,cisDemoFixtureDates} from './cisDemoFixtureDates';
+import {belongsToOccurrence} from '../lib/reviewOccurrences';
+import {currentReviewCompletion} from '../testUtils/r4ReviewFixture';
 const api = axios.create({
   adapter: previewAdapter
 });
@@ -144,9 +146,14 @@ test('reset recovers creations edits deletions completions and baseline without 
     name: 'Temporary name'
   });
   const r = original.reviews.find(r => r.client_id === cid);
-  await api.post('/reviews/' + r.review_id + '/complete', {
-    occurrence_id: r.current_occurrence_id
+  const related=(await api.get('/related',{params:{entity_type:'reviews',entity_id:r.review_id,occurrence_id:r.current_occurrence_id}})).data;
+  const completion=await currentReviewCompletion(api,r.review_id,{
+    expectedOccurrenceId:r.current_occurrence_id,
+    resultForStep:step=>({step_id:step.step_id,result:'N/A',reason:'SYNTHETIC reset-recovery walkthrough; no external control or business decision is performed: '+step.text}),
+    supportingReference:'SYNTHETIC QA saved reset-recovery walkthrough for Review '+r.review_id+' occurrence '+r.current_occurrence_id+'.'
   });
+  if((related.findings||[]).some(f=>f.client_id===cid&&f.review_id===r.review_id&&belongsToOccurrence(f,r)))completion.outcome='Exceptions noted';
+  await api.post('/reviews/' + r.review_id + '/complete',completion);
   const modified = readStore();
   modified.assets = modified.assets.filter(a => a.client_id !== cid);
   saveStore(modified);

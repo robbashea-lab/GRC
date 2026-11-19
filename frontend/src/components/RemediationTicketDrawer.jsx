@@ -174,7 +174,7 @@ function Work({task,users,user,onSaved,onDirty,onControls,commandBusyRef,detail=
     });
   },[task]);
   useEffect(()=>{onDirty(task.task_id,dirty);return()=>onDirty(task.task_id,false);},[dirty,task.task_id,onDirty]);
-  const allowed=editableFields('tasks',user,task),writable=!readOnly&&mayEdit(user,task);
+  const allowed=editableFields('tasks',user,task),writable=!readOnly&&mayEdit(user,task)&&task.status!=='done';
   const enabled=k=>writable&&(!allowed||allowed.has(k)||(k==='assignee_id'&&user.role==='client_contributor'));
   const put=(k,v)=>{
     if(!dirty)editVersion.current=task.updated_at??null;
@@ -195,7 +195,7 @@ function Work({task,users,user,onSaved,onDirty,onControls,commandBusyRef,detail=
       .map(([key,edit])=>[key,{...edit,before:accepted[key]}])));
   }
   async function save(status){
-    if(readOnly||commandBusyRef?.current)return;
+    if(!writable||commandBusyRef?.current)return;
     onControls?.(task.task_id,{save:()=>save(),disabled:true,busy:true});
     setBusy(true);setError('');
     const next={...form,...(status?{status}:{})};

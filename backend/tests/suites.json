@@ -1,5 +1,6 @@
 {
   "offline": [
+    "test_portfolio_onboarding_state.py",
     "test_r4_tool_usage.py",
     "test_r4_pending_evidence_context.py",
     "test_r4_pending_activity.py",

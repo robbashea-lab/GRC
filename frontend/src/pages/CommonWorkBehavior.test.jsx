@@ -88,8 +88,8 @@ test('missing owners, completed history and open high Finding populations retain
     {finding_id:'accepted-with-open-action',client_id:mockClient.client_id,title:'Accepted with open Action',status:'accepted',severity:'critical'},
     {finding_id:'open-high',client_id:mockClient.client_id,title:'Open high Finding',status:'open',severity:'high'}];
   const before=JSON.stringify(records);await render();
-  const ownerSummary=host.querySelector('.cia-summary .needs-owner');
-  expect(ownerSummary.textContent).toContain('Missing owner');await click(ownerSummary);
+  const ownerSummary=host.querySelector('[aria-label="Action summaries"] [data-summary="unassigned"]');
+  expect(ownerSummary.querySelector('.klabel').textContent).toBe('Needs an owner');await click(ownerSummary);
   expect(titles()).toContain('Action missing');expect(titles()).not.toContain('Action assigned');
   await click(host.querySelector('[data-testid="ai-view-completed"]'));
   expect(new Set(titles())).toEqual(new Set(['Action done','Action cancelled','Accepted Finding']));

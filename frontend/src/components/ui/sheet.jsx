@@ -4,7 +4,7 @@ import { cva } from "class-variance-authority";
 import { X } from "lucide-react"
 
 import { cn } from "@/lib/utils"
-import { useSurfaceRef } from "@/lib/useSurfaceRef"
+import { useSurfaceRef, useSurfaceAvailabilityEvents } from "@/lib/useSurfaceRef"
 
 const Sheet = SheetPrimitive.Root
 
@@ -46,11 +46,12 @@ const sheetVariants = cva(
 
 const SheetContent = React.forwardRef(({ side = "right", className, children, description, onOpenAutoFocus, onCloseAutoFocus, ...props }, ref) => {
   const opener = React.useRef(null);
+  const availabilityEvents=useSurfaceAvailabilityEvents({...props,onOpenAutoFocus});
   return (
   <SheetPortal>
     <SheetOverlay />
-    <SheetPrimitive.Content ref={useSurfaceRef(ref)} className={cn(sheetVariants({ side }), className)} {...props}
-      onOpenAutoFocus={event => { opener.current = document.activeElement; onOpenAutoFocus?.(event); }}
+    <SheetPrimitive.Content ref={useSurfaceRef(ref)} className={cn(sheetVariants({ side }), className)} {...props} {...availabilityEvents}
+      onOpenAutoFocus={event => { opener.current = document.activeElement; availabilityEvents.onOpenAutoFocus(event); }}
       onCloseAutoFocus={event => {
         onCloseAutoFocus?.(event);
         // Programmatically opened record drawers have no Radix Trigger to restore.

@@ -3,6 +3,7 @@ import api, { formatError } from '@/lib/api';
 import { resultOptions, completionPayload, parseReviewCompletionGuide } from '@/lib/r4ReviewCompletion';
 import { useCreateIntent } from '@/lib/createIntent';
 import { useAuth } from '@/context/AuthContext';
+import { occurrenceId } from '@/lib/reviewOccurrences';
 function ServiceContext({ areas }) {
   return areas.map(area => (
     <p key={area.area_id}>
@@ -144,6 +145,8 @@ export default function ReviewCompletionGuide({
   reviewId,
   record,
   guide: controlled,
+  revisionAcknowledgment,
+  revisionOwner,
   onChange,
   onSaved,
   disabled = false
@@ -157,6 +160,7 @@ export default function ReviewCompletionGuide({
     [error, setError] = useState(''),
     [busy, setBusy] = useState(false);
   const activeReview = useRef(id), latestGuide = useRef(null);
+  const consumedRevision = useRef(null);
   const changeCallback = useRef(onChange);
   activeReview.current = id;
   useEffect(() => {changeCallback.current = onChange;}, [onChange]);
@@ -200,6 +204,20 @@ export default function ReviewCompletionGuide({
     setLoaded(parsed);
     changeCallback.current?.(parsed);
   }
+  useEffect(() => {
+    const acknowledgment=revisionAcknowledgment,current=latestGuide.current;
+    if(!acknowledgment||consumedRevision.current===acknowledgment||!current)return;
+    if(busy||command.unconfirmed())return;
+    consumedRevision.current=acknowledgment;
+    if(current.accepted_completion_retry||activeReview.current!==id
+      ||acknowledgment.owner!==revisionOwner||acknowledgment.review_id!==id
+      ||!record||acknowledgment.client_id!==record.client_id||acknowledgment.occurrence_id!==occurrenceId(record)
+      ||acknowledgment.occurrence_id!==current.occurrence_id||acknowledgment.updated_at!==record?.updated_at
+      ||current.expected_updated_at!==acknowledgment.previous_updated_at)return;
+    // Only our confirmed write advances the CAS token; answers, support and contract stay local.
+    const next=parseReviewCompletionGuide({...current,expected_updated_at:acknowledgment.updated_at});
+    setLoaded(next);changeCallback.current?.(next,acknowledgment);
+  }, [revisionAcknowledgment,revisionOwner,record,id,busy,command,guide]);
   function result(step, key, value) {
     const current = guide.results.find(r => r.step_id === step.step_id) || {
       step_id: step.step_id,

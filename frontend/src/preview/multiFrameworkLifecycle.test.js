@@ -5,6 +5,8 @@ import {previewAdapter} from './commandTestAdapter';
 import {STORE_KEY,readStore,saveStore} from './store';
 import catalog from '@catalogs/onboardingCatalog.json';
 import {FRAMEWORKS,sharedFrameworkPlans,reviewConfig} from '../lib/frameworks';
+import {currentReviewCompletion} from '../testUtils/r4ReviewFixture';
+import {belongsToOccurrence} from '../lib/reviewOccurrences';
 const api=axios.create({adapter:previewAdapter});
 const {setImmediate:yieldEventLoop}=jest.requireActual('timers');
 const get=async(path,cid,params={})=>(await api.get(path,{params:{client_id:cid,...params}})).data;
@@ -38,7 +40,8 @@ test('one organization operates five years across three frameworks without share
   // Identity-only test boundary: Demo cannot accept real invitations. No client,
   // GRC record, assessment or history is seeded, and reference users are untouched.
   const replacement={user_id:'qa_aperture_operator',name:'Caroline',email:'caroline@example.test',role:'client_contributor',status:'active',client_ids:[cid]};
-  const identityStore=readStore();identityStore.users.push(replacement);saveStore(identityStore);
+  const validator={user_id:'qa_aperture_validator',name:'Synthetic independent validator',email:'aperture-validator@example.test',role:'platform_admin',status:'active',client_ids:[cid],all_clients:false};
+  const identityStore=readStore();identityStore.users.push(replacement,validator);saveStore(identityStore);
   for(const r of reviews)await patch('/reviews/'+r.review_id,{owner_id:replacement.user_id,scope:'Synthetic workforce identity service; original scope',expected_occurrence_id:r.current_occurrence_id});
   const policies=await get('/policies',cid);expect(policies).toHaveLength(17);
   expect(new Set(policies.map(p=>p.baseline_key)).size).toBe(17);
@@ -129,7 +132,41 @@ test('one organization operates five years across three frameworks without share
         expect(portfolio.frameworks).toHaveLength(3);expect(portfolio.last_activity).toBeTruthy();
         expect((await get('/evidence-library/items/'+firstEvidence.evidence_id)).expiration_date).toBe('2028-12-31');
       }
-      const completed=await post('/reviews/'+due.review_id+'/complete',{occurrence_id:due.current_occurrence_id});
+      const sourcePolicy=due.policy_id?await get('/policies/'+due.policy_id):null;
+      const sourceVendor=due.vendor_id?await get('/vendors/'+due.vendor_id):null;
+      const sourceRisk=due.risk_id?await get('/risks/'+due.risk_id):null;
+      const approvalGap=sourcePolicy&&sourcePolicy.status!=='approved';
+      const assuranceGap=sourceVendor?.assurance_required&&(sourceVendor.assurance_records||[]).some(item=>item.required!==false
+        &&(!item.evidence_ids?.length||!item.received_at||!item.refresh_due||item.refresh_due.slice(0,10)<new Date().toISOString().slice(0,10)));
+      const currentFindings=(await get('/findings',cid)).filter(f=>f.review_id===due.review_id&&belongsToOccurrence(f,due));
+      if((approvalGap||assuranceGap)&&!currentFindings.length)currentFindings.push(await post('/reviews/'+due.review_id+'/create-finding',{
+        occurrence_id:due.current_occurrence_id,title:approvalGap?'Synthetic policy approval remains outstanding':'Synthetic supplier assurance remains outstanding',
+        description:approvalGap?'The native policy remains unapproved; this Review does not make an approval decision.':'Required supplier assurance is missing or expired; this Review does not establish assurance.',
+        remediation_title:approvalGap?'Obtain a separate policy approval decision':'Obtain current required supplier assurance',severity:'medium'}));
+      const command=await currentReviewCompletion(api,due.review_id,{
+        expectedOccurrenceId:due.current_occurrence_id,
+        supportingReference:'DEMO synthetic multi-framework lifecycle only; current-occurrence evidence '+evidence.evidence_id+'. No external operation or audit opinion is asserted.',
+        resultForStep:(step,{guide,review})=>{
+          const answer=(result,reason)=>({step_id:step.step_id,result,reason});
+          const gaps=currentFindings.map(f=>f.finding_id+': '+f.title).join('; ');
+          if(guide.template_id==='risk_rec'){
+            switch(step.support){
+              case 'Updated risk record':return answer('Pass','Synthetic walkthrough inspected the retained risk '+sourceRisk.risk_id+': '+sourceRisk.title);
+              case 'Rating change':return answer('Pass','Inspected retained likelihood '+sourceRisk.likelihood_score+' and impact '+sourceRisk.impact_score+'; no rating change is requested.');
+              case 'Action status':return answer('N/A','This record-lifecycle fixture does not independently verify treatment effectiveness or complete corrective Actions.');
+              case 'Approver and date':return answer('N/A','No new acceptance or closure decision is made by this Review; native existing decisions are preserved.');
+              case 'Next review':return answer('Pass','Inspected native scheduled successor '+review.next_review_date+'; the original five-year schedule assertions remain below.');
+              default:throw new Error('Unmodeled synthetic risk check: '+step.support);
+            }
+          }
+          if(guide.template_id==='policy_rec'&&step.support==='Approved version')return answer(approvalGap?'Exception':'Pass',approvalGap?'The native policy remains unapproved; retain '+gaps:'The separately approved native version '+sourcePolicy.version+' remains approved.');
+          if(['vendor_rec','assure_rec'].includes(guide.template_id)&&assuranceGap&&['Assurance document','Period dates','Review notes','Follow-up date'].includes(step.support))return answer('Exception','Required assurance remains unresolved: '+gaps);
+          return answer('N/A','This synthetic lifecycle scenario does not perform the external control, communication or business decision in this question: '+step.text);
+        }
+      });
+      if(currentFindings.length)command.outcome='Exceptions noted';
+      const completed=await post('/reviews/'+due.review_id+'/complete',command);
+      expect((await post('/reviews/'+due.review_id+'/complete',command)).occurrence).toEqual(completed.occurrence);
       occurrences.set(completed.occurrence.occurrence_id,copy(completed.occurrence));
       if(due.review_id===access.review_id)firstOccurrence||=copy(completed.occurrence);
       expect(completed.review.current_occurrence_id).not.toBe(due.current_occurrence_id);
@@ -141,7 +178,14 @@ test('one organization operates five years across three frameworks without share
       await patch('/tasks/'+sharedAction.task_id,{status:'done'});
       expect((await get('/findings/'+sharedFinding.finding_id)).status).toBe('remediated');
       expect((await get('/tasks/'+sharedAction.task_id)).completed_at).toBeTruthy();
-      await post('/findings/'+sharedFinding.finding_id+'/validate',{rationale:'Independently verified sampled supplier rights and corrective operation'});
+      const actor=copy(readStore().user),validationStore=readStore();validationStore.user=copy(validator);saveStore(validationStore);
+      try{
+        const validated=await post('/findings/'+sharedFinding.finding_id+'/validate',{rationale:'Independently verified sampled supplier rights and corrective operation'});
+        expect(validated.validated_by).toBe(validator.user_id);
+        expect(validated.validated_by).not.toBe((await get('/tasks/'+sharedAction.task_id)).completed_by);
+      }finally{
+        const restored=readStore();restored.user=actor;saveStore(restored);
+      }
       expect((await get('/findings/'+sharedFinding.finding_id)).status).toBe('closed');
       for(const a of mapped)expect((await get(ap(a))).status).toBe('not_assessed');
       // Separate synthetic assessor decisions, not a side effect of closing work.

@@ -158,6 +158,32 @@ const workDisclosure = (title, dialog = document.querySelector('[data-testid="en
 };
 const workDetails = button => document.getElementById(button.getAttribute('aria-controls'));
 
+test.each(['demo','standard'])('%s Portfolio uses actual native finalized onboarding without a monitoring fixture',async mode=>{
+  mockAuth={user:{user_id:'u',role:'super_admin',workspace_mode:mode},workspaceMode:mode};
+  const native={...client,client_id:'native-finalized',name:'Native finalized client',onboarding_baseline:{completed:true}};
+  delete native.monitoring;
+  api.get.mockImplementation(async path=>({data:path.endsWith('/overview')
+    ?{as_of:AT,clients:[native],programs:[]}
+    :{clients:[{...native,onboarding_state:'complete',metric_items:currentWork}]}}));
+  const before=JSON.stringify(native);
+  await act(async()=>root.render(<EnhancedPortfolio user={mockAuth.user}/>));
+  const kpi=[...host.querySelectorAll('.kchip')].find(node=>node.textContent.includes('Not started'));
+  expect(kpi.querySelector('b').textContent).toBe('0');expect(kpi.disabled).toBe(false);
+  expect(kpi.textContent).not.toContain('Onboarding state unavailable');
+  expect(JSON.stringify(native)).toBe(before);expect(api.post).not.toHaveBeenCalled();expect(api.patch).not.toHaveBeenCalled();
+});
+
+test('unproven native onboarding remains unavailable in the real KPI control',async()=>{
+  const native={...client,client_id:'native-unknown',onboarding_state:'unknown'};delete native.monitoring;
+  api.get.mockImplementation(async path=>({data:path.endsWith('/overview')
+    ?{as_of:AT,clients:[native],programs:[]}
+    :{clients:[{...native,metric_items:currentWork}]}}));
+  await act(async()=>root.render(<EnhancedPortfolio user={mockAuth.user}/>));
+  const kpi=[...host.querySelectorAll('.kchip')].find(node=>node.textContent.includes('Not started'));
+  expect(kpi.querySelector('b').textContent).toBe('—');expect(kpi.disabled).toBe(true);
+  expect(kpi.textContent).toContain('Onboarding state unavailable');expect(api.post).not.toHaveBeenCalled();expect(api.patch).not.toHaveBeenCalled();
+});
+
 test.each(['demo', 'standard'])('Portfolio keeps Client, Programs and GRC lead columns plus an overview action for every framework in %s mode', async mode => {
   mockAuth = {user: {user_id: 'operator', role: 'platform_admin', workspace_mode: mode}, workspaceMode: mode};
   const futureClient = {...client, client_id: 'future_client', name: 'Future client', assigned_owner_id: null, grc_lead_id: null, grc_lead: null};
@@ -197,11 +223,11 @@ test.each(['demo', 'standard'])('Portfolio keeps Client, Programs and GRC lead c
   expect(host.querySelectorAll('.pf-kstrip b')[3].textContent).toBe('0');
   expect(host.querySelector('.toolbar').nextElementSibling.classList.contains('pf-kstrip')).toBe(true);
   expect(row.querySelector('.cov-pchip.od').textContent).toBe('1 overdue · oldest 3 days');
-  expect([...host.querySelector('select[aria-label="Sort clients"]').options].map(option=>option.value)).toEqual(['attention','name']);
+  expect([...host.querySelector('select[aria-label="Sort clients"]').options].map(option=>option.value)).toEqual(['attention','name','next']);
   expect(api.post).not.toHaveBeenCalled(); expect(api.patch).not.toHaveBeenCalled();
 });
 
-test.each(['name'])('named Demo Portfolio sort control applies %s and keeps it after the lead-view round trip', async sort => {
+test.each(['name','next'])('named Demo Portfolio sort control applies %s and keeps it after the lead-view round trip', async sort => {
   const rows = [
     ['demo_prestige', 'Prestige Worldwide', '2026-10-21'],
     ['demo_krusty_krab', 'The Krusty Krab', '2026-10-25'],
@@ -220,11 +246,14 @@ test.each(['name'])('named Demo Portfolio sort control applies %s and keeps it a
   expect(visibleIds()).toEqual(canonical);
   const select = host.querySelector('select[aria-label="Sort clients"]');
   await act(async () => {select.value = sort; select.dispatchEvent(new Event('change', {bubbles: true}));});
-  const expected = ['demo_brawndo', 'demo_dunder', 'demo_initech', 'demo_prestige', 'demo_krusty_krab'];
+  const expected = sort==='next'?['demo_prestige','demo_dunder','demo_initech','demo_krusty_krab','demo_brawndo']:['demo_brawndo', 'demo_dunder', 'demo_initech', 'demo_prestige', 'demo_krusty_krab'];
   expect(select.value).toBe(sort);
   expect(visibleIds()).toEqual(expected);
   await click('By lead'); await click('Clients');
   expect(visibleIds()).toEqual(expected);
+  mockAuth={...mockAuth,user:{...mockAuth.user}};
+  await act(async()=>root.render(<EnhancedPortfolio user={mockAuth.user}/>));
+  expect(host.querySelector('[aria-label="Sort clients"]').value).toBe(sort);expect(visibleIds()).toEqual(expected);
   await act(async () => {select.value = 'attention'; select.dispatchEvent(new Event('change', {bubbles: true}));});
   expect(visibleIds()).toEqual(canonical);
   expect(api.post).not.toHaveBeenCalled(); expect(api.patch).not.toHaveBeenCalled();

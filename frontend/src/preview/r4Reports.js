@@ -13,6 +13,7 @@ import {commandRequest, stable} from './commandRequests';
 import {clone, audit, now} from './store';
 import {reviewView} from '../lib/reviewOccurrences';
 import {recordUuid} from '../lib/recordUuid';
+import {clientAccess} from './assignmentEligibility';
 
 const TYPES = ['assessment', 'executive', 'scope', 'risks', 'vendors', 'policies'];
 const STATUSES = ['addressed', 'in_progress', 'needs_attention', 'not_assessed', 'not_applicable'];
@@ -104,7 +105,7 @@ function sourceRecords(db, clientId) {
   const projectUser = user => Object.fromEntries(userFields.filter(key => Object.hasOwn(user, key)).map(key => [key, user[key]]));
   return {...records, client, actor: projectUser(db.user), users: (db.users || []).filter(user => identities.has(user.user_id)
     && canExportReports({...user, password_change_required: false})
-    && (user.role === 'super_admin' || user.role === 'platform_admin' && user.all_clients === true || user.client_ids?.includes(clientId))).map(projectUser),
+    && clientAccess(user, clientId)).map(projectUser),
   baseline: db.baselines?.[clientId] || null};
 }
 
@@ -178,7 +179,7 @@ async function preview(db, params) {
   const included = rows.filter(row => ['included', 'invalid_not_applicable'].includes(applicability[row.definition_id]));
   const labels = statusLabels(key), selected = program(key, configuration, catalog);
   const users = new Map(source.users.filter(user => canExportReports({...user, password_change_required: false})
-    && (user.role === 'super_admin' || user.role === 'platform_admin' && user.all_clients === true || user.client_ids?.includes(clientId)))
+    && clientAccess(user, clientId))
     .map(user => [user.user_id, user.name || null]));
   const person = id => users.get(id) || id || null;
   const criticality = vendor => {

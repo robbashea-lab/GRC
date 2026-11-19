@@ -560,7 +560,10 @@ async function executePreviewAdapter(config,generation) {
         const review=record(db,kind,id);
         return await save(commandRequest(db,path,review.client_id,body.request_id,body,()=>action(db,kind,id,name,body)));
       }
+      const retainedReview=kind==='reviews'&&name==='complete'&&record(db,kind,id).occurrences?.some(item=>item.occurrence_id===body.occurrence_id);
       const result = action(db, kind, id, name, body);
+      // Current authorization and Review replay/lifecycle validation ran above; an accepted occurrence is read-only.
+      if(retainedReview)return respond(result);
       const r = record(db, kind, id);
       if (kind !== 'reviews') audit(db, name, kind, r);
       if (['invite', 'submit-review', 'approve', 'reject', 'schedule-review', 'create-finding', 'create-task', 'complete'].includes(name)) db.notifications.unshift({

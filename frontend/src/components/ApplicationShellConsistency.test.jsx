@@ -106,6 +106,21 @@ afterEach(async () => {
 });
 
 const renderLayout = () => act(async () => root.render(<Layout/>));
+async function openWorkspace(trigger) {
+  await act(async()=>{
+    trigger.focus();
+    trigger.dispatchEvent(new KeyboardEvent('keydown',{key:'Enter',bubbles:true,cancelable:true}));
+  });
+  expect(trigger.getAttribute('aria-expanded')).toBe('true');
+  const menu=document.querySelector(`[role="menu"][aria-labelledby="${trigger.id}"]`);
+  expect(menu).not.toBeNull();
+  return menu;
+}
+const workspaceClientNames = menu => [...menu.querySelectorAll('button')].map(button=>{
+  const label=button.cloneNode(true);
+  label.querySelectorAll('[aria-hidden="true"]').forEach(mark=>mark.remove());
+  return label.textContent.trim();
+});
 
 function expectStaticApplicationBrand(node) {
   expect(node).not.toBeNull();
@@ -116,6 +131,16 @@ function expectStaticApplicationBrand(node) {
   expect(node.hasAttribute('tabindex')).toBe(false);
   expect(node.querySelector('a,button,[href],[tabindex],[role="button"],[role="link"]')).toBeNull();
   expect(node.querySelector('img.governara-feather')).not.toBeNull();
+}
+
+function expectStandardBrand() {
+  const brand = host.querySelector('.topbar .brand');
+  expect(brand.querySelector('.brand-name').textContent).toBe('GoverNara');
+  expect(brand.querySelector('.brand-tag').textContent).toBe('Turn complexity into clarity.');
+  expect(brand.textContent).not.toMatch(/by prestige worldwide|clarity for a stronger tomorrow/i);
+  expect(brand.querySelector('svg[aria-hidden="true"]')).not.toBeNull();
+  expect(brand.getAttribute('href')).toBe(['super_admin','platform_admin'].includes(mockAuth.user.role) ? '/clients' : '/dashboard');
+  return brand;
 }
 
 test('the application brand is static while the excluded public Brand keeps its existing presentation', async () => {
@@ -135,18 +160,19 @@ test.each(['demo', 'standard'].flatMap(mode => CLIENTS.map(client => [mode, clie
       mockLocation = {...mockLocation, pathname};
       await renderLayout();
       const shell = host.querySelector('.brawndo-workspace-pilot');
-      expect(shell.dataset.applicationShell).toBe('true');
-      expect(host.querySelector('.bwp-topbar')).not.toBeNull();
-      expect(host.querySelector('aside.bsb')).not.toBeNull();
-      expectStaticApplicationBrand(host.querySelector('.bwp-brand'));
-      expectStaticApplicationBrand(host.querySelector('.bsb-brand'));
+      expect(shell.classList.contains('native-standard')).toBe(true);
+      expect(shell.classList.contains('app-shell')).toBe(true);
+      expect(document.documentElement.dataset.nativeStandard).toBe(shell.dataset.theme);
+      expect(host.querySelector('.topbar')).not.toBeNull();
+      expect(host.querySelector('nav.side')).not.toBeNull();
+      expectStandardBrand();
       expect(host.querySelector('[data-testid="native-record-draft"]')).not.toBeNull();
       expect(host.querySelector('[aria-label="Toggle client navigation"]')).not.toBeNull();
-      expect(host.querySelector('[aria-label="Search workspace pages and active work"]')).not.toBeNull();
+      expect(host.querySelector('[aria-label="Search pages and active work"]')).not.toBeNull();
       expect(host.querySelector('[data-testid="profile-menu-trigger"]')).not.toBeNull();
       if (pathname === '/dashboard') {
-        expect(host.querySelector('[data-testid="context-header-client"]').textContent).toContain(clientName);
-        expect(host.querySelector('.bwp-client').textContent).toContain(clientName);
+        expect(host.querySelector('.ws-card').textContent).toContain(clientName);
+        expect(host.querySelector('[aria-label="Switch workspace"]').textContent).toContain(clientName);
       }
     }
     expect(api.post).not.toHaveBeenCalled();
@@ -156,13 +182,15 @@ test.each(['demo', 'standard'].flatMap(mode => CLIENTS.map(client => [mode, clie
   },
 );
 
-test('brand clicks do not navigate while Portfolio, directory, menu and workspace search remain operational', async () => {
+test('approved brand, Portfolio, workspace menu and search retain their native destinations', async () => {
   selectClient(CLIENTS[8], 'standard');
   await renderLayout();
-  for (const brand of host.querySelectorAll('.bwp-brand,.bsb-brand')) {
-    await act(async () => {brand.click(); brand.querySelector('img').click();});
-  }
-  expect(mockNavigate).not.toHaveBeenCalled();
+  const brand = expectStandardBrand();
+  await act(async () => brand.click());
+  expect(mockNavigate).toHaveBeenLastCalledWith('/clients');
+  await act(async () => brand.querySelector('svg').dispatchEvent(new MouseEvent('click',{bubbles:true,cancelable:true})));
+  expect(mockNavigate).toHaveBeenCalledTimes(2);
+  expect(mockNavigate).toHaveBeenLastCalledWith('/clients');
 
   const mobile = host.querySelector('[aria-label="Toggle client navigation"]');
   expect(mobile.getAttribute('aria-expanded')).toBe('false');
@@ -173,23 +201,30 @@ test('brand clicks do not navigate while Portfolio, directory, menu and workspac
 
   await act(async () => host.querySelector('[data-testid="return-to-portfolio"]').click());
   expect(mockNavigate).toHaveBeenLastCalledWith('/clients');
-  await act(async () => host.querySelector('.bwp-client').click());
+  const workspaceTrigger = host.querySelector('[aria-label="Switch workspace"]');
+  const workspaceMenu = await openWorkspace(workspaceTrigger);
+  expect(workspaceClientNames(workspaceMenu)).toEqual(mockOrg.clients.map(client=>client.name));
+  await act(async () => workspaceMenu.querySelector('a[href="/clients"]').click());
   expect(mockNavigate).toHaveBeenLastCalledWith('/clients');
 
-  const search = host.querySelector('[aria-label="Search workspace pages and active work"]');
+  const searchTrigger = host.querySelector('[aria-label="Search pages and active work"]');
   await act(async () => window.dispatchEvent(new KeyboardEvent('keydown', {key: 'k', ctrlKey: true, bubbles: true})));
+  const palette = host.querySelector('[role="dialog"]');
+  const search = palette.querySelector('input[type="search"]');
   expect(document.activeElement).toBe(search);
-  expect(search.getAttribute('aria-expanded')).toBe('true');
   await act(async () => {
     Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set.call(search, 'Reviews');
     search.dispatchEvent(new Event('input', {bubbles: true}));
   });
-  const results = host.querySelector('#bwp-search-results');
-  expect(results.querySelector('a[href="/reviews"]')).not.toBeNull();
-  expect(results.querySelector('a[href="/calendar"]')).toBeNull();
-  await act(async () => results.querySelector('a[href="/reviews"]').click());
-  expect(mockNavigate).toHaveBeenLastCalledWith('/reviews');
-  expect(search.getAttribute('aria-expanded')).toBe('false');
+  const options = [...palette.querySelectorAll('[role="option"]')];
+  const reviews = options.find(node=>node.textContent==='Reviews');
+  expect(reviews).toBeTruthy();expect(options.some(node=>node.textContent==='Calendar')).toBe(false);
+  const focusReturned = new Promise(resolve=>searchTrigger.addEventListener('focus',resolve,{once:true}));
+  await act(async () => reviews.click());
+  expect(mockNavigate).toHaveBeenLastCalledWith('/reviews?client_id='+mockOrg.currentClientId);
+  expect(host.querySelector('[role="dialog"]')).toBeNull();
+  await focusReturned;
+  expect(document.activeElement).toBe(searchTrigger);
 });
 
 test('theme and navigation changes preserve the mounted native draft and saved theme preference', async () => {
@@ -205,21 +240,25 @@ test('theme and navigation changes preserve the mounted native draft and saved t
   await act(async () => host.querySelector('[aria-label="Toggle client navigation"]').click());
   expect(host.querySelector('[data-testid="native-record-draft"]')).toBe(draft);
   expect(draft.value).toBe('Unsaved native record detail');
-  expectStaticApplicationBrand(host.querySelector('.bwp-brand'));
+  expectStandardBrand();
   expect(api.post).not.toHaveBeenCalled();
   expect(api.patch).not.toHaveBeenCalled();
 });
 
-test.each(['super_admin', 'platform_admin', 'client_readonly'])('%s retains its native client-directory control', async role => {
+test.each(['super_admin', 'platform_admin', 'client_readonly'])('%s retains authorized workspace switching and its native Portfolio access', async role => {
   mockAuth = {...mockAuth, user: {...mockAuth.user, role}};
   await renderLayout();
-  expectStaticApplicationBrand(host.querySelector('.bwp-brand'));
-  const directory = host.querySelector('.bwp-client');
+  expectStandardBrand();
+  const directory = host.querySelector('[aria-label="Switch workspace"]');
   const internal = role === 'super_admin' || role === 'platform_admin';
-  expect(directory.tagName).toBe(internal ? 'BUTTON' : 'SPAN');
+  expect(directory.tagName).toBe('BUTTON');
   expect(!!host.querySelector('[data-testid="return-to-portfolio"]')).toBe(internal);
+  const menu = await openWorkspace(directory);
+  expect(workspaceClientNames(menu)).toEqual(mockOrg.clients.map(client=>client.name));
+  const portfolio = menu.querySelector('a[href="/clients"]');
+  expect(!!portfolio).toBe(internal);
   if (internal) {
-    await act(async () => directory.click());
+    await act(async () => portfolio.click());
     expect(mockNavigate).toHaveBeenLastCalledWith('/clients');
   } else expect(mockNavigate).not.toHaveBeenCalled();
 });

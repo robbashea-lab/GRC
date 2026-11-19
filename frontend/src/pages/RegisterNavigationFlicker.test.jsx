@@ -195,12 +195,12 @@ describe.each(recordPages)('%s current response identity', (route,Page,heading,l
 test.each(invalidLists)('Reviews rejects a %s current list without successful zero counts',async(_kind,payload)=>{
   mockPath='/reviews';await render(()=> <RecordListPage kind="reviews"/>);await finishReads({'/reviews':payload});
   expect(container.querySelector('[data-testid="register-load-error"]')?.textContent).toContain('could not be verified for this client');
-  expect([...container.querySelectorAll('.bdr-kcell strong')].map(node=>node.textContent)).toEqual(['—','—','—','—']);
+  expect([...container.querySelectorAll('.crr-root [data-native-summary] .kvalue')].map(node=>node.textContent)).toEqual(['—','—','—','—']);
   expect(container.querySelector('[data-testid="export-reviews-button"]').disabled).toBe(true);
   expect(container.querySelector('[data-testid^="reviews-row-"]')).toBeNull();expect(container.textContent).not.toMatch(/Unverified|Current native record/);
   await act(async()=>container.querySelector('[data-testid="register-load-error"] button').click());await finishReads();
   expect(container.querySelector('[data-testid="register-load-error"]')).toBeNull();
-  expect([...container.querySelectorAll('.bdr-kcell strong')].map(node=>node.textContent)).toEqual(['0','0','0','0']);
+  expect([...container.querySelectorAll('.crr-root [data-native-summary] .kvalue')].map(node=>node.textContent)).toEqual(['0','0','0','0']);
 });
 
 test.each([
@@ -214,7 +214,7 @@ test.each([
   expect(mockDrawerProps.open).toBe(true);
   expect(container.querySelector('[data-testid="register-load-error"]')?.textContent).toContain('could not be verified for this client');
   if(loadedMarker)expect(container.querySelector(`[data-testid="${loadedMarker}"]`)).toBeNull();
-  else expect([...container.querySelectorAll('.bdr-kcell strong')].map(node=>node.textContent)).toEqual(['—','—','—','—']);
+  else expect([...container.querySelectorAll('.crr-root [data-native-summary] .kvalue')].map(node=>node.textContent)).toEqual(['—','—','—','—']);
   expect(container.querySelector('[data-testid^="reviews-row-"],[data-testid^="policies-row-"],[data-testid^="vendor-row-"]')).toBeNull();
   for(const method of ['post','patch','delete'])expect(api[method]).not.toHaveBeenCalled();
 });

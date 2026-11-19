@@ -1,9 +1,25 @@
 import axios from 'axios';
 import {previewAdapter} from './commandTestAdapter';
 import {buildLegacyDemoStore,readStore,saveStore,seedStore} from './store';
+import {currentReviewCompletion} from '../testUtils/r4ReviewFixture';
 const api=axios.create({adapter:previewAdapter}),cid='demo_brawndo';
 beforeEach(async()=>{localStorage.clear();sessionStorage.clear();await api.post('/demo/enter');});
 const day=v=>v?.slice(0,10);
+const riskCompletion=review=>currentReviewCompletion(api,review.review_id,{
+  expectedOccurrenceId:review.current_occurrence_id,
+  resultForStep:step=>{
+    const performed={
+      'Updated risk record':['Pass','SYNTHETIC QA: inspected the retained Risk identity and saved context.'],
+      'Rating change':['Pass','SYNTHETIC QA: reviewed the retained rating without changing it.'],
+      'Action status':['N/A','SYNTHETIC QA: this schedule fixture does not inspect or validate linked corrective work; its progress and effectiveness remain separate.'],
+      'Approver and date':['N/A','SYNTHETIC QA: this schedule case performs no acceptance or closure decision.'],
+      'Next review':['Pass','SYNTHETIC QA: inspected the explicit saved schedule anchor and cadence before native completion.']
+    }[step.support];
+    expect(performed).toBeDefined();
+    return {step_id:step.step_id,result:performed[0],reason:performed[1]};
+  },
+  supportingReference:'SYNTHETIC QA completed-result record: retained Risk metadata and explicit schedule inspected; linked corrective-work inspection is outside this case and no external assessment is claimed.'
+});
 test('rescheduling a Risk re-anchors its recurring Review on the new date',async()=>{
   // This retained recurring Risk identity predates the fresh showcase replacement.
   saveStore(buildLegacyDemoStore(),{resetFiles:true});await api.post('/demo/enter');
@@ -11,7 +27,8 @@ test('rescheduling a Risk re-anchors its recurring Review on the new date',async
   await api.patch('/risks/'+risk.risk_id,{next_review:'2026-11-10'});
   const review=readStore().reviews.find(r=>r.risk_id===risk.risk_id&&!['completed','cancelled'].includes(r.status));
   expect(review.schedule_anchor.day).toBe(10);
-  const done=(await api.post(`/reviews/${review.review_id}/complete`,{occurrence_id:review.current_occurrence_id,risk_outcome:'Reviewed — No Change'})).data;
+  const body=await riskCompletion(review);
+  const done=(await api.post(`/reviews/${review.review_id}/complete`,{...body,risk_outcome:'Reviewed — No Change'})).data;
   const months={quarterly:3,semiannual:6,annual:12}[review.recurrence];
   const expected=new Date(Date.UTC(2026,10+months,10)).toISOString().slice(0,10);
   expect(day(done.review.due_date)).toBe(expected);
@@ -55,8 +72,10 @@ test('re-saving a Risk with the same next-review day in date-only form keeps the
   expect(day(risk.next_review)).not.toBe('2027-01-31');
   await api.patch('/risks/'+risk.risk_id,{next_review:'2027-01-31'});
   let review=readStore().reviews.find(r=>r.risk_id===risk.risk_id&&!['completed','cancelled'].includes(r.status));
-  await api.patch('/reviews/'+review.review_id,{recurrence:'monthly'}).catch(()=>{});
-  const done=(await api.post(`/reviews/${review.review_id}/complete`,{occurrence_id:review.current_occurrence_id,risk_outcome:'Reviewed — No Change'})).data;
+  review=(await api.patch('/reviews/'+review.review_id,{recurrence:'monthly',expected_updated_at:review.updated_at??null,expected_occurrence_id:review.current_occurrence_id})).data;
+  expect(review.recurrence).toBe('monthly');
+  const body=await riskCompletion(review);
+  const done=(await api.post(`/reviews/${review.review_id}/complete`,{...body,risk_outcome:'Reviewed — No Change'})).data;
   const after=readStore().risks.find(r=>r.risk_id===risk.risk_id);
   // Re-save with the identical day as a date-only string, as the drawer does.
   await api.patch('/risks/'+risk.risk_id,{next_review:after.next_review.slice(0,10)});

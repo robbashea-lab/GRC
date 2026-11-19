@@ -1,6 +1,7 @@
 import axios from 'axios';
 import {previewAdapter} from './adapter';
 import {STORE_KEY, buildLegacyDemoStore, saveStore, seedStore, write} from './store';
+import {currentReviewCompletion} from '../testUtils/r4ReviewFixture';
 
 const api = axios.create({adapter: previewAdapter});
 const retainedRiskId = 'demo_brawndo_risk_0';
@@ -24,7 +25,22 @@ test('retained seeded Risk keeps its original Added fallback through save, revie
   expect(saved).not.toHaveProperty('date_identified');
 
   const review = (await api.post(path + '/review')).data.review;
-  await api.post('/reviews/' + review.review_id + '/complete', {occurrence_id: review.current_occurrence_id});
+  const completion=await currentReviewCompletion(api,review.review_id,{
+    expectedOccurrenceId:review.current_occurrence_id,
+    supportingReference:'SYNTHETIC retained Risk Added-date regression '+retainedRiskId+': current source record and scheduled next occurrence inspected, no new risk decision.',
+    resultForStep:(step,{review:current})=>{
+      const unperformed={
+        'risk_rec:record:1':'SYNTHETIC metadata-preservation case does not reassess business relevance or Risk description.',
+        'risk_rec:record:2':'SYNTHETIC fixture preserves the existing rating and does not re-rate likelihood or impact.',
+        'risk_rec:record:3':'SYNTHETIC metadata case does not perform treatment Action progress checks.',
+        'risk_rec:record:4':'SYNTHETIC metadata case makes no acceptance or closure decision.',
+      };
+      if(step.step_id==='risk_rec:record:5'){expect(current.next_review_date).toBeTruthy();return {step_id:step.step_id,result:'Pass',reason:''};}
+      if(!Object.hasOwn(unperformed,step.step_id))throw new Error('Unexpected Risk date fixture step '+step.step_id);
+      return {step_id:step.step_id,result:'N/A',reason:unperformed[step.step_id]};
+    },
+  });
+  await api.post('/reviews/' + review.review_id + '/complete', completion);
   const reloaded = (await api.get(path)).data;
   expect(reloaded.created_at).toBe(original.created_at);
   expect(reloaded).not.toHaveProperty('date_identified');

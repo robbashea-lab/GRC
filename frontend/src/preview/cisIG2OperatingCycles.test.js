@@ -5,6 +5,7 @@ import baseline from '@catalogs/onboardingCatalog.json';
 import {cis,FRAMEWORKS,reviewDrivers,activePlans} from '../lib/frameworks';
 import {cisReviewBriefs} from '../lib/cisOperations';
 import {reviewSchedule} from '../lib/reviewOccurrences';
+import {currentReviewCompletion} from '../testUtils/r4ReviewFixture';
 const api=axios.create({adapter:previewAdapter});
 const {setImmediate:yieldLoop}=jest.requireActual('timers');
 async function post(path,body){const r=await api.post(path,body);jest.runOnlyPendingTimers();await new Promise(resolve=>yieldLoop(resolve));return r.data;}
@@ -30,7 +31,12 @@ test('a fresh cumulative IG2 program retains source duties through 24 months of 
   for(const review of await get('/reviews',cid)){
    if(review.due_date.slice(0,10)>day)continue;
    await post('/reviews/'+review.review_id+'/start',{occurrence_id:review.current_occurrence_id});
-   const body={occurrence_id:review.current_occurrence_id,spawn_next:true,conclusion:'Synthetic governance check only',tested_period:review.period||day,tested_scope:review.framework_safeguards.join(', '),checklist_confirmed:true,no_evidence_reason:'Synthetic recurrence test; external technical effectiveness is not asserted'};
+   const completion=await currentReviewCompletion(api,review.review_id,{
+    expectedOccurrenceId:review.current_occurrence_id,
+    resultForStep:step=>({step_id:step.step_id,result:'N/A',reason:'This synthetic cadence/source-duty walkthrough does not execute the external operational check: '+step.text}),
+    supportingReference:'Synthetic native IG2 Review '+review.review_id+' occurrence '+review.current_occurrence_id+'; source duties and anchored recurrence are inspected here, with no external technical execution asserted.'
+   });
+   const body={...completion,spawn_next:true,conclusion:'Synthetic governance check only',tested_period:review.period||day,tested_scope:review.framework_safeguards.join(', '),checklist_confirmed:true,no_evidence_reason:'Synthetic recurrence test; external technical effectiveness is not asserted'};
    const done=await post('/reviews/'+review.review_id+'/complete',body);
    expect(done.occurrence.due_date).toBe(review.due_date);expect(done.review.due_date).toBe(reviewSchedule(review).next_review_date);
    expect((await post('/reviews/'+review.review_id+'/complete',body)).occurrence).toEqual(done.occurrence);

@@ -39,7 +39,7 @@ test.each([
   }
   expect(readStore()[kind].find(row=>row[idField]===created[idField])).toEqual(before);
   await expect(api.post('/'+kind,{client_id:clientId,name:'Invalid create',catalog_key:foreign,...(kind==='vendors'?{service:'Synthetic service'}:{})})).rejects.toThrow(/Invalid catalog key/);
-  const custom=(await api.post('/'+kind,{client_id:clientId,name,...(kind==='vendors'?{service:'Synthetic service'}:{})})).data;
+  const custom=(await api.post('/'+kind,{client_id:clientId,name:name+' custom identity',...(kind==='vendors'?{service:'Synthetic service'}:{})})).data;
   expect(custom.catalog_key).toBeNull();
 });
 
@@ -53,8 +53,10 @@ test('distinct AI product keys persist and decoration alone preserves native app
   // Keep this fixture isolated from real records while exercising the native AI command handler.
   const db=readStore();
   const rows=['m365','cstudio','ghcopilot'].map(catalog_key=>aiRequest(db,'/ai_systems','post',{},
-    {client_id:clientId,name:'Synthetic Microsoft product',provider:'Microsoft',catalog_key}));
+    {client_id:clientId,name:'Synthetic Microsoft product '+catalog_key,provider:'Microsoft',catalog_key}));
   expect(rows.map(row=>row.catalog_key)).toEqual(['m365','cstudio','ghcopilot']);
+  expect(()=>aiRequest(db,'/ai_systems','post',{}, {client_id:clientId,name:'Synthetic Microsoft product m365',provider:'Microsoft',catalog_key:'m365'})).toThrow(/already exists/);
+  expect(db.ai_systems.filter(row=>row.client_id===clientId)).toHaveLength(3);
   saveStore(db);
   expect(readStore().ai_systems.filter(row=>row.client_id===clientId).map(row=>row.catalog_key)).toEqual(['m365','cstudio','ghcopilot']);
   const cid='demo_brawndo';

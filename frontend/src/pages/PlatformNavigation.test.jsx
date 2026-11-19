@@ -74,7 +74,9 @@ test("standard enhanced Portfolio preserves native All/Mine scope and its shared
   expect(container.querySelector('[data-testid="add-client-button"]')).toBeNull();
   expect(container.querySelector('h1').textContent).toBe('Client portfolio');
   expect([...container.querySelectorAll('[aria-label="Scope"] button')].map(node=>node.textContent)).toEqual(['All clients','Assigned to me']);
-  expect([...container.querySelectorAll('[role="columnheader"]')].map(node=>node.textContent)).toEqual(['Client','Programs','GRC lead']);
+  const headings=[...container.querySelectorAll('[role="columnheader"]')];
+  expect(headings.slice(0,3).map(node=>node.textContent)).toEqual(['Client','Programs','GRC lead']);
+  expect(headings).toHaveLength(4);expect(headings[3].getAttribute('aria-label')).toBe('Client overview');
   expect(container.querySelector('h1').parentElement.textContent).toContain('2 clients · 3 programs');
   expect(container.querySelectorAll('.ep-program')).toHaveLength(3);
   await click(scopeButton('Assigned to me'));
@@ -109,23 +111,32 @@ test.each(['attention','name','next'])('%s Portfolio sort preserves cohort, prog
   expect(container.querySelectorAll('.ep-program')).toHaveLength(2);
 });
 
-test('client names navigate separately while a whole exact program opens history and its explicit workspace control',async()=>{
+test('client names open overview and its explicit portal control while an exact program retains its workspace path',async()=>{
   await render(<ClientDirectory />);
   const first=mockPortfolio.clients[0],selected=mockPortfolio.programs.find(value=>value.client_id===first.client_id&&value.program_key==='soc-2');
-  await click(container.querySelector('[data-client-id="'+first.client_id+'"] .ep-client-link'));
+  const clientName=container.querySelector('[data-client-id="'+first.client_id+'"] .ep-client-link');
+  await click(clientName);
+  const overview=document.querySelector('[data-testid="enhanced-portfolio-history"]');
+  expect(overview.querySelector('.m-title').textContent).toBe(first.name);
+  expect(mockSwitch).not.toHaveBeenCalled();expect(mockNavigate).not.toHaveBeenCalled();
+  await click([...overview.querySelectorAll('button')].find(node=>node.textContent.trim()==='Open client portal'));
   expect(mockSwitch).toHaveBeenCalledWith(first.client_id);
   expect(mockNavigate).toHaveBeenLastCalledWith('/dashboard?client_id='+first.client_id);
+  const clientFocusReturned=new Promise(resolve=>clientName.addEventListener('focus',resolve,{once:true}));
+  await click(overview.querySelector('[aria-label="Close implementation preview"]'));await clientFocusReturned;
+  expect(document.activeElement).toBe(clientName);
   const progress=container.querySelector('[aria-label^="'+first.name+' SOC 2 implementation history;"]');
   progress.focus();await click(progress.querySelector('.ep-framework'));
   expect(mockNavigate).toHaveBeenCalledTimes(1);
   const dialog=document.querySelector('[data-testid="enhanced-portfolio-history"]');
   expect(dialog).toBeTruthy();expect(dialog.querySelector('[aria-label="Select program"] [aria-pressed="true"]').textContent).toBe('SOC 2');
-  expect(api.get.mock.calls.filter(([path])=>path.endsWith('/history')).map(([,options])=>options.params)).toEqual(['1m','3m','6m','12m'].map(range=>({client_id:first.client_id,program_key:'soc-2',range,include_archived:false})));
+  expect(api.get.mock.calls.filter(([path])=>path.endsWith('/history')).every(([,options])=>options.params.client_id===first.client_id)).toBe(true);
+  expect(api.get.mock.calls.filter(([path,options])=>path.endsWith('/history')&&options.params.program_key===selected.program_key).map(([,options])=>options.params)).toEqual(['1m','3m','6m','12m'].map(range=>({client_id:first.client_id,program_key:'soc-2',range,include_archived:false})));
   expect(dialog.querySelector('.ep-current').textContent).toContain('4 of 38 implemented');
   await click([...dialog.querySelectorAll('button')].find(node=>node.textContent==='Open SOC 2 workspace →'));
   expect(mockSwitch).toHaveBeenLastCalledWith(first.client_id);
   expect(mockNavigate).toHaveBeenLastCalledWith('/compliance/soc-2?client_id='+first.client_id);
-  await click([...dialog.querySelectorAll('button')].find(node=>node.textContent==='Open client portal'));
+  await click([...dialog.querySelectorAll('button')].find(node=>node.textContent.trim()==='Open client portal'));
   expect(mockNavigate).toHaveBeenLastCalledWith('/dashboard?client_id='+first.client_id);
   expect(dialog.contains(document.activeElement)).toBe(true);
   const focusReturned=new Promise(resolve=>progress.addEventListener('focus',resolve,{once:true}));
@@ -149,11 +160,16 @@ test("sidebar removes favorites and keeps client navigation with scope filtering
   expect(mockSwitch).toHaveBeenCalledWith(client.client_id);
 });
 
-test("sidebar search appears once the client list is long enough to scan", async () => {
+test("the shared search palette filters a long client list and opens the exact native client", async () => {
   mockClients = Array.from({length: 9}, (_, i) => ({client_id: 'c' + i, name: 'Client ' + i, status: 'active'}));
   await render(<Layout />);
-  await change(container.querySelector('[data-testid="sidebar-client-search"]'), 'Client 7');
-  expect(container.querySelectorAll('[data-testid^="sidebar-open-"]').length).toBe(1);
+  await click(container.querySelector('[aria-label="Search pages and active work"]'));
+  await change(document.querySelector('.native-palette input[type="search"]'), 'Client 7');
+  const results=[...document.querySelectorAll('.native-palette [role="option"]')];
+  expect(results).toHaveLength(1);expect(results[0].textContent).toContain('Client 7');
+  expect(container.querySelectorAll('[data-testid^="sidebar-open-"]').length).toBe(9);
+  await click(results[0]);expect(mockSwitch).toHaveBeenCalledWith('c7');
+  expect(mockNavigate).toHaveBeenLastCalledWith('/dashboard?client_id=c7');
 });
 
 test("owner retains native create payload, retry idempotency and existing client edit", async () => {

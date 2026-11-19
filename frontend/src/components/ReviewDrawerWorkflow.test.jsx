@@ -3,6 +3,7 @@ import React,{act} from 'react';
 import {createRoot} from 'react-dom/client';
 import ReviewDrawer from './ReviewDrawer';
 import api from '@/lib/api';
+import {currentReviewCompletion} from '@/testUtils/r4ReviewFixture';
 
 let mockUser,mockFullRecord,mockClient;
 jest.mock('@/context/AuthContext',()=>({useAuth:()=>({user:mockUser})}));
@@ -17,7 +18,7 @@ const nativeScrollIntoView=Element.prototype.scrollIntoView;
 beforeAll(()=>{if(!nativeScrollIntoView)Element.prototype.scrollIntoView=jest.fn();});
 afterAll(()=>{if(!nativeScrollIntoView)delete Element.prototype.scrollIntoView;});
 
-let root,container,record,onOpenChange;
+let root,container,record,onOpenChange,mountReads,hasRendered;
 const query=id=>document.querySelector(`[data-testid="${id}"]`);
 const button=label=>[...document.querySelectorAll('button')].find(node=>node.textContent===label);
 const click=node=>act(async()=>node.click());
@@ -25,12 +26,36 @@ const input=(node,value)=>act(async()=>{
   Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype,'value').set.call(node,value);
   node.dispatchEvent(new Event('input',{bubbles:true}));
 });
-const render=props=>act(async()=>root.render(<ReviewDrawer open record={record} clientId={record.client_id} onOpenChange={onOpenChange} {...props}/>));
+async function render(props={}){
+  const initial=!hasRendered,start=mountReads.length;hasRendered=true;
+  await act(async()=>root.render(<ReviewDrawer open record={record} clientId={record.client_id} onOpenChange={onOpenChange} {...props}/>));
+  if(!initial)return;
+  // Observe the actual initial parent/child reads, including the Evidence count.
+  // Later intentionally held identity/readiness replies remain controlled by each case.
+  const issued=mountReads.slice(start),shown=Object.hasOwn(props,'record')?props.record:record;
+  const historical=!!props.initialValues?.occurrence||['completed','cancelled'].includes(shown?.status);
+  const live=shown?.review_id&&!historical&&shown.client_id===(props.clientId||record.client_id)&&shown.client_id===mockClient.client_id;
+  if(live){
+    expect(issued.filter(read=>read.name).map(read=>read.name)).toEqual(['history','related','comments','activity']);
+    expect(issued.some(read=>read.path===`/reviews/${shown.review_id}/completion-guide`)).toBe(true);
+  }
+  if(historical)expect(issued.filter(read=>read.path.endsWith('/completion-guide'))).toHaveLength(0);
+  await act(async()=>{if(live)await Promise.all(issued.map(read=>read.response));else await Promise.allSettled(issued.map(read=>read.response));});
+}
 beforeEach(async()=>{
   global.IS_REACT_ACT_ENVIRONMENT=true;
   sessionStorage.clear();localStorage.clear();mockFullRecord=true;mockClient=cisClient('demo_brawndo');
   mockUser=(await api.post('/demo/enter')).data.user;
   record=(await api.post('/reviews',{client_id:'demo_brawndo',title:'Workflow regression review',review_type:'access',recurrence:'quarterly',due_date:'2099-09-30'})).data;
+  mountReads=[];hasRendered=false;const get=api.get.bind(api);
+  jest.spyOn(api,'get').mockImplementation((path,config)=>{
+    let name;
+    if(path===`/reviews/${record.review_id}/history`)name='history';
+    if(path==='/related'&&config?.params?.entity_type==='reviews'&&config.params.entity_id===record.review_id)name='related';
+    if(path==='/comments'&&config?.params?.entity_type==='reviews'&&config.params.entity_id===record.review_id)name='comments';
+    if(path===`/reviews/${record.review_id}/activity`)name='activity';
+    const response=get(path,config);mountReads.push({name,path,response});return response;
+  });
   onOpenChange=jest.fn();container=document.createElement('div');document.body.appendChild(container);root=createRoot(container);
 });
 afterEach(async()=>{await act(async()=>root.unmount());container.remove();jest.restoreAllMocks();jest.clearAllMocks();});
@@ -111,12 +136,22 @@ test('read-only users cannot start or edit the existing occurrence',async()=>{
   expect(query('field-notes').disabled).toBe(true);expect(query('drawer-save')).toBeNull();expect(query('review-complete')).toBeNull();
 });
 
-test.each([false,true])('completion retains the opener pilot confirmation branch (%s) without an implicit start',async reviewsPilot=>{
-  await render({reviewsPilot});const post=jest.spyOn(api,'post');
+test.each([false,true])('completion retains the approved confirmation for either opener (%s) without an implicit start',async reviewsPilot=>{
+  const get=api.get.getMockImplementation(),loads=[];
+  jest.spyOn(api,'get').mockImplementation((path,...args)=>{const response=get(path,...args);if(path===`/reviews/${record.review_id}/completion-guide`)loads.push(response);return response;});
+  await render({reviewsPilot});await act(async()=>{await Promise.all(loads);});
+  expect(loads).toHaveLength(1);expect((await loads[0]).data).toMatchObject({template_id:'custom',custom:true,steps:[],results:[],required_support:[]});
+  const body=await currentReviewCompletion(api,record.review_id,{expectedOccurrenceId:record.current_occurrence_id,
+    supportingReference:'',resultForStep:step=>{throw new Error('Unexpected checklist step on this native custom Review: '+step.step_id);}});
+  const guide=document.querySelector('[aria-label="Review guide"]');expect(guide).toBeTruthy();
+  expect(guide.textContent).toContain('No supplied checklist for this Review.');expect(body.checklist.results).toEqual([]);
+  expect([...guide.querySelectorAll('label')].find(value=>value.textContent.startsWith('Supporting result reference')).querySelector('textarea').value).toBe('');
+  const post=jest.spyOn(api,'post');
   await click(query('review-complete'));
-  if(reviewsPilot){expect(query('review-complete-confirm')).not.toBeNull();expect(post).not.toHaveBeenCalled();await click(query('review-complete-confirmed'));}
-  else expect(query('review-complete-confirm')).toBeNull();
+  expect(query('review-complete-confirm')).not.toBeNull();expect(post).not.toHaveBeenCalled();await click(query('review-complete-confirmed'));
+  await act(async()=>{await Promise.allSettled(post.mock.results.map(result=>result.value));});
   expect(post.mock.calls.some(([url])=>url.endsWith('/complete'))).toBe(true);
+  expect(post.mock.calls.find(([url])=>url.endsWith('/complete'))[1]).toMatchObject(body);
   expect(post.mock.calls.some(([url])=>url.endsWith('/start'))).toBe(false);
 });
 
@@ -167,7 +202,7 @@ test('a historical occurrence from another review does not gain workflow present
 });
 
 test.each([['identity',{user_id:'different-demo-user'}],['role',{role:'client_viewer'}]])('Evidence count and cached files are discarded on authenticated %s change, including late old replies',async(_name,userChange)=>{
-  const originalGet=api.get.bind(api),pendingOld=[],pendingNew=[];
+  const originalGet=api.get.getMockImplementation(),pendingOld=[],pendingNew=[];
   let phase='initial';
   const catalog=(total,filename)=>({items:[{evidence_id:'evidence-'+total,filename,category:'direct',linked_type:'review',linked_id:record.review_id,context:{},references:[]}],
     total,counts:{direct:total,actions:0,findings:0,review:0,treatment:0},page:1,page_size:25});
@@ -277,6 +312,9 @@ test('new Brawndo Policy Review defaults annually without inventing a due date o
   await chooseConfiguration('review_type','Policy');
   expect(query('field-recurrence').textContent).toContain('Annual');
   expect(query('field-due_date').value).toBe('');
+  await click(query('tab-requirements'));
+  const basis=document.querySelector('[aria-label="Requirement & Review Expectations"]');expect(basis).toBeTruthy();
+  expect(basis.querySelector('[role="status"]')).toBeNull();
   expect(post).not.toHaveBeenCalled();
 });
 

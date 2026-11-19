@@ -72,20 +72,21 @@ test.each(['demo', 'standard'].flatMap(mode => [[mode, false], [mode, true]]))(
     expect(host.querySelector('a[href="/client-profile"]').textContent).toBe('Review client configuration');
     expect(host.textContent).not.toMatch(/CIS|A clearer view|Priority overview|program is unavailable/);
     expect(host.querySelector('[data-testid=verified-native-program], [role=progressbar]')).toBeNull();
-    expect(loadClientDashboard.mock.calls.every(([, options]) => options.includeProgramMetadata === false)).toBe(true);
+    expect(loadClientDashboard.mock.calls.every(([, options]) => options.includeProgramMetadata === true)).toBe(true);
     expect(api.get.mock.calls.every(([path]) => path === '/dashboard')).toBe(true);
     expect(api.get.mock.calls.every(([, options]) => options.params.client_id === clientId && options.params.work_metadata === true)).toBe(true);
     expect(JSON.stringify({client, snapshot})).toBe(before); expectNoWrites();
   });
 
 test.each(['hipaa', 'nist-csf-2', 'cmmc'])('%s retains its native program vocabulary and destination in common composition', async framework => {
-  const {snapshot} = prepare({completed: true, framework}); await render();
+  prepare({completed: true, framework}); await render();
   expect(host.querySelector('#bdd-work-heading')?.textContent).toBe('Priority work');
   expect(host.textContent).toContain(FRAMEWORKS.find(value => value.key === framework).label);
   expect(host.querySelector(`a[href="/compliance/${framework}"]`)).not.toBeNull();
   expect(host.querySelector('[data-testid=verified-native-program]')).toBeNull();
   expect(host.textContent).not.toMatch(/CIS IG|CIS program|safeguards|SoA/);
-  if (framework === 'cmmc') expect(host.textContent).toContain(snapshot.programs[0].explanation);
+  expect(host.textContent).not.toContain('program is unavailable');
+  expect(host.textContent).not.toContain('Detailed assessment and mapping are not yet implemented.');
   expectNoWrites();
 });
 
@@ -112,6 +113,15 @@ test('an unverified tracked program remains unavailable rather than gaining a fr
   expect(host.querySelector('[aria-label="Program Status"]').textContent).toContain('is unavailable');
   expect(host.querySelector('[data-testid=verified-native-program]')).toBeNull();
   expect(host.textContent).not.toContain('No frameworks configured.');
-  expect(loadClientDashboard.mock.calls[0][1].includeProgramMetadata).toBe(false);
+  expect(loadClientDashboard.mock.calls[0][1].includeProgramMetadata).toBe(true);
+  expectNoWrites();
+});
+
+test('a selected native tracked program missing its response stays unavailable rather than becoming General GRC',async()=>{
+  const {client}=prepare({completed:true});
+  client.shared_programs=[{client_id:clientId,program_id:`${clientId}:iso-27001`,framework_key:'iso-27001',version:frameworkCatalog('iso-27001').version,selected:true}];
+  await render();
+  expect(host.querySelector('[aria-label="Program Status"]').textContent).toContain('is unavailable');
+  expect(host.textContent).not.toContain('No frameworks configured.');
   expectNoWrites();
 });

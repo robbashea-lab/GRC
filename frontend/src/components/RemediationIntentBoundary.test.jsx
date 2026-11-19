@@ -3,12 +3,14 @@ import {createRoot} from 'react-dom/client';
 import RemediationTicketDrawer from './RemediationTicketDrawer';
 import api,{setAccessToken,setWorkspaceMode} from '@/lib/api';
 import {clearPendingCommands,syncPendingCommandIdentity} from '@/lib/createIntent';
+import {workSubmissionPatch} from '@/lib/r4Remediation';
 
 const mockUser={user_id:'synthetic-admin-a',role:'super_admin'};
+const mockWorker={user_id:'synthetic-work-submitter',role:'platform_admin',status:'active',client_ids:['synthetic-client']};
 let mockFinding,mockTask;
 const mockLoad=jest.fn().mockResolvedValue(undefined);
 jest.mock('@/context/AuthContext',()=>({useAuth:()=>({user:mockUser})}));
-jest.mock('@/lib/useActionRegisterData',()=>({useActionRegisterData:()=>({data:{findings:[mockFinding],tasks:[mockTask]},users:[],loading:false,error:'',load:mockLoad})}));
+jest.mock('@/lib/useActionRegisterData',()=>({useActionRegisterData:()=>({data:{findings:[mockFinding],tasks:[mockTask]},users:[mockUser,mockWorker],loading:false,error:'',load:mockLoad})}));
 jest.mock('./EvidencePanel',()=>()=>null);
 jest.mock('./RecordDrawer',()=>()=>null);
 jest.mock('./AssigneeSelect',()=>()=>null);
@@ -29,7 +31,9 @@ beforeEach(()=>{
   sessionStorage.clear();localStorage.clear();clearPendingCommands();setWorkspaceMode('standard');
   syncPendingCommandIdentity(mockUser.user_id,'standard');setAccessToken('SYNTHETIC_PRIOR_BEARER');
   mockFinding={finding_id:'synthetic-finding',client_id:'synthetic-client',title:'Synthetic remediation',status:'remediated',updated_at:'original-finding-version'};
-  mockTask={task_id:'synthetic-task',client_id:'synthetic-client',title:'Synthetic work',status:'done',finding_id:mockFinding.finding_id,updated_at:'original-task-version'};
+  const openTask={task_id:'synthetic-task',client_id:'synthetic-client',title:'Synthetic work',status:'open',finding_id:mockFinding.finding_id,updated_at:'original-task-version'};
+  // This positive transport fixture models a new submission by a distinct scoped worker.
+  mockTask={...openTask,status:'done',...workSubmissionPatch(openTask,{status:'done'},mockWorker.user_id,'2026-10-18T12:00:00Z')};
   calls=[];write=config=>Promise.resolve(reply(config));
   api.defaults.adapter=config=>{
     if(config.method==='post'){calls.push(config);return write(config);}

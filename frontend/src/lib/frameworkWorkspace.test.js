@@ -1,15 +1,44 @@
-import {CATALOGS} from './frameworks';
+import {CATALOGS,activeDefinitions} from './frameworks';
 import {groupRequirements,nextAssessment,matchesAssessment,sectionSummary,sourcePresentation,recurrencePresentation,assessmentWork} from './frameworkWorkspace';
 
 test('native catalog order and hierarchy survive grouping without losing requirements',()=>{
+  const addedHipaaIds=['164.308(b)(2)','164.314(a)(2)(i)','164.314(a)(2)(ii)','164.314(a)(2)(iii)','164.314(b)(2)'];
   for(const [key,catalog] of Object.entries(CATALOGS)){
     const roots=groupRequirements(key,catalog.requirements);
-    expect(roots.flatMap(n=>n.rows.map(r=>r.id))).toEqual(catalog.requirements.map(r=>r.id));
+    const ids=catalog.requirements.map(r=>r.id),grouped=roots.flatMap(n=>n.rows.map(r=>r.id));
+    expect(grouped).toHaveLength(ids.length);expect(new Set(grouped).size).toBe(ids.length);
+    expect([...grouped].sort()).toEqual([...ids].sort());
+    // Additive HIPAA children stay appended in the retained catalog and appear in their own existing sections.
+    if(key==='hipaa'){
+      expect(grouped.filter(id=>!addedHipaaIds.includes(id))).toEqual(ids.filter(id=>!addedHipaaIds.includes(id)));
+      expect(ids.filter(id=>addedHipaaIds.includes(id))).toEqual(addedHipaaIds);
+    }else expect(grouped).toEqual(ids);
+    const positions=new Map(ids.map((id,index)=>[id,index]));
+    const checkNodes=nodes=>{
+      const firstPositions=nodes.map(node=>positions.get(node.rows[0].id));
+      expect(firstPositions).toEqual([...firstPositions].sort((a,b)=>a-b));
+      for(const node of nodes){
+        const order=node.rows.map(row=>positions.get(row.id));
+        expect(order).toEqual([...order].sort((a,b)=>a-b));
+        if(node.children.length){
+          expect(node.children.flatMap(child=>child.rows.map(row=>row.id)).sort()).toEqual(node.rows.map(row=>row.id).sort());
+          checkNodes(node.children);
+        }
+      }
+    };
+    checkNodes(roots);
   }
   expect(groupRequirements('cis-ig1',CATALOGS['cis-ig1'].requirements)).toHaveLength(18);
   const nist=groupRequirements('nist-csf-2',CATALOGS['nist-csf-2'].requirements);
   expect(nist).toHaveLength(6);expect(nist.every(n=>n.children.length>0)).toBe(true);
   expect(groupRequirements('iso-27001',CATALOGS['iso-27001'].requirements).map(n=>n.id)).toEqual(['isms_clause','annex_control']);
+  const levelOne=activeDefinitions('cmmc',{level:1}),levelTwo=activeDefinitions('cmmc',{level:2});
+  expect(levelOne.map(row=>row.id)).toEqual(['3.1.1','3.1.2','3.1.20','3.1.22','3.5.1','3.5.2','3.8.3',
+    '3.10.1','3.10.3','3.10.4','3.10.5','3.13.1','3.13.5','3.14.1','3.14.2','3.14.4','3.14.5']);
+  expect(new Set(levelOne.map(row=>row.level_one_parent))).toEqual(new Set(['i','ii','iii','iv','v','vi','vii','viii','ix','x','xi','xii','xiii','xiv','xv']));
+  expect(levelOne.filter(row=>row.level_one_parent==='ix').map(row=>row.id)).toEqual(['3.10.3','3.10.4','3.10.5']);
+  expect(groupRequirements('cmmc',levelOne).flatMap(node=>node.rows.map(row=>row.id))).toEqual(levelOne.map(row=>row.id));
+  expect(levelTwo).toHaveLength(110);expect(new Set(levelTwo.map(row=>row.id)).size).toBe(110);
 });
 test('resume and filters keep assessment status independent from overdue operations',()=>{
   const rows=[{framework_assessment_id:'a',status:'addressed',work:{overdue_reviews:1}},{framework_assessment_id:'b',status:'not_assessed'},{framework_assessment_id:'c',status:'in_progress'}];

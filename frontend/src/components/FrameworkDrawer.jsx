@@ -87,6 +87,7 @@ export default function FrameworkDrawer({open,onOpenChange,record,clientId,onSav
   const guardedDownload=useEvidenceDownload(clientId,aid,open);
   const contextOwner=JSON.stringify([frameworkContextScope(contextIdentity),user?.role,user?.status,user?.updated_at,user?.client_ids,user?.all_clients]);
   const activeContextOwner=useRef(contextOwner),activeContextOperation=useRef(null);activeContextOwner.current=contextOwner;
+  const contextReadGeneration=useRef(0);
   useEffect(()=>{
     activeContextOwner.current=contextOwner;
     if(activeContextOperation.current&&activeContextOperation.current!==contextOwner){activeContextOperation.current=null;setBusy(false);}
@@ -130,16 +131,18 @@ export default function FrameworkDrawer({open,onOpenChange,record,clientId,onSav
   useEffect(()=>{if(!dirty&&!guidedDraft&&!reviewDraft&&!controlDraft&&!itemsDraft&&!finding&&!comment.trim()&&!linkDraft)return;const warn=e=>{e.preventDefault();e.returnValue='';};window.addEventListener('beforeunload',warn);return()=>window.removeEventListener('beforeunload',warn);},[dirty,guidedDraft,reviewDraft,controlDraft,itemsDraft,finding,comment,linkDraft]);
   useEffect(()=>{
     const c=new AbortController();
+    const request=++contextReadGeneration.current,owner=activeContextOwner.current;
+    const acceptsRead=()=>!c.signal.aborted&&request===contextReadGeneration.current&&activeContextOwner.current===owner;
     // Equivalent DTO copies must not restart the read loop; only these identity fields are consumed.
     const openerRecord={framework_assessment_id:aid,client_id:recordClientId,framework_key:frameworkKey,definition_id:definitionId,framework_version:frameworkVersion};
     // Keep native linked rows mounted during same-origin refreshes. Clear a
     // changed visual origin so an away/back switch cannot reuse its old receipt.
-    setCtx(old=>prototype&&old?.current?.framework_assessment_id===aid&&old.current.client_id===clientId
+    setCtx(old=>!acceptsRead()?old:prototype&&old?.current?.framework_assessment_id===aid&&old.current.client_id===clientId
       &&(old.visualOrigin?.key??null)===visualOriginKey?old:null);
-    setError('');const opts={params:{client_id:clientId},signal:c.signal};
+    setError(previous=>acceptsRead()?'':previous);const opts={params:{client_id:clientId},signal:c.signal};
     // Only the exact pilot may omit unused detail reads. Other native openers retain their ordered reads.
     Promise.all([api.get(`/framework_assessments/${aid}/related`,{signal:c.signal}),api.get('/clients/'+clientId+'/members',{signal:c.signal}),pilotContextOnly?Promise.resolve({data:[]}):api.get('/contacts',opts),pilotContextOnly?Promise.resolve({data:[]}):api.get('/comments',{params:{entity_type:'framework_assessments',entity_id:aid},signal:c.signal}),pilotContextOnly?Promise.resolve({data:[]}):api.get(`/framework_assessments/${aid}/activity`,{signal:c.signal}),api.get('/frameworks/'+frameworkKey,opts)]).then(async ([related,users,contacts,comments,activity,workspace])=>{
-      if(c.signal.aborted)return;
+      if(!acceptsRead())return;
       const context={programSelected:workspace.data.selected===true,programConfigured:workspace.data.configured===true,framework:workspace.data.framework,visualOrigin:visualOriginKey?{key:visualOriginKey,selected:workspace.data.selected,configured:workspace.data.configured,framework:workspace.data.framework,programId:workspace.data.implementation_position?.program_id}:null,related:related.data,users:users.data,configuration:{...(workspace.data.configuration||{}),...(['soc-2','iso-27001'].includes(frameworkKey)?{__program_active:workspace.data.selected}: {})},retainedControls:(workspace.data.organizational_controls||[]).filter(control=>control.assessment_ids?.includes(aid)),inventoryContext:workspace.data.assessments.find(a=>a.client_id===clientId&&a.framework_key==='cis-ig1'&&a.definition_id==='1.1'),current:(found=>found&&{...found,work:workspace.data.work?.[aid]})(workspace.data.assessments.find(a=>a.framework_assessment_id===aid))};
       const freshPilot=pilotContextOnly&&cisVisualRecordMatches(openerRecord,context,visualOriginKey)
         &&brawndoAssessmentPilotEligible({demoMode,workspaceMode,user:{workspace_mode:userWorkspaceMode},
@@ -148,9 +151,9 @@ export default function FrameworkDrawer({open,onOpenChange,record,clientId,onSav
       if(pilotContextOnly&&!freshPilot)[contacts,comments,activity]=await Promise.all([
         api.get('/contacts',opts),api.get('/comments',{params:{entity_type:'framework_assessments',entity_id:aid},signal:c.signal}),
         api.get(`/framework_assessments/${aid}/activity`,{signal:c.signal})]);
-      if(!c.signal.aborted)setCtx(old=>({...context,contacts:contacts.data,comments:comments.data,activity:activity.data,
-        options:{...(prototype&&old?.current?.framework_assessment_id===aid&&old.current.client_id===clientId?old.options:{}),reviews:related.data.reviews||[]}}));
-    }).catch(e=>{if(!c.signal.aborted){setCtx(null);setError(formatError(e));}});return()=>c.abort();
+      if(acceptsRead())setCtx(old=>acceptsRead()?({...context,contacts:contacts.data,comments:comments.data,activity:activity.data,
+        options:{...(prototype&&old?.current?.framework_assessment_id===aid&&old.current.client_id===clientId?old.options:{}),reviews:related.data.reviews||[]}}):old);
+    }).catch(e=>{if(acceptsRead()){setCtx(old=>acceptsRead()?null:old);setError(previous=>acceptsRead()?formatError(e):previous);}});return()=>c.abort();
   },[aid,clientId,recordClientId,frameworkKey,definitionId,frameworkVersion,revision,prototype,actorOriginKey,visualOriginKey,pilotContextOnly,demoMode,workspaceMode,userWorkspaceMode,visualReference]);
   const contextLoaded=!!ctx;
   useEffect(()=>{
@@ -158,9 +161,11 @@ export default function FrameworkDrawer({open,onOpenChange,record,clientId,onSav
     const kind=reviewDraft?'reviews':tab==='Related'?link.kind:null;
     if(!kind)return;
     const c=new AbortController();
+    const request=contextReadGeneration.current,owner=activeContextOwner.current;
+    const acceptsRead=()=>!c.signal.aborted&&request===contextReadGeneration.current&&activeContextOwner.current===owner;
     api.get('/'+kind,{params:{client_id:clientId},signal:c.signal}).then(({data})=>{
-      if(!c.signal.aborted)setCtx(old=>old?{...old,options:{...old.options,[kind]:data}}:old);
-    }).catch(e=>{if(!c.signal.aborted)setError(formatError(e));});
+      if(acceptsRead())setCtx(old=>acceptsRead()&&old?{...old,options:{...old.options,[kind]:data}}:old);
+    }).catch(e=>{if(acceptsRead())setError(previous=>acceptsRead()?formatError(e):previous);});
     return()=>c.abort();
   },[contextLoaded,clientId,aid,tab,link.kind,reviewDraft,revision]);
   async function run(fn,owner=null){
@@ -193,6 +198,9 @@ export default function FrameworkDrawer({open,onOpenChange,record,clientId,onSav
   }
   function acceptAssessment(response){
     const {data,contextReceipt}=response;
+    // A verified native receipt supersedes older joined reads immediately, before
+    // React runs the revision effect's cleanup or a queued older response arrives.
+    if(activeContextOwner.current===contextOwner&&frameworkContextResponse(data,contextIdentity))contextReadGeneration.current++;
     setSavedForm(data);
     if(!contextReceipt){setForm(data);return false;}
     const newerForm=!contextReceipt.draft||JSON.stringify(nativeSnapshot.current.form)!==contextReceipt.draft.form;

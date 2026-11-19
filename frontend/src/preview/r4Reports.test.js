@@ -289,6 +289,38 @@ test('foreign preview, history and retained bytes remain inaccessible to a scope
   expect((await preview('risks')).header.client.id).toBe(CID);
 });
 
+test('malformed actor grants cannot preview, export, replay or download and leave all saved state unchanged', async () => {
+  const intent = 'reports-malformed-grants-original';
+  const retained = (await exportReport('risks', 'csv', 'cis-ig1', intent)).data;
+  for (const client_ids of [CID, CID+'_foreign', [CID+'_foreign'], undefined, null, false, {0:CID,length:1}]) {
+    edit(db => { Object.assign(db.user, {role:'platform_admin',client_ids,all_clients:false}); });
+    readStore();
+    const before = sessionStorage.getItem(STORE_KEY);
+    await expect(preview('risks')).rejects.toMatchObject({response:{status:403}});
+    await expect(api.get('/reports/history', {params:params()})).rejects.toMatchObject({response:{status:403}});
+    await expect(api.get(retained.download_url)).rejects.toMatchObject({response:{status:403}});
+    await expect(exportReport('risks', 'csv', 'cis-ig1', intent)).rejects.toMatchObject({response:{status:403}});
+    await expect(exportReport('risks', 'csv', 'cis-ig1', 'reports-malformed-new-intent')).rejects.toMatchObject({response:{status:403}});
+    expect(sessionStorage.getItem(STORE_KEY)).toBe(before);
+  }
+});
+
+test('report names require actual identity membership while native IDs remain intact', async () => {
+  addRisk();
+  for (const client_ids of [CID, CID+'_foreign', [CID+'_foreign'], null]) {
+    edit(db => { db.users.find(user => user.user_id === ANALYST).client_ids = client_ids; });
+    readStore();
+    const before = sessionStorage.getItem(STORE_KEY);
+    const dto = await preview('risks');
+    expect(dto.header.lead).toEqual({id:ANALYST,name:null});
+    expect(dto.sections[0].rows[0][4]).toBe(ANALYST);
+    expect(JSON.stringify(dto)).not.toContain('Reports QA analyst');
+    expect(sessionStorage.getItem(STORE_KEY)).toBe(before);
+  }
+  edit(db => { db.users.find(user => user.user_id === ANALYST).client_ids = [CID]; });
+  expect((await preview('risks')).header.lead).toEqual({id:ANALYST,name:'Reports QA analyst'});
+});
+
 test('saved bytes survive later native edits, reload and exact replay without duplicate exports', async () => {
   addRisk('Original report value café');
   const intent = 'reports-immutable-owned-intent';

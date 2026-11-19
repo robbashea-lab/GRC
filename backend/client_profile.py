@@ -1,6 +1,7 @@
 """Optional client context; source records and permissions remain in their modules."""
 import json
-from datetime import date
+import re
+from datetime import date, datetime
 from pathlib import Path
 from typing import Literal
 from fastapi import APIRouter, Depends, HTTPException
@@ -69,6 +70,26 @@ async def recorded_baseline(s,client):
     if event:
         return {'state':{},'legacy':True,'completed_at':event.get('at'),'completed_by':event.get('user_id')}
     return None
+
+
+def recorded_onboarding_state(client, *, legacy_completed=False):
+    """Read-only status from the same saved/legacy proof used by recorded_baseline."""
+    if not isinstance(client.get('client_id'), str) or not client['client_id'].strip():
+        return 'unknown'
+    initial, saved = client.get('initial_program_baseline'), client.get('onboarding_baseline')
+    has_snapshot = isinstance(initial, dict) and bool(initial)
+    has_saved_completion = isinstance(saved, dict) and saved.get('completed') is True
+    if has_snapshot or has_saved_completion or legacy_completed:
+        return 'complete'
+    updated_at = saved.get('updated_at') if isinstance(saved, dict) else None
+    if (isinstance(saved, dict) and saved.get('completed') is False
+            and isinstance(updated_at, str) and re.match(r'^\d{4}-\d{2}-\d{2}(?:$|T| )', updated_at)):
+        try:
+            datetime.fromisoformat(updated_at.replace('Z', '+00:00'))
+            return 'in_progress'
+        except ValueError:
+            pass
+    return 'unknown'
 
 
 def router_for(s):

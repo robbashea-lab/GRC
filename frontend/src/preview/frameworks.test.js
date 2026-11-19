@@ -1,8 +1,8 @@
 import axios from 'axios';
 import {previewAdapter} from './commandTestAdapter';
-import {STORE_KEY} from './store';
+import {STORE_KEY,readStore,saveStore} from './store';
 import catalog from '@catalogs/onboardingCatalog.json';
-import {cis,FRAMEWORKS,onboardingDraft,belowSource} from '../lib/frameworks';
+import {cis,CATALOGS,FRAMEWORKS,activeDefinitions,onboardingDraft,belowSource} from '../lib/frameworks';
 import {complianceNavigation} from '../lib/complianceNavigation';
 const api=axios.create({adapter:previewAdapter});
 let cid;
@@ -47,7 +47,24 @@ test('new intake begins with programs; catalog is IG1 only; cadence warning sepa
   expect(onboardingDraft({version:2,step:0,policies:{},requirements:{},reviews:['inventory']})).toMatchObject({step:0,reviews:[]});
   expect(cis.requirements.filter(d=>d.implementation_group===1)).toHaveLength(56);expect(new Set(cis.requirements.map(d=>d.id)).size).toBe(153);
   expect(cis.requirements.filter(d=>d.implementation_group===1&&['13','16','18'].includes(d.id.split('.')[0]))).toEqual([]);
-  expect(FRAMEWORKS.filter(f=>f.implemented).map(f=>f.key)).toEqual(['hipaa','cis-ig1','nist-csf-2','iso-27001','soc-2']);
+  expect(FRAMEWORKS.filter(f=>f.implemented).map(f=>f.key)).toEqual(['hipaa','cis-ig1','nist-csf-2','iso-27001','cmmc','soc-2']);
+  // Catalog rows are assessment units: retain native parents and related scope
+  // rather than calling this a count of independent regulatory obligations.
+  const hipaa=CATALOGS.hipaa.requirements,retained=['164.302','164.105','164.530'];
+  const children={'164.308(b)(2)':'164.308(b)(1)','164.314(a)(2)(i)':'164.314(a)(1)',
+    '164.314(a)(2)(ii)':'164.314(a)(1)','164.314(a)(2)(iii)':'164.314(a)(1)','164.314(b)(2)':'164.314(b)(1)'};
+  expect(hipaa).toHaveLength(81);expect(new Set(hipaa.map(row=>row.id)).size).toBe(81);
+  expect(hipaa.filter(row=>!retained.includes(row.id))).toHaveLength(78);
+  expect(hipaa.filter(row=>retained.includes(row.id)).map(row=>row.id).sort()).toEqual([...retained].sort());
+  expect(hipaa.filter(row=>!Object.hasOwn(children,row.id))).toHaveLength(76);
+  expect(Object.fromEntries(hipaa.filter(row=>row.parent_assessment_id).map(row=>[row.id,row.parent_assessment_id]))).toEqual(children);
+  const one=activeDefinitions('cmmc',{level:1});
+  expect(one).toHaveLength(17);expect(new Set(one.map(row=>row.level_one_parent)).size).toBe(15);
+  expect(Object.fromEntries(one.map(row=>[row.id,row.level_one_parent]))).toEqual({
+    '3.1.1':'i','3.1.2':'ii','3.1.20':'iii','3.1.22':'iv','3.5.1':'v','3.5.2':'vi','3.8.3':'vii',
+    '3.10.1':'viii','3.10.3':'ix','3.10.4':'ix','3.10.5':'ix','3.13.1':'x','3.13.5':'xi',
+    '3.14.1':'xii','3.14.2':'xiii','3.14.4':'xiv','3.14.5':'xv'});
+  expect(activeDefinitions('cmmc',{level:2})).toHaveLength(110);
   expect(belowSource(cis.review_plans.find(p=>p.key==='account-authorization'),{recurrence:'annual'})).toBe(true);
   expect(cis.review_plans.find(p=>p.key==='data-recovery').default_cadence).toBe('annual');
 });
@@ -89,7 +106,7 @@ test.each([[],['cis-ig1'],['hipaa'],['iso-27001','soc-2'],['cis-ig1','hipaa','ni
   const baseline=(await get('onboarding/baseline')).state;
   expect(complianceNavigation(cid,baseline,await get('requirements')).map(f=>f.key).sort()).toEqual([...programs].sort());
   for(const key of ['hipaa','nist-csf-2','iso-27001','cmmc','soc-2']){
-    const shell=await get('frameworks/'+key),count=programs.includes(key)?({hipaa:76,'iso-27001':123,'soc-2':33,'nist-csf-2':106}[key]||0):0;expect(shell.assessments).toHaveLength(count);expect(shell.definitions).toHaveLength(count);
+    const shell=await get('frameworks/'+key),count=programs.includes(key)?({hipaa:81,'iso-27001':123,'soc-2':33,'nist-csf-2':106}[key]||0):0;expect(shell.assessments).toHaveLength(count);expect(shell.definitions).toHaveLength(count);
   }
 });
 
@@ -107,7 +124,15 @@ test('one authoritative Finding and Action; evidence, comments, responses surviv
   related=(await api.get(base+'/related')).data;
   expect(related.tasks[0].status).toBe('done');expect(related.findings[0].status).toBe('remediated');
   expect((await get('frameworks/cis-ig1')).assessments[0].status).toBe('in_progress');
-  await api.post('/findings/'+finding.finding_id+'/validate',{rationale:'Remediation verified'});
+  const validationStore=readStore(),worker=validationStore.user;
+  const validator={user_id:'synthetic_framework_validator',name:'Synthetic independent validator',email:'framework-validator@example.test',
+    role:'platform_admin',status:'active',client_ids:[cid],all_clients:false,workspace_mode:'demo'};
+  validationStore.users.push(validator);validationStore.user=validator;saveStore(validationStore);
+  try{
+    const ready=(await api.get('/findings/'+finding.finding_id)).data;
+    const validated=(await api.post('/findings/'+finding.finding_id+'/validate',{rationale:'Remediation verified',expected_updated_at:ready.updated_at??null})).data;
+    expect(validated.validated_by).toBe(validator.user_id);expect(validated.validated_by).not.toBe(worker.user_id);
+  }finally{const restored=readStore();restored.user=worker;saveStore(restored);}
   await api.patch(base,{status:'addressed'});
   await configure(s);await configure(state([]));
   expect((await get('reviews')).every(r=>!r.framework_driver_active)).toBe(true);

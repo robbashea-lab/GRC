@@ -17,7 +17,7 @@ export function getCisDemoScenarioContext(db,clientId,at=new Date().toISOString(
   const expectedPoints=showcase?6:5;
   if(showcase&&(db.cis_demo_refresh?.version!==CIS_SHOWCASE_VERSION
     ||db.cis_demo_refresh.anchor!==context.anchor||db.cis_demo_refresh.clients?.[clientId]?.version!==CIS_SHOWCASE_VERSION))return null;
-  if(!scenario||db.user?.workspace_mode!=='demo'||!(db.user.client_ids||[]).includes(clientId)
+  if(!scenario||db.user?.workspace_mode!=='demo'||!Array.isArray(db.user.client_ids)||!db.user.client_ids.includes(clientId)
     ||client?.environment!=='Demo'||client.status!=='active'||client.archived||client.archived_at
     ||!state?.completed||state.requirements?.['cis-ig1']!=='applies'
     ||client.framework_settings?.['cis-ig1']?.implementation_group!==scenario.implementation_group

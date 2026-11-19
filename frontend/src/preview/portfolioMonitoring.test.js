@@ -1,4 +1,6 @@
 import { portfolioMonitoring } from './portfolioMonitoring';
+import {recordedOnboardingState} from '../lib/clientProfile';
+import {portfolio} from './summaries';
 const client = {
   client_id: 'demo_brawndo',
   status: 'active'
@@ -23,6 +25,16 @@ const review = changes => ({
   recurrence: 'monthly',
   due_date: '2026-10-25',
   ...changes
+});
+test('ordinary Demo onboarding projection uses same-client native proof without broadening monitoring history',()=>{
+  const client={client_id:'new-demo-client',name:'Synthetic native client',status:'active'};
+  const db={...database(),clients:[client],users:[],contacts:[],requirements:[],policies:[],vendors:[],risks:[],findings:[],tasks:[],reviews:[]};
+  db.baselines[client.client_id]={completed:true};
+  const before=JSON.stringify(db),row=portfolio(db).clients[0];
+  expect(row.onboarding_state).toBe('complete');expect(row.monitoring).toBeUndefined();expect(JSON.stringify(db)).toBe(before);
+  expect(recordedOnboardingState(client,null,[{client_id:'foreign',action:'onboarding-complete'}])).toBe('unknown');
+  expect(recordedOnboardingState(client,null,[{client_id:client.client_id,action:'onboarding-complete'}])).toBe('complete');
+  expect(recordedOnboardingState(client,{completed:false,updated_at:'not-a-date'})).toBe('unknown');
 });
 test('projects genuine completions and valid active schedules without changing records', () => {
   const db = database();

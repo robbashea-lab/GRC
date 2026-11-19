@@ -10,7 +10,14 @@ test.each(['inactive','foreign'])('reopened work is unassigned when the historic
   const cid='demo_brawndo',db=readStore(),owner=db.users.find(u=>u.client_ids?.includes(cid)&&u.role==='client_contributor');
   const {data:f}=await api.post('/findings',{client_id:cid,title:'Owner departed',owner_id:owner.user_id});
   const {data:t}=await api.post('/tasks',{client_id:cid,title:'Original correction',source_type:'finding',source_id:f.finding_id,assignee_id:owner.user_id});
+  const workSession=readStore(),validator=workSession.user;
+  workSession.user={...owner,workspace_mode:'demo'};saveStore(workSession);
   await api.patch('/tasks/'+t.task_id,{status:'done',resolution:'Prior resolution'});
+  const submitted=readStore(),completed=submitted.tasks.find(row=>row.task_id===t.task_id);
+  expect(completed.completed_by).toBe(owner.user_id);
+  expect(completed.submission_history.at(-1).by).toBe(owner.user_id);
+  expect(validator.user_id).not.toBe(owner.user_id);
+  submitted.user=validator;saveStore(submitted);
   const ready=(await api.get('/findings/'+f.finding_id)).data;
   const {data:closed}=await api.post('/findings/'+f.finding_id+'/validate',{rationale:'Checked',request_id:'initial-validation',expected_updated_at:ready.updated_at});
   const changed=readStore(),before=JSON.parse(JSON.stringify(changed.tasks.find(x=>x.task_id===t.task_id))),account=changed.users.find(u=>u.user_id===owner.user_id);

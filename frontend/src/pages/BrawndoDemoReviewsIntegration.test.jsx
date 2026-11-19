@@ -3,6 +3,8 @@ import {createRoot} from 'react-dom/client';
 import RecordListPage from './RecordListPage';
 import api from '@/lib/api';
 import {cisClient as mockCisClient} from '@/testUtils/cisExperience';
+import {cisClientProgram} from '@/lib/cisExperience';
+import {sharedClientPrograms} from '@/lib/sharedExperience';
 let mockReviewSearch='',mockOrgLoading=false,mockWorkspaceMode='demo',mockDrawerMounts=0,mockNativeProps,mockRows,mockClient;
 const mockUser={user_id:'admin',role:'super_admin',workspace_mode:'demo'};
 jest.mock('@/context/AuthContext',()=>({useAuth:()=>({user:mockUser,workspaceMode:mockWorkspaceMode,loading:false})}));
@@ -37,7 +39,9 @@ test.each(['unconfigured','general','hipaa','nist-csf-2','cmmc'])('%s common His
   expect([...container.querySelectorAll('[aria-label="Sort reviews"] option')].some(node=>node.value==='completed_at:desc')).toBe(false);
   await act(async()=>container.querySelectorAll('.register tbody .bdr-name')[1].click());
   expect(mockNativeProps.record).toBe(completed);expect(mockNativeProps.initialValues.occurrence).toBeUndefined();
-  expect(mockNativeProps.reviewsPilot).toBe(false);expect(JSON.stringify(mockRows)).toBe(before);
+  expect(mockNativeProps.reviewsPilot).toBe(true);
+  expect(cisClientProgram(mockClient)).toBeNull();expect(sharedClientPrograms(mockClient)).toEqual([]);
+  expect(JSON.stringify(mockRows)).toBe(before);
   for(const method of ['post','patch','delete'])expect(api[method]).not.toHaveBeenCalled();
 });
 
@@ -113,10 +117,10 @@ test('historical quarter preserves cards and register while native History opens
     mockRows=[{...mockRows[0],title:'Renamed current monthly Review',updated_at:'current-parent-version',occurrences:[execution]}];
     const before=JSON.stringify(mockRows);
     await act(async()=>root.render(<RecordListPage kind="reviews"/>));
-    const protectedBefore={cards:one('.crr-root .kpis').outerHTML,register:one('.crr-root .register').outerHTML};
+    const protectedBefore={cards:one('.crr-root [data-native-summary]').outerHTML,register:one('.crr-root .register').outerHTML};
     await act(async()=>container.querySelector('[aria-label="Previous quarter"]').click());
     expect(one('.crr-overview .quarter-controls > strong').textContent).toContain('Q3 2026');
-    expect({cards:one('.crr-root .kpis').outerHTML,register:one('.crr-root .register').outerHTML}).toEqual(protectedBefore);
+    expect({cards:one('.crr-root [data-native-summary]').outerHTML,register:one('.crr-root .register').outerHTML}).toEqual(protectedBefore);
     // Approved concept plots saved current unresolved occurrences; completed executions stay in native History.
     expect(container.querySelectorAll('.crr-overview [data-date="2026-09-30"] .review-dot')).toHaveLength(0);
     expect(container.querySelectorAll('.crr-overview .review-dot')).toHaveLength(0);

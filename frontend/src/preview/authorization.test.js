@@ -38,3 +38,23 @@ test('managers may reassign to client users only; providers cannot create client
   expect(refused('super_admin', 'post', '/clients', {})).toBeNull();
   expect(refused('client_readonly', 'patch', '/me/preferences', {})).toBeNull();
 });
+
+test('malformed actor memberships cannot authorize an otherwise permitted record change', () => {
+  for (const client_ids of ['a', 'a_foreign', ['a_foreign'], null, undefined, false, {0: 'a', length: 1}]) {
+    const d = db('client_contributor');
+    d.user = {...d.user, client_ids};
+    const before = JSON.stringify(d);
+    expect(() => authorizeDemo(d, 'patch', ['risks', 'r1'], {notes: 'Unauthorized change'}))
+      .toThrow('Forbidden for this client');
+    expect(JSON.stringify(d)).toBe(before);
+  }
+});
+
+test('managers cannot assign new or existing work to a string-shaped client membership', () => {
+  const d = db('client_grc_manager');
+  d.users = d.users.map(user => user.user_id === 'ro' ? {...user, client_ids: 'a_foreign'} : user);
+  const before = JSON.stringify(d);
+  expect(() => authorizeDemo(d, 'patch', ['risks', 'r1'], {owner_id: 'ro'})).toThrow('Assign an existing authorized client user');
+  expect(() => authorizeDemo(d, 'post', ['tasks'], {client_id: 'a', assignee_id: 'ro'})).toThrow('Assign an existing authorized client user');
+  expect(JSON.stringify(d)).toBe(before);
+});

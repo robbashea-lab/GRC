@@ -3,6 +3,7 @@ import axios from 'axios';
 import {previewAdapter} from './adapter';
 import {readStore,saveStore,STORE_KEY} from './store';
 import {effectivePolicySubject,policySetCoverage,advanceCoveredSchedule} from './policyReviewCoverage';
+import {currentReviewCompletion} from '../testUtils/r4ReviewFixture';
 const api=axios.create({adapter:previewAdapter}),cid='demo_brawndo',at='2026-10-21T12:00:00.000Z';
 const subject=id=>({subject_id:id+'-approved-1',policy_id:id,client_id:cid,title:id,version:'1',basis:{type:'external',reference:'https://example.test/'+id,document_version:'1'}});
 const policy=(id,status='approved')=>({policy_id:id,client_id:cid,title:id,status,version:'1',updated_at:id+'-v1',approval_subject:status==='approved'?subject(id):null,
@@ -10,6 +11,24 @@ const policy=(id,status='approved')=>({policy_id:id,client_id:cid,title:id,statu
 const annual={review_id:'annual-set',client_id:cid,title:'Native annual set',baseline_key:'policy-review',review_type:'policy',recurrence:'annual',due_date:'2026-10-01',status:'upcoming',current_occurrence_id:'annual-2026'};
 const child=id=>({review_id:'child-'+id,client_id:cid,policy_id:id,title:'Native '+id,review_type:'policy',recurrence:'annual',due_date:'2024-01-31',status:'upcoming',current_occurrence_id:id+'-2024'});
 const committed={clients:[cisClient()],requirements:[{client_id:cid,baseline_key:'cis-ig1',baseline_response:'applies'}]};
+const coverageCompletion=review=>currentReviewCompletion(api,review.review_id,{
+  expectedOccurrenceId:review.current_occurrence_id,
+  supportingReference:'SYNTHETIC annual coverage regression '+review.review_id+': retained approval subjects and native schedule are the source; no new policy approval, workforce communication or retention attestation.',
+  resultForStep:step=>{
+    const unperformed={
+      'policy:always:1':'SYNTHETIC coverage regression does not perform a policy content or operating-practice review.',
+      'policy:always:2':'SYNTHETIC fixture retains recorded approvals; it grants no new approval or version. Native eligibility checks must still validate every retained subject.',
+      'policy:always:3':'SYNTHETIC fixture makes no documentation-retention attestation.',
+      'policy:client:1':'SYNTHETIC fixture performs no new client approval decision.',
+      'policy_rec:record:1':'SYNTHETIC child-cycle regression does not perform a policy content or practice review.',
+      'policy_rec:record:2':'SYNTHETIC child-cycle fixture preserves the approved version and performs no new approval.',
+      'policy_rec:record:3':'SYNTHETIC child-cycle fixture makes no workforce communication claim.',
+      'policy_rec:record:4':'SYNTHETIC coverage case exercises native date advancement below; no separate next-date selection is performed.',
+    };
+    if(!Object.hasOwn(unperformed,step.step_id))throw new Error('Unexpected Policy coverage fixture step '+step.step_id);
+    return {step_id:step.step_id,result:'N/A',reason:unperformed[step.step_id]};
+  },
+});
 beforeEach(async()=>{
   localStorage.clear();sessionStorage.clear();await api.post('/demo/enter');
   // Annual governance is optional in the strict CIS Demo preset. Select an explicit synthetic obligation for this campaign.
@@ -91,7 +110,7 @@ test('retained incomplete approved records fail closed after reload without impl
   expect(loadedPolicy.approved_at).toBe(approved.approved_at);
   expect(loadedPolicy.approval_subject).toBeUndefined();
   expect(loadedPolicy.decision_history).toEqual([]);
-  await expect(api.post('/reviews/'+review.review_id+'/complete',{occurrence_id:review.current_occurrence_id||undefined})).rejects.toThrow(/coverage is incomplete/);
+  await expect(api.post('/reviews/'+review.review_id+'/complete',await coverageCompletion(review))).rejects.toThrow(/coverage is incomplete/);
   expect(sessionStorage.getItem(STORE_KEY)).toBe(before);
   expect(readStore().policies.find(row=>row.policy_id===approved.policy_id)).toEqual(loadedPolicy);
 });
@@ -132,7 +151,7 @@ test('native retained current-version conflict refuses completion with no child 
   const db=readStore();db.policies=[policy('A'),{...policy('Z'),version:'2',approved_at:'2026-10-20',approval_subject:null}];
   db.reviews=[{...annual},child('A'),child('Z')];saveStore(db);
   const before=sessionStorage.getItem(STORE_KEY);
-  await expect(api.post('/reviews/annual-set/complete',{occurrence_id:'annual-2026'})).rejects.toThrow(/current approved version/);
+  await expect(api.post('/reviews/annual-set/complete',await coverageCompletion(annual))).rejects.toThrow(/current approved version/);
   expect(sessionStorage.getItem(STORE_KEY)).toBe(before);
 });
 
@@ -141,7 +160,7 @@ test('native annual completion persists exact membership, completes covered obli
   db.policies=[a,b,c];db.reviews=[{...annual},child('A'),child('B'),child('C')];saveStore(db);
   const untouchedChild=(await api.get('/reviews/child-B')).data,untouchedPolicy=(await api.get('/policies/B')).data;
   const approvalBefore=JSON.stringify(db.policies.map(p=>[p.status,p.version,p.approval_subject,p.approval_history,p.decision_history]));
-  const body={occurrence_id:annual.current_occurrence_id};
+  const body=await coverageCompletion(annual);
   const completed=(await api.post('/reviews/annual-set/complete',body)).data;
   expect(completed.occurrence.policy_coverage.map(member=>member.policy_id)).toEqual(['A','C']);
   let stored=JSON.parse(sessionStorage.getItem(STORE_KEY));
@@ -166,18 +185,22 @@ test('native annual completion persists exact membership, completes covered obli
   const related=(await api.get('/related',{params:{entity_type:'policies',entity_id:'A'}})).data;
   expect(related.reviews.map(row=>row.review_id)).toEqual(expect.arrayContaining(['annual-set','child-A']));
   const single=(await api.get('/reviews/child-A')).data;
-  await api.post('/reviews/child-A/complete',{occurrence_id:single.current_occurrence_id});
+  await api.post('/reviews/child-A/complete',await coverageCompletion(single));
   expect((await api.get('/reviews/annual-set')).data.occurrences).toHaveLength(1);
 });
 
 test('failed native persistence leaves the annual and child snapshots unchanged, and native retry succeeds',async()=>{
   const db=readStore();db.policies=[policy('A')];db.reviews=[{...annual},child('A')];saveStore(db);
+  const body=await coverageCompletion(annual);
   const before=sessionStorage.getItem(STORE_KEY),nativeSet=Storage.prototype.setItem;
   const fail=jest.spyOn(Storage.prototype,'setItem').mockImplementation(function(key,value){if(key===STORE_KEY)throw new DOMException('Synthetic quota','QuotaExceededError');return nativeSet.call(this,key,value);});
-  try{await expect(api.post('/reviews/annual-set/complete',{occurrence_id:'annual-2026'})).rejects.toThrow();}
+  try{
+    await expect(api.post('/reviews/annual-set/complete',body)).rejects.toThrow();
+    expect(fail.mock.calls.some(([key])=>key===STORE_KEY)).toBe(true);
+  }
   finally{fail.mockRestore();}
   expect(sessionStorage.getItem(STORE_KEY)).toBe(before);
-  const response=(await api.post('/reviews/annual-set/complete',{occurrence_id:'annual-2026'})).data;
+  const response=(await api.post('/reviews/annual-set/complete',body)).data;
   expect(response.occurrence.policy_coverage).toHaveLength(1);
   expect((await api.get('/reviews/child-A')).data.occurrences).toHaveLength(1);
 });
@@ -197,7 +220,7 @@ test('native deletion remains available outside pending coverage and denies pend
 
 test('eligible policy with no child uses the annual catch-up date, not another overdue deadline',async()=>{
   const db=readStore();db.policies=[policy('A')];db.reviews=[{...annual,due_date:'2020-02-29'}];saveStore(db);
-  const response=(await api.post('/reviews/annual-set/complete',{occurrence_id:'annual-2026'})).data;
+  const response=(await api.post('/reviews/annual-set/complete',await coverageCompletion(annual))).data;
   const saved=(await api.get('/policies/A')).data;
   expect(saved.next_review_date).toBe(response.review.due_date);
   expect(Date.parse(saved.next_review_date)).toBeGreaterThan(Date.parse(response.occurrence.completed_at));
@@ -212,6 +235,6 @@ test.each([null,[],{'cis-ig1':null},{'cis-ig1':[]},
   db.clients.find(row=>row.client_id===cid).framework_settings=settings;
   saveStore(db);
   const before=sessionStorage.getItem(STORE_KEY);
-  await expect(api.post('/reviews/'+annual.review_id+'/complete',{occurrence_id:annual.current_occurrence_id})).rejects.toThrow(/selected CIS implementation group/);
+  await expect(api.post('/reviews/'+annual.review_id+'/complete',await coverageCompletion(annual))).rejects.toThrow(/selected CIS implementation group/);
   expect(sessionStorage.getItem(STORE_KEY)).toBe(before);
 });

@@ -4,6 +4,7 @@ import Dashboard from './Dashboard';
 import {useOrg} from '@/context/OrgContext';
 import {loadClientDashboard} from '@/lib/loadClientDashboard';
 import {cisContext} from '../testUtils/cisExperience';
+import api from '@/lib/api';
 
 jest.mock('@/context/OrgContext', () => ({useOrg: jest.fn()}));
 const mockUser = {user_id: 'actor', role: 'super_admin', workspace_mode: 'demo'};
@@ -20,6 +21,11 @@ beforeEach(() => {
   sessionStorage.setItem('grc_client_id', 'demo_brawndo');
   container = document.createElement('div'); document.body.appendChild(container); root = createRoot(container);
   loadClientDashboard.mockReset();
+  api.get.mockReset();
+  api.get.mockImplementation(async(path,{params}={})=>{
+    if(path!=='/dashboard')throw new Error('Unexpected native bootstrap read: '+path);
+    return {data:{client_id:params.client_id,items:[],total:0,offset:params.offset,limit:params.limit,has_more:false}};
+  });
 });
 afterEach(async () => {await act(async () => root.unmount()); container.remove(); localStorage.clear(); sessionStorage.clear();});
 
@@ -58,7 +64,7 @@ test('a failed organization bootstrap does not remain stuck behind the neutral p
 });
 
 test('a resolved unconfigured client receives common appearance with its native empty state', async () => {
-  const client = {client_id: 'demo_brawndo', name: 'Synthetic native client', status: 'active'};
+  const client = {client_id: 'demo_brawndo', name: 'Synthetic native client', status: 'active',cis_program:null,shared_programs:[]};
   useOrg.mockReturnValue({...cisContext(), currentClient: null, loading: true});
   loadClientDashboard.mockResolvedValue(snapshot);
   await act(async () => root.render(<Dashboard/>));

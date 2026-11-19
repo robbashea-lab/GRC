@@ -48,7 +48,7 @@ export function EnhancedPortfolio({
   const state = {
     search: preferences.search || '', mine: !!preferences.mine,
     framework: preferences.framework === 'all' ? '' : preferences.framework || '',
-    sort: ['attention','name'].includes(preferences.enhancedSort) ? preferences.enhancedSort : 'attention', view: preferences.enhancedView || 'clients',
+    sort: ['attention','name','next'].includes(preferences.enhancedSort) ? preferences.enhancedSort : 'attention', view: preferences.enhancedView || 'clients',
     kpi: PORTFOLIO_KPIS.some(([key]) => key === preferences.enhancedKpi) ? preferences.enhancedKpi : null,
   };
   const update = useCallback(patch => {
@@ -178,7 +178,7 @@ export function EnhancedPortfolio({
         <label className="field ep-search"><Search size={15} aria-hidden="true" /><input ref={search} type="search" placeholder="Search client, lead or framework…" aria-label="Search clients" value={state.search} onChange={event => update({search:event.target.value})} /></label>
         <div className="ep-segment seg" role="group" aria-label="Scope">{[[false, 'All clients'], [true, 'Assigned to me']].map(([value, label]) => <button key={label} type="button" aria-pressed={state.mine === value} aria-checked={state.mine === value} onClick={() => update({mine:value})}>{label}</button>)}</div>
         <select className="select" aria-label="Framework" value={state.framework} onChange={event => update({framework:event.target.value})}><option value="">All frameworks</option>{frameworks.map(([key, label]) => <option key={key} value={key}>{label}</option>)}</select>
-        <label className="sort-label">Sort <select className="select" aria-label="Sort clients" value={state.sort} onChange={event => update({sort:event.target.value})}><option value="attention">Needs attention first</option><option value="name">Client name A–Z</option></select></label>
+        <label className="sort-label">Sort <select className="select" aria-label="Sort clients" value={state.sort} onChange={event => update({sort:event.target.value})}><option value="attention">Needs attention first</option><option value="name">Client name A–Z</option><option value="next">Next key date</option></select></label>
         <div className="ep-segment seg" role="group" aria-label="View">{[['clients', 'Clients'], ['leads', 'By lead']].map(([value, label]) => <button key={value} type="button" aria-pressed={state.view === value} aria-checked={state.view === value} onClick={() => update({view:value})}>{label}</button>)}</div>
       </div>
       <div className="pf-kstrip">

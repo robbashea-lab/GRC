@@ -2,6 +2,7 @@
 // Demo show the same 403s the server returns; it never protects real data.
 import { ids } from './store';
 import { stable } from './commandRequests';
+import { clientAccess } from './assignmentEligibility';
 
 const OWNER = 'super_admin', PROVIDER = 'platform_admin', MANAGER = 'client_grc_manager';
 const CONTRIBUTOR = 'client_contributor', READER = 'client_readonly';
@@ -22,7 +23,7 @@ const SELF = [/^patch \/me$/, /^patch \/me\/password$/, /^patch \/me\/preference
 class Forbidden extends Error { constructor(message) { super(message); this.status = 403; } }
 const deny = message => { throw new Forbidden(message); };
 const roleOf = user => user?.role === 'client_viewer' ? READER : user?.role;
-const activeClientUser = (db, id, clientId) => db.users.some(u => u.user_id === id && u.status === 'active' && CLIENT_ROLES.includes(u.role) && u.client_ids?.includes(clientId));
+const activeClientUser = (db, id, clientId) => db.users.some(u => u.user_id === id && u.status === 'active' && CLIENT_ROLES.includes(u.role) && clientAccess(u, clientId));
 
 export function requireCreationAssignee(db, clientId, assigneeId) {
   const role=roleOf(db.user);
@@ -79,7 +80,7 @@ export function authorizeDemo(db, method, parts, body = {}, requestKey) {
   }
   const row = (db[kind] || []).find(r => r[ids[kind]] === id);
   if (!row) deny('Record unavailable for this client');
-  if (!user.client_ids?.includes(row.client_id)) deny('Forbidden for this client');
+  if (!clientAccess(user, row.client_id)) deny('Forbidden for this client');
   if (kind === 'tasks' && method === 'patch' && parts.length === 2 && requestKey) {
     const receipt = db.command_requests?.[JSON.stringify([user.user_id,row.client_id,'/'+parts.join('/'),requestKey])];
     // Demo receipts are committed atomically with their effects. Replay only the

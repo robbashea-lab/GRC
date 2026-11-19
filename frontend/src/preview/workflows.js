@@ -150,10 +150,14 @@ export function onboard(db, body) {
 export function action(db, kind, id, name, body) {
   const r = record(db, kind, id),
     cid = r.client_id;
+  // An accepted Review occurrence replays before current-cycle CAS; new completions validate their Guide below.
+  if(kind==='reviews'&&name==='complete'){
+    if(db.user.status&&db.user.status!=='active')throw Object.assign(new Error('This retained Review is read-only'),{status:403});
+    return reviewAction(db,id,name,body);
+  }
   if(Object.prototype.hasOwnProperty.call(body,'expected_updated_at')&&body.expected_updated_at!==(r.updated_at??null))throw new Error('Record changed since it was opened; reload before saving');
   body={...body};
-  // Review completion validates the explicit revision as part of its Guide contract.
-  if(kind!=='reviews'||name!=='complete')delete body.expected_updated_at;
+  delete body.expected_updated_at;
   const patch = b => write(db, kind, b, id);
   if(kind==='findings'&&name==='reopen'){
     if(!['super_admin','platform_admin'].includes(db.user.role))throw new Error('Only platform-level roles can reopen remediation');
@@ -208,7 +212,7 @@ export function action(db, kind, id, name, body) {
     if (r.status !== 'completed' || !body.rationale?.trim()) throw new Error('A completed review and amendment explanation are required.');
     return patch({amendments:[...(r.amendments || []), {by:db.user.user_id,at:now(),rationale:body.rationale}]});
   }
-  if (kind === 'reviews' && ['start','complete'].includes(name)) return reviewAction(db, id, name, body);
+  if (kind === 'reviews' && name==='start') return reviewAction(db, id, name, body);
   if (kind === 'reviews' && name === 'create-finding') {
     const prior = body.request_id && list(db,'findings',cid).find(f => f.created_by === db.user.user_id && f.review_id === id && f.occurrence_id === body.occurrence_id && f.request_id === body.request_id);
     if (prior) return prior;

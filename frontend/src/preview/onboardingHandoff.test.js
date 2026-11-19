@@ -3,7 +3,7 @@ import {previewAdapter} from './commandTestAdapter';
 import catalog from '@catalogs/onboardingCatalog.json';
 import {currentHandoff,onboardingPreview,unansweredPolicies} from '../lib/onboardingHandoff';
 import {onboardingDraft} from '../lib/frameworks';
-import {readStore,saveStore} from './store';
+import {readStore,saveStore,STORE_KEY} from './store';
 import {operationGaps} from '../lib/cisOperations';
 const api=axios.create({adapter:previewAdapter});
 let cid,state;
@@ -82,6 +82,22 @@ test('scope, disabled users, contact-only and minimal contract',async()=>{
   expect(()=>currentHandoff(data,'unrelated')).toThrow();
   db.user={user_id:'other',status:'active',client_ids:['other'],role:'client_contributor'};saveStore(db);
   await expect(get()).rejects.toBeTruthy();
+});
+
+test('handoff counts only active client users with array-shaped exact memberships without repairing accounts',async()=>{
+  const db=readStore();
+  db.users.push(
+    {user_id:'synthetic-valid-member',status:'active',client_ids:[cid],role:'client_contributor'},
+    {user_id:'synthetic-exact-string',status:'active',client_ids:cid,role:'client_contributor'},
+    {user_id:'synthetic-foreign-string',status:'active',client_ids:cid+'_foreign',role:'client_readonly'},
+    {user_id:'synthetic-foreign-array',status:'active',client_ids:[cid+'_foreign'],role:'client_contributor'},
+    {user_id:'synthetic-disabled-member',status:'disabled',client_ids:[cid],role:'client_contributor'},
+    {user_id:'synthetic-internal-member',status:'active',client_ids:[cid],role:'platform_admin'},
+  );
+  saveStore(db);readStore();
+  const before=sessionStorage.getItem(STORE_KEY);
+  expect((await get()).people.active_client_users).toBe(1);
+  expect(sessionStorage.getItem(STORE_KEY)).toBe(before);
 });
 
 test('program adjustment preserves intake and work, is idempotent, and rejects invalid authority',async()=>{

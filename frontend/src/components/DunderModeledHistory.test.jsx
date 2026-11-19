@@ -189,9 +189,15 @@ test('Demo Portfolio requests the exact Dunder context for all four native perio
   expect(dialog.querySelectorAll('.ep-periods strong')).toHaveLength(4);
   expect([...dialog.querySelectorAll('.ep-periods strong')].every(node => node.textContent.includes('0.0'))).toBe(true);
   expect(dialog.querySelector('[data-demo-scenario],.ph-scenario-area,.ph-status-history-legend')).toBeNull();
-  await click('View data');
-  expect(dialog.querySelector('.ep-history-data').textContent).toContain('Illustrative demo scenario');
-  expect(dialog.querySelector('.ep-history-data').textContent).toContain('Initial native baseline');
+  // The approved Portfolio exposes exact positions through its keyboard readout.
+  const chart=dialog.querySelector('svg[tabindex="0"]');expect(chart).toBeTruthy();
+  const inspect=key=>act(async()=>chart.dispatchEvent(new KeyboardEvent('keydown',{key,bubbles:true})));
+  await inspect('Home');
+  expect(dialog.querySelector('.ph-readout').textContent).toContain('Illustrative demo scenario');
+  expect(dialog.querySelector('.ph-readout').textContent).toContain('of 121 applicable');
+  await inspect('End');
+  expect(dialog.querySelector('.ph-readout').textContent).toContain('Initial native demo baseline');
+  expect(dialog.querySelector('.ph-readout').textContent).toContain('of 121 applicable');
 });
 
 test('Portfolio keeps every period unavailable when the source omits qualified context', async () => {

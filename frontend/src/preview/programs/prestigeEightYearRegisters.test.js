@@ -262,8 +262,24 @@ test('foreign legacy display IDs/counters and every other client, identity, hist
 
 test('native approval, lifecycle and decision boundaries remain separate from inventory status and completed Actions', () => {
   const db = copy(candidate.db), ai = owned(db, 'ai_systems')[0], before = JSON.stringify(db);
-  expect(() => aiRequest(db, '/ai_systems/' + ai.ai_system_id + '/approval', 'post', {}, {status: 'approved', note: 'No SOC approval capability', expected_updated_at: ai.updated_at})).toThrow(/configured CIS/);
+  const path='/ai_systems/'+ai.ai_system_id+'/approval';
+  const actor=db.user,contributor=db.users.find(user=>user.status==='active'&&user.role==='client_contributor'&&Array.isArray(user.client_ids)&&user.client_ids.includes(CID));
+  expect(contributor).toBeTruthy();
+  db.user=copy(contributor);
+  const denied=JSON.stringify(db);
+  try {
+    expect(() => aiRequest(db,path,'post',{}, {status:'approved',note:'SYNTHETIC contributor cannot approve',expected_updated_at:ai.updated_at})).toThrow('Only platform administrators can make this decision');
+    expect(JSON.stringify(db)).toBe(denied);
+  } finally {db.user=actor;}
+  expect(() => aiRequest(db,path,'post',{}, {status:'approved',note:'SYNTHETIC stale decision',expected_updated_at:'stale'})).toThrow('Record changed since it was opened; reload before deciding');
   expect(JSON.stringify(db)).toBe(before);
+  const incomplete=copy(db),incompleteAI=rowFor(incomplete,'ai_systems',ai.ai_system_id);
+  incompleteAI.environment='';
+  const missingUse=JSON.stringify(incomplete);
+  expect(() => aiRequest(incomplete,path,'post',{}, {status:'approved',note:'SYNTHETIC missing documented use',expected_updated_at:incompleteAI.updated_at})).toThrow('Document the environment, uses and permitted data before approval');
+  expect(JSON.stringify(incomplete)).toBe(missingUse);
+  expect(db.reviews).toEqual(candidate.db.reviews);
+  expect(owned(db,'ai_systems')).toEqual(owned(candidate.db,'ai_systems'));
   const inactive = owned(db, 'vendors').find(row => row.status === 'inactive');
   expect(() => guardEdit('vendors', {status: 'active'}, inactive, db.user, db)).toThrow(/historical/);
   const base = owned(db, 'vendors').find(row => row.status === 'active');

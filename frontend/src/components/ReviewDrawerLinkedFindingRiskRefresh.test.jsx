@@ -3,6 +3,7 @@ import {createRoot} from 'react-dom/client';
 import ReviewDrawer from './ReviewDrawer';
 import api from '@/lib/api';
 import {rememberClient} from '@/lib/clientSelection';
+import {readStore} from '@/preview/store';
 
 let mockAuth,mockOrg;
 jest.mock('@/context/AuthContext',()=>({useAuth:()=>mockAuth}));
@@ -11,12 +12,25 @@ jest.mock('@/lib/api',()=>({__esModule:true,default:require('axios').default.cre
 jest.mock('react-router-dom',()=>({Link:({children,to})=><a href={to}>{children}</a>,useNavigate:()=>jest.fn()}),{virtual:true});
 jest.mock('sonner',()=>({toast:{error:jest.fn(),success:jest.fn(),info:jest.fn()}}));
 
-let root,container,review,finding,parentSaved,savedEvent;
+let root,container,review,finding,parentSaved,savedEvent,mountReads,hasRendered;
 const query=id=>document.querySelector(`[data-testid="${id}"]`);
 const button=(scope,label)=>[...scope.querySelectorAll('button')].find(node=>node.textContent===label);
 const click=node=>act(async()=>{expect(node).toBeTruthy();node.focus();node.click();});
 const focusSettled=()=>act(async()=>{await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));});
-const render=(props={})=>act(async()=>root.render(<ReviewDrawer open record={review} clientId={review.client_id} onOpenChange={()=>{}} onSaved={parentSaved} {...props}/>));
+async function render(props={}){
+  const initial=!hasRendered,start=mountReads.length;hasRendered=true;
+  await act(async()=>root.render(<ReviewDrawer open record={review} clientId={review.client_id} onOpenChange={()=>{}} onSaved={parentSaved} {...props}/>));
+  if(!initial)return;
+  // Wait for the original mount's real reads only. Later controlled refreshes
+  // intentionally stay pending until each case releases its existing gates.
+  const issued=mountReads.slice(start);
+  expect(issued.filter(read=>read.name!=='guide').map(read=>read.name)).toEqual(['history','related','comments','activity']);
+  expect(issued.some(read=>read.name==='guide')).toBe(true);
+  await act(async()=>{await Promise.all(issued.map(read=>read.response));});
+  const related=(await issued.find(read=>read.name==='related').response).data;
+  expect(related.findings).toContainEqual(expect.objectContaining({finding_id:finding.finding_id,client_id:review.client_id,
+    review_id:review.review_id,occurrence_id:review.current_occurrence_id}));
+}
 const input=(node,value)=>act(async()=>{
   Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype,'value').set.call(node,value);
   node.dispatchEvent(new Event('input',{bubbles:true}));
@@ -36,6 +50,17 @@ beforeEach(async()=>{
   mockOrg={currentClientId:'demo_brawndo',currentClient:clients.find(row=>row.client_id==='demo_brawndo'),clients,loading:false};
   review=(await api.post('/reviews',{client_id:'demo_brawndo',title:'Synthetic parent refresh QA',review_type:'access',recurrence:'quarterly',due_date:'2099-09-30'})).data;
   finding=(await api.post(`/reviews/${review.review_id}/create-finding`,{request_id:crypto.randomUUID(),title:'Synthetic linked gap',remediation_title:'Retain native work',occurrence_id:review.current_occurrence_id})).data;
+  mountReads=[];hasRendered=false;
+  const get=api.get.bind(api);
+  jest.spyOn(api,'get').mockImplementation((path,config)=>{
+    let name;
+    if(path===`/reviews/${review.review_id}/history`)name='history';
+    if(path==='/related'&&config?.params?.entity_type==='reviews'&&config.params.entity_id===review.review_id)name='related';
+    if(path==='/comments'&&config?.params?.entity_type==='reviews'&&config.params.entity_id===review.review_id)name='comments';
+    if(path===`/reviews/${review.review_id}/activity`)name='activity';
+    if(path===`/reviews/${review.review_id}/completion-guide`)name='guide';
+    const response=get(path,config);if(name)mountReads.push({name,response});return response;
+  });
   parentSaved=jest.fn();savedEvent=jest.fn();window.addEventListener('grc:ticket-saved',savedEvent);
   container=document.createElement('div');document.body.appendChild(container);root=createRoot(container);
 });
@@ -54,8 +79,8 @@ async function raiseRisk(){
   await click(button(document.querySelector('[role="alertdialog"]'),'Confirm raise as risk'));
 }
 // Hold only the parent Review's four real adapter reads; the child ticket and command remain native.
-function holdReviewRefresh(){
-  const get=api.get.bind(api),reads=new Map();
+function holdReviewRefresh({staleComment,onCurrentRead}={}){
+  const get=api.get.getMockImplementation(),reads=new Map();
   jest.spyOn(api,'get').mockImplementation((path,config)=>{
     let name;
     if(path===`/reviews/${review.review_id}/history`)name='history';
@@ -63,8 +88,19 @@ function holdReviewRefresh(){
     if(path==='/comments'&&config?.params?.entity_type==='reviews'&&config.params.entity_id===review.review_id)name='comments';
     if(path===`/reviews/${review.review_id}/activity`)name='activity';
     if(!name)return get(path,config);
+    const response=get(path,config);
+    // Preserve the first four old-owner gates. New-owner reads are real, fresh
+    // adapter requests and must not replace or wait on those old gates.
+    if(reads.has(name)){onCurrentRead?.({name,response});return response;}
     const gate=deferred();reads.set(name,gate);
-    return Promise.all([get(path,config),gate.promise]).then(([response])=>response);
+    const captured=response.then(value=>{
+      if(name!=='comments'||!staleComment)return value;
+      const data=JSON.parse(JSON.stringify(value.data)),comment=data.find(row=>row.comment_id===staleComment.comment_id);
+      expect(comment).toBeTruthy();comment.body=staleComment.body;
+      return {...value,data};
+    });
+    gate.response=captured;
+    return Promise.all([captured,gate.promise]).then(([value])=>value);
   });
   return reads;
 }
@@ -107,23 +143,35 @@ test.each(['history','related','comments','activity'])('a failed %s read keeps t
 
 test.each(['actor','role','mode','client','closed','unmounted'])('a stale %s parent cannot acknowledge a pending linked-Risk refresh',async change=>{
   await render();await openFinding();
-  const sentinel='Comment visible only in the superseded refresh';
-  await api.post('/comments',{entity_type:'reviews',entity_id:review.review_id,occurrence_id:review.current_occurrence_id,body:sentinel});
-  const reads=holdReviewRefresh();
+  const sentinel='Comment visible only in the superseded refresh',currentBody='SYNTHETIC genuine current native comment';
+  const comment=(await api.post('/comments',{entity_type:'reviews',entity_id:review.review_id,occurrence_id:review.current_occurrence_id,body:currentBody})).data;
+  expect(comment.comment_id).toBeTruthy();const currentReads=[];
+  const reads=holdReviewRefresh({staleComment:{comment_id:comment.comment_id,body:sentinel},onCurrentRead:read=>currentReads.push(read)});
   await raiseRisk();expectAllReads(reads);
+  const oldComments=(await reads.get('comments').response).data;
+  expect(oldComments.find(row=>row.comment_id===comment.comment_id).body).toBe(sentinel);
+  expect(readStore().comments.find(row=>row.comment_id===comment.comment_id)).toEqual(comment);
+  const stored=JSON.stringify(readStore());
   if(change==='actor')mockAuth={...mockAuth,user:{...mockAuth.user,user_id:'different-native-actor'}};
   if(change==='role')mockAuth={...mockAuth,user:{...mockAuth.user,role:'platform_admin'}};
   if(change==='mode')mockAuth={...mockAuth,workspaceMode:'authenticated'};
   if(change==='client')mockOrg={...mockOrg,currentClientId:'demo_dunder',currentClient:mockOrg.clients.find(row=>row.client_id==='demo_dunder')};
   if(change==='unmounted'){await act(async()=>root.unmount());root=null;}
   else await render({open:change!=='closed'});
+  if(['actor','role'].includes(change)){
+    expect(currentReads.map(read=>read.name)).toEqual(['history','related','comments','activity']);
+    await act(async()=>{await Promise.all(currentReads.map(read=>read.response));});
+  }
   await finishReads(reads);
   expect(parentSaved).not.toHaveBeenCalled();expect(savedEvent).not.toHaveBeenCalled();
   expect(document.body.textContent).not.toContain('Risk linked and verified.');
   if(['actor','role'].includes(change)){
-    // These same-client changes do not reset the Review generation. Reject their stale data before state installation.
+    // Current authorized reads retain the genuine comment; only the captured old copy is marked stale.
     await click(query('tab-comments'));expect(query('reviews-drawer').textContent).not.toContain(sentinel);
+    expect(query('reviews-drawer').textContent).toContain(currentBody);
   }
+  expect(readStore().comments.find(row=>row.comment_id===comment.comment_id)).toEqual(comment);
+  expect(JSON.stringify(readStore())).toBe(stored);
 });
 
 test('a rejected parent callback retains the unconfirmed command and does not dispatch success',async()=>{
@@ -144,7 +192,7 @@ test('an explicit failed dedicated parent refresh rejects success without invoki
 
 test('a failed exact Risk read blocks read-only opening without invoking parent saves or claiming a save',async()=>{
   const {data:{risk}}=await api.post(`/findings/${finding.finding_id}/raise-risk`);
-  await render();await openFinding();const get=api.get.bind(api),post=jest.spyOn(api,'post');
+  await render();await openFinding();const get=api.get.getMockImplementation(),post=jest.spyOn(api,'post');
   jest.spyOn(api,'get').mockImplementation((path,config)=>path===`/risks/${risk.risk_id}`?Promise.reject(new Error('Synthetic Risk read unavailable')):get(path,config));
   await click(button(query('remediation-ticket-drawer'),'Open linked Risk'));
   expect(parentSaved).not.toHaveBeenCalled();expect(savedEvent).not.toHaveBeenCalled();expect(post).not.toHaveBeenCalled();

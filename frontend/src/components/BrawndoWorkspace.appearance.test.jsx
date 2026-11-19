@@ -101,7 +101,7 @@ test('the Dashboard-only shell follows the documented gate-only rollback without
   expect(host.querySelector('.brawndo-workspace-pilot').dataset.additionalSurface).toBe('policies');
 });
 
-function expectAppearance(surface, theme = 'light', chrome = surface) {
+function expectAppearance(surface, theme = 'dark', chrome = surface) {
   const shell = host.querySelector('.brawndo-workspace-pilot'), html = document.documentElement;
   const visual = surface === 'dashboard' ? surface : undefined;
   const additional = surface === 'policies' ? surface : undefined;
@@ -142,11 +142,11 @@ test('combined appearance transitions retain the mounted native draft and reject
     await render(); expectAppearance(surface); expectDraft();
 
     // A routine refresh withdraws styling without remounting the native editor.
-    mockOrg = {...mockOrg, loading: true}; await render(); expectAppearance(null, 'light', surface); expectDraft();
+    mockOrg = {...mockOrg, loading: true}; await render(); expectAppearance(null, 'dark', surface); expectDraft();
     mockOrg = {...mockOrg, loading: false}; await render(); expectAppearance(surface); expectDraft();
 
     mockAuth = {...mockAuth, user: {...mockAuth.user, user_id: `${mockAuth.user.user_id}-next`}};
-    await render(); expectAppearance(null, 'light', surface); expectDraft();
+    await render(); expectAppearance(null, 'dark', surface); expectDraft();
     mockLoadedOrigin = currentOrigin(); await render(); expectAppearance(surface); expectDraft();
 
     // A different authorized client receives common appearance, never a CIS program design by name.
@@ -171,8 +171,9 @@ test('combined appearance transitions retain the mounted native draft and reject
     mockLocation = {pathname, search: ''}; await render(); expectAppearance(surface); expectDraft();
   }
   await act(async () => host.querySelector('.bwp-theme').click());
-  expectAppearance('cis', 'dark'); expectDraft();
-  mockLocation = {pathname: '/systems', search: ''}; await render(); expectAppearance(null, 'dark'); expectDraft();
+  expectAppearance('cis', 'light'); expectDraft();
+  expect(localStorage.getItem('omnisciente:brawndo-dashboard-theme')).toBe('light');
+  mockLocation = {pathname: '/systems', search: ''}; await render(); expectAppearance(null, 'light'); expectDraft();
   await act(async () => root.unmount()); root = null;
   expect(mockUnmounts).toBe(1);
   for (const attribute of ['data-brawndo-workspace', 'data-visual-surface', 'data-visual-theme',

@@ -4,6 +4,7 @@ import FrameworkDrawer from './FrameworkDrawer';
 import api from '@/lib/api';
 import guide from '@catalogs/operatorGuidance/isoRequirementGuide.json';
 import criteria from '@catalogs/operatorGuidance/isoAssessmentCriteria.json';
+import serviceCatalog from '@catalogs/r4ServicesTools.json';
 
 let mockUser,root,container,record,related,next;
 jest.mock('@/context/AuthContext',()=>({useAuth:()=>({user:mockUser})}));
@@ -23,7 +24,10 @@ beforeEach(()=>{
  container=document.createElement('div');document.body.appendChild(container);root=createRoot(container);
  record={framework_assessment_id:'iso-a',client_id:'demo_dunder',framework_key:'iso-27001',definition_id:'4.1',status:'in_progress',owner_id:'u',implementation:'Current context',assessment_history:[],last_assessed:null};
  related={reviews:[],evidence:[],findings:[],tasks:[],risks:[],policies:[]};
- api.get.mockImplementation(async path=>({data:path.endsWith('/related')?related:path.startsWith('/organizational-controls')?{items:[],migration_pending:0}:path.startsWith('/frameworks/')?{assessments:[record]}:path.endsWith('/members')?[{user_id:'u',name:'Pam'}]:[]}));
+ api.get.mockImplementation(async path=>({data:path===`/framework_assessments/${record.framework_assessment_id}/service-context`?{
+   client_id:record.client_id,expected_client_updated_at:null,services:{areas:{},custom_tools:[],preset:null,exclusions:{}},
+   candidates:[],selected_activity_id:null,catalog:serviceCatalog.tools.map(tool=>({...tool,area_ids:[...tool.area_ids],updated_at:null}))
+ }:path.endsWith('/related')?related:path.startsWith('/organizational-controls')?{items:[],migration_pending:0}:path.startsWith('/frameworks/')?{assessments:[record]}:path.endsWith('/members')?[{user_id:'u',name:'Pam'}]:[]}));
  api.patch.mockImplementation(async(path,body)=>({data:{...record,...body,last_assessed:'2026-10-02'}}));
 });
 afterEach(async()=>{await act(async()=>root.unmount());container.remove();jest.resetAllMocks();});
@@ -47,7 +51,9 @@ test('ISO inline interview and Items placement preserve stored ownership and man
 
 test('legacy mandatory-clause N/A is reported without rewriting its saved value',async()=>{
  record.status='not_applicable';await render();
- expect(container.querySelector('[role="alert"]').textContent).toContain('Legacy conflict');
+ expect(api.get).toHaveBeenCalledWith('/framework_assessments/iso-a/service-context');
+ expect(container.querySelector('[aria-label="Services and recurring activity"] [role="alert"]')).toBeNull();
+ expect(container.querySelector('.brawndo-caution[role="alert"]').textContent).toContain('Legacy conflict');
  expect(container.querySelector('input[value="not_applicable"]')).toBeNull();
  expect(record.status).toBe('not_applicable');expect(api.patch).not.toHaveBeenCalled();
 });

@@ -21,19 +21,19 @@ jest.mock('@/lib/api',()=>({__esModule:true,default:{get:jest.fn(),post:jest.fn(
 const modules=[
   {name:'Reviews',path:'/reviews',collection:'reviews',element:<RecordListPage kind="reviews"/>,
     chart:'.crr-root .crr-overview',period:'.quarter-controls strong',agenda:'.agenda-list .agenda-entry',markers:'.review-dot',
-    cards:'.crr-root > .kpis',register:'.crr-root > section.register',savedMarker:'[data-date="2028-04-12"] .review-dot',
+    cards:'.crr-root [data-native-summary]',register:'.crr-root > section.register',savedMarker:'[data-date="2028-04-12"] .review-dot',
     overdue:true,unavailable:'Review dates unavailable.',pending:'.bdr-empty[role="status"]',denied:'.bdr-empty[role="alert"]'},
   {name:'Actions',path:'/action-items',collection:'tasks',element:<ActionItems/>,
     chart:'.cia-page .quarter-card',period:'.quarter-controls strong',agenda:'.cia-agenda-list .agenda-entry',markers:'.review-dot',
-    cards:'.bda-summary',register:'.bda-table-scroll',savedMarker:'[data-date="2028-04-13"] [data-action-id="saved-action"]',
+    cards:'.cia-page [data-native-summary]',register:'.bda-table-scroll',savedMarker:'[data-date="2028-04-13"] [data-action-id="saved-action"]',
     overdue:true,unavailable:'Action deadlines unavailable.',pending:'.bda-results [role="status"]',denied:'.bda-results [role="status"]'},
   {name:'Risks',path:'/risks',collection:'risks',element:<RiskRegister/>,
     chart:'.cis-risks-concept .quarter-card',period:'.quarter-controls strong',agenda:'.agenda-list .agenda-entry',markers:'.review-dot',
-    cards:'.cis-risks-concept > .kpis',register:'.cis-risks-concept > section.register',matrix:'.cis-risks-concept .matrix-panel',
+    cards:'.cis-risks-concept [data-native-summary]',register:'.cis-risks-concept > section.register',matrix:'.cis-risks-concept .matrix-panel',
     savedMarker:'[data-date="2028-04-14"] .review-dot[data-event-id]',overdue:true,loadingFrame:'[data-testid="risks-navigation-loading"]'},
   {name:'Vendors',path:'/vendors',collection:'vendors',element:<VendorRegister/>,
     chart:'.cv-quarter',period:'.cv-quarter-controls strong',agenda:'.cv-agenda-entry',markers:'.cv-event-dot',
-    cards:'.cv-kpis',register:'[aria-label="Vendor register"]',loadingFrame:'[data-testid="vendors-navigation-loading"]',
+    cards:'[aria-label="Vendor summaries"]',register:'[aria-label="Vendor register"]',loadingFrame:'[data-testid="vendors-navigation-loading"]',
     savedMarker:'[data-event-id$=":saved-vendor:review"]',overdue:true,overdueButtonText:'Overdue'},
 ];
 let root,container,actorSequence=0;
@@ -191,7 +191,9 @@ test.each(modules.flatMap(module=>['hipaa','nist-csf-2'].flatMap(frameworkKey=>[
     expect(period(module)).toBe('Q2 2028');
     expect(requiredNode(requiredChart(module),module.savedMarker).getAttribute('aria-label')).toContain('Retained native '+name.slice(0,-1));
     expect(cisClientProgram(mockOrg.currentClient)).toBeNull();
-    expect(brawndoFullRecordEligible({...mockAuth,...mockOrg,pathname:module.path,selectedClientId:clientId,clientId,record:mockRecords[module.collection][0]})).toBe(false);
+    const recordContext={...mockAuth,...mockOrg,pathname:module.path,selectedClientId:clientId,clientId,record:mockRecords[module.collection][0]};
+    expect(brawndoFullRecordEligible(recordContext)).toBe(true);
+    expect(brawndoFullRecordEligible({...recordContext,record:{...recordContext.record,client_id:'foreign-client'}})).toBe(false);
     expect(container.textContent).toContain('Retained native '+({reviews:'Review',tasks:'Action',risks:'Risk',vendors:'Vendor'}[module.collection]));
     expect(JSON.stringify(mockRecords)).toBe(retained);noWrites();
   },

@@ -2,9 +2,25 @@ import axios from 'axios';
 import {previewAdapter} from './adapter';
 import {newRiskDefaults,nextRiskReview} from '../lib/brawndoRisks';
 import {STORE_KEY} from './store';
+import {currentReviewCompletion} from '../testUtils/r4ReviewFixture';
 const api=axios.create({adapter:previewAdapter}),cid='demo_brawndo';
 beforeEach(async()=>{localStorage.clear();sessionStorage.clear();await api.post('/demo/enter');});
 const create=async extra=>(await api.post('/risks',{...newRiskDefaults(),client_id:cid,title:'Synthetic pilot Risk',description:'Test only',likelihood_score:3,impact_score:4,...extra})).data;
+const scheduleCompletion=review=>currentReviewCompletion(api,review.review_id,{
+ expectedOccurrenceId:review.current_occurrence_id,
+ supportingReference:'SYNTHETIC Risk schedule regression '+review.review_id+': current native cadence inspected; no new rating, treatment, acceptance or closure decision.',
+ resultForStep:(step,{review:current})=>{
+  const unperformed={
+   'risk_rec:record:1':'SYNTHETIC schedule-only regression does not reassess business relevance or the Risk description.',
+   'risk_rec:record:2':'SYNTHETIC fixture preserves the recorded 3 x 4 rating; no re-rating is performed.',
+   'risk_rec:record:3':'SYNTHETIC fixture does not perform a treatment Action progress review.',
+   'risk_rec:record:4':'SYNTHETIC fixture makes no acceptance or closure decision.',
+  };
+  if(step.step_id==='risk_rec:record:5'){expect(current.next_review_date).toBeTruthy();return {step_id:step.step_id,result:'Pass',reason:''};}
+  if(!Object.hasOwn(unperformed,step.step_id))throw new Error('Unexpected Risk schedule fixture step '+step.step_id);
+  return {step_id:step.step_id,result:'N/A',reason:unperformed[step.step_id]};
+ },
+});
 test('undecided creation, Other descriptions and edits preserve assessment and schedule',async()=>{
  const r=await create({category:'other',category_other:'Synthetic category',source_type:'other',source_other:'Synthetic incident'}),path='/risks/'+r.risk_id;
  expect(r.treatment).toBe('');expect(r.risk_score).toBe(12);expect(r.last_reviewed).toBeFalsy();
@@ -29,13 +45,13 @@ test('monitoring is pilot lifecycle only; legacy categories and monitoring treat
 test('late completion keeps the next review on the scheduled cycle, permits explicit override, preserves history',async()=>{
  const r=await create({next_review:'2020-03-01'}),path='/risks/'+r.risk_id,review=(await api.post(path+'/review')).data.review;
  expect((await api.get(path)).data.last_reviewed).toBeFalsy();
- const body={occurrence_id:review.current_occurrence_id,risk_outcome:'Reviewed — No Change'};
+ const body={...await scheduleCompletion(review),risk_outcome:'Reviewed — No Change'};
  const done=(await api.post('/reviews/'+review.review_id+'/complete',body)).data;
  const saved=(await api.get(path)).data;
  expect(done.occurrence.next_review_date).toBe(saved.next_review);
  expect(saved.next_review.slice(0,10)).toBe('2021-03-01');expect(saved.last_reviewed).toBe(done.occurrence.completed_at);expect(done.occurrence.due_date.slice(0,10)).toBe('2020-03-01');
  expect((await api.post('/reviews/'+review.review_id+'/complete',body)).data.occurrence).toEqual(done.occurrence);
- const override=(await api.post('/reviews/'+review.review_id+'/complete',{occurrence_id:done.review.current_occurrence_id,risk_next_review:'2090-10-10'})).data;
+ const override=(await api.post('/reviews/'+review.review_id+'/complete',{...await scheduleCompletion(done.review),risk_next_review:'2090-10-10'})).data;
  expect(override.review.due_date.slice(0,10)).toBe('2090-10-10');expect((await api.get(path)).data.next_review).toBe('2090-10-10');expect((await api.get(path+'/review-history')).data).toHaveLength(2);
 });
 test('risk Action stays authoritative; completion does not accept, close or rescore the risk',async()=>{

@@ -5,7 +5,9 @@ import {action} from '../workflows';
 import {guardEdit} from '../decisions';
 import {saveBaseline, baselineRecordVersions} from '../baseline';
 import {reviewDrivers} from '../../lib/frameworks';
-import {occurrenceId, assertCurrentOccurrence, scheduledDate} from '../../lib/reviewOccurrences';
+import {occurrenceId, assertCurrentOccurrence, scheduledDate, reviewView} from '../../lib/reviewOccurrences';
+import {prepareR4Completion,r4ReviewCompletionRequest} from '../r4ReviewCompletion';
+import {currentReviewCompletion} from '../../testUtils/r4ReviewFixture';
 import {preparePrestigeNativeOnboarding} from './prestigeNativeOnboarding';
 import {createPrestigeCurrentRegisters} from './prestigeEightYearRegisters';
 import {PRESTIGE_POLICY_DOCUMENT_FACTS, PRESTIGE_GOVERNANCE_REVIEW_FACTS, PRESTIGE_GOVERNANCE_HISTORY_BOUNDARY,
@@ -242,7 +244,21 @@ test('configuring an ongoing parent retains a real native completed occurrence a
   const value = copy(prepared), review = reviewFor(value.db, 'soc-user-access');
   store.write(value.db, 'reviews', {due_date: '2026-10-20', expected_updated_at: review.updated_at}, review.review_id);
   action(value.db, 'reviews', review.review_id, 'start', {occurrence_id: occurrenceId(review)});
-  const completed = action(value.db, 'reviews', review.review_id, 'complete', {occurrence_id: occurrenceId(review), completion_notes: 'Controlled current native completion; not eight-year source history.'});
+  const path='/reviews/'+review.review_id;
+  // Keep native reads and completion on this exact prepared database, outside session storage.
+  const nativeReads={async get(requestPath){
+    if(requestPath===path)return {data:reviewView(store.record(value.db,'reviews',review.review_id))};
+    if(requestPath!==path+'/completion-guide')throw new Error('Unexpected native Review fixture read');
+    await prepareR4Completion(value.db,requestPath,'get');
+    return {data:r4ReviewCompletionRequest(value.db,requestPath,'get')};
+  }};
+  const completion=await currentReviewCompletion(nativeReads,review.review_id,{
+    expectedOccurrenceId:occurrenceId(review),
+    resultForStep:step=>({step_id:step.step_id,result:'N/A',reason:'SYNTHETIC current-parent preservation case; no external control or business decision is performed: '+step.text}),
+    supportingReference:'SYNTHETIC QA native parent/occurrence preservation for '+review.review_id+'; not eight-year source history.',
+    completionNotes:'Controlled current native completion; not eight-year source history.'
+  });
+  const completed = action(value.db, 'reviews', review.review_id, 'complete', completion);
   const original = copy(completed.occurrence), id = completed.review.review_id, current = occurrenceId(store.record(value.db, 'reviews', id));
   const result = await createPrestigeCurrentGovernance(value, OPTIONS), saved = store.record(result.db, 'reviews', id);
   expect(saved.occurrences).toEqual([original]);

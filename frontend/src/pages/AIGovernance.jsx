@@ -21,7 +21,7 @@ import {AI_VIEWS,aiMatches,aiNeedsAttention} from '@/lib/brawndoAI';
 import BrawndoAICards from '@/components/BrawndoAICards';
 import {BrawndoSurface,BrawndoPageHeader,BrawndoChips} from '@/components/BrawndoPage';
 import {useAdditionalSectionsSurface,useAdditionalSectionsPresentation} from '@/lib/brawndoAdditionalScope';
-import AIRegisterFirst from '@/components/AIRegisterFirst';
+import AIRegisterFirst,{ownerLabel} from '@/components/AIRegisterFirst';
 import AIOnboardingWizard from '@/components/AIOnboardingWizard';
 import AIRecordView from '@/components/AIRecordView';
 import AIProfileDialog from '@/components/AIProfileDialog';
@@ -30,8 +30,6 @@ import {SCHEMAS} from '@/lib/schemas';
 import evidenceSources from '@/lib/evidenceSources.json';
 import {resolveEvidenceSource} from '@/lib/evidenceContext';
 import AdditionalPagePending from '@/components/AdditionalPagePending';
-import {sharedExperienceEligible} from '@/lib/sharedExperience';
-import {selectedClient} from '@/lib/clientSelection';
 
 const text=(key,label)=>({key,label,sortable:true});
 export default function AIGovernance(){
@@ -55,34 +53,32 @@ function AIWorkspace({identity}){
   const data=snapshot?.identity===identity&&(reference?snapshot.clientId===currentClientId:snapshot.key===key)?snapshot:null,rows=data?.rows||[],members=data?.members||[];
   const additional=useAdditionalSectionsSurface('ai-governance',data&&!error&&data.identity===identity&&data.intake?.client_id===currentClientId?data.clientId:null);
   const nativeAIExperience=additional&&aiClientAvailable(currentClient);
-  // Preserve existing saved-field view rules separately from universal guided availability.
-  const priorSharedRegister=sharedExperienceEligible({...org,...auth,selectedClientId:selectedClient(),
-    routeClientId:new URLSearchParams(window.location.search).get('client_id'),authLoading:auth.loading,
-    authError:auth.error,orgLoading:org.loading,orgError:org.error});
   const additionalPresentation=useAdditionalSectionsPresentation('ai-governance');
   const columns=[text('display_id','ID'),text('name','AI System / Use Case'),{...text('owner_id','Owner'),filter:true,emptyLabel:'Unassigned',optionsOnly:true,options:members.map(u=>({value:u.user_id,label:u.name||u.email}))},text('provider','Provider'),{...text('purposes','Purpose / Use'),filter:true},{...text('risk_tier','Risk Tier'),filter:true,rank:ranks,emptyLabel:'Not Screened'},{...text('status','Status'),filter:true},{...text('last_review','Last Review'),filter:true,dateKind:'history',emptyLabel:'Never Reviewed'},{...text('next_review','Next Review'),filter:true,dateKind:'future',emptyLabel:'No Review Scheduled'}];
   const table=useTableControls({columns,rows,module:'ai-governance',scope:`${user?.user_id}:${currentClientId}`});
   const today=new Date().toISOString().slice(0,10),active=r=>!['suspended','retired'].includes(r.status);
-  const presets=[['active','All Active',active],['due','Due for Review',r=>active(r)&&(typeof r.next_review!=='string'||r.next_review.slice(0,10)<=today)],['high','High Risk',r=>active(r)&&r.risk_tier==='high'],['third','Third-Party',r=>active(r)&&(r.vendor_id||r.provider||r.screening?.third_party)],['customer','Customer-Facing',r=>active(r)&&(r.purposes?.includes('Customer-Facing')||r.screening?.customer_facing)],['inactive','Inactive',r=>!active(r)]];
-  const searched=rows.filter(r=>[r.display_id,r.name,r.provider,r.description,...(reference?[r.product_model,r.environment]:[]),...(r.purposes||[])].join(' ').toLowerCase().includes(search.toLowerCase()));
+  const nativeFilters={
+    due:r=>active(r)&&(typeof r.next_review!=='string'||r.next_review.slice(0,10)<=today),
+    high:r=>r.risk_tier==='high',
+    third:r=>!!(r.vendor_id||r.provider||r.screening?.third_party),
+    customer:r=>!!(r.purposes?.includes('Customer-Facing')||r.screening?.customer_facing),
+    pending:r=>r.approval_status==='pending_assessment',
+    attention:aiNeedsAttention,
+  };
+  const presets=[['active','All Active',active],...[
+    ['due','Due for Review'],['high','High Risk'],['third','Third-Party'],['customer','Customer-Facing'],
+  ].map(([id,label])=>[id,label,r=>active(r)&&nativeFilters[id](r)]),['inactive','Inactive',r=>!active(r)]];
+  const searched=rows.filter(r=>[r.display_id,r.name,r.provider,r.description,r.product_model,r.environment,
+    ...(r.purposes||[]),ownerLabel(r.owner_id,members),
+    ...(r.related_links||[]).filter(link=>link.kind==='risks').map(link=>link.id),
+  ].join(' ').toLowerCase().includes(search.toLowerCase()));
   const visible=referenceWorkflow?searched.filter(r=>quick==='attention'?aiNeedsAttention(r):aiMatches(r,quick,showInactive)):table.apply(searched.filter(presets.find(p=>p[0]===quick)?.[2]||active));
-  // Reuse native saved-field meaning for clients outside the earlier framework rollout.
-  // Attention and inactive controls remain separate from these established filters.
-  const nativeRegister=additional&&!priorSharedRegister&&!referenceWorkflow?{
+  // Both APIs already project canonical screening, dates and alerts; appearance must not reinterpret them.
+  const nativeRegister=additional?{
     searchedRows:searched,
-    filters:{
-      ...Object.fromEntries(presets.filter(([id])=>['due','high','third','customer'].includes(id)).map(([id,,test])=>[id,test])),
-      attention:aiNeedsAttention,
-    },
-    screening:row=>row.risk_tier?<SeverityBadge value={row.risk_tier}/>:<span className="register-empty">Not screened</span>,
+    filters:nativeFilters,
+    screening:row=>row.risk_tier?<SeverityBadge value={row.risk_tier}/>:<span className="register-empty">{row.screening_requires_reassessment?'Needs assessment':'Not screened'}</span>,
   }:null;
-  const inactiveOnly=!!nativeRegister,verifiedInactiveContract=useRef(null);
-  // A verified enrollment can replace Inactive-only; loading must not discard the selected view.
-  useEffect(()=>{
-    if(!additional)return;
-    if(verifiedInactiveContract.current===true&&!inactiveOnly)setQuick(view=>view==='inactive'?'active':view);
-    verifiedInactiveContract.current=inactiveOnly;
-  },[additional,inactiveOnly]);
   const writable=isInternal(user);
   const [intakeEnabled,setIntakeEnabled]=useState(false);
   // Activate only where native intake is displayed, then retain its draft during appearance refreshes.

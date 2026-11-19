@@ -508,9 +508,20 @@ test('SOC categories are selected native scope and incomplete positions never lo
   db.framework_assessments.pop();current=demoCurrentPositions(db,db.clients,AS_OF)[0].current;
   expect(current.percentage).toBeNull();expect(current.missing_records).toBe(1);
   expect(current.availability).toBe('partial');
-  const unsupported=fixture(['cmmc']),overview=request(unsupported,'overview');
-  expect(overview.frameworks).toEqual([]);expect(overview.programs).toHaveLength(1);
-  expect(overview.programs[0].current.availability).toBe('unavailable');
+  const cmmc=fixture(['cmmc']),before=copy(cmmc),overview=request(cmmc,'overview');
+  expect(overview.frameworks).toEqual([{key:'cmmc',label:'CMMC Level 2',framework_key:'cmmc',client_count:1,
+    clients:[{client_id:'isolated',name:'Isolated local reporting fixture'}]}]);
+  expect(overview.programs).toHaveLength(1);
+  expect(overview.programs[0].current).toMatchObject({availability:'available',total:110,denominator:110,implemented:0,percentage:0});
+  expect(overview.programs[0].unit_label).toBe('requirements');expect(cmmc).toEqual(before);
+  const levelOne=fixture(['cmmc'],{cmmc:{level:1}}),first=request(levelOne,'overview').programs[0];
+  expect(first.current).toMatchObject({availability:'available',total:17,denominator:17,implemented:0,percentage:0});
+  expect(first.unit_label).toBe('mapped checks');
+  expect(new Set(levelOne.framework_assessments.map(row=>row.level_one_parent)).size).toBe(15);
+  // Invalid saved scope remains unavailable even though CMMC now has native implementation tracking.
+  const unsupported=fixture(['cmmc'],{cmmc:{level:0}}),unavailable=request(unsupported,'overview');
+  expect(unavailable.frameworks).toEqual([]);expect(unavailable.programs).toHaveLength(1);
+  expect(unavailable.programs[0].current.availability).toBe('unavailable');
   expect(unsupported.requirements[0].baseline_response).toBe('applies');
 });
 

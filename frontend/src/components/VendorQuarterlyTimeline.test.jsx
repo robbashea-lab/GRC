@@ -75,8 +75,8 @@ test('non-quarterly consumers retain the existing native Vendor timeline', async
 });
 
 function protectedMarkup(modalOpen = false) {
-  return Object.fromEntries([['cards', '.cv-kpis'], ['register', '[aria-label="Vendor register"]']].map(([key, selector]) => {
-    const node = container.querySelector(selector), copy = node.cloneNode(true);
+  return Object.fromEntries([['cards', '[aria-label="Vendor summaries"]'], ['register', '[aria-label="Vendor register"]']].map(([key, selector]) => {
+    const node = container.querySelector(selector);expect(node).toBeTruthy();const copy = node.cloneNode(true);
     // A portal may hide an ancestor rather than the card itself; the background must still be hidden.
     expect(!!node.closest('[aria-hidden="true"]')).toBe(modalOpen);
     copy.removeAttribute('data-aria-hidden');copy.removeAttribute('aria-hidden');
@@ -172,13 +172,15 @@ test('local midnight refreshes global overdue counts and open-list urgency witho
   const datedReview = {...review, due_date: '2026-10-18'};
   const before = JSON.stringify({datedVendor, datedReview});
   await render({rows: [datedVendor], reviews: [datedReview]});
-  const due = [...container.querySelectorAll('.cv-kpis button')].find(node => node.textContent.includes('Due in 30 days'));
+  const due = container.querySelector('[data-testid="additional-vendor-metric-due30"]');
+  expect(due.textContent).toContain('Due in 30 days');
   expect(due.textContent).toContain('1 item');
   await click(due);
   expect(document.querySelector('.cv-list-items').textContent).toContain('Due today');
   await act(async () => jest.advanceTimersByTime(1100));
   expect(document.querySelector('.cv-list-items').textContent).toContain('1 day overdue');
-  const overdue = [...container.querySelectorAll('.cv-kpis button')].find(node => node.textContent.includes('Overdue'));
+  const overdue = container.querySelector('[data-testid="additional-vendor-metric-overdue"]');
+  expect(overdue.textContent).toContain('Overdue');
   expect(overdue.textContent).toContain('1 item');
   expect(due.textContent).toContain('0 items');
   expect(JSON.stringify({datedVendor, datedReview})).toBe(before);

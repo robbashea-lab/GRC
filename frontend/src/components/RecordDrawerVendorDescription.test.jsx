@@ -42,14 +42,16 @@ test.each([
   const client=reference&&clientId!=='demo_prestige'?cisClient(clientId,group):{client_id:clientId,name,status:'active'};
   mockOrg={currentClientId:clientId,currentClient:client,clients:[client]};
   const vendor={vendor_id:'synthetic_vendor',client_id:clientId,name:'Fixture Vendor',service:'Hosting',status:'active',assurance_records:[]};
+  const before=JSON.stringify({client,vendor});
   await render({kind:'vendors',clientId,record:vendor});
   const dialog=document.querySelector('[data-testid="vendors-drawer"]');
   expect(dialog.getAttribute('role')).toBe('dialog');
   expect(document.getElementById(dialog.getAttribute('aria-labelledby')).textContent).toBe(vendor.name);
   expect(description(dialog).textContent).toBe(vendorPurpose);
   expect(description(dialog).classList.contains('sr-only')).toBe(true);
-  expect(dialog.querySelector('[data-testid="tab-assurance"]').textContent).toBe(reference?'Security Assurance Reviews':'Security Assurance');
-  for(const tab of ['evidence','comments'])expect(!!dialog.querySelector(`[data-testid="tab-${tab}"]`)).toBe(reference);
+  expect(dialog.querySelector('[data-testid="tab-assurance"]').textContent).toBe('Security Assurance Reviews');
+  for(const tab of ['evidence','comments'])expect(dialog.querySelector(`[data-testid="tab-${tab}"]`)).toBeTruthy();
+  expect(JSON.stringify({client,vendor})).toBe(before);
 });
 
 test('readonly nonreference Vendor retains its disabled save control and correct purpose',async()=>{

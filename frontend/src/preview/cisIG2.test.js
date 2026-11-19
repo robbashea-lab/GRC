@@ -1,12 +1,13 @@
 import axios from 'axios';
 import {previewAdapter} from './commandTestAdapter';
-import {readStore,STORE_KEY,clone} from './store';
+import {readStore,saveStore,STORE_KEY,clone} from './store';
 import baseline from '@catalogs/onboardingCatalog.json';
 import {FRAMEWORKS,activeDefinitions,activePlans,reviewDrivers} from '../lib/frameworks';
 import {cisDemoSelection,CIS_DEMO_REVISION} from './cisDemoSelection';
 import {CIS_SHOWCASE_VERSION} from './cisDemoFixtureDates';
 import {cisReviewBriefs} from '../lib/cisOperations';
 import {complianceNavigation} from '../lib/complianceNavigation';
+import {currentReviewCompletion} from '../testUtils/r4ReviewFixture';
 const api=axios.create({adapter:previewAdapter});
 const state=group=>({version:3,step:3,policies:Object.fromEntries(baseline.policies.map(p=>[p.key,'unsure'])),requirements:Object.fromEntries(FRAMEWORKS.map(f=>[f.key,f.key==='cis-ig1'?'applies':'does_not_apply'])),reviews:[],framework_reviews:{},framework_settings:{'cis-ig1':{implementation_group:group}}});
 let cid;
@@ -112,13 +113,34 @@ test('IG2 operating work uses shared Finding, Action, evidence and Review histor
   expect((await api.get('/evidence/'+evidence.evidence_id+'/download')).data.content_base64).toBe(bytes);
   await api.patch('/tasks/'+task.task_id,{status:'done'});
   expect((await api.get('/findings/'+finding.finding_id)).data.status).toBe('remediated');
-  await api.post('/findings/'+finding.finding_id+'/validate',{rationale:'Synthetic workflow validation only'});
+  const submitted=readStore(),worker=submitted.user;
+  const validator={user_id:'synthetic_ig2_independent_validator',name:'Synthetic independent validator',
+    email:'ig2-validator@example.test',role:'platform_admin',status:'active',workspace_mode:'demo',client_ids:[cid],all_clients:false};
+  expect(submitted.users.some(account=>account.user_id===validator.user_id)).toBe(false);
+  expect(submitted.tasks.find(row=>row.task_id===task.task_id).completed_by).toBe(worker.user_id);
+  expect(validator.user_id).not.toBe(worker.user_id);
+  submitted.users.push(validator);submitted.user=validator;saveStore(submitted);
+  const ready=(await api.get('/findings/'+finding.finding_id)).data;
+  await api.post('/findings/'+finding.finding_id+'/validate',{rationale:'Synthetic workflow validation only',expected_updated_at:ready.updated_at??null,request_id:'synthetic_ig2_independent_validation'});
   expect((await api.get('/findings/'+finding.finding_id)).data).toMatchObject({status:'closed',framework_assessment_id:assessment.framework_assessment_id});
+  const validated=readStore();validated.user=worker;saveStore(validated);
   const review=readStore().reviews.find(r=>r.client_id===cid&&r.framework_plan_key==='penetration-testing');
   await api.patch('/reviews/'+review.review_id,{due_date:'2026-10-03',expected_updated_at:review.updated_at,expected_occurrence_id:review.current_occurrence_id});
   const scheduled=(await api.get('/reviews/'+review.review_id)).data;
-  const completed=(await api.post('/reviews/'+review.review_id+'/complete',{occurrence_id:scheduled.current_occurrence_id,spawn_next:true,conclusion:'Synthetic governance follow-up reviewed',tested_period:'2026',tested_scope:'18.1-18.3 follow-up',checklist_confirmed:true,no_evidence_reason:'Illustrative workflow only; no external testing performed'})).data;
+  // The closed assessment arrangement is distinct from this occurrence's absent actual test report.
+  const reviewFinding=(await api.post('/reviews/'+review.review_id+'/create-finding',{
+    occurrence_id:scheduled.current_occurrence_id,title:'SYNTHETIC current penetration test report is unavailable',
+    remediation_title:'Retain current Review follow-up for actual testing evidence'
+  })).data;
+  const completion=await currentReviewCompletion(api,review.review_id,{
+    expectedOccurrenceId:scheduled.current_occurrence_id,
+    resultForStep:step=>({step_id:step.step_id,result:'Exception',reason:'SYNTHETIC QA: no actual penetration test, retest, scope approval or external report is established by this fixture; current Review Finding '+reviewFinding.finding_id+' retains that gap.'}),
+    supportingReference:'SYNTHETIC QA completed governance result: actual external testing remains unverified under current Review Finding '+reviewFinding.finding_id+'.',
+    completionNotes:'SYNTHETIC workflow follow-up only; no external testing was performed.'
+  });
+  const completed=(await api.post('/reviews/'+review.review_id+'/complete',{...completion,spawn_next:true,conclusion:'Synthetic governance follow-up reviewed',tested_period:'2026',tested_scope:'18.1-18.3 follow-up',checklist_confirmed:true,no_evidence_reason:'Illustrative workflow only; no external testing performed'})).data;
   expect(completed.occurrence.conclusion).toBe('Synthetic governance follow-up reviewed');
+  expect(completed.occurrence.checklist_outcome).toBe('Exceptions noted');
   const unchanged=(await workspace()).assessments.find(r=>r.definition_id==='18.2');
   expect(unchanged.status).toBe('not_assessed');expect(unchanged.verification||'not_verified').toBe('not_verified');
   const urgent=(await api.post('/tasks',{client_id:cid,title:'Synthetic urgent incident response coordination',source_type:'manual',priority:'critical',description:'Event-driven 17.4-17.6 response follow-up'})).data;

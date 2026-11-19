@@ -1,9 +1,10 @@
 import axios from 'axios';
 import {previewAdapter} from './commandTestAdapter';
-import {STORE_KEY} from './store';
+import {STORE_KEY,readStore,saveStore} from './store';
 import catalog from '@catalogs/onboardingCatalog.json';
 import {complianceProgress} from '../lib/complianceProgress';
 import {loadClientDashboard} from '../lib/loadClientDashboard';
+import {currentReviewCompletion} from '../testUtils/r4ReviewFixture';
 const api=axios.create({adapter:previewAdapter});
 let cid;
 const get=async(path,extra={})=>(await api.get('/'+path,{params:{client_id:cid,...extra}})).data;
@@ -40,14 +41,27 @@ test('assessment state unaffected by separate deduplicated Finding, Action and E
 });
 test('Calendar preserves active/closed distinction and Review occurrences through actual workflows',async()=>{
   const review=(await api.post('/reviews',{client_id:cid,title:'Quarterly access',review_type:'access',due_date:'2026-09-30',recurrence:'quarterly'})).data;
-  await api.post('/reviews/'+review.review_id+'/complete',{occurrence_id:review.current_occurrence_id});
+  const completion=await currentReviewCompletion(api,review.review_id,{
+    expectedOccurrenceId:review.current_occurrence_id,
+    resultForStep:step=>({step_id:step.step_id,result:'N/A',reason:'SYNTHETIC Calendar lifecycle case; this does not execute the external control or business decision: '+step.text}),
+    supportingReference:'SYNTHETIC QA completed Calendar/occurrence walkthrough for '+review.current_occurrence_id+'.'
+  });
+  await api.post('/reviews/'+review.review_id+'/complete',completion);
   const f=(await api.post('/findings',{client_id:cid,title:'NO ISP',due_date:'2026-10-02',severity:'high'})).data;
   const t=(await api.post('/tasks',{client_id:cid,title:'MAKE AN ISP',source_type:'finding',source_id:f.finding_id,due_date:'2026-10-02',priority:'high'})).data;
   const params={start:'2026-09-01',end:'2026-12-31'};
   expect(flat(await get('calendar',{...params,scope:'active'}))).toHaveLength(3);
   await api.patch('/tasks/'+t.task_id,{status:'done'});
   expect(new Set(flat(await get('calendar',{...params,scope:'active'})).map(r=>r.status))).toEqual(new Set(['remediated','upcoming']));
-  await api.post('/findings/'+f.finding_id+'/validate',{rationale:'Document checked'});
+  const identityStore=readStore(),worker=identityStore.user;
+  const validator={user_id:'synthetic_calendar_validator',name:'Synthetic independent validator',email:'calendar-validator@example.test',
+    role:'platform_admin',status:'active',client_ids:[cid],all_clients:false,workspace_mode:'demo'};
+  identityStore.users.push(validator);identityStore.user=validator;saveStore(identityStore);
+  try{
+    const ready=(await api.get('/findings/'+f.finding_id)).data;
+    const validated=(await api.post('/findings/'+f.finding_id+'/validate',{rationale:'Document checked',expected_updated_at:ready.updated_at??null})).data;
+    expect(validated.validated_by).toBe(validator.user_id);expect(validated.validated_by).not.toBe(worker.user_id);
+  }finally{const restored=readStore();restored.user=worker;saveStore(restored);}
   const rows=flat(await get('calendar',{...params,scope:'all'}));
   expect(rows).toHaveLength(4);
   expect(rows.filter(r=>r.historical).every(r=>!r.can_reschedule)).toBe(true);

@@ -228,7 +228,7 @@ test('accepted refresh stamps once; render, search, matrix, theme and immediate 
   await act(async()=>{Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,'value').set.call(search,'Native');search.dispatchEvent(new Event('input',{bubbles:true}));});
   await click(matrixCell());await closeList();
   await click(container.querySelector('[data-testid="workspace-theme"]'));
-  expect(container.querySelector('[data-testid="cis-risks-concept"]').dataset.theme).toBe('dark');
+  expect(container.querySelector('[data-testid="cis-risks-concept"]').dataset.theme).toBe('light');
   const controls=container.querySelector('[aria-label="Records"]');
   expect([...controls.querySelectorAll(':scope > button')].map(b=>b.childNodes[0].textContent.trim())).toEqual(['Active','Accepted','Closed']);
   let panel=await openFilters();expect(panel).not.toBeNull();expect(container.querySelector('.filter-button').getAttribute('aria-expanded')).toBe('true');

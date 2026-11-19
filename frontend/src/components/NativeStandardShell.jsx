@@ -51,6 +51,13 @@ export default function NativeStandardShell({children}) {
   const canReports = canExportReports(user);
   const clientPages = [...WORK, ...frameworks.map(f => [f.to, f.label, ShieldCheck]), ...PROGRAM, ...CLIENT.filter(([to]) => to !== '/reports' || canReports), ...RELATED];
   const pages = [...(internal ? [['/clients', 'Portfolio', Briefcase], ...ADMIN.filter(([to]) => to !== '/admin/audit' || user?.role === 'super_admin')] : []), ...(clientId ? clientPages : []), ['/account', 'My Account', Users]];
+  const routeLabel = pages.find(([to]) => to.split('?')[0] === pathname)?.[1] || (pathname === '/tasks' ? 'Tasks' : 'Workspace');
+  const titleClient = pathname !== '/account' && !org.loading && !org.error && clientId === org.currentClientId ? client?.name : null;
+  const pageTitle = `${routeLabel}${titleClient ? ' · ' + titleClient : ''} | GoverNara`;
+  useEffect(() => {
+    document.title = pageTitle;
+    return () => {if (document.title === pageTitle) document.title = 'GoverNara';};
+  }, [pageTitle]);
   const term = query.trim().toLowerCase();
   const matchingPages = pages.filter(([, label]) => label.toLowerCase().includes(term));
   const matchingClients = clients.filter(c => [c.name, c.grc_lead?.name || ''].join(' ').toLowerCase().includes(term));
