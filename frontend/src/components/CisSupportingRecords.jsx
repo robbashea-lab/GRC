@@ -4,7 +4,7 @@ import {EvidenceCatalogPicker} from './EvidencePanel';
 import {activePlans,activeDefinitions} from '@/lib/frameworks';
 import FrameworkReviewSetup from './FrameworkReviewSetup';
 import api,{formatError} from '@/lib/api';
-import {downloadEvidence,EvidenceSource,sourceReference,resolveEvidenceSource} from '@/lib/evidenceContext';
+import {useEvidenceDownload,EvidenceSource,sourceReference,resolveEvidenceSource} from '@/lib/evidenceContext';
 import {frameworkCatalog} from '@/lib/frameworks';
 import {useAuth} from '@/context/AuthContext';
 
@@ -19,6 +19,7 @@ function ReviewHistory({review,busy,onOpen}){
   </div>;
 }
 export default function CisSupportingRecords({record,current,definition,ctx,related,writable,busy,run,setNested,setReviewDraft,reviewSaved}){
+  const downloadEvidence=useEvidenceDownload(record.client_id,record.framework_assessment_id);
   const {user}=useAuth(),manageRelationships=writable&&['super_admin','platform_admin'].includes(user?.role);
   const [linking,setLinking]=useState(false),aid=record.framework_assessment_id;
   const evidence=(related.evidence||[]).filter(e=>!e.archived_at);

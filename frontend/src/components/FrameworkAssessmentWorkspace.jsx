@@ -48,6 +48,7 @@ export default function FrameworkAssessmentWorkspace({state,actions}){
   const rolloutEntry=assessmentRollout?assessmentRolloutEntry(framework,definition.id,{module:assessmentModule}):null;
   const nativeRequirement=<><p>{isoGuide?.plain||guide.meaning}</p><AssessmentRequirement heading={definition.specification==='isms_clause'?'ISMS requirement & reference':'Annex A control & reference'} text={source.text||guide.meaning} official={!!source.text}/></>;
   const assessmentControls=<>
+    {state.contextEditor}
               {definition.specification==='annex_control'&&<fieldset disabled={disabled} className="space-y-3 brawndo-inset">
                 <h4>Statement of Applicability</h4><p className="text-sm text-ink-secondary">Applicability is a risk-treatment decision, separate from implementation. Excluding a control does not erase its assessment or history.</p>
                 {soaView&&<SoaFieldGuidance definitionId={definition.id} field="necessary"/>}<label className="block">Applicability<select aria-label="SoA applicability" value={form.soa_applicability||''} onChange={e=>put('soa_applicability',e.target.value)}><option value="">Undetermined</option><option value="included">Applicable</option><option value="excluded">Not Applicable</option></select></label>

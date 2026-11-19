@@ -37,7 +37,7 @@ async def project(db, clients):
     contact_map = {(c["client_id"], c["contact_id"]): c for c in contacts}
     user_map = {u["user_id"]: u for u in users}
     programs = await db.requirements.find({'client_id': {'$in': [c['client_id'] for c in clients]},
-        'baseline_key': {'$in': ['cis-ig1', 'iso-27001', 'soc-2']}, 'baseline_response': 'applies'},
+        'baseline_key': {'$in': list(CATALOGS)}, 'baseline_response': 'applies'},
         {'_id': 0, 'client_id': 1, 'baseline_key': 1}).to_list(None) if clients else []
     selected = {(row['client_id'], row['baseline_key']) for row in programs}
     return [{**{k:v for k,v in c.items() if k!='_configuration_lock'},
@@ -46,7 +46,7 @@ async def project(db, clients):
         'shared_programs': [cis_scope.experience_program(c, True) if key == 'cis-ig1' else {
             'client_id': c['client_id'], 'program_id': f"{c['client_id']}:{key}",
             'framework_key': key, 'version': CATALOGS[key]['version'], 'selected': True,
-        } for key in ('cis-ig1', 'iso-27001', 'soc-2') if (c['client_id'], key) in selected],
+        } for key in CATALOGS if (c['client_id'], key) in selected],
         "primary_contact_record": contact_map.get((c["client_id"], c.get("primary_contact_id"))),
         "grc_lead_id": c.get("assigned_owner_id"),
         "grc_lead": user_map.get(c.get("assigned_owner_id")),

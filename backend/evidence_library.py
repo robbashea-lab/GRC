@@ -60,13 +60,20 @@ def router_for(s):
 
     @router.get('/sources')
     async def sources(client_id:str,kind:str,q:str=Query('',max_length=250),page:int=Query(1,ge=1),user=Depends(s.get_current_user)):
+        from r4_services import require_settled_population
+
         s._scope_filter(user,client_id)
         if kind not in ctx.SOURCES: raise HTTPException(422,'Unsupported source')
+        await require_settled_population(s.db, {'client_id': client_id})
         query={'client_id':client_id}
         if q: query['$or']=[{field:{'$regex':re.escape(q),'$options':'i'}} for field in ('title','name','display_id','definition_id','framework_key')]
+        if kind in ('reviews', 'vendors', 'framework_assessments'):
+            await require_settled_population(s.db, query, collections=(kind,))
         key=ctx.SOURCES[kind]['key']
         docs=await s.db[kind].find(query,{'_id':0}).sort([(key,1)]).skip((page-1)*25).limit(25).to_list(25)
-        return {'items':[ctx.reference(kind,row,occurrence=review_occurrences.occurrence_id(row) if kind=='reviews' else None) for row in docs], 'total':await s.db[kind].count_documents(query),'page':page,'page_size':25}
+        total = await s.db[kind].count_documents(query)
+        await require_settled_population(s.db, {'client_id': client_id}, docs)
+        return {'items':[ctx.reference(kind,row,occurrence=review_occurrences.occurrence_id(row) if kind=='reviews' else None) for row in docs], 'total':total,'page':page,'page_size':25}
 
     @router.get('/reviews/{review_id}/sets')
     async def sets(review_id:str,page:int=Query(1,ge=1),year:str=Query('',max_length=4),user=Depends(s.get_current_user)):

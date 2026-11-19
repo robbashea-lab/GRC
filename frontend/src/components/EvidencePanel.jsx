@@ -3,7 +3,7 @@ import { isInternal } from '@/lib/permissions';
 import {Download} from 'lucide-react';
 import {Button} from './ui/button';
 import api,{formatError} from '@/lib/api';
-import {downloadEvidence,EvidenceSource,uploaderLabel} from '@/lib/evidenceContext';
+import {useEvidenceDownload,EvidenceSource,uploaderLabel} from '@/lib/evidenceContext';
 import {toast} from 'sonner';
 import {useAuth} from '@/context/AuthContext';
 import {Input} from './ui/input';
@@ -44,6 +44,7 @@ export function EvidencePagination({data,page,setPage}){
   return <div className="flex items-center justify-between gap-3 text-xs text-ink-secondary" aria-label="Evidence pagination"><span>{data.total?`${(page-1)*data.page_size+1}–${Math.min(page*data.page_size,data.total)}`:'0'} of {data.total} files</span><div className="flex gap-2"><Button type="button" size="sm" variant="outline" disabled={page<=1} onClick={()=>setPage(page-1)}>Previous</Button><Button type="button" size="sm" variant="outline" disabled={page*data.page_size>=data.total} onClick={()=>setPage(page+1)}>Next</Button></div></div>;
 }
 export function EvidenceDownload({row}){
+  const downloadEvidence=useEvidenceDownload(row.client_id,row.evidence_id);
   return <button type="button" aria-label={`Download ${row.filename}`} title={`Download ${row.filename}`} className="shrink-0 p-2 rounded hover:bg-surface-subtle text-ink-secondary" onClick={()=>downloadEvidence(row).catch(e=>toast.error(formatError(e)))}><Download aria-hidden="true" className="h-3.5 w-3.5"/></button>;
 }
 function RelationshipAction({row,kind,id,occurrenceId,onDelete,onChanged,allowLink}){

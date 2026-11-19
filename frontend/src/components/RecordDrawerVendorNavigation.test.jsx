@@ -20,8 +20,9 @@ const input=(node,value)=>act(async()=>{Object.getOwnPropertyDescriptor(node.tag
 const active=id=>expect(document.querySelector('[data-testid="tab-'+id+'"]').className).toContain('active');
 beforeEach(()=>{mockStrict=false;global.IS_REACT_ACT_ENVIRONMENT=true;sessionStorage.clear();localStorage.clear();mockUser={user_id:'admin',role:'super_admin',workspace_mode:'standard'};container=document.createElement('div');document.body.appendChild(container);root=createRoot(container);api.get.mockImplementation(async path=>({data:path==='/related'?{}:[]}));api.post.mockResolvedValue({data:{vendor_id:'created'}});});
 afterEach(async()=>{await act(async()=>root.unmount());container.remove();jest.clearAllMocks();});
-test.each(['assurance','contract'])('generic vendor opens requested %s without reference workflow',async vendorTab=>{await render({initialValues:{vendorTab}});active(vendorTab);expect(document.body.textContent).not.toContain('Security Assurance Reviews');});
-test.each([undefined,'unknown','evidence'])('missing or unavailable generic tab %s falls back to overview',async vendorTab=>{await render({initialValues:{vendorTab}});active('overview');});
+test.each(['assurance','contract'])('shared vendor opens requested native %s tab',async vendorTab=>{await render({initialValues:{vendorTab}});active(vendorTab);expect(document.body.textContent).toContain('Security Assurance Reviews');});
+test.each([undefined,'unknown'])('missing or unavailable generic tab %s falls back to overview',async vendorTab=>{await render({initialValues:{vendorTab}});active('overview');});
+test('the shared native Evidence tab remains available for a related Vendor',async()=>{await render({initialValues:{vendorTab:'evidence'}});active('evidence');expect(api.patch).not.toHaveBeenCalled();});
 test('reopen and logical record/client switches apply their own requested tab',async()=>{await render({initialValues:{vendorTab:'assurance'}});await render({open:false});await render({initialValues:{vendorTab:'contract'}});active('contract');await render({record:{...vendor,vendor_id:'v2'},initialValues:{vendorTab:'assurance'}});active('assurance');await render({clientId:'second-client',record:{...vendor,client_id:'second-client'},initialValues:{vendorTab:'contract'}});active('contract');});
 test('record-data refresh retains selected tab and unsaved edits while rebasing untouched fields',async()=>{const close=jest.fn();await render({onOpenChange:close});await input(document.querySelector('[data-testid="field-name"]'),'Unsaved vendor');await click(document.querySelector('[data-testid="tab-contract"]'));await render({record:{...vendor,service:'Refreshed service',updated_at:'new'},initialValues:{vendorTab:'assurance'},onOpenChange:close});active('contract');await click(document.querySelector('[data-testid="tab-overview"]'));expect(document.querySelector('[data-testid="field-name"]').value).toBe('Unsaved vendor');expect(document.querySelector('[data-testid="field-service"]').value).toBe('Refreshed service');await click(document.querySelector('[data-testid="drawer-cancel"]'));expect(close).not.toHaveBeenCalled();expect(document.body.textContent).toContain('Discard unsaved changes?');});
 test('generic create does not persist navigation metadata',async()=>{await render({record:null,initialValues:{name:'Created vendor',service:'Hosting',vendorTab:'assurance',assuranceId:'nav-only'}});await click(document.querySelector('[data-testid="drawer-save"]'));expect(api.post).toHaveBeenCalled();const payload=api.post.mock.calls[0][1];expect(payload.name).toBe('Created vendor');expect(payload).not.toHaveProperty('vendorTab');expect(payload).not.toHaveProperty('assuranceId');});
@@ -33,12 +34,12 @@ test('same reference vendor refresh retains an unposted comment and its close gu
 test('dirty assurance refresh saves against its loaded version and retains draft after conflict',async()=>{
   const record={...vendor,updated_at:'version1',assurance_records:[{type:'SOC 2',required:true,evidence_ids:[]}]},close=jest.fn();
   await render({record,initialValues:{vendorTab:'assurance'},onOpenChange:close});
-  await input(document.querySelector('input[aria-label="SOC 2 Reviewed / Received"]'),'2026-10-07');
+  await input(document.querySelector('input[aria-label="SOC 2 Report Received On"]'),'2026-10-07');
   await render({record:{...record,updated_at:'version2',assurance_records:[...record.assurance_records,{type:'ISO 27001',required:true,evidence_ids:[]}]},onOpenChange:close});
   api.patch.mockRejectedValue(Object.assign(new Error('Record changed; refresh before saving'),{response:{status:409,headers:{'x-create-rejected':'true'}}}));
   await click(document.querySelector('[data-testid="drawer-save"]'));
   expect(api.patch).toHaveBeenCalledWith('/vendors/v1',expect.objectContaining({expected_updated_at:'version1',assurance_records:[expect.objectContaining({type:'SOC 2',received_at:'2026-10-07'})]}),expect.anything());
-  expect(close).not.toHaveBeenCalled();expect(document.querySelector('input[aria-label="SOC 2 Reviewed / Received"]').value).toBe('2026-10-07');
+  expect(close).not.toHaveBeenCalled();expect(document.querySelector('input[aria-label="SOC 2 Report Received On"]').value).toBe('2026-10-07');
   await click(document.querySelector('[data-testid="drawer-cancel"]'));expect(document.body.textContent).toContain('Discard unsaved changes?');
 });
 test('clean refresh advances the editing version for a subsequent successful save',async()=>{
@@ -67,11 +68,11 @@ test.each([['name',false],['name',true],['status',false],['status',true]])('Vend
   await render({clientId:record.client_id,record});await click(document.querySelector('[data-testid="tab-reviews_tab"]'));await click([...document.querySelectorAll('button')].find(b=>b.textContent.startsWith(review.title)));
   await click([...document.querySelectorAll('button')].find(b=>b.textContent==='Save linked Vendor Review'));await click([...document.querySelectorAll('button')].find(b=>b.textContent==='Close linked Vendor Review'));await click(document.querySelector('[data-testid="tab-overview"]'));
   if(field==='name')await input(document.querySelector('[data-testid="field-name"]'),'Edited during refresh');
-  else await act(async()=>{const select=document.querySelector('[data-testid="field-status"]');select.value='active';select.dispatchEvent(new Event('change',{bubbles:true}));});
+  else await act(async()=>{const select=document.querySelector('[data-testid="field-status"]');select.value='offboarding';select.dispatchEvent(new Event('change',{bubbles:true}));});
   await act(async()=>resolveRefresh({data:{...record,status:'under_review',updated_at:'version2',next_review:'2027-10-07'}}));api.patch.mockResolvedValue({data:{...record,updated_at:'version3'}});
   expect(document.querySelector('dl').textContent).toContain('Under review');
-  expect(document.querySelector('[data-testid="field-status"]').value).toBe(field==='status'?'active':'under_review');
-  await click(document.querySelector('[data-testid="drawer-save"]'));expect(api.patch).toHaveBeenCalledWith('/vendors/v1',expect.objectContaining({expected_updated_at:'version1',...(field==='name'?{name:'Edited during refresh'}:{status:'active'})}),expect.anything());
+  expect(document.querySelector('[data-testid="field-status"]').value).toBe(field==='status'?'offboarding':'under_review');
+  await click(document.querySelector('[data-testid="drawer-save"]'));expect(api.patch).toHaveBeenCalledWith('/vendors/v1',expect.objectContaining({expected_updated_at:'version1',...(field==='name'?{name:'Edited during refresh'}:{status:'offboarding'})}),expect.anything());
 });
 
 test('a clean Vendor status refresh rebases its close guard without an extra save',async()=>{
@@ -98,19 +99,19 @@ test('nested Vendor Review preserves a genuine status draft and its original con
   const review={review_id:'review1',vendor_id:record.vendor_id,client_id:record.client_id,title:'Linked vendor Review'};
   api.get.mockImplementation(async path=>({data:path==='/related'?{}:path==='/reviews'?[review]:path==='/vendors/v1'?{...record,status:'under_review',updated_at:'version2',next_review:'2027-10-07'}:[]}));
   await render({clientId:record.client_id,record,onOpenChange:close});
-  await act(async()=>{const select=document.querySelector('[data-testid="field-status"]');select.value='active';select.dispatchEvent(new Event('change',{bubbles:true}));});
+  await act(async()=>{const select=document.querySelector('[data-testid="field-status"]');select.value='offboarding';select.dispatchEvent(new Event('change',{bubbles:true}));});
   await click(document.querySelector('[data-testid="tab-reviews_tab"]'));
   await click([...document.querySelectorAll('button')].find(b=>b.textContent.startsWith(review.title)));
   await click([...document.querySelectorAll('button')].find(b=>b.textContent==='Save linked Vendor Review'));
   await click([...document.querySelectorAll('button')].find(b=>b.textContent==='Close linked Vendor Review'));
   await click(document.querySelector('[data-testid="tab-overview"]'));
   expect(document.querySelector('dl').textContent).toContain('Under review');
-  expect(document.querySelector('[data-testid="field-status"]').value).toBe('active');
+  expect(document.querySelector('[data-testid="field-status"]').value).toBe('offboarding');
   api.patch.mockRejectedValue(Object.assign(new Error('Record changed; reload before saving'),{response:{status:409,headers:{'x-create-rejected':'true'}}}));
   await click(document.querySelector('[data-testid="drawer-save"]'));
-  expect(api.patch).toHaveBeenCalledWith('/vendors/v1',expect.objectContaining({status:'active',expected_updated_at:'version1'}),expect.anything());
+  expect(api.patch).toHaveBeenCalledWith('/vendors/v1',expect.objectContaining({status:'offboarding',expected_updated_at:'version1'}),expect.anything());
   expect(close).not.toHaveBeenCalled();
-  expect(document.querySelector('[data-testid="field-status"]').value).toBe('active');
+  expect(document.querySelector('[data-testid="field-status"]').value).toBe('offboarding');
   await click(document.querySelector('[data-testid="drawer-cancel"]'));
   expect(document.body.textContent).toContain('Discard unsaved changes?');
 });

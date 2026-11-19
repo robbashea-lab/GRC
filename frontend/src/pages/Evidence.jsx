@@ -13,7 +13,7 @@ import {HistoryDate} from '@/components/RegisterCells';
 import RegisterLoadError from '@/components/RegisterLoadError';
 import RecordDrawer from '@/components/RecordDrawer';
 import {useEvidenceCatalog,EvidencePagination} from '@/components/EvidencePanel';
-import {EvidenceSource,resolveEvidenceSource,downloadEvidence,uploaderLabel} from '@/lib/evidenceContext';
+import {EvidenceSource,resolveEvidenceSource,useEvidenceDownload,uploaderLabel} from '@/lib/evidenceContext';
 import {Folder,Download,File as FileIcon,ChevronRight,Plus} from 'lucide-react';
 import {toast} from 'sonner';
 import EvidenceItemDrawer from '@/components/EvidenceItemDrawer';
@@ -24,13 +24,16 @@ import './BrawndoEvidence.css';
 import {useAdditionalSectionsSurface,useAdditionalSectionsPresentation} from '@/lib/brawndoAdditionalScope';
 import AdditionalEvidence,{initialEvidenceView} from '@/components/AdditionalEvidence';
 import AdditionalPagePending from '@/components/AdditionalPagePending';
+import {useEvidenceArchive} from '@/lib/evidenceArchive';
 
 const areaName=a=>a==='Unassigned'?'Needs Classification':a;
 const reviewTypes=SCHEMAS.reviews.fields.find(f=>f.name==='review_type').options;
 const folderName=f=>f.area==='Reviews'?(reviewTypes.find(t=>t.value===f.key)?`${reviewTypes.find(t=>t.value===f.key).label} Reviews`:f.label):f.area==='Frameworks'?(FRAMEWORKS.find(t=>t.key===f.key)?.label||f.label):f.label;
 export default function Evidence(){const {currentClientId}=useOrg(),{user,workspaceMode}=useAuth();return <EvidenceWorkspace key={JSON.stringify([currentClientId,user?.user_id,user?.role,workspaceMode,user?.workspace_mode])}/>;}
 function EvidenceWorkspace(){
-  const {currentClientId,currentClient}=useOrg(),{user}=useAuth(),compliance=useCompliance();
+  const {currentClientId,currentClient}=useOrg(),{user,workspaceMode}=useAuth(),compliance=useCompliance();
+  const downloadEvidence=useEvidenceDownload(currentClientId);
+  const archive=useEvidenceArchive(currentClientId,JSON.stringify([user?.user_id,user?.status,user?.role,user?.updated_at,user?.client_ids,!!user?.all_clients,!!user?.password_change_required,workspaceMode,user?.workspace_mode,currentClient?.client_id,currentClient?.status]));
   const pilot=!!currentClientId;
   const scopeRef=useRef(currentClientId);scopeRef.current=currentClientId;
   const [area,setArea]=useState(''),[folder,setFolder]=useState(null),[q,setQ]=useState(''),[page,setPage]=useState(1),[all,setAll]=useState(false);
@@ -56,7 +59,7 @@ function EvidenceWorkspace(){
   const visibleGroups=area==='Frameworks'?compliance.items.map(f=>groups.find(g=>g.key===f.key)||{area:'Frameworks',key:f.key,label:f.label,path:JSON.stringify(['Frameworks',f.key]),count:0}):groups;
   const showFiles=landing||!!q||!!folder||all||area==='Unassigned'||area&&!groups.length;
   async function openSource(ref){try{const target=await resolveEvidenceSource(ref,currentClientId);if(scopeRef.current===currentClientId)setDrawer(target);}catch(e){toast.error(formatError(e));}}
-  const tile=(key,name,count,onClick)=><button type="button" key={key} className="evidence-folder" onClick={onClick}><Folder aria-hidden="true" size={23}/><span><strong>{name}</strong><small>{count} {count===1?'file':'files'}</small></span><ChevronRight aria-hidden="true" size={15}/></button>;
+  const tile=(key,name,count,onClick)=><div className="ev-folder native-evidence-folder" key={key}><button type="button" className="evidence-folder" onClick={onClick}><Folder aria-hidden="true" size={23}/><span><strong>{name}</strong><small>{count} {count===1?'file':'files'}</small></span><ChevronRight aria-hidden="true" size={15}/></button><button type="button" className="ev-dl" disabled={archive.busy||!count} aria-label={`Download ${name} folder`} onClick={()=>archive.run({state:JSON.stringify({include_archived:archived,filters:{...(area?{program_areas:[area]}:{program_areas:[key]}),...(area?{folder_paths:[key]}:{})}})},area||key)}><Download size={15} aria-hidden="true"/></button></div>;
   const body=<>
     {pilot?<BrawndoPageHeader eyebrow={`${currentClient?.name||'Client'} · Evidence repository`} title="Evidence Library">{canOperate(user)&&<button type="button" className="bpage-btn bpage-btn-primary" onClick={()=>openUpload(area)} data-testid="add-evidence"><Plus size={16} aria-hidden="true"/>Add Evidence</button>}</BrawndoPageHeader>
     :<PageHeader title="Evidence Library" subtitle="Evidence organized by work area and record type." action={canOperate(user)&&<PrimaryAction label="Add Evidence" onClick={()=>openUpload(area)} testid="add-evidence"/>}/>}
@@ -65,7 +68,7 @@ function EvidenceWorkspace(){
       {area&&<nav aria-label="Evidence location" className="evidence-breadcrumbs"><button onClick={()=>go()}>Evidence Library</button><ChevronRight aria-hidden="true" size={14}/>{folder?<><button onClick={()=>go(area)}>{areaName(area)}</button><ChevronRight aria-hidden="true" size={14}/><span aria-current="page">{folderName(folder)}</span></>:<span aria-current="page">{areaName(area)}</span>}</nav>}
       <RegisterLoadError error={presentationError} onRetry={result.reload} name="Evidence"/>
       {result.loading&&<p role="status" className="text-sm text-ink-secondary">Loading evidence…</p>}
-      {data&&!area&&!q&&!all&&<section aria-label="Browse evidence"><h2 className="text-sm font-semibold mb-3">Browse</h2><div className="evidence-folders">{PROGRAM_AREAS.map(a=>tile(a,areaName(a),data.program_counts?.[a]||0,()=>go(a)))}</div></section>}
+      {data&&!area&&!q&&!all&&<section aria-label="Browse evidence"><div className="bae-section-head"><h2 className="text-sm font-semibold mb-3">Browse</h2><button type="button" className="ghost" disabled={archive.busy} onClick={()=>archive.run()}>Download all</button></div><div className="evidence-folders">{PROGRAM_AREAS.map(a=>tile(a,areaName(a),data.program_counts?.[a]||0,()=>go(a)))}</div></section>}
       {data&&area&&!folder&&!q&&<section aria-label={`${areaName(area)} folders`}><h2 className="font-semibold mb-1">{areaName(area)}</h2><p className="text-sm text-ink-secondary mb-3">{area==='Unassigned'?'Link these files to their originating work to classify them.':'Files appear here from existing source and supporting relationships.'}</p>
         {area==='Frameworks'&&compliance.error&&<p role="alert">Framework configuration could not be loaded: {compliance.error}</p>}
         <div className="evidence-folders">{visibleGroups.map(f=>tile(f.path,folderName(f),f.count,()=>go(area,f)))}</div>
@@ -81,10 +84,11 @@ function EvidenceWorkspace(){
         </tr>)}</tbody></table></div>}{!landing&&<EvidencePagination data={data} page={page} setPage={setPage}/>}</section>}
     </div>
   </>;
-  const presentation=additionalPresentation&&!additional?<AdditionalPagePending className="bae-page" headerClassName="bae-page-head" title={`${currentClient.name} Evidence Library`} subtitle="Evidence repository" name="Evidence" loadingMessage="Loading evidence…" error={presentationError} onRetry={result.reload}/>:additional?<AdditionalEvidence clientId={currentClientId} clientName={currentClient?.name||'Client'} cisProgram={cisProgram} frameworkItems={compliance.items} frameworkError={compliance.error} frameworkLoading={compliance.loading} frameworkFolderName={folderName} canUpload={canOperate(user)} onUpload={openUpload} onOpenItem={setItemId} onOpenSource={openSource} revision={additionalRevision} viewState={additionalView} onViewStateChange={setAdditionalView}/>:pilot?<BrawndoSurface className="register-surface evidence-repository bevidence" data-testid="brawndo-evidence">{body}</BrawndoSurface>:<div className="register-surface evidence-repository">{body}</div>;
+  const presentation=additionalPresentation&&!additional?<AdditionalPagePending className="bae-page" headerClassName="bae-page-head" title={`${currentClient.name} Evidence Library`} subtitle="Evidence repository" name="Evidence" loadingMessage="Loading evidence…" error={presentationError} onRetry={result.reload}/>:additional?<AdditionalEvidence archive={archive} clientId={currentClientId} clientName={currentClient?.name||'Client'} cisProgram={cisProgram} frameworkItems={compliance.items} frameworkError={compliance.error} frameworkLoading={compliance.loading} frameworkFolderName={folderName} canUpload={canOperate(user)} onUpload={openUpload} onOpenItem={setItemId} onOpenSource={openSource} revision={additionalRevision} viewState={additionalView} onViewStateChange={setAdditionalView}/>:pilot?<BrawndoSurface className="register-surface evidence-repository bevidence" data-testid="brawndo-evidence">{body}</BrawndoSurface>:<div className="register-surface evidence-repository">{body}</div>;
   // Presentation can withdraw during an organization refresh. Keep native editors
   // at stable sibling positions; the outer identity key still resets real scope changes.
   return <>{presentation}
+    {(archive.busy||archive.error||archive.message)&&<div className="native-evidence-archive-status">{archive.error?<p role="alert">Archive not downloaded: {archive.error} Download files individually if this selection cannot be verified.</p>:<p role="status">{archive.message}</p>}{archive.busy&&<button type="button" className="ghost" onClick={archive.cancel}>Cancel archive</button>}</div>}
     {adding&&<EvidenceUpload clientId={currentClientId} initialArea={uploadArea} onClose={()=>setAdding(false)} onSaved={refreshEvidence}/>}
     {itemId&&<EvidenceItemDrawer key={itemId} id={itemId} onClose={()=>setItemId(null)} onOpen={openSource} onChanged={refreshEvidence}/>}
     {drawer&&<RecordDrawer open onOpenChange={value=>{if(!value)setDrawer(null);}} {...drawer} clientId={currentClientId} onSaved={refreshEvidence}/>}

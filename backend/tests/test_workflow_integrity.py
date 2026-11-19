@@ -2,6 +2,7 @@ from test_client_dashboard_sources import ClientDashboardSourcesTests, server
 
 
 class WorkflowIntegrityTests(ClientDashboardSourcesTests):
+    r4_valid_completion_fixture = True
     async def _finding_with_task(self):
         self.sign_in("member")
         await server.db.reviews.insert_one({"review_id": "rev", "client_id": "a", "title": "Access Review", "owner_id": "member",

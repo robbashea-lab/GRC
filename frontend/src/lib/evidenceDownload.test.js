@@ -1,7 +1,12 @@
-import {downloadEvidence} from './evidenceContext';
+import React,{act} from 'react';
+import {createRoot} from 'react-dom/client';
+import {downloadEvidence,useEvidenceDownload} from './evidenceContext';
 import api from './api';
 
 jest.mock('./api',()=>({__esModule:true,default:{get:jest.fn()}}));
+let mockAuth,mockOrg;
+jest.mock('@/context/AuthContext',()=>({useAuth:()=>mockAuth}));
+jest.mock('@/context/OrgContext',()=>({useOrg:()=>mockOrg}));
 
 let anchors,blobs,click,originalCreate,originalRevoke;
 const readBytes=blob=>new Promise((resolve,reject)=>{
@@ -60,4 +65,81 @@ test('a failed native anchor click still revokes the URL and propagates the fail
   const failure=new Error('Native click failed');click.mockImplementation(()=>{throw failure;});
   await expect(downloadEvidence({evidence_id:'sample'})).rejects.toBe(failure);
   expect(URL.revokeObjectURL).toHaveBeenCalledTimes(1);expect(URL.revokeObjectURL).toHaveBeenCalledWith('blob:evidence-attachment');
+});
+
+test('a scope lost while creating the owned URL revokes it without clicking the attachment',async()=>{
+  let current=true;
+  api.get.mockResolvedValue({data:{filename:'owned.bin',content_base64:'AP8='}});
+  URL.createObjectURL.mockImplementation(()=>{current=false;return 'blob:ended-evidence';});
+  await expect(downloadEvidence({evidence_id:'owned'},{isCurrent:()=>current})).resolves.toBe(false);
+  expect(click).not.toHaveBeenCalled();expect(URL.revokeObjectURL).toHaveBeenCalledWith('blob:ended-evidence');
+});
+
+describe('mounted native evidence download owner',()=>{
+  let root,host,operation,onError;
+  const content={filename:'résultat 日本語 v7.bin',content_base64:Buffer.from([0,255,1,128,...Buffer.from('café ✓','utf8')]).toString('base64')};
+  function Harness({clientId='client-a',owner='record-a',active=true}){
+    const download=useEvidenceDownload(clientId,owner,active);
+    return <button onClick={()=>{
+      operation=download({client_id:clientId,evidence_id:'binary:/qa?version#7',version:7,filename:'catalog.bin'});
+      operation.catch(onError);
+    }}>Download</button>;
+  }
+  const render=async props=>act(async()=>root.render(<Harness {...props}/>));
+  const start=async()=>act(async()=>host.querySelector('button').click());
+  beforeEach(()=>{
+    global.IS_REACT_ACT_ENVIRONMENT=true;
+    mockAuth={user:{user_id:'owner-a',status:'active',role:'platform_admin',client_ids:['client-a'],workspace_mode:'demo'},workspaceMode:'demo'};
+    mockOrg={currentClientId:'client-a',currentClient:{client_id:'client-a',status:'active'}};
+    operation=null;onError=jest.fn();
+    host=document.createElement('div');document.body.appendChild(host);root=createRoot(host);
+  });
+  afterEach(async()=>{await act(async()=>root.unmount());host.remove();});
+
+  test('a deferred current response delivers exact native bytes and server filename, then revokes its URL',async()=>{
+    let finish;
+    api.get.mockImplementation(()=>new Promise(resolve=>{finish=resolve;}));
+    await render();await start();
+    expect(api.get).toHaveBeenCalledWith('/evidence/binary%3A%2Fqa%3Fversion%237/download',{signal:expect.any(AbortSignal)});
+    expect(click).not.toHaveBeenCalled();expect(URL.createObjectURL).not.toHaveBeenCalled();
+    await act(async()=>{finish({data:content});await operation;});
+    expect(anchors).toEqual([{href:'blob:evidence-attachment',filename:content.filename}]);
+    expect(await readBytes(blobs[0])).toEqual([...Buffer.from(content.content_base64,'base64')]);
+    expect(blobs[0].type).toBe('application/octet-stream');
+    expect(URL.revokeObjectURL).toHaveBeenCalledWith('blob:evidence-attachment');expect(onError).not.toHaveBeenCalled();
+  });
+
+  test.each(['client','account','mode','grant','workspace','owner','closed','unmount'])('%s change aborts and suppresses a late native file even when transport ignores cancellation',async kind=>{
+    let finish;
+    api.get.mockImplementation(()=>new Promise(resolve=>{finish=resolve;}));
+    await render();await start();
+    const signal=api.get.mock.calls[0][1].signal;
+    let props={};
+    if(kind==='client')props={clientId:'client-b'};
+    if(kind==='account')mockAuth={...mockAuth,user:{...mockAuth.user,user_id:'owner-b'}};
+    if(kind==='mode')mockAuth={...mockAuth,workspaceMode:'standard',user:{...mockAuth.user,workspace_mode:'standard'}};
+    if(kind==='grant')mockAuth={...mockAuth,user:{...mockAuth.user,client_ids:['client-b']}};
+    if(kind==='workspace')mockOrg={currentClientId:'client-b',currentClient:{client_id:'client-b',status:'active'}};
+    if(kind==='owner')props={owner:'record-b'};
+    if(kind==='closed')props={active:false};
+    if(kind==='unmount')await act(async()=>root.render(null));else await render(props);
+    expect(signal.aborted).toBe(true);
+    await act(async()=>{finish({data:content});await operation;});
+    await expect(operation).resolves.toBe(false);
+    expect(URL.createObjectURL).not.toHaveBeenCalled();expect(click).not.toHaveBeenCalled();
+    expect(anchors).toEqual([]);expect(blobs).toEqual([]);expect(onError).not.toHaveBeenCalled();
+  });
+
+  test('an API refusal stays visible to the current owner while an ended request error is ignored',async()=>{
+    const denied=Object.assign(new Error('Native file access denied'),{response:{status:403}});
+    api.get.mockRejectedValueOnce(denied);
+    await render();await start();await expect(operation).rejects.toBe(denied);
+    expect(onError).toHaveBeenCalledWith(denied);expect(click).not.toHaveBeenCalled();
+    onError.mockClear();let fail;
+    api.get.mockImplementationOnce(()=>new Promise((resolve,reject)=>{fail=reject;}));
+    await start();await render({clientId:'client-b'});
+    await act(async()=>{fail(denied);await operation;});
+    await expect(operation).resolves.toBe(false);expect(onError).not.toHaveBeenCalled();
+    expect(URL.createObjectURL).not.toHaveBeenCalled();expect(click).not.toHaveBeenCalled();
+  });
 });

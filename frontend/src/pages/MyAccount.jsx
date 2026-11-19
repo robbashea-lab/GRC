@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { User, ShieldCheck, Bell } from "lucide-react";
+import {nativeRoleLabel} from '@/lib/plannedRoleModel';
 
 export default function MyAccount() {
   const { user, refresh } = useAuth();
@@ -28,6 +29,8 @@ export default function MyAccount() {
   }, [user]);
 
   const isGoogle = user?.auth_provider === "google" && !user?.password_hash_present;
+  const roleLabel = nativeRoleLabel(user?.role);
+  const initials = (user?.name || user?.email || '').trim().split(/\s+/).map(part => part[0]).slice(0,2).join('').toUpperCase();
 
   async function saveProfile() {
     setSaving(true);
@@ -68,30 +71,33 @@ export default function MyAccount() {
   ];
 
   return (
-    <div>
+    <div className="native-account wrap">
       <PageHeader
-        eyebrow="My Account"
-        title={user?.name || user?.email || "My account"}
+        eyebrow="Account"
+        title="My Account"
         subtitle="Manage your personal profile, security and notification preferences."
       />
-      <div className="page-content max-w-3xl">
-        <div className="flex gap-2 mb-6" data-testid="account-tabs">
+      <section className="panel native-account-panel">
+        <div className="prof-top"><span className="av native-account-avatar">{initials}</span><div><b>{user?.name || user?.email}</b><div className="sub">{user?.email} · {roleLabel}</div></div></div>
+        <div className="dr-tabs pf-tabs" role="tablist" aria-label="My Account" data-testid="account-tabs">
           {TABS.map((t) => {
             const active = tab === t.id;
             return (
               <button
                 key={t.id}
+                type="button"
+                role="tab"
+                aria-selected={active}
                 onClick={() => setTab(t.id)}
                 data-testid={`account-tab-${t.id}`}
-                className={`inline-flex items-center gap-2 px-3 h-9 rounded-md border text-sm transition ${active ? "border-brand-charcoal bg-primary text-primary-foreground font-medium" : "border-line bg-surface-card text-ink-secondary hover:bg-surface-subtle"}`}
               >
-                <t.icon className="h-3.5 w-3.5" /> {t.label}
+                {t.label}
               </button>
             );
           })}
         </div>
 
-        <div className="bg-surface-card border border-line rounded-lg p-6 space-y-4">
+        <div className="pf-body native-account-body">
           {tab === "profile" && (
             <div className="space-y-3" data-testid="account-profile">
               <div>
@@ -115,7 +121,7 @@ export default function MyAccount() {
               </div>
               <div>
                 <Label className="text-xs text-ink-secondary">Role</Label>
-                <Input value={(user?.role || "").replace("_", " ")} readOnly className="text-sm bg-surface-subtle capitalize" />
+                <Input value={roleLabel} readOnly className="text-sm bg-surface-subtle" />
                 <div className="text-xs text-ink-help mt-1">Roles are managed by administrators.</div>
               </div>
               <div className="pt-2">
@@ -156,23 +162,26 @@ export default function MyAccount() {
 
           {tab === "notifications" && (
             <div className="space-y-3" data-testid="account-notifications">
-              <label className="flex items-center gap-2 text-sm">
-                <input
-                  type="checkbox"
+              <div className="tog-row">
+                <span><b>Pause my Monday My Work digest email</b><span className="sub native-digest-help">You'll still receive review-due, assignment and mention notifications inside the app.</span></span>
+                <button
+                  type="button"
+                  role="switch"
+                  className="tog"
+                  aria-label="Pause my Monday My Work digest email"
+                  aria-checked={prefs.weekly_digest_optout}
                   data-testid="me-weekly-digest-optout"
-                  checked={prefs.weekly_digest_optout}
-                  onChange={(e) => setPrefs({ ...prefs, weekly_digest_optout: e.target.checked })}
-                />
-                Pause my Monday <strong>My Work</strong> digest email
-              </label>
-              <div className="text-xs text-ink-help">You'll still receive review-due, assignment and mention notifications inside the app.</div>
+                  disabled={saving}
+                  onClick={() => setPrefs(previous => ({ ...previous, weekly_digest_optout: !previous.weekly_digest_optout }))}
+                ><span/></button>
+              </div>
               <div className="pt-2">
                 <Button onClick={savePrefs} disabled={saving} data-testid="me-save-prefs">Save preferences</Button>
               </div>
             </div>
           )}
         </div>
-      </div>
+      </section>
     </div>
   );
 }

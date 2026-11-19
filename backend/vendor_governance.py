@@ -101,8 +101,8 @@ async def validate(db, v, can_access, previous=None):
             raise HTTPException(422, 'Invalid Review date')
         if recurrence not in ('none','monthly','quarterly','semiannual','annual','custom'):
             raise HTTPException(422, 'Invalid Review frequency')
-        if recurrence == 'custom' and (type(custom) is not int or not 1 <= custom <= 3650):
-            raise HTTPException(422, 'Custom recurrence requires 1–3650 days')
+        if recurrence == 'custom' and (type(custom) is not int or not 1 <= custom <= 3660):
+            raise HTTPException(422, 'Custom recurrence requires 1–3660 days')
     for key in ('contract_start','contract_renewal','contract_expiration'):
         if v.get(key) and not day(v[key]):
             raise HTTPException(422, 'Invalid contract date')

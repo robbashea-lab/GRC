@@ -10,6 +10,7 @@ from collections import Counter
 from datetime import datetime, timedelta, timezone
 
 from framework_catalog import CATALOGS, FRAMEWORKS, active_definitions, client_configuration
+from r4_services import assert_settled
 
 
 MEASURE_VERSION = 'native-implementation-v1'
@@ -82,10 +83,14 @@ def _component(key, label, rows, framework):
 
 def current_position(client, framework, assignments, assessments, as_of):
     """Use the native catalog scope and saved conclusion; never score interviews."""
+    assert_settled(client)
+    for row in assessments:
+        assert_settled(row)
     key = framework['key']
     configuration = client_configuration(key, client)
     group = configuration.get('implementation_group')
     categories = configuration.get('categories')
+    level = configuration.get('level')
     valid_configuration = True
     if key == 'cis-ig1':
         valid_configuration = type(group) is int and group in CATALOGS[key]['available_implementation_groups']
@@ -93,20 +98,28 @@ def current_position(client, framework, assignments, assessments, as_of):
         valid_configuration = (isinstance(categories, list) and
             all(isinstance(c, str) and c in SOC_LABELS for c in categories) and
             'security' in categories and len(set(categories)) == len(categories))
+    elif key == 'cmmc':
+        valid_configuration = type(level) is int and level in (1, 2)
     scope_configuration = ({'implementation_group': group} if key == 'cis-ig1' else
-                           {'categories': sorted(categories)} if key == 'soc-2' and valid_configuration else {})
-    label = f'CIS IG{group}' if key == 'cis-ig1' and valid_configuration else framework['label']
+                           {'categories': sorted(categories)} if key == 'soc-2' and valid_configuration else
+                           {'level': level} if key == 'cmmc' and valid_configuration else {})
+    label = (f'CIS IG{group}' if key == 'cis-ig1' and valid_configuration else
+             f'CMMC Level {level}' if key == 'cmmc' and valid_configuration else framework['label'])
     program_key = f'cis-ig{group}' if key == 'cis-ig1' and valid_configuration else key
     catalog = CATALOGS.get(key, {})
     version = catalog.get('version') or framework.get('version')
     title = framework.get('name') or framework['label']
     if key == 'cis-ig1' and valid_configuration:
         title = f'CIS Controls v{version} · Implementation Group {group}'
+    elif key == 'cmmc' and valid_configuration:
+        title = label + (' · FAR 52.204-21 / FCI' if level == 1 else ' · NIST SP 800-171 Rev 2 / CUI')
     elif version and version not in title:
         title += ' · ' + version
     unit = (catalog.get('labels', {}).get('items') or ('Safeguards' if key == 'cis-ig1' else 'Items')).lower()
     if key == 'iso-27001':
         unit = 'requirements and controls'
+    elif key == 'cmmc':
+        unit = 'mapped checks' if level == 1 else 'requirements'
     position = {'client_id': client['client_id'], 'client_name': client.get('name', client['client_id']),
                 'program_id': client['client_id'] + ':' + key,
                 'program_title': title, 'unit_label': unit, 'framework_version': version,
@@ -199,6 +212,9 @@ def current_position(client, framework, assignments, assessments, as_of):
         position['scope_label'] = ', '.join(SOC_LABELS.get(category, category) for category in scope_configuration['categories'])
     elif key == 'cis-ig1':
         position['scope_label'] = f"Cumulative IG{configuration['implementation_group']} safeguards"
+    elif key == 'cmmc':
+        position['scope_label'] = ('17 mapped checks for 15 FAR parent requirements / FCI' if level == 1 else
+                                   '110 NIST SP 800-171 Rev 2 requirements / CUI')
 
     references = [{'kind': 'requirements', 'id': row.get('requirement_id'), 'version': row.get('updated_at') or row.get('created_at'),
                    'source_event': row.get('_portfolio_activity_last_event_id')}
@@ -209,7 +225,9 @@ def current_position(client, framework, assignments, assessments, as_of):
                        'status': row.get('status'),
                        'version': row.get('last_saved') or row.get('last_assessed') or row.get('created_at')}
                       for values in grouped.values() for row in values)
-    configuration_at = client.get('cis_configuration_updated_at' if key == 'cis-ig1' else 'soc_configuration_updated_at') if key in ('cis-ig1', 'soc-2') else None
+    configuration_field = {'cis-ig1': 'cis_configuration_updated_at', 'soc-2': 'soc_configuration_updated_at',
+                           'cmmc': 'cmmc_configuration_updated_at'}.get(key)
+    configuration_at = client.get(configuration_field) if configuration_field else None
     if configuration_at:
         references.append({'kind': 'clients', 'id': client['client_id'], 'field': key + '_configuration', 'version': configuration_at})
     references.sort(key=lambda reference: (reference['kind'], reference.get('id') or '', reference.get('field') or ''))
@@ -254,13 +272,14 @@ def current_position(client, framework, assignments, assessments, as_of):
 
 async def build_current_positions(db, client, as_of=None):
     """Two bounded native reads for one authorized client; no source mutation."""
+    assert_settled(client)
     if not _active(client) or not client.get('onboarding_baseline', {}).get('completed'):
         return []
     cid = client['client_id']
     assignments = await db.requirements.find({'client_id': cid, 'baseline_response': 'applies'},
         {'_id': 0, 'requirement_id': 1, 'client_id': 1, 'baseline_key': 1, 'baseline_response': 1,
          'status': 1, 'archived': 1, 'archived_at': 1, 'created_at': 1, 'updated_at': 1,
-         '_portfolio_activity_last_event_id': 1}).to_list(SOURCE_LIMIT + 1)
+         '_portfolio_activity_last_event_id': 1, '_r4_context_pending': 1}).to_list(SOURCE_LIMIT + 1)
     if len(assignments) > SOURCE_LIMIT:
         raise ValueError('Portfolio native program population exceeds the supported size')
     assignments = [row for row in assignments if row.get('client_id') == cid and row.get('baseline_response') == 'applies' and _active(row)]
@@ -273,9 +292,11 @@ async def build_current_positions(db, client, as_of=None):
         {'_id': 0, 'client_id': 1, 'framework_assessment_id': 1, 'definition_id': 1, 'framework_key': 1,
          'framework_version': 1, 'status': 1, 'soa_applicability': 1, 'soa_justification': 1, 'na_rationale': 1,
          'archived': 1, 'archived_at': 1, 'created_at': 1, 'last_saved': 1, 'last_assessed': 1,
-         '_portfolio_activity_last_event_id': 1}).to_list(SOURCE_LIMIT + 1)
+         '_portfolio_activity_last_event_id': 1, '_r4_context_pending': 1}).to_list(SOURCE_LIMIT + 1)
     if len(assessments) > SOURCE_LIMIT:
         raise ValueError('Portfolio native assessment population exceeds the supported size')
+    for row in assessments:
+        assert_settled(row)
     captured_at = as_of or datetime.now(timezone.utc).isoformat()
     return [current_position(client, framework, assignments,
             [row for row in assessments if row.get('client_id') == cid and row.get('framework_key') == framework['key']], captured_at)

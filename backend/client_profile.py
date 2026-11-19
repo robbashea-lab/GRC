@@ -79,6 +79,8 @@ def router_for(s):
             raise HTTPException(403,'Forbidden for this client')
         client = await s.db.clients.find_one({'client_id':cid},{'_id':0})
         if not client: raise HTTPException(404,'Client not found')
+        import r4_services
+        r4_services.assert_settled(client)
         return client
 
     @router.get('/clients/{cid}/profile')
@@ -102,7 +104,7 @@ def router_for(s):
         changes = {key:{'before':old.get(key),'after':value} for key,value in values.items() if old.get(key)!=value}
         if not changes: return {'ok':True}
         at = s._next_write_time(client.get('updated_at'))
-        changed = await s.db.clients.update_one({'client_id':cid,'updated_at':client.get('updated_at')},
+        changed = await s.db.clients.update_one({'client_id':cid,'updated_at':client.get('updated_at'),'_r4_context_pending':None},
             {'$set':{f'profile.{body.section}':merged,'updated_at':at}})
         if not changed.matched_count: raise HTTPException(409,'Profile changed; reload before saving')
         await s.audit(user,'client-profile-updated','client',cid,cid,meta={'section':body.section,'changes':changes})

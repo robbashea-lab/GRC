@@ -191,10 +191,12 @@ test.each(['demo', 'standard'])('Portfolio keeps Client, Programs and GRC lead c
   expect(table.querySelector('[data-client-id="future_client"] .ep-programs').textContent).toContain('No program yet');
   expect(table.textContent).not.toMatch(/Needs attention|Needs a lead|Insufficient history|Real native action|Nothing scheduled/);
   expect(table.querySelector('.ep-attention,.ep-trends,.ep-key-date')).toBeNull();
-  expect(host.querySelectorAll('.ep-kpi')).toHaveLength(4);
-  expect([...host.querySelectorAll('.ep-kpi > span')].map(node => node.textContent)).toEqual(['Needs attention', 'Overdue items', 'Due in 30 days', 'Not started']);
-  expect(host.querySelectorAll('.ep-kpi strong')[1].textContent).toBe('1');
-  expect(host.querySelectorAll('.ep-kpi strong')[3].textContent).toBe('0');
+  expect(host.querySelectorAll('.pf-kstrip .kchip')).toHaveLength(4);
+  expect([...host.querySelectorAll('.pf-kstrip .kl')].map(node => node.textContent)).toEqual(['Needs attention', 'Overdue items', 'Due in 30 days', 'Not started']);
+  expect(host.querySelectorAll('.pf-kstrip b')[1].textContent).toBe('1');
+  expect(host.querySelectorAll('.pf-kstrip b')[3].textContent).toBe('0');
+  expect(host.querySelector('.toolbar').nextElementSibling.classList.contains('pf-kstrip')).toBe(true);
+  expect(row.querySelector('.cov-pchip.od').textContent).toBe('1 overdue · oldest 3 days');
   expect([...host.querySelector('select[aria-label="Sort clients"]').options].map(option=>option.value)).toEqual(['attention','name']);
   expect(api.post).not.toHaveBeenCalled(); expect(api.patch).not.toHaveBeenCalled();
 });
@@ -401,7 +403,7 @@ test('a removed attention filter cannot hide clients through retained preference
   await act(async()=>root.render(<SavedFilter/>));
   await act(async()=>root.render(<EnhancedPortfolio user={actor}/>));
   expect(host.querySelector('[data-client-id="demo_brawndo"]')).toBeTruthy();
-  expect(host.querySelectorAll('.ep-kpi')).toHaveLength(4);
+  expect(host.querySelectorAll('.pf-kstrip .kchip')).toHaveLength(4);
   expect(host.textContent).not.toMatch(/gone quiet|scheduling gap|monitoring policy/i);
 });
 

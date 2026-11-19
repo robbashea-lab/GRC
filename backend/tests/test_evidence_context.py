@@ -2,7 +2,11 @@ import json
 from test_client_dashboard_sources import ClientDashboardSourcesTests, server
 
 
+from r4_fixture_inputs import validate_with_independent_actor
+
+
 class EvidenceContextTests(ClientDashboardSourcesTests):
+    r4_valid_completion_fixture = True
     async def asyncSetUp(self):
         await super().asyncSetUp()
         if self._testMethodName in ('test_existing_sources_reject_other_tenants','test_new_client_has_zero_metrics_and_records_appear_without_setup'):
@@ -36,7 +40,10 @@ class EvidenceContextTests(ClientDashboardSourcesTests):
         self.assertEqual(item['context']['review']['period'],'Q3 2026')
         self.assertNotIn('content_base64',item)
         await self.client.patch('/api/tasks/'+self.task['task_id'],json={'status':'done'})
-        validated=await self.client.post('/api/findings/'+self.finding['finding_id']+'/validate',json={'rationale':'Synthetic evidence inspected for test'})
+        pending=await server.db.findings.find_one({'finding_id':self.finding['finding_id']})
+        validated=await validate_with_independent_actor(self,server,self.finding['finding_id'],{
+            'rationale':'Synthetic evidence inspected for test','expected_updated_at':pending['updated_at'],
+            'request_id':'evidence-context-independent-validation'})
         self.assertEqual(validated.status_code,200,validated.text)
         self.assertEqual(await server.db.evidence.count_documents({}),3)
         self.assertEqual((await server.db.evidence.find_one({'evidence_id':action['evidence_id']}))['linked_id'],self.task['task_id'])

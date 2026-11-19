@@ -70,7 +70,10 @@ test.each([1,2,3])('IG%i native Action/Risk/Vendor behaviors follow saved config
   expect(()=>prepareTask(db,{...task,source_type:'vendor',source_id:'vendor',vendor_id:'vendor',assurance_id:'foreign'})).toThrow(/Assurance source/);
   expect(()=>prepareTask(db,{...task,source_type:'vendor',source_id:'vendor',vendor_id:'vendor',assurance_id:'assurance'})).not.toThrow();
   expect(()=>prepareTask(db,{...task,assurance_id:'new'}, {...task,assurance_id:'original'})).toThrow(/Original assurance source/);
-  expect(()=>validateVendor(db,{...vendor,status:'active'},vendor)).not.toThrow();
+  expect(()=>validateVendor(db,{...vendor,status:'active'},vendor)).toThrow(/next Vendor lifecycle/);
+  const reviewed={...vendor,status:'under_review'};
+  expect(()=>validateVendor(db,reviewed,vendor)).not.toThrow();
+  expect(()=>validateVendor(db,{...reviewed,status:'active'},reviewed)).not.toThrow();
   expect(()=>validateVendor(db,{...vendor,assurance_records:[]},vendor)).toThrow(/Assurance history/);
   const last={occurrence_id:'completed-assurance',completed_at:'2026-10-21T12:00:00Z'};
   syncVendorReview(db,{client_id:cid,vendor_id:'vendor',vendor_purpose:'assurance',occurrences:[last],status:'upcoming',due_date:'2027-10-13'});
@@ -124,7 +127,7 @@ test('company names and draft payloads do not enable CIS behavior; common AI met
   expect(db.ai_systems).toHaveLength(1);
   expect(db.ai_systems[0]).toMatchObject({ai_system_id:ai.ai_system_id,client_id:cid,environment:'Synthetic evaluation',status:'draft'});
   expect(isCisClient(db,cid)).toBe(false);
-  expect(db.ai_systems[0].approval_status).toBeUndefined();
+  expect(db.ai_systems[0].approval_status).toBe('pending_assessment');
   const saved=JSON.stringify(db.ai_systems);
   expect(()=>aiRequest(db,`/ai_systems/${ai.ai_system_id}`,'patch',{}, {approval_status:'approved',expected_updated_at:ai.updated_at})).toThrow(/read-only AI fields/);
   expect(JSON.stringify(db.ai_systems)).toBe(saved);

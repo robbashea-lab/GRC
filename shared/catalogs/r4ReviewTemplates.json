@@ -1,0 +1,1124 @@
+{
+  "version": "r4-2026-11-18",
+  "source_sha256": "865a2a2d6722f07e7d7085eef23bd2e292e2e8061cf1a174630c00ce9fa788b0",
+  "result_values": [
+    "Pass",
+    "Exception",
+    "N/A",
+    "NMI"
+  ],
+  "topics": [
+    {
+      "id": "ssp",
+      "areas": [
+        "governance"
+      ],
+      "purpose": "Keeps the System Security Plan accurate: boundary, systems, external service providers and how each requirement is implemented.",
+      "generic": [],
+      "always": [
+        [
+          "Confirm the boundary diagram and system inventory match the environment",
+          "Updated boundary diagram",
+          "spm"
+        ],
+        [
+          "Confirm each requirement's implementation statement is current",
+          "Updated SSP sections",
+          "spm"
+        ],
+        [
+          "Record external service providers and their shared responsibilities",
+          "Customer responsibility matrix",
+          "spm"
+        ]
+      ],
+      "client": [
+        [
+          "Client approves the updated SSP",
+          "Signed SSP",
+          "client"
+        ]
+      ],
+      "governance": null
+    },
+    {
+      "id": "poam",
+      "areas": [
+        "governance"
+      ],
+      "purpose": "Tracks every open deficiency to closure with an owner and milestone dates.",
+      "generic": [],
+      "always": [
+        [
+          "Update each open item's status, owner and milestone dates",
+          "Updated POA&M",
+          "spm"
+        ],
+        [
+          "Close items only with evidence of remediation",
+          "Closure evidence",
+          "spm"
+        ],
+        [
+          "Add new deficiencies from assessments and reviews",
+          "Updated POA&M",
+          "spm"
+        ]
+      ],
+      "client": [],
+      "governance": null
+    },
+    {
+      "id": "pentest",
+      "areas": [
+        "pentest",
+        "vuln"
+      ],
+      "purpose": "Confirms penetration testing is planned and performed on schedule, and that findings are remediated and retested.",
+      "generic": [
+        [
+          "Obtain the latest penetration test report",
+          "Test report",
+          "cl"
+        ]
+      ],
+      "always": [
+        [
+          "Confirm findings are remediated or risk-accepted, with retest results recorded",
+          "Remediation and retest report",
+          "spm"
+        ],
+        [
+          "Confirm the scope covers current external IP addresses and sites",
+          "Scope document",
+          "spm"
+        ]
+      ],
+      "client": [
+        [
+          "Client approves the test scope and window",
+          "Approval",
+          "client"
+        ]
+      ],
+      "governance": null
+    },
+    {
+      "id": "dev",
+      "areas": [
+        "dev"
+      ],
+      "purpose": "Confirms the secure development process and third-party component management are followed.",
+      "generic": [
+        [
+          "Review the secure development process and its recent exceptions",
+          "Process document",
+          "cl"
+        ],
+        [
+          "Review the third-party component inventory and its vulnerability findings",
+          "Component report",
+          "cl"
+        ]
+      ],
+      "always": [],
+      "client": [],
+      "governance": {
+        "gov": [
+          "Secure development process reviewed; exceptions approved"
+        ],
+        "client": []
+      }
+    },
+    {
+      "id": "endpoint",
+      "areas": [
+        "edr",
+        "endpoint",
+        "dns"
+      ],
+      "purpose": "Confirms endpoint protections are deployed and current: anti-malware, host firewalls, session locking, DNS filtering and autorun controls.",
+      "generic": [
+        [
+          "Confirm anti-malware is installed and updating on every endpoint",
+          "Agent coverage report",
+          "cl"
+        ],
+        [
+          "Confirm host firewalls and session locking are enforced",
+          "Policy settings",
+          "cl"
+        ],
+        [
+          "Confirm DNS filtering applies to every device",
+          "DNS filtering policy",
+          "cl"
+        ]
+      ],
+      "always": [
+        [
+          "Confirm exclusions and disabled protections are documented and approved",
+          "Exclusion list",
+          "spm"
+        ]
+      ],
+      "client": [],
+      "governance": {
+        "gov": [
+          "Exclusions and disabled protections have documented approval"
+        ],
+        "client": []
+      }
+    },
+    {
+      "id": "network",
+      "areas": [
+        "firewall",
+        "siem"
+      ],
+      "purpose": "Confirms network infrastructure is securely managed, segmented and monitored.",
+      "generic": [
+        [
+          "Obtain the firewall and network device list with firmware status",
+          "Device list and firmware",
+          "cl"
+        ],
+        [
+          "Confirm network alerts and logs are monitored",
+          "Monitoring records",
+          "cl"
+        ]
+      ],
+      "always": [
+        [
+          "Confirm segmentation and remote access paths match the documented architecture",
+          "Network diagram",
+          "spm"
+        ]
+      ],
+      "client": [],
+      "governance": {
+        "gov": [
+          [
+            "Network architecture documentation reviewed and updated (CIS 12.4: at least annually and after relevant significant enterprise changes)",
+            "Network architecture documentation reviewed and updated under the applicable requirements and organizational plan"
+          ]
+        ],
+        "client": []
+      }
+    },
+    {
+      "id": "asset",
+      "areas": [
+        "endpoint",
+        "firewall"
+      ],
+      "purpose": "Keeps the enterprise asset inventory complete and current, and confirms unauthorized assets are dealt with.",
+      "generic": [
+        [
+          "Obtain a dated export from the inventory system of record",
+          "Dated inventory export",
+          "cl"
+        ],
+        [
+          "Compare the inventory against a second source (DHCP, MDM, firewall or scanner) and investigate unknown devices",
+          "Reconciliation notes",
+          "cl"
+        ]
+      ],
+      "always": [
+        [
+          "Confirm the inventory covers end-user, mobile, server, network, IoT, virtual, cloud and remote assets; name the source for anything the main tool doesn't see",
+          "Coverage notes",
+          "spm"
+        ],
+        [
+          "Confirm unauthorized assets found since the last review were removed, denied or quarantined",
+          "Handling tickets",
+          "spm"
+        ]
+      ],
+      "client": [
+        [
+          "Confirm owner, department and approved-to-connect for assets added since the last review",
+          "Updated inventory fields or client confirmation",
+          "client"
+        ]
+      ],
+      "governance": {
+        "gov": [],
+        "client": [
+          "Client confirms owner, department and approved-to-connect for assets added since the last review"
+        ]
+      }
+    },
+    {
+      "id": "software",
+      "areas": [
+        "endpoint",
+        "appcontrol"
+      ],
+      "purpose": "Keeps the software inventory current and confirms only authorized, supported software is in use.",
+      "generic": [
+        [
+          "Obtain a dated software inventory",
+          "Software inventory report",
+          "cl"
+        ],
+        [
+          "List unsupported or end-of-life software found",
+          "Unsupported software list",
+          "cl"
+        ]
+      ],
+      "always": [
+        [
+          "Confirm each unsupported item is removed or has a documented exception with mitigating controls",
+          "Exception records",
+          "spm"
+        ],
+        [
+          "Confirm unauthorized software was removed or approved",
+          "Removal tickets or approvals",
+          "spm"
+        ],
+        [
+          "Confirm browsers, email clients and network infrastructure firmware are on supported versions",
+          "Version and firmware reports",
+          "spm"
+        ]
+      ],
+      "client": [
+        [
+          "Confirm business purpose for applications added since the last review",
+          "Client confirmation",
+          "client"
+        ]
+      ],
+      "governance": {
+        "gov": [
+          "Unsupported software has a documented, client-approved exception or a removal date"
+        ],
+        "client": [
+          "Client confirms business purpose for applications added since the last review"
+        ]
+      }
+    },
+    {
+      "id": "data",
+      "areas": [
+        "dataprot",
+        "identity"
+      ],
+      "purpose": "Confirms the documented data management process is current and its parts operate: data inventory, access permissions, retention, disposal and encryption.",
+      "generic": [
+        [
+          "Confirm device encryption is enabled on end-user devices",
+          "Encryption report",
+          "cl"
+        ]
+      ],
+      "always": [
+        [
+          "Review the data management process and update it for changes (at least annually)",
+          "Reviewed document with date",
+          "spm"
+        ],
+        [
+          "Confirm access permissions on locations holding sensitive data follow need-to-know",
+          "Permission review notes",
+          "spm"
+        ],
+        [
+          "Confirm disposal records for retired devices and media",
+          "Disposal certificates or tickets",
+          "spm"
+        ]
+      ],
+      "client": [
+        [
+          "Confirm the data inventory, data owners and retention periods",
+          "Updated data inventory",
+          "client"
+        ]
+      ],
+      "governance": {
+        "gov": [
+          [
+            "Data management process reviewed and updated (CIS 3.1: at least annually and after relevant significant enterprise changes)",
+            "Data management process reviewed and updated under the applicable requirements and organizational plan"
+          ]
+        ],
+        "client": [
+          "Client confirms the data inventory, data owners and retention periods"
+        ]
+      }
+    },
+    {
+      "id": "config",
+      "areas": [
+        "endpoint",
+        "firewall"
+      ],
+      "purpose": "Confirms documented secure configuration processes exist for enterprise assets and network infrastructure and are kept current.",
+      "generic": [
+        [
+          "Obtain the current configuration standards or baselines",
+          "Baseline documents",
+          "cl"
+        ]
+      ],
+      "always": [
+        [
+          "Review and update the secure configuration process for enterprise assets (at least annually or after significant change)",
+          "Reviewed process with date",
+          "spm"
+        ],
+        [
+          "Review and update the secure configuration process for network infrastructure",
+          "Reviewed process with date",
+          "spm"
+        ],
+        [
+          "Confirm deviations from the baseline are recorded and approved",
+          "Exception records",
+          "spm"
+        ]
+      ],
+      "client": [
+        [
+          "Client approves exceptions to the baseline",
+          "Approval records",
+          "client"
+        ]
+      ],
+      "governance": {
+        "gov": [
+          [
+            "Secure configuration processes for enterprise assets and network infrastructure reviewed and updated (CIS 4.1 and 4.2: at least annually and after relevant significant enterprise changes)",
+            "Secure configuration process reviewed and updated under the applicable requirements and organizational plan"
+          ]
+        ],
+        "client": [
+          "Client approved any exceptions to the baseline"
+        ]
+      }
+    },
+    {
+      "id": "access",
+      "areas": [
+        "identity",
+        "mfa"
+      ],
+      "purpose": "Confirms accounts are inventoried and authorized, dormant accounts are disabled, admin access is separated and MFA is enforced.",
+      "generic": [
+        [
+          "Export every account with name, username, department and start/end dates",
+          "Account export",
+          "cl"
+        ],
+        [
+          "Disable or remove dormant accounts per the framework threshold",
+          "Dormant account report",
+          "cl"
+        ]
+      ],
+      "always": [
+        [
+          "Confirm administrator accounts are dedicated and separate from daily-use accounts",
+          "Admin account list",
+          "spm"
+        ],
+        [
+          "Confirm MFA for externally exposed applications, remote access and administrative access",
+          "MFA / Conditional Access report",
+          "spm"
+        ],
+        [
+          "Sample access-granting and access-revoking tickets since the last review",
+          "Ticket sample",
+          "spm"
+        ]
+      ],
+      "client": [
+        [
+          "Client approver validates the account list: who should have access",
+          "Signed or emailed validation",
+          "client"
+        ]
+      ],
+      "governance": {
+        "gov": [],
+        "client": [
+          "Client approver validated the account list",
+          "Client’s access-granting and revocation process, including HR notice, is documented"
+        ]
+      }
+    },
+    {
+      "id": "vuln",
+      "areas": [
+        "patching",
+        "vuln"
+      ],
+      "purpose": "Confirms the vulnerability management process runs: operating systems and applications are patched on schedule and found vulnerabilities are remediated by risk.",
+      "generic": [
+        [
+          "Obtain OS and application patch compliance reports",
+          "Patch compliance reports",
+          "cl"
+        ],
+        [
+          "Obtain the latest vulnerability scan results",
+          "Scan report",
+          "cl"
+        ]
+      ],
+      "always": [
+        [
+          "For CIS 7.1, review vulnerability-management documentation annually and after relevant significant changes; for CIS 7.2, review the risk-based remediation process at least monthly. Other programs use their applicable requirements and plan.",
+          "Reviewed process with date",
+          "spm"
+        ],
+        [
+          "Confirm overdue patches and high-risk findings have a remediation plan or a documented exception",
+          "Remediation tracking",
+          "spm"
+        ]
+      ],
+      "client": [
+        [
+          "Client approves risk acceptance for anything not remediated",
+          "Risk acceptance",
+          "client"
+        ]
+      ],
+      "governance": {
+        "gov": [
+          "@always0"
+        ],
+        "client": [
+          "Client approved risk acceptance for anything not remediated"
+        ]
+      }
+    },
+    {
+      "id": "log",
+      "areas": [
+        "siem",
+        "itdr"
+      ],
+      "purpose": "Confirms audit logging is defined, enabled, stored with enough capacity and retention, and reviewed.",
+      "generic": [
+        [
+          "Confirm logging is enabled on servers, firewalls and Microsoft 365",
+          "Logging settings",
+          "cl"
+        ],
+        [
+          "Confirm log retention meets the framework requirement",
+          "Retention settings",
+          "cl"
+        ]
+      ],
+      "always": [
+        [
+          "Review and update the audit log management process (at least annually)",
+          "Reviewed process with date",
+          "spm"
+        ],
+        [
+          "Confirm logs are reviewed and alerts triaged; sample recent escalations",
+          "Review records",
+          "spm"
+        ]
+      ],
+      "client": [],
+      "governance": {
+        "gov": [
+          [
+            "Audit log management process reviewed and updated (CIS 8.1: at least annually and after relevant significant enterprise changes)",
+            "Audit log management process reviewed and updated under the applicable requirements and organizational plan"
+          ]
+        ],
+        "client": []
+      }
+    },
+    {
+      "id": "incident",
+      "areas": [
+        "governance",
+        "edr",
+        "siem"
+      ],
+      "purpose": "Confirms incident handling roles, contacts and the reporting process are current, and the response capability is tested where required.",
+      "generic": [],
+      "always": [
+        [
+          "Confirm the person who manages incident handling, and a backup, are designated",
+          "Roles list",
+          "spm"
+        ],
+        [
+          "Update the incident contact list both ways: client contacts and iVenture contacts",
+          "Contact list",
+          "spm"
+        ],
+        [
+          "Confirm the workforce knows how to report an incident",
+          "Communication or training record",
+          "spm"
+        ],
+        [
+          "Run or schedule the incident response exercise where the framework requires one",
+          "Exercise report",
+          "spm"
+        ]
+      ],
+      "client": [
+        [
+          "Client confirms its decision-maker and notification contacts (insurer, legal counsel, regulators)",
+          "Client confirmation",
+          "client"
+        ]
+      ],
+      "governance": null
+    },
+    {
+      "id": "awareness",
+      "areas": [
+        "training"
+      ],
+      "purpose": "Reviews the awareness program and workforce training against applicable scoped requirements and the organizational plan.",
+      "generic": [
+        [
+          "Obtain training-completion evidence; phishing results are optional organizational validation.",
+          "Completion report",
+          "cl"
+        ]
+      ],
+      "always": [
+        [
+          "For CIS 14.1, update awareness content annually and after relevant significant changes. Other programs follow their applicable requirements and plan.",
+          "Updated content or plan",
+          "spm"
+        ],
+        [
+          "Confirm the applicable scoped awareness topics using the linked source requirements; one universal topic list does not cover every framework.",
+          "Course list",
+          "spm"
+        ]
+      ],
+      "client": [
+        [
+          "Client follows up with users who haven't completed training",
+          "Follow-up record",
+          "client"
+        ],
+        [
+          "For CIS 14.1, train new hires at hire and the workforce at least annually. Other programs follow their applicable timing requirements and plan.",
+          "New-hire list with completion",
+          "client"
+        ]
+      ],
+      "governance": null
+    },
+    {
+      "id": "vendor",
+      "areas": [
+        "governance"
+      ],
+      "purpose": "Confirms the service provider inventory is complete and current, providers are classified, and the agreements regulated data needs are in place.",
+      "generic": [],
+      "always": [
+        [
+          "Update the service provider inventory: add new providers, retire old ones, confirm contacts",
+          "Updated vendor register",
+          "spm"
+        ],
+        [
+          "Apply the enterprise provider-assessment policy and risk/classification. Assurance reports or questionnaires are options, not a universal CIS IG1 inventory requirement.",
+          "Assurance documents",
+          "spm"
+        ],
+        [
+          "Confirm required agreements (BAA, DPA, confidentiality terms) are in place where regulated data is shared",
+          "Signed agreements",
+          "spm"
+        ]
+      ],
+      "client": [
+        [
+          "Client confirms non-IT providers that handle company data",
+          "Client confirmation",
+          "client"
+        ]
+      ],
+      "governance": null
+    },
+    {
+      "id": "risk",
+      "areas": [
+        "governance"
+      ],
+      "purpose": "Confirms the risk assessment is current and drives treatment decisions.",
+      "generic": [],
+      "always": [
+        [
+          "Confirm the assessment scope covers every system holding regulated or sensitive data",
+          "Scope statement",
+          "spm"
+        ],
+        [
+          "Update threats, vulnerabilities, likelihood and impact",
+          "Updated assessment",
+          "spm"
+        ],
+        [
+          "Confirm each significant risk has a treatment decision and an owner",
+          "Risk register",
+          "spm"
+        ]
+      ],
+      "client": [
+        [
+          "Client leadership reviews and accepts residual risk",
+          "Sign-off",
+          "client"
+        ]
+      ],
+      "governance": null
+    },
+    {
+      "id": "policy",
+      "areas": [
+        "governance"
+      ],
+      "purpose": "Confirms security policies and procedures are current, approved, available to the people who need them and retained as required.",
+      "generic": [],
+      "always": [
+        [
+          "Review each policy for changes in practice or requirements",
+          "Review notes",
+          "spm"
+        ],
+        [
+          "Record approvals and new version numbers",
+          "Approved versions",
+          "spm"
+        ],
+        [
+          "Confirm documentation is retained for the period the framework requires (HIPAA: six years)",
+          "Retention location",
+          "spm"
+        ]
+      ],
+      "client": [
+        [
+          "Client approves updated policies",
+          "Approval",
+          "client"
+        ]
+      ],
+      "governance": null
+    },
+    {
+      "id": "physical",
+      "areas": [
+        "governance"
+      ],
+      "purpose": "Confirms physical access to facilities and systems is limited, logged and reviewed.",
+      "generic": [],
+      "always": [],
+      "client": [
+        [
+          "Review physical access logs and the badge holder list",
+          "Access log export",
+          "client"
+        ],
+        [
+          "Confirm visitors are escorted and logged",
+          "Visitor log",
+          "client"
+        ],
+        [
+          "Remove access for departed staff",
+          "Badge removal record",
+          "client"
+        ]
+      ],
+      "governance": null
+    },
+    {
+      "id": "media",
+      "areas": [
+        "dataprot",
+        "governance"
+      ],
+      "purpose": "Confirms media is sanitized or destroyed before disposal or reuse, and marked where required.",
+      "generic": [],
+      "always": [
+        [
+          "Obtain sanitization or destruction records for the period",
+          "Certificates of destruction",
+          "spm"
+        ],
+        [
+          "Confirm media marking where the framework requires it",
+          "Marking sample",
+          "spm"
+        ]
+      ],
+      "client": [],
+      "governance": null
+    },
+    {
+      "id": "evaluation",
+      "areas": [
+        "governance"
+      ],
+      "purpose": "Periodically evaluates whether security controls still meet the framework and remain effective.",
+      "generic": [],
+      "always": [
+        [
+          "Re-assess the requirements due for review in GoverNara",
+          "Assessment records",
+          "spm"
+        ],
+        [
+          "Record results and open findings",
+          "Findings",
+          "spm"
+        ],
+        [
+          "Report results to client leadership",
+          "Report",
+          "spm"
+        ]
+      ],
+      "client": [],
+      "governance": null
+    },
+    {
+      "id": "strategy",
+      "areas": [
+        "governance"
+      ],
+      "purpose": "Reviews the cybersecurity strategy and the current and target profile against outcomes.",
+      "generic": [],
+      "always": [
+        [
+          "Compare the current profile with the target",
+          "Profile comparison",
+          "spm"
+        ],
+        [
+          "Adjust priorities and the roadmap",
+          "Updated roadmap",
+          "spm"
+        ]
+      ],
+      "client": [
+        [
+          "Review results with client leadership",
+          "Meeting notes",
+          "client"
+        ]
+      ],
+      "governance": null
+    },
+    {
+      "id": "backup",
+      "areas": [
+        "backup_server",
+        "backup_m365",
+        "backup_pc"
+      ],
+      "purpose": "Confirms the data recovery process is current, backups run for in-scope systems, recovery data is protected and an isolated copy exists, and recovery is tested where required.",
+      "generic": [
+        [
+          "Obtain backup job reports for every in-scope system",
+          "Backup job report",
+          "cl"
+        ],
+        [
+          "For applicable CIS 11.4, verify an isolated recovery instance; offline or immutable alone does not prove isolation. Other programs use their applicable recovery requirements.",
+          "Backup copy configuration",
+          "cl"
+        ]
+      ],
+      "always": [
+        [
+          "For CIS 11.1, review recovery documentation annually and after relevant significant changes; check the separate operating/test requirements. Other programs follow their applicable plan.",
+          "Reviewed process with date",
+          "spm"
+        ],
+        [
+          "Confirm a restore test was performed and recorded where the framework requires it",
+          "Restore test record",
+          "spm"
+        ]
+      ],
+      "client": [
+        [
+          "Client confirms which systems and data must be recoverable and the recovery expectations",
+          "Client confirmation",
+          "client"
+        ]
+      ],
+      "governance": {
+        "gov": [
+          "@always0"
+        ],
+        "client": [
+          "Client confirmed which systems and data must be recoverable and the recovery expectations"
+        ]
+      }
+    }
+  ],
+  "record_guides": [
+    {
+      "id": "risk_rec",
+      "purpose": "Keeps this risk's rating and treatment current. Every register risk is reviewed on its schedule.",
+      "steps": [
+        [
+          "Confirm the risk is still relevant and its description is accurate",
+          "Updated risk record",
+          "spm"
+        ],
+        [
+          "Re-rate likelihood and impact",
+          "Rating change",
+          "spm"
+        ],
+        [
+          "Check progress on the linked treatment actions",
+          "Action status",
+          "spm"
+        ],
+        [
+          "Record an acceptance or closure decision with a named approver, if applicable",
+          "Approver and date",
+          "client"
+        ],
+        [
+          "Set the next review date",
+          "Next review",
+          "spm"
+        ]
+      ]
+    },
+    {
+      "id": "vendor_rec",
+      "purpose": "Confirms this provider is still needed, correctly classified and covered by current assurance and agreements.",
+      "steps": [
+        [
+          "Confirm the provider is still in use and the business owner",
+          "Owner confirmation",
+          "client"
+        ],
+        [
+          "Confirm services and data access are unchanged",
+          "Updated vendor record",
+          "spm"
+        ],
+        [
+          "Confirm criticality",
+          "Criticality",
+          "spm"
+        ],
+        [
+          "Confirm assurance meets the organization-agreed freshness and coverage policy; a 12-month age or bridge letter is not a universal ISO/SOC deadline",
+          "Assurance document",
+          "spm"
+        ],
+        [
+          "Confirm contract, renewal and notice dates, and required agreements (BAA, DPA)",
+          "Contract record",
+          "spm"
+        ]
+      ]
+    },
+    {
+      "id": "assure_rec",
+      "purpose": "Collects and reviews this provider's current security assurance.",
+      "steps": [
+        [
+          "Obtain the current SOC 2 report, ISO 27001 certificate or completed questionnaire",
+          "Assurance document",
+          "spm"
+        ],
+        [
+          "Check the report period and any bridge letter",
+          "Period dates",
+          "spm"
+        ],
+        [
+          "Review exceptions and complementary user entity controls that apply to the client",
+          "Review notes",
+          "spm"
+        ],
+        [
+          "Record follow-ups for anything unresolved",
+          "Follow-up date",
+          "spm"
+        ]
+      ]
+    },
+    {
+      "id": "contract_rec",
+      "purpose": "Decides renewal before the notice date and confirms the security terms.",
+      "steps": [
+        [
+          "Confirm renewal and notice dates",
+          "Contract dates",
+          "spm"
+        ],
+        [
+          "Confirm security and data protection terms",
+          "Contract clauses",
+          "spm"
+        ],
+        [
+          "Record the renewal decision",
+          "Decision",
+          "client"
+        ]
+      ]
+    },
+    {
+      "id": "ai_rec",
+      "purpose": "Confirms this AI system is still used as approved, with the agreed data limits and human review.",
+      "steps": [
+        [
+          "Confirm the approved use is unchanged",
+          "Use statement",
+          "client"
+        ],
+        [
+          "Confirm what data is entered and that prohibited data is excluded",
+          "Data handling notes",
+          "spm"
+        ],
+        [
+          "Confirm human review before important output is used",
+          "Process description",
+          "client"
+        ],
+        [
+          "Check vendor terms on training, retention and data location",
+          "Vendor terms",
+          "spm"
+        ],
+        [
+          "Record the approval decision and conditions",
+          "Decision",
+          "spm"
+        ]
+      ]
+    },
+    {
+      "id": "policy_rec",
+      "purpose": "Keeps this policy accurate, approved and communicated.",
+      "steps": [
+        [
+          "Compare the policy with current practice and framework requirements",
+          "Review notes",
+          "spm"
+        ],
+        [
+          "Update the version and obtain approval",
+          "Approved version",
+          "client"
+        ],
+        [
+          "Communicate changes to the workforce",
+          "Communication record",
+          "client"
+        ],
+        [
+          "Set the next review date",
+          "Next review",
+          "spm"
+        ]
+      ]
+    }
+  ],
+  "plan_templates": {
+    "asset-inventory": "asset",
+    "software-support": "software",
+    "data-governance": "data",
+    "secure-configuration": "config",
+    "account-authorization": "access",
+    "vulnerability-remediation": "vuln",
+    "audit-logging": "log",
+    "data-recovery": "backup",
+    "awareness": "awareness",
+    "provider-inventory": "vendor",
+    "incident-governance": "incident",
+    "endpoint-validation": "endpoint",
+    "network-defense": "network",
+    "secure-development": "dev",
+    "penetration-testing": "pentest",
+    "passive-discovery-reconciliation": "asset",
+    "script-allowlist-reassessment": "software",
+    "event-alert-tuning": "log",
+    "provider-assessment": "vendor",
+    "internal-penetration-test": "pentest",
+    "iso-internal-audit": "native_only",
+    "iso-management-review": "native_only",
+    "iso-risk-assessment": "risk",
+    "iso-objective-review": "native_only",
+    "iso-soa-review": "native_only",
+    "iso-corrective-review": "native_only",
+    "iso-policy-review": "policy",
+    "iso-user-access": "access",
+    "iso-vendor": "vendor",
+    "iso-awareness": "awareness",
+    "soc-risk-assessment": "risk",
+    "soc-user-access": "access",
+    "soc-vulnerability": "vuln",
+    "soc-vendor": "vendor",
+    "soc-backup": "backup",
+    "soc-incident-response": "incident",
+    "soc-policy-review": "policy",
+    "soc-awareness": "awareness",
+    "hipaa-risk-assessment": "risk",
+    "hipaa-user-access": "access",
+    "hipaa-awareness": "awareness",
+    "hipaa-incident-response": "incident",
+    "hipaa-bcp-dr": "backup",
+    "hipaa-vendor": "vendor",
+    "hipaa-policy-review": "policy",
+    "hipaa-management-review": "evaluation",
+    "csf-management-review": "strategy",
+    "csf-risk-assessment": "risk",
+    "csf-user-access": "access",
+    "csf-vendor": "vendor",
+    "csf-policy-review": "policy",
+    "csf-awareness": "awareness",
+    "csf-vulnerability": "vuln",
+    "csf-backup": "backup",
+    "csf-incident-response": "incident"
+  },
+  "baseline_templates": {
+    "inventory": "asset",
+    "data-inventory": "data",
+    "configuration": "config",
+    "user-access": "access",
+    "user-lifecycle": "access",
+    "vulnerability": "vuln",
+    "awareness": "awareness",
+    "vendor": "vendor",
+    "penetration-test": "pentest",
+    "restore": "backup",
+    "backup": "backup",
+    "bcp-dr": "backup",
+    "incident-response": "incident",
+    "risk-assessment": "risk",
+    "risk-exceptions": "risk",
+    "policy-review": "policy",
+    "requirements-review": "native_only",
+    "management-review": "native_only"
+  }
+}

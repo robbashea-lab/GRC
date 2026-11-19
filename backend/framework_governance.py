@@ -29,6 +29,9 @@ from csf_profile import CsfProfile
 from soc_readiness import SocConfiguration, ManagementControl, configuration as soc_configuration
 from cis_scope import CisConfiguration, validate_settings
 from framework_catalog import client_configuration, active_plans
+from cmmc_scope import CmmcConfiguration
+import generic_guided_assessment
+import r4_services
 import create_requests
 
 ROOT=Path(__file__).parents[1]/'frontend/src/lib'
@@ -63,10 +66,10 @@ def validate_configuration(state):
             raise HTTPException(422,'Invalid framework Review fields')
         if 'enabled' in config and type(config['enabled']) is not bool: raise HTTPException(422,'Invalid Review selection')
         if config.get('recurrence','annual') not in CADENCES: raise HTTPException(422,'Invalid client cadence')
-        if config.get('recurrence')=='custom' and (type(config.get('custom_recurrence_days')) is not int or not 1<=config['custom_recurrence_days']<=3650): raise HTTPException(422,'Custom cadence must be 1–3650 days')
+        if config.get('recurrence')=='custom' and (type(config.get('custom_recurrence_days')) is not int or not 1<=config['custom_recurrence_days']<=3660): raise HTTPException(422,'Custom cadence must be 1–3660 days')
         if config.get('due_date') and not review_occurrences.scheduled_date(config['due_date']): raise HTTPException(422,'Invalid Review date')
 
-async def reconcile(s,cid,state,user,*,cis_active_configuration=None):
+async def reconcile(s,cid,state,user,*,cis_active_configuration=None,cmmc_active_configuration=None):
     """Explicit activation only. Absent keys are untouched (single-program Settings edits)."""
     for key,catalog in CATALOGS.items():
         if key not in state.get('requirements',{}):
@@ -77,11 +80,12 @@ async def reconcile(s,cid,state,user,*,cis_active_configuration=None):
                 drivers=[{**d,'framework_driver_active':False} if d['framework_key']==key else d for d in shared_review_plans.drivers(row)]
                 await save_drivers(s,row,drivers)
             continue
-        await reconcile_catalog(s,cid,state,user,key,catalog,cis_active_configuration=cis_active_configuration if key=='cis-ig1' else None)
+        await reconcile_catalog(s,cid,state,user,key,catalog,cis_active_configuration=cis_active_configuration if key=='cis-ig1' else cmmc_active_configuration if key=='cmmc' else None)
 
 
 async def save_drivers(s,row,drivers):
     """Only current provenance changes; completed occurrences keep their snapshot."""
+    r4_services.assert_settled(row)
     drivers=sorted(drivers,key=lambda d:d['framework_plan_key'])
     if row.get('framework_drivers')==drivers:return
     # The legacy scalar describes the original framework, not the whole driver set.
@@ -89,7 +93,7 @@ async def save_drivers(s,row,drivers):
     updates={'framework_drivers':drivers,'framework_driver_active':primary['framework_driver_active'] if primary else row.get('framework_driver_active',True),
              'updated_at':s._next_write_time(row.get('updated_at'))}
     changed=await s.db.reviews.update_one({'client_id':row['client_id'],'review_id':row['review_id'],
-        'framework_drivers':row.get('framework_drivers'),'updated_at':row.get('updated_at')},{'$set':updates})
+        'framework_drivers':row.get('framework_drivers'),'updated_at':row.get('updated_at'),'_r4_context_pending':None},{'$set':updates})
     if not changed.matched_count:raise HTTPException(409,'Review drivers changed; reload configuration before retrying')
 
 
@@ -102,7 +106,8 @@ async def add_driver(s,cid,rid,key,plan,active=True):
 
 
 async def reconcile_catalog(s,cid,state,user,key,catalog,*,cis_active_configuration=None):
-    client=await s.db.clients.find_one({'client_id':cid},{'_id':0,'framework_settings':1})
+    client=await s.db.clients.find_one({'client_id':cid},{'_id':0,'framework_settings':1,'_r4_context_pending':1})
+    r4_services.assert_settled(client)
     configuration=client_configuration(key,client,state)
     definitions=active_definitions(key,configuration)
     # Shared schedule proposals use current settings, not the immutable intake baseline.
@@ -113,11 +118,14 @@ async def reconcile_catalog(s,cid,state,user,key,catalog,*,cis_active_configurat
             'framework_assessment_id':aid,'client_id':cid,'framework_key':key,'definition_id':definition['id'],
             'framework_version':catalog['version'],'status':'not_assessed','implementation':'','technology':'','notes':'','na_rationale':'',
             'owner_id':None,'process_owner_id':None,'created_at':s._now(),'related_links':[],'assessment_history':[]}},upsert=True)
+    assessment_rows=await s.db.framework_assessments.find({'client_id':cid,'framework_key':key},
+        {'_id':0,'definition_id':1,'_r4_context_pending':1}).to_list(None)
+    for assessment in assessment_rows:r4_services.assert_settled(assessment)
     plans=active_plans(key,configuration)
     # A scope proposal may initialize retained records, but its current drivers
     # must not exceed either side of the transition before scope is published.
     published_plans={p['key']:p for p in active_plans(key,cis_active_configuration if cis_active_configuration is not None else configuration)}
-    if key=='cis-ig1':
+    if key in ('cis-ig1','cmmc'):
         active_keys=set(published_plans)
         retained=await s.db.reviews.find({'client_id':cid,'$or':[{'framework_key':key},{'framework_drivers.framework_key':key}]},{'_id':0}).to_list(None)
         for row in retained:
@@ -142,9 +150,12 @@ async def reconcile_catalog(s,cid,state,user,key,catalog,*,cis_active_configurat
         mapping.update({'framework_'+field:plan[field] for field in ('purpose','evidence_expectations','completion_criteria') if field in plan})
         if old:
             rid=old['review_id']
+            r4_services.assert_settled(old)
             # Never replace another framework's provenance or operational history.
             if old.get('framework_key') in (None,key):
-                await s.db.reviews.update_one({'review_id':rid,'client_id':cid},{'$set':mapping})
+                changed=await s.db.reviews.update_one({'review_id':rid,'client_id':cid,
+                    'updated_at':old.get('updated_at'),'_r4_context_pending':None},{'$set':mapping})
+                if not changed.matched_count:raise HTTPException(409,'Review changed; reload configuration before retrying')
         else:
             # Equivalent plans use the same insertion key even during concurrent activation.
             canonical=next(((other_key,p) for other_key,c in CATALOGS.items() for p in c['review_plans'] if plan.get('baseline_key') and p.get('baseline_key')==plan['baseline_key']), (key,plan))
@@ -155,9 +166,11 @@ async def reconcile_catalog(s,cid,state,user,key,catalog,*,cis_active_configurat
             row.update(review_occurrences.schedule(row));row['current_occurrence_id']=review_occurrences.occurrence_id(row)
             await s.db.reviews.update_one({'_id':rid},{'$setOnInsert':row},upsert=True)
         await add_driver(s,cid,rid,key,published_plan,driver_active)
-        await s.db.framework_assessments.update_many(
-            {'client_id':cid,'framework_key':key,'definition_id':{'$in':plan['safeguards']}},
+        linked=await s.db.framework_assessments.update_many(
+            {'client_id':cid,'framework_key':key,'definition_id':{'$in':plan['safeguards']},'_r4_context_pending':None},
             {'$addToSet':{'related_links':{'kind':'reviews','id':rid}}})
+        if linked.matched_count!=sum(a['definition_id'] in plan['safeguards'] for a in assessment_rows):
+            raise HTTPException(409,'Assessment context changed; retry configuration after the original save recovers')
 
 class CisOperation(BaseModel):
     model_config=ConfigDict(extra='forbid',strict=True)
@@ -171,6 +184,7 @@ class AssessmentPatch(BaseModel):
     status: Optional[Literal['not_assessed','in_progress','addressed','needs_attention','not_applicable']]=None
     implementation: Optional[str]=Field(default=None,max_length=20000)
     guided_assessment_source: Optional[guided_assessment.GuidedSource]=None
+    coordination: Optional[r4_services.CoordinationIn]=None
     technology: Optional[str]=Field(default=None,max_length=4000)
     notes: Optional[str]=Field(default=None,max_length=20000)
     na_rationale: Optional[str]=Field(default=None,max_length=4000)
@@ -217,13 +231,14 @@ class ReviewSetup(BaseModel):
     title: str=Field(default='',max_length=500)
     owner_id: Optional[str]=None
     recurrence: Literal['monthly','quarterly','semiannual','annual','custom']='quarterly'
-    custom_recurrence_days: Optional[int]=Field(default=None,ge=1,le=3650)
+    custom_recurrence_days: Optional[int]=Field(default=None,ge=1,le=3660)
     due_date: Optional[str]=Field(default=None,max_length=10)
 
 async def explicit_finding_scopes(s,cid):
-    rows=await s.db.framework_assessments.find({'client_id':cid},{'_id':0,'framework_assessment_id':1,'related_links':1}).to_list(None)
+    rows=await s.db.framework_assessments.find({'client_id':cid},{'_id':0,'framework_assessment_id':1,'related_links':1,'_r4_context_pending':1}).to_list(None)
     scopes={}
     for a in rows:
+        r4_services.assert_settled(a)
         for link in a.get('related_links',[]):
             if link['kind']=='findings':scopes.setdefault(link['id'],set()).add(a['framework_assessment_id'])
     return scopes
@@ -236,18 +251,20 @@ def finding_applies(row,f,rids,scopes):
 async def workspace_work(s,cid,rows,*,upgraded=False):
     """Tenant-scoped scalar reads, no occurrence/evidence/history payloads or per-row queries."""
     if not rows:return {}
-    projection={'_id':0,'client_id':1,'review_id':1,'finding_id':1,'task_id':1,'framework_assessment_id':1,'framework_key':1,'framework_safeguards':1,'status':1,'due_date':1}
+    projection={'_id':0,'client_id':1,'review_id':1,'finding_id':1,'task_id':1,'framework_assessment_id':1,'framework_key':1,'framework_safeguards':1,'status':1,'due_date':1,'_r4_context_pending':1}
     if upgraded:
         projection.update({field:1 for field in ('title','severity','priority','owner_id','assignee_id','reviewer_id','assessment_item_id','risk_id')})
     async def read(cursor,what):
         # Existing bounded-list contract refuses overflow; partial counts must not look complete.
-        return await s._bounded(cursor,10000,what) if upgraded else await cursor.to_list(None)
+        saved=await s._bounded(cursor,10000,what) if upgraded else await cursor.to_list(None)
+        for record in saved:r4_services.assert_settled(record)
+        return saved
     reviews=await read(s.db.reviews.find({'client_id':cid},projection),'workspace reviews')
     findings=await read(s.db.findings.find({'client_id':cid},projection),'workspace findings')
     risks=await read(s.db.risks.find({'client_id':cid,'risk_id':{'$in':list({finding['risk_id'] for finding in findings if finding.get('risk_id')})}},
         {'_id':0,'client_id':1,'risk_id':1,'status':1,'likelihood_score':1,'impact_score':1,'next_review':1,'acceptance_expires_at':1}),'workspace linked risks') if upgraded else []
     if upgraded:
-        scope_rows=await read(s.db.framework_assessments.find({'client_id':cid},{'_id':0,'framework_assessment_id':1,'related_links':1}),'workspace finding scopes')
+        scope_rows=await read(s.db.framework_assessments.find({'client_id':cid},{'_id':0,'framework_assessment_id':1,'related_links':1,'_r4_context_pending':1}),'workspace finding scopes')
         scopes={}
         for assessment in scope_rows:
             for link in assessment.get('related_links',[]):
@@ -321,6 +338,7 @@ async def related(s,row):
         if kind=='policies':clauses.append({'baseline_key':{'$in':[p['policy_key'] for p in CATALOGS.get(row['framework_key'],{}).get('policy_mappings',[]) if did in p['safeguards']]}})
         if kind=='evidence':clauses.append({'linked_type':{'$in':['framework_assessment','framework_assessments']},'linked_id':aid})
         out[kind]=await s.db[kind].find({'client_id':cid,'$or':clauses},{'_id':0,'content_base64':0}).to_list(None)
+        for record in out[kind]:r4_services.assert_settled(record)
     rids=[r['review_id'] for r in out['reviews']]
     findings=await s.db.findings.find({'client_id':cid,'review_id':{'$in':rids}},{'_id':0}).to_list(None)
     scopes=await explicit_finding_scopes(s,cid)
@@ -346,11 +364,15 @@ def router_for(s):
         if not s._can_access_client(user,cid):raise HTTPException(403,'Forbidden')
         client=await s.db.clients.find_one({'client_id':cid},{'_id':0})
         if not client:raise HTTPException(404,'Client not found')
+        r4_services.assert_settled(client)
         return client
     async def parent(aid,user,write=False):
         return await s._authorized_parent('framework_assessments',aid,user,write)
     async def guided_scope(row,client):
         guided_assessment.check_scope(row,client)
+        if row['framework_key'] in generic_guided_assessment.FRAMEWORKS and not await s.db.requirements.find_one({
+                'client_id': row['client_id'], 'baseline_key': row['framework_key'], 'baseline_response':'applies'}):
+            raise HTTPException(404,'Interview is not active for this program')
         if row['framework_key']=='iso-27001':
             await iso_guided_assessment.require_active(s,row,client)
         if row['framework_key']=='soc-2' and not await s.db.requirements.find_one({'client_id':row['client_id'],'baseline_key':'soc-2','baseline_response':'applies'}):
@@ -377,7 +399,7 @@ def router_for(s):
     @router.patch('/framework_assessments/{aid}/items/{item_id}')
     async def update_item(aid:str,item_id:str,body:assessment_items.ItemPatch,user=Depends(s.get_current_user)):
         row=await parent(aid,user,True)
-        if row['framework_key'] not in ('cis-ig1','soc-2','iso-27001'):
+        if row['framework_key'] not in CATALOGS:
             raise HTTPException(404,'Assessment items are not available for this framework')
         await assessment_items.update(s,row,item_id,body,user)
         return portfolio_activity.public_source(await parent(aid,user))
@@ -392,8 +414,7 @@ def router_for(s):
     async def summary(client_id:str, program:Optional[str]=None, detail:Optional[str]=None,
                       offset:int=Query(0,ge=0), limit:int=Query(25,ge=1,le=100), user=Depends(s.get_current_user)):
         import framework_summary
-        await scoped(client_id,user)
-        client=await s.db.clients.find_one({'client_id':client_id},{'_id':0,'client_id':1,'onboarding_baseline.completed':1})
+        client=await scoped(client_id,user)
         return await framework_summary.read(s,client,(program,detail) if detail else None,offset,limit)
     @router.get('/frameworks/{key}')
     async def workspace(key:str,client_id:str,user=Depends(s.get_current_user)):
@@ -403,11 +424,12 @@ def router_for(s):
         if not framework:raise HTTPException(404,'Framework not found')
         program=await s.db.requirements.find_one({'client_id':client_id,'baseline_key':key,'baseline_response':'applies'})
         rows=await s.db.framework_assessments.find({'client_id':client_id,'framework_key':key},{'_id':0}).to_list(None) if framework['implemented'] else []
+        for row in rows:r4_services.assert_settled(row)
         catalog=CATALOGS.get(key,{})
         config=client_configuration(key,client)
         retained={a['definition_id'] for a in rows}
         controls = await s.db.organizational_controls.find({'client_id':client_id},{'_id':0,'control_id':1,'legacy_id':1,'assessment_ids':1,'design':1,'conflicts':1,'observations.operating':1,'observations.expected_instances':1,'observations.collected_instances':1}).to_list(None) if key=='soc-2' else []
-        upgraded=key in ('cis-ig1','soc-2') and guided_assessment.upgraded_pilot({'client_id':client_id,'framework_key':key},user)
+        upgraded=key in ('cis-ig1','soc-2',*generic_guided_assessment.FRAMEWORKS) and guided_assessment.upgraded_pilot({'client_id':client_id,'framework_key':key},user)
         if key=='iso-27001' and program:
             upgraded=guided_assessment.upgraded_pilot({'client_id':client_id,'framework_key':key},user)
         guided_drafts = {}
@@ -432,6 +454,12 @@ def router_for(s):
             identities={a['framework_assessment_id']+':'+user['user_id']:a['definition_id'] for a in rows if a['definition_id'] in active_ids}
             drafts=await s.db.guided_assessment_pilot.find({'client_id':client_id,'_id':{'$in':list(identities)}},
                 {'_id':1,'revision':1,'completed':1,'version':1,'generated_at':1,'user_id':1}).to_list(123)
+            guided_drafts={identities[d['_id']]:{field:d.get(field) for field in ('revision','completed','version','generated_at','user_id')} for d in drafts}
+        if key in generic_guided_assessment.FRAMEWORKS and program:
+            active_ids={d['id'] for d in active_definitions(key,config)}
+            identities={a['framework_assessment_id']+':'+user['user_id']:a['definition_id'] for a in rows if a['definition_id'] in active_ids}
+            drafts=await s.db.guided_assessment_pilot.find({'client_id':client_id,'_id':{'$in':list(identities)}},
+                {'_id':1,'revision':1,'completed':1,'version':1,'generated_at':1,'user_id':1}).to_list(153)
             guided_drafts={identities[d['_id']]:{field:d.get(field) for field in ('revision','completed','version','generated_at','user_id')} for d in drafts}
         return portfolio_activity.public_source({'framework':framework,'selected':bool(program),'configured':bool(rows),'organizational_controls':controls,
                 'implementation_position':portfolio_progress.current_position(client,framework,[program] if program else [],rows,s._now())['current'] if program else None,
@@ -467,13 +495,48 @@ def router_for(s):
             await reconcile(s,body.client_id,state,user,cis_active_configuration={'implementation_group':min(intent['before'],intent['after'])})
             after = {**current, 'framework_settings': {**current.get('framework_settings', {}), 'cis-ig1': {'implementation_group': intent['after']}}}
             portfolio_patch, portfolio_event = s._portfolio_event_patch('client', body.client_id, body.client_id, user, current, after, intent['updated_at'])
-            changed=await s.db.clients.update_one({'client_id':body.client_id,'cis_configuration_updated_at':current.get('cis_configuration_updated_at')},
+            changed=await s.db.clients.update_one({'client_id':body.client_id,'cis_configuration_updated_at':current.get('cis_configuration_updated_at'),'_r4_context_pending':None},
                 {'$set':{'framework_settings.cis-ig1':{'implementation_group':intent['after']},'cis_configuration_updated_at':intent['updated_at'],'cis_scope_change':intent, **portfolio_patch}})
             if not changed.matched_count:raise HTTPException(409,'CIS scope changed; reload configuration')
             await reconcile(s,body.client_id,state,user)
             await s.audit(user,'CIS scope updated','client',body.client_id,body.client_id,meta={**intent, '_portfolio_activity_event_id': portfolio_event['event_id'] if portfolio_event else None})
             return {'implementation_group':intent['after'],'expected_updated_at':intent['updated_at']}
         return await create_requests.run(s.db,idempotency_key,user['user_id'],body.client_id,'/frameworks/cis-ig1/configuration',body.model_dump(exclude_unset=True),execute)
+    @router.patch('/frameworks/cmmc/configuration')
+    @s.configuration_mutation
+    async def configure_cmmc(body:CmmcConfiguration,user=Depends(s.get_current_user),idempotency_key:Optional[str]=Header(default=None,alias='Idempotency-Key')):
+        client=await scoped(body.client_id,user)
+        if not client.get('onboarding_baseline',{}).get('completed'):
+            raise HTTPException(409,'Complete onboarding before adjusting program configuration')
+        if not await s.db.requirements.find_one({'client_id':body.client_id,'baseline_key':'cmmc','baseline_response':'applies'}):
+            raise HTTPException(409,'Select CMMC Applies before configuring its scope')
+        async def execute(identity):
+            current=await scoped(body.client_id,user)
+            receipt=await s.db.create_requests.find_one({'_id':identity})
+            intent=receipt.get('cmmc_scope_intent')
+            if not intent:
+                s._require_snapshot(body.model_dump(exclude_unset=True),{'updated_at':current.get('cmmc_configuration_updated_at')})
+                before=client_configuration('cmmc',current)['level']
+                if body.level<before and (not body.confirm_reduction or not body.reason or not body.effective_date):
+                    raise HTTPException(422,'Scope reduction requires impact confirmation, reason and effective date; answers, evidence and history are retained')
+                intent={'before':before,'after':body.level,'previous_updated_at':current.get('cmmc_configuration_updated_at'),
+                    'updated_at':s._next_write_time(current.get('cmmc_configuration_updated_at')),'reason':body.reason,
+                    'effective_date':body.effective_date or datetime.now(timezone.utc).date().isoformat(),'changed_by':user['user_id']}
+                await s.db.create_requests.update_one({'_id':identity},{'$set':{'cmmc_scope_intent':intent}})
+            if current.get('cmmc_configuration_updated_at') not in (intent['previous_updated_at'],intent['updated_at']):
+                raise HTTPException(409,'CMMC scope changed during recovery; reload before starting a new change')
+            state={**current['onboarding_baseline'],'requirements':{'cmmc':'applies'},'framework_settings':{'cmmc':{'level':intent['after']}}}
+            await reconcile(s,body.client_id,state,user,cmmc_active_configuration={'level':min(intent['before'],intent['after'])})
+            after={**current,'framework_settings':{**current.get('framework_settings',{}),'cmmc':{'level':intent['after']}}}
+            portfolio_patch,portfolio_event=s._portfolio_event_patch('client',body.client_id,body.client_id,user,current,after,intent['updated_at'])
+            changed=await s.db.clients.update_one({'client_id':body.client_id,'cmmc_configuration_updated_at':current.get('cmmc_configuration_updated_at'),'_r4_context_pending':None},
+                {'$set':{'framework_settings.cmmc':{'level':intent['after']},'cmmc_configuration_updated_at':intent['updated_at'],'cmmc_scope_change':intent,**portfolio_patch}})
+            if not changed.matched_count:raise HTTPException(409,'CMMC scope changed; reload configuration')
+            await reconcile(s,body.client_id,state,user)
+            await s.audit(user,'CMMC scope updated','client',body.client_id,body.client_id,
+                meta={**intent,'_portfolio_activity_event_id':portfolio_event['event_id'] if portfolio_event else None})
+            return {'level':intent['after'],'expected_updated_at':intent['updated_at']}
+        return await create_requests.run(s.db,idempotency_key,user['user_id'],body.client_id,'/frameworks/cmmc/configuration',body.model_dump(exclude_unset=True),execute)
     @router.get('/frameworks/cis-ig1/export')
     async def export_cis(client_id:str,include_retained:bool=False,user=Depends(s.get_current_user)):
         client=await scoped(client_id,user)
@@ -504,7 +567,9 @@ def router_for(s):
         at=s._next_write_time(client.get('soc_configuration_updated_at'))
         after = {**client, 'framework_settings': {**client.get('framework_settings', {}), 'soc-2': config}}
         portfolio_patch, portfolio_event = s._portfolio_event_patch('client', body.client_id, body.client_id, user, client, after, at)
-        await s.db.clients.update_one({'client_id':body.client_id},{'$set':{'framework_settings.soc-2':config,'soc_configuration_updated_at':at, **portfolio_patch}})
+        changed=await s.db.clients.update_one({'client_id':body.client_id,'soc_configuration_updated_at':client.get('soc_configuration_updated_at'),'_r4_context_pending':None},
+            {'$set':{'framework_settings.soc-2':config,'soc_configuration_updated_at':at, **portfolio_patch}})
+        if not changed.matched_count:raise HTTPException(409,'SOC 2 scope changed; reload configuration')
         await reconcile(s,body.client_id,{**client['onboarding_baseline'],'requirements':{'soc-2':'applies'}},user)
         await s.audit(user,'SOC 2 readiness scope updated','client',body.client_id,body.client_id,
                       meta={'categories':config['categories'],'period_start':config['period_start'],'period_end':config['period_end'],'_portfolio_activity_event_id':portfolio_event['event_id'] if portfolio_event else None})
@@ -557,6 +622,7 @@ def router_for(s):
             10000,'framework Review relationships')
         linked_events=[]
         for assessment in assessments:
+            r4_services.assert_settled(assessment)
             link={'kind':'reviews','id':rid}
             if link in assessment.get('related_links',[]):
                 continue
@@ -569,7 +635,7 @@ def router_for(s):
             linked=await s.db.framework_assessments.update_one({
                 'framework_assessment_id':assessment['framework_assessment_id'],'client_id':cid,
                 'related_links':assessment.get('related_links'), 'last_saved':assessment.get('last_saved'),
-                'last_assessed':assessment.get('last_assessed')},update)
+                'last_assessed':assessment.get('last_assessed'),'_r4_context_pending':None},update)
             if not linked.matched_count:raise HTTPException(409,'Assessment relationships changed; retry the Review setup')
             if linked.modified_count:linked_events.append((portfolio_event['event_id'] if portfolio_event else None,
                                                          assessment['framework_assessment_id']))
@@ -581,7 +647,41 @@ def router_for(s):
         return portfolio_activity.public_source(await s.db.reviews.find_one({'review_id':rid,'client_id':cid},{'_id':0}))
 
     @router.patch('/framework_assessments/{aid}')
-    async def update(aid:str,body:AssessmentPatch,user=Depends(s.get_current_user)):
+    async def update(aid:str,body:AssessmentPatch,user=Depends(s.get_current_user),idempotency_key:Optional[str]=Header(default=None,alias='Idempotency-Key')):
+        if body.coordination is not None:
+            candidate=await s.db.framework_assessments.find_one({'framework_assessment_id':aid},{'_id':0})
+            if not candidate or not s._can_access_client(user,candidate['client_id']):
+                raise HTTPException(404,'Assessment not found')
+            if not s._writable(user):
+                raise HTTPException(403,'Read-only role')
+            authorization.require_assigned(user, 'framework_assessments', candidate)
+            route='/framework_assessments/'+aid+'/save'
+            payload=body.model_dump(exclude_unset=True)
+            # Completed receipts and pending-audit repair precede execute. They
+            # must use current authority, allowing only this exact frozen plan's claim.
+            retained_identity=await r4_services.authorize_retained_command(
+                s,idempotency_key,user,candidate['client_id'],route,payload)
+            r4_services.assert_settled(candidate, retained_identity)
+            await r4_services.client_for(s,candidate['client_id'],user,identity=retained_identity)
+            async def coordinated(identity):
+                current=await parent(aid,user,True)
+                receipt=await s.db.create_requests.find_one({'_id':identity})
+                if receipt.get('r4_write_plan') is not None:
+                    await r4_services.apply_plan(s,receipt['r4_write_plan'],identity,user,'Shared assessment context saved')
+                    return portfolio_activity.public_source(await parent(aid,user))
+                if current['framework_key']=='iso-27001':
+                    async def locked_context_iso(lease):
+                        latest,_,actor=await iso_guided_assessment.write_context(s,aid,user)
+                        return await update_assessment(aid,body,actor,latest,lease,intent_id=identity)
+                    return await iso_guided_lease.run(s,current,locked_context_iso)
+                if current['framework_key']=='soc-2':
+                    async def locked_context_soc(lease):
+                        latest,_,actor=await soc_guided_assessment.write_context(s,aid,user)
+                        return await update_assessment(aid,body,actor,latest,lease,intent_id=identity)
+                    return await soc_guided_lease.run(s,current,locked_context_soc)
+                return await update_assessment(aid,body,user,current,intent_id=identity)
+            return await create_requests.run(s.db,idempotency_key,user['user_id'],candidate['client_id'],
+                route,payload,coordinated)
         old=await parent(aid,user,True)
         if old['framework_key']=='iso-27001':
             old,_,user=await iso_guided_assessment.write_context(s,aid,user)
@@ -596,8 +696,10 @@ def router_for(s):
                 return await update_assessment(aid,body,actor,current,lease)
             return await soc_guided_lease.run(s,old,locked)
         return await update_assessment(aid,body,user,old)
-    async def update_assessment(aid,body,user,old,lease=None):
+    async def update_assessment(aid,body,user,old,lease=None,intent_id=None):
         changes=body.model_dump(exclude_unset=True)
+        changes.pop('coordination',None)
+        context_plan=await r4_services.prepare_context_plan(s,old,user,body.coordination) if body.coordination is not None else None
         if 'guided_assessment_source' in changes:
             await guided_scope(old,await scoped(old['client_id'],user))
             if changes['guided_assessment_source']:
@@ -613,6 +715,10 @@ def router_for(s):
                     if not same_application and draft['version'] != guided_assessment.current_version(old['definition_id'], upgraded=True, framework=old['framework_key']):
                         raise HTTPException(409, 'Current-source interview review is required before saving a new assessment')
                     if not same_application:guided_assessment.require_current_lineage(draft,old,source_client)
+                if old['framework_key'] in generic_guided_assessment.FRAMEWORKS:
+                    proposed=generic_guided_assessment.result_status(old['definition_id'],draft['answers'],draft['version'])
+                    if changes.get('implementation')!=draft.get('narrative') or changes.get('status')!=proposed:
+                        raise HTTPException(422,'Save the exact reviewed text and proposed implementation status')
                 if old['framework_key']=='iso-27001':
                     iso_guided_assessment.validate_completion(old['definition_id'],draft['answers'],draft['version'])
                     if draft.get('summary_review') != {'version':draft['version'],'answers':draft['answers']}:
@@ -760,7 +866,7 @@ def router_for(s):
                 changes.update(last_saved=at,assessment_recorded_at=at if judgment else old.get('assessment_recorded_at'),
                                assessment_recorded_by=user['user_id'] if judgment else old.get('assessment_recorded_by'))
                 data.update(changes)
-            snapshot={k:data.get(k) for k in AssessmentPatch.model_fields if k not in ('expected_last_assessed','record_assessment') and (k not in ('cis_assessment_criteria','soc_assessment_checks','iso_assessment_checks','cis_operation','guided_assessment_source') or k in data) and (k not in VERIFICATION_FIELDS or k in history_verification)};snapshot.update(at=at,by=user['user_id'])
+            snapshot={k:data.get(k) for k in AssessmentPatch.model_fields if k not in ('expected_last_assessed','record_assessment','coordination') and (k not in ('cis_assessment_criteria','soc_assessment_checks','iso_assessment_checks','cis_operation','guided_assessment_source') or k in data) and (k not in VERIFICATION_FIELDS or k in history_verification)};snapshot.update(at=at,by=user['user_id'])
             if changes.get('guided_assessment_source'):
                 snapshot.update(items_to_address=data.get('items_to_address',[]),items_revision=data.get('items_revision',0))
             if old['framework_key']=='soc-2':
@@ -781,9 +887,18 @@ def router_for(s):
                 write['$push']={'assessment_history':snapshot}
             if lease is not None:
                 await lease.check()
-            result=await s.db.framework_assessments.update_one(predicate,write)
-            if not result.matched_count:raise HTTPException(409,'Assessment changed since it was opened; reload before saving')
+            if context_plan is not None:
+                patch={**write['$set']}
+                if '$push' in write:patch['assessment_history']=[*old.get('assessment_history',[]),snapshot]
+                additional=r4_services.write_row('framework_assessments','framework_assessment_id',old,patch,
+                    preconditions={key:old.get(key) for key in ('last_saved','last_assessed','items_revision')})
+                await r4_services.commit_context_plan(s,old,user,context_plan,intent_id,additional_writes=[additional])
+            else:
+                result=await s.db.framework_assessments.update_one({**predicate,'_r4_context_pending':None},write)
+                if not result.matched_count:raise HTTPException(409,'Assessment changed since it was opened; reload before saving')
             await s.audit(user,'Framework assessment updated','framework_assessment',aid,old['client_id'],meta={'changed_fields':changed,'status':data['status'],'_portfolio_activity_event_id':portfolio_event['event_id'] if portfolio_event else None})
+        elif context_plan is not None:
+            await r4_services.commit_context_plan(s,old,user,context_plan,intent_id)
         return portfolio_activity.public_source(await parent(aid,user))
     @router.get('/framework_assessments/{aid}')
     async def get_assessment(aid:str,user=Depends(s.get_current_user)):
@@ -806,7 +921,7 @@ def router_for(s):
         if portfolio_patch:update['$set']=portfolio_patch
         linked=await s.db.framework_assessments.update_one({
             'framework_assessment_id':aid,'client_id':row['client_id'],'related_links':row.get('related_links'),
-            'last_saved':row.get('last_saved'),'last_assessed':row.get('last_assessed')},update)
+            'last_saved':row.get('last_saved'),'last_assessed':row.get('last_assessed'),'_r4_context_pending':None},update)
         if not linked.matched_count:raise HTTPException(409,'Assessment relationships changed; reload before linking')
         await s.audit(user,'Framework record linked','framework_assessment',aid,row['client_id'],meta={
             **body.model_dump(),'_portfolio_activity_event_id':portfolio_event['event_id'] if portfolio_event else None,
@@ -820,7 +935,7 @@ def router_for(s):
         if target['client_id']!=row['client_id']:raise HTTPException(422,'Relationship must belong to this client')
         # Suppress this assessment's current link, not the artifact or original provenance.
         removed=await s.db.framework_assessments.update_one({'framework_assessment_id':aid,'client_id':row['client_id'],
-            'related_links':row.get('related_links'),'last_saved':row.get('last_saved'),'last_assessed':row.get('last_assessed')},
+            'related_links':row.get('related_links'),'last_saved':row.get('last_saved'),'last_assessed':row.get('last_assessed'),'_r4_context_pending':None},
             {'$pull':{'related_links':body.model_dump()},'$addToSet':{'unlinked_evidence_ids':body.id}})
         if not removed.matched_count:raise HTTPException(409,'Assessment relationships changed; reload before unlinking')
         await s.audit(user,'Framework Evidence unlinked','framework_assessment',aid,row['client_id'],meta={

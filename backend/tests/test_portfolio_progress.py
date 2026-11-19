@@ -116,7 +116,7 @@ class NativeProgressTests(unittest.TestCase):
             client(categories=('confidentiality', 'security', 'availability')))['scope_signature'])
 
     def test_other_supported_frameworks_do_not_invent_criteria_or_profile_alignment_credit(self):
-        for key in ('hipaa', 'nist-csf-2'):
+        for key in ('hipaa', 'nist-csf-2', 'cmmc'):
             with self.subTest(key=key):
                 rows = source(key)
                 rows[0].update(status='addressed', csf_profile={'gap_state': 'gap'})
@@ -125,9 +125,18 @@ class NativeProgressTests(unittest.TestCase):
                 self.assertEqual(current['total'], len(CATALOGS[key]['requirements']))
                 self.assertEqual(current['implemented'], 1)
                 self.assertEqual(current['denominator'], len(rows))
-        unsupported = progress.current_position(client(), framework('cmmc'), [], [], AS_OF)['current']
-        self.assertEqual(unsupported['availability'], 'unavailable')
-        self.assertIsNone(unsupported['percentage'])
+                if key == 'cmmc':
+                    self.assertEqual(current['denominator'], 110)
+                    self.assertEqual(current['availability'], 'available')
+                    self.assertEqual(current['percentage'], (1 / 110) * 100)
+        missing = progress.current_position(client(), framework('cmmc'), [], [], AS_OF)['current']
+        self.assertEqual(missing['availability'], 'partial')
+        self.assertEqual((missing['total'], missing['missing_records']), (110, 110))
+        self.assertEqual(missing['denominator'], 0)
+        self.assertIsNone(missing['percentage'])
+        self.assertFalse(missing['not_started'])
+        self.assertEqual(missing['provenance']['source_references'], [])
+        self.assertIsNone(missing['provenance']['source_as_of'])
 
     def test_no_data_missing_duplicates_unknown_and_zero_scope_never_look_complete(self):
         missing = position('cis-ig1', [])

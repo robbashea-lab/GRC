@@ -30,7 +30,7 @@ const button=text=>[...container.querySelectorAll('button')].find(node=>node.tex
 const search=value=>act(async()=>{const node=container.querySelector('[data-testid="ai-search"]');Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,'value').set.call(node,value);node.dispatchEvent(new Event('input',{bubbles:true}));});
 const change=(node,value)=>act(async()=>{node.value=value;node.dispatchEvent(new Event('change',{bubbles:true}));});
 const tickets=()=>[...container.querySelectorAll('tbody tr')];
-const summary=key=>container.querySelector('.bda-cell.bda-'+key+' strong').textContent;
+const summary=key=>container.querySelector('[data-summary="'+key+'"] strong').textContent;
 
 beforeEach(()=>{
   global.IS_REACT_ACT_ENVIRONMENT=true;sessionStorage.clear();localStorage.clear();sessionStorage.setItem('grc_client_id','demo_brawndo');mockDrawer=null;mockForm=null;
@@ -62,7 +62,7 @@ test('Due in 30 days uses native inclusive boundaries, excludes undated/finished
     records.tasks=[task('yesterday',{due_date:'2026-10-23'}),task('today',{due_date:'2026-10-24'}),task('day14',{due_date:'2026-11-07'}),task('day15',{due_date:'2026-11-08'}),task('day30',{due_date:'2026-11-23'}),task('day31',{due_date:'2026-11-24'}),task('undated'),task('done',{due_date:'2026-11-05',status:'done'}),task('pending-task',{finding_id:'pending',due_date:'2026-11-23',status:'done'})];
     records.findings=[finding('pending',{status:'remediated',primary_task_id:'pending-task'})];
     await render();expect(summary('upcoming')).toBe('5');
-    await click(container.querySelector('.bda-upcoming'));
+    await click(container.querySelector('[data-summary="upcoming"]'));
     expect(new Set(tickets().map(row=>row.dataset.ticketId))).toEqual(new Set(['task:today','task:day14','task:day15','task:day30','finding:pending']));
     expect(container.querySelector('.bda-more-controls label:last-child select').selectedOptions[0].textContent).toBe('Due in 30 days');
     expect(container.querySelector('.bda-chip').textContent).toContain('Due in 30 days');
@@ -79,7 +79,7 @@ test('alternate controller requires saved enrollment while invalid CIS settings 
   expect(container.querySelector('[data-testid="native-register"]')).not.toBeNull();
   expect(container.querySelector('.brawndo-demo-actions')).toBeNull();
   expect(cisClientProgram(mockOrg.currentClient)).toBeNull();
-  expect(brawndoFullRecordEligible({...mockOrg,...mockAuth,pathname:'/action-items',clientId:cid,selectedClientId:cid})).toBe(false);
+  expect(brawndoFullRecordEligible({...mockOrg,...mockAuth,pathname:'/action-items',clientId:cid,selectedClientId:cid})).toBe(true);
   expect(api.post).not.toHaveBeenCalled();expect(api.patch).not.toHaveBeenCalled();
   mockAuth=originalAuth;mockOrg=originalOrg;await rerender();await act(async()=>navigate('/findings'));expect(container.querySelector('[data-testid="native-register"]')).not.toBeNull();
 });
@@ -89,7 +89,7 @@ test('full-population summary is independent of search/source and filters preced
   records.findings=[finding('accepted',{status:'accepted',severity:'high'})];records.tasks.push(task('linked',{finding_id:'accepted',status:'blocked'}));
   await render();expect(tickets()).toHaveLength(10);expect(summary('active')).toBe('13');expect(summary('unassigned')).toBe('12');expect(summary('upcoming')).toBe('0');
   // The replacement overview does not invent a deadline for a blocked, unscheduled ticket.
-  expect(container.querySelector('.bda-upcoming small').textContent).toBe('Saved active Action deadlines');
+  expect(container.querySelector('[data-summary="upcoming"] small').textContent).toBe('Saved active Action deadlines');
   expect(container.querySelector('.bda-runway')).toBeNull();
   await click(button('Next'));expect(tickets()).toHaveLength(3);expect(container.textContent).toContain('Page 2 of 2');
   await search('Distinct target');expect(tickets()).toHaveLength(1);expect(tickets()[0].textContent).toContain('Distinct target');expect(container.textContent).toContain('Page 1 of 1');expect(summary('active')).toBe('13');
@@ -102,11 +102,11 @@ test('unavailable loads never describe unknown summaries as empty or fully assig
   const pending=new Promise((resolve,reject)=>{rejectLoad=reject;});
   api.get.mockReturnValue(pending);
   const expectUnavailable=()=>{
-    const cells=[...container.querySelectorAll('.bda-cell')];
+    const cells=[...container.querySelectorAll('[data-summary]')];
     expect(cells).toHaveLength(4);
     for(const cell of cells){
       expect(cell.querySelector('strong').textContent).toBe('—');
-      expect(cell.querySelector('small').textContent).toBe('—');
+      expect(cell.querySelector('small').textContent).toBe('Counts unavailable');
       expect(cell.disabled).toBe(true);
     }
   };
@@ -119,8 +119,8 @@ test('unavailable loads never describe unknown summaries as empty or fully assig
 
 test('presentation preserves native creation forms and adds no selection, bulk or selected CSV operations',async()=>{
   await render();
-  const themeAction=container.querySelector('.surface-theme-action');expect(themeAction.textContent).toBe('Dark');
-  await click(themeAction);expect(container.querySelector('.brawndo-demo-actions').dataset.theme).toBe('dark');expect(themeAction.textContent).toBe('Light');
+  const themeAction=container.querySelector('.surface-theme-action');expect(themeAction.textContent).toBe('Light');
+  await click(themeAction);expect(container.querySelector('.brawndo-demo-actions').dataset.theme).toBe('light');expect(themeAction.textContent).toBe('Dark');
   expect(container.querySelector('table input[type="checkbox"]')).toBeNull();expect(container.querySelector('[aria-label="Selected ticket actions"]')).toBeNull();
   expect(button('Reassign selected')).toBeUndefined();expect(button('Export selected CSV')).toBeUndefined();
   await click(button('New finding'));expect(mockForm).toMatchObject({kind:'findings',record:null,clientId:cid,open:true});
@@ -249,12 +249,12 @@ test('quarter browsing preserves native overdue filters, cards and register whil
     await click(button('This quarter'));
     expect(container.querySelector('.bda-runway')).toBeNull();expect([...container.querySelectorAll('.review-dot')].map(node=>node.dataset.actionId)).toEqual(['late']);
     expect(tickets()).toHaveLength(1);const before=location.search;
-    const protectedBefore={cards:container.querySelector('.bda-summary').outerHTML,register:container.querySelector('.bda-register').outerHTML};
+    const protectedBefore={cards:container.querySelector('.native-summary').outerHTML,register:container.querySelector('.bda-register').outerHTML};
     const point=container.querySelector('.review-dot');expect(point.getAttribute('aria-label')).toContain('Low');
     await act(async()=>point.focus());expect(location.search).toBe(before);
     await click(container.querySelector('[aria-label="Next quarter"]'));
     expect(container.querySelector('.quarter-controls').textContent).toContain('Q1 2027');
-    expect({cards:container.querySelector('.bda-summary').outerHTML,register:container.querySelector('.bda-register').outerHTML}).toEqual(protectedBefore);
+    expect({cards:container.querySelector('.native-summary').outerHTML,register:container.querySelector('.bda-register').outerHTML}).toEqual(protectedBefore);
     expect(location.search).toBe(before);expect(tickets()[0].textContent).toContain('Action late');
     await click(container.querySelector('.agenda-entry'));
     expect(mockDrawer.kind).toBe('tasks');expect(mockDrawer.record.task_id).toBe('later');
@@ -287,9 +287,9 @@ test('new due-in-30 card retains native date filtering and clears pagination wit
   const date=new Date();date.setUTCDate(date.getUTCDate()+12);const due=date.toISOString().slice(0,10);
   records={tasks:[...Array.from({length:12},(_,i)=>task(String(i),{due_date:due})),task('undated')],findings:[]};
   await render('/action-items?page=2');expect(summary('upcoming')).toBe('12');
-  await click(container.querySelector('.bda-upcoming'));
+  await click(container.querySelector('[data-summary="upcoming"]'));
   expect(new URLSearchParams(location.search).get('quick')).toBe('upcoming');expect(new URLSearchParams(location.search).has('page')).toBe(false);expect(tickets()).toHaveLength(10);
-  await click(container.querySelector('.bda-upcoming'));expect(new URLSearchParams(location.search).has('quick')).toBe(false);
+  await click(container.querySelector('[data-summary="upcoming"]'));expect(new URLSearchParams(location.search).has('quick')).toBe(false);
   expect(summary('active')).toBe('13');expect(api.post).not.toHaveBeenCalled();expect(api.patch).not.toHaveBeenCalled();
 });
 

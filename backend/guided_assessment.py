@@ -9,6 +9,7 @@ import soc_guided_assessment
 import soc_guided_lease
 import iso_guided_assessment
 import iso_guided_lease
+import generic_guided_assessment
 
 LEGACY = json.loads((ROOT / 'guidedAssessmentPilot.json').read_text(encoding='utf-8'))
 CONTROL1 = json.loads((ROOT / 'guidedControl1.json').read_text(encoding='utf-8'))
@@ -65,6 +66,8 @@ CATALOG = {**PROGRAM3_CATALOG,
 VERSIONS = {LEGACY['version']: LEGACY, CONTROL1['version']: CONTROL1, PROGRAM_V1['version']: PROGRAM1_CATALOG, PROGRAM_V2['version']: PROGRAM2_CATALOG, CONTROL1_V3['version']: CONTROL1_V3, CONTROL1_V4['version']: CONTROL1_V4, CONTROL1_V5['version']:CONTROL1_V5, PROGRAM['version']: PROGRAM3_CATALOG, PROGRAM_V4['version']: PROGRAM4_CATALOG, PROGRAM_V5['version']:PROGRAM5_CATALOG}
 
 def current_version(id, upgraded=True, framework='cis-ig1'):
+    if framework in generic_guided_assessment.FRAMEWORKS:
+        return generic_guided_assessment.current_version(id, framework)
     if framework == 'iso-27001':
         return iso_guided_assessment.current_version(id)
     if framework == 'soc-2':
@@ -133,6 +136,8 @@ class GuidedSource(BaseModel):
     generated_at: str = Field(max_length=100)
 
 def check_scope(row, client):
+    if row['framework_key'] in generic_guided_assessment.FRAMEWORKS:
+        return generic_guided_assessment.check_scope(row, client)
     if row['framework_key'] == 'iso-27001':
         return iso_guided_assessment.check_scope(row, client)
     if row['framework_key'] == 'soc-2':
@@ -145,6 +150,8 @@ def check_scope(row, client):
         raise HTTPException(404, 'Guided pilot is not enabled for this assessment')
 
 def validate_answers(id, answers, version=None):
+    if version in generic_guided_assessment.VERSIONS:
+        return generic_guided_assessment.validate_answers(id, answers, version)
     if version in iso_guided_assessment.VERSIONS:
         return iso_guided_assessment.validate_answers(id, answers, version)
     if version in soc_guided_assessment.VERSIONS:
@@ -180,9 +187,11 @@ def validate_completion(id, answers, version):
 
 def upgraded_pilot(row, user):
     # The router authenticates tenant/record access and canonical group scope first.
-    return bool(user and row.get('client_id') and row.get('framework_key') in ('cis-ig1', 'soc-2', 'iso-27001'))
+    return bool(user and row.get('client_id') and row.get('framework_key') in ('cis-ig1', 'soc-2', 'iso-27001', *generic_guided_assessment.FRAMEWORKS))
 
 def current_base(row, client):
+    if row['framework_key'] in generic_guided_assessment.FRAMEWORKS:
+        return generic_guided_assessment.current_base(row, client)
     if row['framework_key'] == 'iso-27001':
         return iso_guided_assessment.current_base(row, client)
     if row['framework_key'] == 'soc-2':
@@ -302,6 +311,10 @@ async def _recorded_result_clock(s, row, user, old, body, at):
 
 
 async def _save_draft(s, row, user, body, client=None, upgraded=False, lease=None):
+    if body.completed and row['framework_key'] in generic_guided_assessment.FRAMEWORKS:
+        proposed = generic_guided_assessment.result_status(row['definition_id'], body.answers, body.version)
+        if body.result is None or body.result.status != proposed or body.result.narrative != body.narrative:
+            raise HTTPException(422, 'Reviewed status and text must match this completed interview')
     if row['framework_key'] not in ('soc-2', 'iso-27001') and 'summary_review' in body.model_fields_set:
         raise HTTPException(422, 'Summary review metadata applies only to SOC 2')
     if not upgraded:

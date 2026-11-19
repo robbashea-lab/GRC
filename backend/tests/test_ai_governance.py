@@ -16,7 +16,7 @@ class AIGovernanceTests(ClientDashboardSourcesTests):
         self.assertEqual(first['display_id'],'AI-001')
         second=await self.create(client_id='b',owner_id=None)
         self.assertEqual(second['display_id'],'AI-001')
-        results=await asyncio.gather(*[self.client.post('/api/ai_systems',json={'client_id':'a','name':'Parallel'}) for _ in range(8)])
+        results=await asyncio.gather(*[self.client.post('/api/ai_systems',json={'client_id':'a','name':'Parallel '+str(index)}) for index in range(8)])
         self.assertTrue(all(r.status_code==200 for r in results))
         self.assertEqual(len({r.json()['display_id'] for r in results}),8)
         url='/api/ai_systems/'+first['ai_system_id']
@@ -46,9 +46,9 @@ class AIGovernanceTests(ClientDashboardSourcesTests):
             with self.subTest(client_status=status):
                 await server.db.clients.update_one({'client_id':'a'},{'$set':{'status':status}})
                 self.assertEqual(await server.db.requirements.count_documents({'client_id':'a'}),0)
-                row=await self.create(status='draft',owner_id=None,**values)
+                row=await self.create(name='Synthetic '+status+' metadata',status='draft',owner_id=None,**values)
                 self.assertEqual({key:row[key] for key in values},values)
-                self.assertNotIn('approval_status',row);self.assertNotIn('approval_history',row)
+                self.assertEqual(row['approval_status'],'pending_assessment');self.assertNotIn('approval_history',row)
                 saved=await self.client.patch('/api/ai_systems/'+row['ai_system_id'],json={
                     'restrictions':'Explicit revised limit','expected_updated_at':row['updated_at']})
                 self.assertEqual(saved.status_code,200,saved.text)
@@ -58,7 +58,7 @@ class AIGovernanceTests(ClientDashboardSourcesTests):
                 self.assertEqual(current['environment'],values['environment'])
                 self.assertEqual(current['created_at'],row['created_at'])
                 self.assertEqual(current['related_links'],[])
-                self.assertNotIn('approval_status',current);self.assertNotIn('approval_history',current)
+                self.assertEqual(current['approval_status'],'pending_assessment');self.assertNotIn('approval_history',current)
                 for kind in ('reviews','risks','vendors','findings','tasks','framework_assessments'):
                     self.assertEqual(await server.db[kind].count_documents({}),0,kind)
 
@@ -70,7 +70,7 @@ class AIGovernanceTests(ClientDashboardSourcesTests):
                 await server.db.clients.update_one({'client_id':'a'},{'$set':{'status':'active'},'$unset':{'archived':'','archived_at':''}})
                 await server.db.clients.update_one({'client_id':'a'},{'$set':changes})
                 response=await self.client.post('/api/ai_systems',json=body)
-                self.assertEqual(response.status_code,422,response.text)
+                self.assertEqual(response.status_code,403 if changes=={'status':'archived'} else 422,response.text)
         response=await self.client.post('/api/ai_systems',json={**body,'client_id':'missing-native-client'})
         self.assertEqual(response.status_code,404,response.text)
         self.sign_in('member')
@@ -79,11 +79,14 @@ class AIGovernanceTests(ClientDashboardSourcesTests):
         self.assertEqual((await self.client.post('/api/ai_systems',json={**body,'client_id':'b'})).status_code,403)
         for kind in ('ai_systems','reviews','risks','vendors','create_requests'):
             self.assertEqual(await server.db[kind].count_documents({}),0,kind)
-        denials=await server.db.audit_logs.find({}).to_list(None)
+        archive_denials=await server.db.audit_logs.count_documents({'action':'access-denied','user_id':'admin'})
+        self.assertEqual(archive_denials,1)
+        denials=await server.db.audit_logs.find({'user_id':'member'}).to_list(None)
         self.assertEqual(len(denials),2)
         self.assertTrue(all(event['action']=='access-denied' and event['user_id']=='member' for event in denials))
 
     async def test_review_occurrence_findings_actions_evidence_and_retirement(self):
+        self.r4_valid_completion_fixture=True
         row=await self.create();aid=row['ai_system_id'];base='/api/ai_systems/'+aid
         schedule={'due_date':'2026-09-30','recurrence':'annual'}
         response=await self.client.post(base+'/reviews',json=schedule)
@@ -116,7 +119,7 @@ class AIGovernanceTests(ClientDashboardSourcesTests):
         self.assertEqual(row['risk_tier'],'high')
         self.assertTrue({'owner','schedule','risk','screening','oversight','vendor','sensitive'}.issubset({a['key'] for a in row['alerts']}))
         base='/api/ai_systems/'+row['ai_system_id']
-        changed=await self.client.post(base+'/material-change',json={'note':'Customer-facing recommendations introduced'})
+        changed=await self.client.post(base+'/material-change',json={'note':'Customer-facing recommendations introduced','expected_updated_at':row['updated_at']})
         self.assertEqual(changed.status_code,200,changed.text)
         self.assertIn('change',[a['key'] for a in changed.json()['alerts']])
         self.assertEqual(await server.db.findings.count_documents({}),0)
@@ -141,6 +144,7 @@ class AIGovernanceTests(ClientDashboardSourcesTests):
         self.assertEqual(await server.db.reviews.count_documents({}),0)
 
     async def test_retirement_preserves_started_closure_and_ids(self):
+        self.r4_valid_completion_fixture=True
         row=await self.create();base='/api/ai_systems/'+row['ai_system_id']
         review=(await self.client.post(base+'/reviews',json={'due_date':'2026-09-30','recurrence':'annual'})).json()
         url='/api/reviews/'+review['review_id'];occ={'occurrence_id':review['current_occurrence_id']}
@@ -152,7 +156,7 @@ class AIGovernanceTests(ClientDashboardSourcesTests):
         kept=await server.db.reviews.find_one({'review_id':review['review_id']})
         self.assertEqual(kept['status'],'completed');self.assertEqual(kept['recurrence'],'none')
         self.assertEqual(len(kept['occurrences']),1)
-        self.assertEqual((await self.create())['display_id'],'AI-002')
+        self.assertEqual((await self.create(name='Next AI use case'))['display_id'],'AI-002')
 
     async def test_foreign_ai_evidence_and_links_rejected(self):
         own=await self.create();foreign=await self.create(client_id='b',owner_id=None)
@@ -260,7 +264,7 @@ class AIGovernanceTests(ClientDashboardSourcesTests):
         await server.db.risks.insert_one({'risk_id':'own-risk','client_id':'a','title':'Synthetic risk'})
         for remove in (False,True):
             with self.subTest(parent_deleted=remove):
-                row=await self.create();aid=row['ai_system_id']
+                row=await self.create(name='Synthetic link race '+str(remove));aid=row['ai_system_id']
                 collection_type=type(server.db.ai_systems);update=collection_type.update_one
                 async def change_parent(collection,query,changes):
                     if collection.name=='ai_systems' and '$addToSet' in changes:

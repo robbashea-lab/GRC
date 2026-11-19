@@ -1,4 +1,3 @@
-import {isCisClient} from './cisCapability';
 import {AI_DEFAULTS,AI_KEYS,aiProjection,aiClientAvailable,validateAI,catalog} from '../lib/aiGovernance';
 import {validateCatalogKey} from '../lib/registerCatalogIdentity';
 import {record,write,audit,uid,now,ids} from './store';
@@ -24,7 +23,6 @@ export function aiRequest(db,path,method,params,body){
   const [, ,id,action]=path.split('/');
   if(!id&&method==='get'){checkClient(params.client_id);return db.ai_systems.filter(r=>r.client_id===params.client_id).map(view);}
   const old=id?record(db,'ai_systems',id):null;checkClient(old?.client_id||body.client_id);
-  const pilot=isCisClient(db,old?.client_id||body.client_id);
   const aiWorkflow=aiClientAvailable(record(db,'clients',old?.client_id||body.client_id));
   if(method==='get'&&action==='activity'){
     const reviewIds=db.reviews.filter(r=>r.client_id===old.client_id&&r.ai_system_id===id).map(r=>r.review_id);
@@ -32,7 +30,7 @@ export function aiRequest(db,path,method,params,body){
   }
   if(old?.status==='retired')throw new Error('Retired AI records remain historical');
   if(action==='approval'&&method==='post'){
-    admin();if(!pilot)throw new Error('Approval decisions require a configured CIS program');
+    admin();if(!aiWorkflow)throw new Error('This client is unavailable for AI approval');
     if(body.expected_updated_at!==(old.updated_at??null))throw new Error('Record changed since it was opened; reload before deciding');
     if(Object.keys(body).some(k=>!['status','note','expected_updated_at'].includes(k)))throw new Error('Unknown decision fields');
     if(!['approved','approved_with_conditions','not_approved'].includes(body.status)||typeof body.note!=='string'||!body.note.trim()||body.note.length>10000)throw new Error('Choose a decision and document its rationale');
@@ -46,13 +44,22 @@ export function aiRequest(db,path,method,params,body){
   if(action==='reviews'&&method==='post'){
     admin();if(old.status==='suspended')throw new Error('Inactive AI cannot start periodic reviews');
     if(!['quarterly','semiannual','annual','custom'].includes(body.recurrence)||!body.due_date||!Number.isFinite(Date.parse(body.due_date)))throw new Error('Choose a valid date and cadence');
-    if(body.recurrence==='custom'&&(!Number.isInteger(body.custom_recurrence_days)||body.custom_recurrence_days<1||body.custom_recurrence_days>3650))throw new Error('Custom recurrence must be 1–3650 days');
+    if(body.recurrence==='custom'&&(!Number.isInteger(body.custom_recurrence_days)||body.custom_recurrence_days<1||body.custom_recurrence_days>3660))throw new Error('Custom recurrence must be 1–3660 days');
     const existing=db.reviews.find(r=>r.ai_system_id===id&&r.ai_review_purpose==='periodic'&&!['completed','cancelled'].includes(r.status));if(existing)return reviewView(existing);
     const r=write(db,'reviews',{client_id:old.client_id,ai_system_id:id,ai_review_purpose:'periodic',title:`AI Governance Review — ${old.display_id} — ${old.name}`,review_type:'ai_governance',owner_id:old.owner_id,due_date:body.due_date,recurrence:body.recurrence,custom_recurrence_days:body.custom_recurrence_days||null});
     audit(db,'AI Governance Review scheduled','ai_systems',old,{review_id:r.review_id});return r;
   }
   if(action==='material-change'&&method==='post'){
-    admin();if(!body.note?.trim())throw new Error('Describe the material change');if(pilot&&old.approval_status)old.approval_status='pending_assessment';old.material_change_at=now();old.material_change_note=body.note;old.updated_at=now();audit(db,'AI material change recorded','ai_systems',old,{note:body.note});return view(old);
+    admin();
+    if(!aiWorkflow)throw new Error('This client is unavailable for AI reassessment');
+    if(Object.keys(body).some(key=>!['note','expected_updated_at'].includes(key)))throw new Error('Unknown material-change fields');
+    if(typeof body.note!=='string'||!body.note.trim()||body.note.length>10000)throw new Error('Describe the material change in at most 10,000 characters');
+    if(!Object.hasOwn(body,'expected_updated_at'))throw Object.assign(new Error('Reopen this AI record before recording a material change'),{status:428});
+    if(body.expected_updated_at!==(old.updated_at??null))throw Object.assign(new Error('Record changed since it was opened; reload before recording a material change'),{status:409});
+    const at=new Date(Math.max(Date.now(),(Date.parse(old.updated_at)||0)+1)).toISOString();
+    if(['approved','approved_with_conditions','not_approved'].includes(old.approval_status))old.approval_status='pending_assessment';
+    old.material_change_at=at;old.material_change_note=body.note;old.updated_at=at;
+    audit(db,'AI material change recorded','ai_systems',old,{note:body.note});return view(old);
   }
   if(action==='links'&&method==='post'){
     if(!['risks','findings','tasks','policies','requirements','vendors'].includes(body.kind))throw new Error('Unsupported relationship');
@@ -62,26 +69,30 @@ export function aiRequest(db,path,method,params,body){
     const link={kind:body.kind,id:body.id,classification,source:body.source||'',rationale:body.rationale||''};old.related_links||=[];if(!old.related_links.some(l=>JSON.stringify(l)===JSON.stringify(link)))old.related_links.push(link);audit(db,'AI record linked','ai_systems',old,link);return {ok:true};
   }
   if(action||!['post','patch'].includes(method)||(!id&&method!=='post')||(id&&method!=='patch'))throw new Error('AI records are retained; use the supported lifecycle controls');
-  if(old&&Object.prototype.hasOwnProperty.call(body,'expected_updated_at')&&body.expected_updated_at!==(old.updated_at??null))throw new Error('Record changed since it was opened; reload before saving');
+  if(old&&!Object.hasOwn(body,'expected_updated_at'))throw Object.assign(new Error('Reopen this AI record before saving'),{status:428});
+  if(old&&body.expected_updated_at!==(old.updated_at??null))throw Object.assign(new Error('Record changed since it was opened; reload before saving'),{status:409});
   body={...body};delete body.expected_updated_at;
   const screeningReview=body.onboarding_screening;
   if(Object.hasOwn(body,'onboarding_screening')&&(!old||!aiWorkflow||!screeningReview))throw new Error('Screening review requires an existing versioned AI record for an active or onboarding client');
   delete body.onboarding_screening;
   if(Object.keys(body).some(k=>![...AI_KEYS,...(aiWorkflow?AI_PILOT_KEYS:[]),'client_id'].includes(k)))throw new Error('Unknown or read-only AI fields');
   if(Object.prototype.hasOwnProperty.call(body,'catalog_key'))body.catalog_key=validateCatalogKey('ai_systems',body.catalog_key);
-  const row={...AI_DEFAULTS,...(pilot?AI_PILOT_DEFAULTS:{}),...old,...body};validateAI(db,row,old);validateAssignment(db,'ai_systems',row,old);
-  if(aiWorkflow&&!pilot&&old)for(const [key,value] of Object.entries(AI_PILOT_DEFAULTS))
-    if(!Object.hasOwn(old,key)&&JSON.stringify(row[key])===JSON.stringify(value))delete row[key];
+  const row={...AI_DEFAULTS,...AI_PILOT_DEFAULTS,...old,...body};validateAI(db,row,old);validateAssignment(db,'ai_systems',row,old);
+  if(!old||row.name!==old.name) {
+    const nameKey=row.name.trim().toLowerCase();
+    if(db.ai_systems.some(item=>item.ai_system_id!==old?.ai_system_id&&item.client_id===row.client_id&&item.name?.trim().toLowerCase()===nameKey)) {
+      throw Object.assign(new Error('An AI system with this name already exists for this client'),{status:409});
+    }
+    row.ai_name_key=nameKey;
+  }
+  if(old)for(const [key,value] of Object.entries(AI_PILOT_DEFAULTS))
+    if(!Object.hasOwn(old,key)&&!Object.hasOwn(body,key)&&JSON.stringify(row[key])===JSON.stringify(value))delete row[key];
   if(screeningReview)row.onboarding_screening=reviewedScreening(old,row,screeningReview,db.user.user_id,now());
-  // Framework changes must not make an old approval silently cover a different deployment.
-  if(!pilot&&old&&['approved','approved_with_conditions'].includes(old.approval_status)
-    &&(JSON.stringify(aiScope(old))!==JSON.stringify(aiScope(row))||screeningReview&&screeningReviewSnapshot(old)!==screeningReviewSnapshot(row)))
-    throw Object.assign(new Error('This change affects a recorded AI approval scope; reassessment is not supported for this program. The original decision and record are unchanged.'),{status:409});
   if(aiWorkflow){
     for(const key of ['environment','restrictions','data_settings'])if(Object.hasOwn(row,key)&&(typeof row[key]!=='string'||row[key].length>10000))throw new Error('Invalid '+key);
     if(Object.hasOwn(row,'permitted_data_types')&&(!Array.isArray(row.permitted_data_types)||row.permitted_data_types.some(v=>!catalog.data_types.includes(v))))throw new Error('Invalid permitted data classifications');
-    if(!old&&pilot)row.approval_status='pending_assessment';
-    else if(pilot&&(JSON.stringify(aiScope(old))!==JSON.stringify(aiScope(row))||screeningReview&&screeningReviewSnapshot(old)!==screeningReviewSnapshot(row))&&['approved','approved_with_conditions','not_approved'].includes(old.approval_status)){
+    if(!old)row.approval_status='pending_assessment';
+    else if((JSON.stringify(aiScope(old))!==JSON.stringify(aiScope(row))||screeningReview&&screeningReviewSnapshot(old)!==screeningReviewSnapshot(row))&&['approved','approved_with_conditions','not_approved'].includes(old.approval_status)){
       row.approval_status='pending_assessment';row.material_change_at=now();row.material_change_note='Approval boundaries changed; reassessment required.';
       audit(db,'AI approval boundaries changed; reassessment required','ai_systems',row);
     }

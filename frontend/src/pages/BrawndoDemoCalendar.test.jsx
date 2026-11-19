@@ -10,8 +10,8 @@ test('pilot filters are read-only and open native items; month overflow navigate
  const props={clientName:'Brawndo',anchor,setAnchor,view:'month',setView,period,days:period.days,today:'2026-10-16',entries,summaryEntries:entries,openSchedule,ymd:localCalendarDate,members:[{user_id:'u',name:'Dana Evans'}],setDragging:jest.fn(),setDragOverDay:jest.fn(),onDragStart:jest.fn(),onDrop:jest.fn()};
  const previousTheme=localStorage.getItem(THEME_KEY);localStorage.removeItem(THEME_KEY);
  try {
- await act(async()=>root.render(<CalendarView {...props}/>));expect(container.querySelectorAll('.kcell')).toHaveLength(4);expect(container.querySelector('h1').textContent).toBe('Brawndo Calendar');
- const themeAction=container.querySelector('.surface-theme-action');expect(themeAction.textContent).toBe('Dark');await act(async()=>themeAction.click());expect(container.querySelector('.bdcal').dataset.theme).toBe('dark');expect(themeAction.textContent).toBe('Light');
+ await act(async()=>root.render(<CalendarView {...props}/>));expect(container.querySelectorAll('.kchip')).toHaveLength(4);expect(container.querySelector('h1').textContent).toBe('Brawndo Calendar');
+ const themeAction=container.querySelector('.surface-theme-action');expect(themeAction.textContent).toBe('Light');await act(async()=>themeAction.click());expect(container.querySelector('.bdcal').dataset.theme).toBe('light');expect(themeAction.textContent).toBe('Dark');
  const viewButtons=[...container.querySelectorAll('[aria-label="Calendar view"] button')];expect(viewButtons.map(button=>button.textContent)).toEqual(['Day','Week','Month']);await act(async()=>viewButtons[1].click());expect(setView).toHaveBeenLastCalledWith('week');
  const owner=container.querySelector('.f-right > label select');expect(owner.value).toBe('all');expect(owner.closest('label').nextElementSibling.getAttribute('aria-label')).toBe('Calendar state');
  await act(async()=>container.querySelector('[data-testid="cal-item-t0"]').click());expect(openSchedule.mock.calls[0][0]).toBe(entries[0]);
@@ -43,7 +43,7 @@ test('newly covered clients keep native month expansion and all saved overdue ev
   expect(setView).not.toHaveBeenCalled();expect(setAnchor).not.toHaveBeenCalled();
   await act(async()=>day().querySelector('[data-testid="cal-item-native-3"]').click());expect(openSchedule.mock.calls[0][0]).toBe(tasks[3]);
   await act(async()=>day().querySelector('.more').click());expect(day().querySelectorAll('.ev')).toHaveLength(3);
-  const overdue=container.querySelectorAll('.kcell')[1];expect(overdue.querySelector('strong').textContent).toBe('2');
+  const overdue=container.querySelectorAll('.kchip')[1];expect(overdue.querySelector('strong').textContent).toBe('2');
   expect(overdue.textContent).not.toContain('Nothing past due');await act(async()=>overdue.click());
   expect(container.querySelector('[data-testid="cal-attn-vendor-overdue"]')).toBeTruthy();
   expect(container.querySelector('[data-testid="cal-attn-represented-overdue"]')).toBeTruthy();
@@ -57,7 +57,7 @@ test('Completed summary excludes accepted/cancelled records and retains their hi
  const entries=['done','accepted','cancelled'].map((status,n)=>({key:`h${n}`,kind:'task',title:status,date:'2026-10-16',historical:true,status}));
  const props={anchor,period,days:period.days,view:'month',today:'2026-10-16',entries,summaryEntries:[],ymd:localCalendarDate,openSchedule:jest.fn(),setAnchor:jest.fn(),setView:jest.fn()};
  try {await act(async()=>root.render(<CalendarView {...props}/>));
- const tiles=container.querySelectorAll('.kcell');expect(tiles[3].querySelector('strong').textContent).toBe('1');expect(tiles[0].querySelector('small').textContent).toContain('0 open · 1 completed · 2 other historical');
+ const tiles=container.querySelectorAll('.kchip');expect(tiles[3].querySelector('strong').textContent).toBe('1');expect(tiles[0].querySelector('small').textContent).toContain('0 open · 1 completed · 2 other historical');
  expect(container.textContent).toContain('Other historical items');
  expect(container.querySelector('[data-testid="cal-attn-h1"]')).not.toBeNull();expect(container.querySelector('[data-testid="cal-attn-h2"]')).not.toBeNull();
  await act(async()=>tiles[3].click());expect(container.querySelector('[data-testid="cal-attn-h0"]')).not.toBeNull();expect(container.querySelector('[data-testid="cal-attn-h1"]')).toBeNull();
@@ -68,10 +68,10 @@ test('pending and failed summaries never report a successful zero or empty-state
  global.IS_REACT_ACT_ENVIRONMENT=true;const container=document.createElement('div');document.body.appendChild(container);const root=createRoot(container);
  const anchor=new Date(2026,9,16),period=calendarPeriod(anchor),props={anchor,period,days:period.days,view:'month',today:'2026-10-16',entries:[],ymd:localCalendarDate};
  try {await act(async()=>root.render(<CalendarView {...props}/>));
- for(const tile of [...container.querySelectorAll('.kcell')].slice(1,3)){expect(tile.querySelector('strong').textContent).toBe('—');expect(tile.querySelector('small').textContent).toBe('Loading…');expect(tile.disabled).toBe(true);}
+ for(const tile of [...container.querySelectorAll('.kchip')].slice(1,3)){expect(tile.querySelector('strong').textContent).toBe('—');expect(tile.querySelector('small').textContent).toBe('Loading…');expect(tile.disabled).toBe(true);}
  expect(container.textContent).not.toContain('Nothing past due');
  await act(async()=>root.render(<CalendarView {...props} summaryEntries={[]} summaryError="Unavailable read"/>));
- for(const tile of [...container.querySelectorAll('.kcell')].slice(1,3)){expect(tile.querySelector('strong').textContent).toBe('—');expect(tile.querySelector('small').textContent).toBe('Unavailable');}
+ for(const tile of [...container.querySelectorAll('.kchip')].slice(1,3)){expect(tile.querySelector('strong').textContent).toBe('—');expect(tile.querySelector('small').textContent).toBe('Unavailable');}
  expect(container.querySelector('[role="alert"]').textContent).toContain('Unavailable read');
  } finally {await act(async()=>root.unmount());container.remove();}
 });

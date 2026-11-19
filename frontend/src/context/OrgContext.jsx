@@ -3,23 +3,29 @@ import api from "@/lib/api";
 import {selectedClient, rememberClient} from '@/lib/clientSelection';
 import {useLocation} from 'react-router-dom';
 import {usePortfolioRefresh} from '@/lib/usePortfolioRefresh';
+import {useAuth} from '@/context/AuthContext';
 
 const OrgContext = createContext(null);
 
 export function OrgProvider({ children }) {
   const location = useLocation();
+  const {user, workspaceMode} = useAuth() || {};
+  const identity = JSON.stringify([workspaceMode, user?.user_id, user?.role, user?.status,
+    user?.updated_at, user?.client_ids, user?.all_clients]);
   const [clients, setClients] = useState([]);
   const authorizedClients = useRef(clients);
   authorizedClients.current = clients;
   const [currentClientId, setCurrentClientId] = useState(selectedClient);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [recovery, setRecovery] = useState(null);
   const loadSequence = useRef(0);
 
   const load = useCallback(async () => {
     const sequence = ++loadSequence.current;
     setLoading(true);
     setError("");
+    setRecovery(null);
     try {
       // Archived clients are included so an archived workspace opened from the Portfolio keeps its identity;
       // navigation lists and the default selection use active clients only.
@@ -40,11 +46,18 @@ export function OrgProvider({ children }) {
     } catch (e) {
       if (sequence !== loadSequence.current) return;
       setClients([]); setCurrentClientId("");
-      setError(e?.response?.data?.detail || e?.message || "Clients could not be loaded.");
+      const detail = e?.response?.data?.detail;
+      if (e?.response?.status === 409 && detail?.code === 'SHARED_CONTEXT_RECOVERY_REQUIRED'
+          && Array.isArray(detail.client_ids) && detail.client_ids.every(id => typeof id === 'string' && id)) {
+        setRecovery({identity, ids: detail.client_ids});
+        setError(detail.message);
+      } else {
+        setError(typeof detail === 'string' ? detail : e?.message || "Clients could not be loaded.");
+      }
     } finally {
       if (sequence === loadSequence.current) setLoading(false);
     }
-  }, []);
+  }, [identity]);
 
   useEffect(() => {
     const generation = loadSequence;
@@ -71,9 +84,14 @@ export function OrgProvider({ children }) {
   };
 
   const currentClient = clients.find((c) => c.client_id === resolvedId) || null;
+  // This ID is never a normal selected Client or a placeholder data object.
+  // Only a dedicated retained-command retry may use it while reads fail closed.
+  const recoveryTarget = requestedId || selectedClient();
+  const recoveryClientId = !loading && recovery?.identity === identity
+    && recovery.ids.includes(recoveryTarget) ? recoveryTarget : '';
 
   return (
-    <OrgContext.Provider value={{ clients, currentClient, currentClientId: resolvedId, switchClient, loading,
+    <OrgContext.Provider value={{ clients, currentClient, currentClientId: resolvedId, recoveryClientId, switchClient, loading,
       error: error || (!loading && requestedId && !resolvedId ? 'This client is unavailable or outside your current access.' : ''), refresh: load }}>
       {children}
     </OrgContext.Provider>

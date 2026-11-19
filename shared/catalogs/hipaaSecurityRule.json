@@ -10,7 +10,7 @@
     "items": "Requirements",
     "implementation": "How We Address This Requirement"
   },
-  "scope_note": "67 Security Rule assessment units plus 9 related organizational, Privacy and Breach Notification dependencies. Counts include standards and their specifications; they are not independent obligations or a compliance percentage. The full Privacy Rule is outside this Security Rule-focused workspace.",
+  "scope_note": "78 R4 tracked Security/Breach provisions plus retained native applicability and related organizational/Privacy assessment units (81 catalog rows). Some parent rows also describe child provisions: rows are assessment units, not independent obligations or a compliance percentage. Prior parent answers and historical decisions remain separate; child conclusions are never inferred. The full Privacy Rule remains outside this workspace.",
   "requirements": [
     {
       "id": "164.302",
@@ -1339,6 +1339,101 @@
       "verified_on": "2026-09-22",
       "applicability_guidance": "Record the actual regulated entity and event/scope conditions. A general GRC review does not determine legal applicability.",
       "evidence_guidance": "Link the scoped assessment, designation, procedures or notification documentation as relevant. Minimize PHI; use redacted or appropriately controlled supporting records."
+    },
+    {
+      "source_type": "regulatory_text",
+      "applicability_guidance": "Confirm the actual covered-entity, business-associate/subcontractor or group-plan role and scope. Retain documented addressability and related-dependency decisions.",
+      "title": "Subcontractor assurances",
+      "id": "164.308(b)(2)",
+      "classification": "conditional",
+      "source_cadence": "Apply the cited operational or event conditions; no universal numeric Review interval.",
+      "evidence_guidance": "Link the scoped contract, safeguards or arrangement and actual supporting records. An equivalent record can support the assessment; minimize PHI.",
+      "parent_assessment_id": "164.308(b)(1)",
+      "control": "164.308",
+      "type": "state",
+      "control_name": "Organizational / subcontractor requirements",
+      "guidance": "(2) A business associate may permit a business associate that is a subcontractor to create, receive, maintain, or transmit electronic protected health information on its behalf only if the business associate obtains satisfactory assurances, in accordance with § 164.314(a), that the subcontractor will appropriately safeguard the information.",
+      "version": "45 CFR 164 · 2026-09-18",
+      "specification": "standard",
+      "assessment_unit_note": "Additional child assessment unit; retained parent answers are not automatically applied. Parent and child rows are not independent obligations.",
+      "source": "https://www.ecfr.gov/on/2026-09-18/title-45/section-164.308#p-164.308(b)(2)",
+      "source_organization": "HHS / OFR / GPO"
+    },
+    {
+      "source_type": "regulatory_text",
+      "applicability_guidance": "Confirm the actual covered-entity, business-associate/subcontractor or group-plan role and scope. Retain documented addressability and related-dependency decisions.",
+      "title": "Business associate contracts",
+      "id": "164.314(a)(2)(i)",
+      "classification": "conditional",
+      "source_cadence": "Apply the cited operational or event conditions; no universal numeric Review interval.",
+      "evidence_guidance": "Link the scoped contract, safeguards or arrangement and actual supporting records. An equivalent record can support the assessment; minimize PHI.",
+      "parent_assessment_id": "164.314(a)(1)",
+      "control": "164.314",
+      "type": "state",
+      "control_name": "Organizational / subcontractor requirements",
+      "guidance": "(2) Implementation specifications (Required) —\n(i) Business associate contracts. The contract must provide that the business associate will—\n(A) Comply with the applicable requirements of this subpart;\n(B) In accordance with § 164.308(b)(2), ensure that any subcontractors that create, receive, maintain, or transmit electronic protected health information on behalf of the business associate agree to comply with the applicable requirements of this subpart by entering into a contract or other arrangement that complies with this section; and\n(C) Report to the covered entity any security incident of which it becomes aware, including breaches of unsecured protected health information as required by § 164.410.",
+      "version": "45 CFR 164 · 2026-09-18",
+      "specification": "required",
+      "assessment_unit_note": "Additional child assessment unit; retained parent answers are not automatically applied. Parent and child rows are not independent obligations.",
+      "source": "https://www.ecfr.gov/on/2026-09-18/title-45/section-164.314#p-164.314(a)(2)(i)",
+      "source_organization": "HHS / OFR / GPO"
+    },
+    {
+      "source_type": "regulatory_text",
+      "applicability_guidance": "Confirm the actual covered-entity, business-associate/subcontractor or group-plan role and scope. Retain documented addressability and related-dependency decisions.",
+      "title": "Other arrangements",
+      "id": "164.314(a)(2)(ii)",
+      "classification": "conditional",
+      "source_cadence": "Apply the cited operational or event conditions; no universal numeric Review interval.",
+      "evidence_guidance": "Link the scoped contract, safeguards or arrangement and actual supporting records. An equivalent record can support the assessment; minimize PHI.",
+      "parent_assessment_id": "164.314(a)(1)",
+      "control": "164.314",
+      "type": "state",
+      "control_name": "Organizational / subcontractor requirements",
+      "guidance": "(ii) Other arrangements. The covered entity is in compliance with paragraph (a)(1) of this section if it has another arrangement in place that meets the requirements of § 164.504(e)(3).",
+      "version": "45 CFR 164 · 2026-09-18",
+      "specification": "required",
+      "assessment_unit_note": "Additional child assessment unit; retained parent answers are not automatically applied. Parent and child rows are not independent obligations.",
+      "source": "https://www.ecfr.gov/on/2026-09-18/title-45/section-164.314#p-164.314(a)(2)(ii)",
+      "source_organization": "HHS / OFR / GPO"
+    },
+    {
+      "source_type": "regulatory_text",
+      "applicability_guidance": "Confirm the actual covered-entity, business-associate/subcontractor or group-plan role and scope. Retain documented addressability and related-dependency decisions.",
+      "title": "Business associate contracts with subcontractors",
+      "id": "164.314(a)(2)(iii)",
+      "classification": "conditional",
+      "source_cadence": "Apply the cited operational or event conditions; no universal numeric Review interval.",
+      "evidence_guidance": "Link the scoped contract, safeguards or arrangement and actual supporting records. An equivalent record can support the assessment; minimize PHI.",
+      "parent_assessment_id": "164.314(a)(1)",
+      "control": "164.314",
+      "type": "state",
+      "control_name": "Organizational / subcontractor requirements",
+      "guidance": "(iii) Business associate contracts with subcontractors. The requirements of paragraphs (a)(2)(i) and (a)(2)(ii) of this section apply to the contract or other arrangement between a business associate and a subcontractor required by § 164.308(b)(4) in the same manner as such requirements apply to contracts or other arrangements between a covered entity and business associate.",
+      "version": "45 CFR 164 · 2026-09-18",
+      "specification": "required",
+      "assessment_unit_note": "Additional child assessment unit; retained parent answers are not automatically applied. Parent and child rows are not independent obligations.",
+      "source": "https://www.ecfr.gov/on/2026-09-18/title-45/section-164.314#p-164.314(a)(2)(iii)",
+      "source_organization": "HHS / OFR / GPO"
+    },
+    {
+      "source_type": "regulatory_text",
+      "applicability_guidance": "Confirm the actual covered-entity, business-associate/subcontractor or group-plan role and scope. Retain documented addressability and related-dependency decisions.",
+      "title": "Group health plan document provisions",
+      "id": "164.314(b)(2)",
+      "classification": "conditional",
+      "source_cadence": "Apply the cited operational or event conditions; no universal numeric Review interval.",
+      "evidence_guidance": "Link the scoped contract, safeguards or arrangement and actual supporting records. An equivalent record can support the assessment; minimize PHI.",
+      "parent_assessment_id": "164.314(b)(1)",
+      "control": "164.314",
+      "type": "state",
+      "control_name": "Organizational / subcontractor requirements",
+      "guidance": "(2) Implementation specifications (Required). The plan documents of the group health plan must be amended to incorporate provisions to require the plan sponsor to—\n(i) Implement administrative, physical, and technical safeguards that reasonably and appropriately protect the confidentiality, integrity, and availability of the electronic protected health information that it creates, receives, maintains, or transmits on behalf of the group health plan;\n(ii) Ensure that the adequate separation required by § 164.504(f)(2)(iii) is supported by reasonable and appropriate security measures;\n(iii) Ensure that any agent to whom it provides this information agrees to implement reasonable and appropriate security measures to protect the information; and\n(iv) Report to the group health plan any security incident of which it becomes aware.",
+      "version": "45 CFR 164 · 2026-09-18",
+      "specification": "required",
+      "assessment_unit_note": "Additional child assessment unit; retained parent answers are not automatically applied. Parent and child rows are not independent obligations.",
+      "source": "https://www.ecfr.gov/on/2026-09-18/title-45/section-164.314#p-164.314(b)(2)",
+      "source_organization": "HHS / OFR / GPO"
     }
   ],
   "review_plans": [
@@ -1488,7 +1583,12 @@
         "164.308(b)(1)",
         "164.308(b)(3)",
         "164.314(a)(1)",
-        "164.314(b)(1)"
+        "164.314(b)(1)",
+        "164.308(b)(2)",
+        "164.314(a)(2)(i)",
+        "164.314(a)(2)(ii)",
+        "164.314(a)(2)(iii)",
+        "164.314(b)(2)"
       ],
       "basis": "Omnisciente Recommended",
       "classification": "recommended",
@@ -1744,5 +1844,6 @@
       "classification": "conditional",
       "source": "https://www.ecfr.gov/current/title-45/section-164.530"
     }
-  ]
+  ],
+  "content_revision": "r4-2026-11-19"
 }

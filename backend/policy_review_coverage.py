@@ -125,6 +125,45 @@ def advance_covered_schedule(review, at):
     raise HTTPException(409, 'The annual Policy cadence exceeds the supported calendar range')
 
 
+def pending_retry(review, request):
+    """Read an already accepted plan, never create a new completion exception.
+
+    Call only after the route's current authorization and occurrence selection.
+    An accepted pre-R4 journal keeps its actual frozen completion; adding today's
+    checklist would invent historical answers. Reconciliation still authorizes
+    every covered Policy and Review before writing, and the parent uses its CAS.
+    """
+    pending = review.get('_policy_coverage_pending')
+    if pending is None:
+        return None
+    if not isinstance(pending, dict) or pending.get('identity_validation_version') != 1:
+        raise HTTPException(409, 'The pending annual Policy coverage predates approval identity validation; reconcile its saved plan before retrying')
+    if (not is_policy_set(review) or review.get('review_type') not in (None, 'policy')
+            or review.get('recurrence') != 'annual'):
+        raise HTTPException(409, 'The pending annual Policy coverage no longer has its canonical Review identity; reconcile its saved plan before retrying')
+    occurrence = review_occurrences.occurrence_id(review)
+    if (not isinstance(request, dict) or pending.get('occurrence_id') != occurrence
+            or request.get('occurrence_id') != occurrence or pending.get('request') != request):
+        raise HTTPException(409, 'Annual Policy completion is pending; retry its original occurrence and request')
+    completed, updates, members = (pending.get(key) for key in ('completed', 'updates', 'members'))
+    valid = (isinstance(completed, dict) and isinstance(updates, dict) and isinstance(members, list)
+             and completed.get('review_id') == review.get('review_id')
+             and completed.get('client_id') == review.get('client_id')
+             and completed.get('occurrence_id') == occurrence and completed.get('status') == 'completed'
+             and isinstance(completed.get('completed_by'), str) and bool(completed['completed_by'].strip())
+             and _time(completed.get('completed_at')) is not None
+             and updates.get('updated_at') == completed.get('completed_at')
+             and isinstance(completed.get('policy_coverage'), list)
+             and isinstance(completed.get('covered_policy_reviews'), list))
+    if not valid:
+        raise HTTPException(409, 'The pending annual Policy completion identity is incomplete; reconcile its saved plan before retrying')
+    for member in members:
+        if (not isinstance(member, dict) or member.get('client_id') != review['client_id']
+                or not member.get('policy_id') or not member.get('subject_id') or not member.get('version')):
+            raise HTTPException(409, 'The pending annual Policy approval identity is incomplete; reconcile its saved plan before retrying')
+    return deepcopy(pending)
+
+
 async def prepare(db, review, completed, updates, request, user):
     """Persist the membership cut-off before any child write; retries reuse it."""
     if not is_policy_set(review):
@@ -137,12 +176,8 @@ async def prepare(db, review, completed, updates, request, user):
             raise HTTPException(409, 'Resolve the canonical annual Policy Review type before completion')
     if review.get('recurrence') != 'annual':
         raise HTTPException(409, 'Configure the annual Policy Review anchor before completion')
-    pending = review.get('_policy_coverage_pending')
-    if pending:
-        if pending.get('identity_validation_version') != 1:
-            raise HTTPException(409, 'The pending annual Policy coverage predates approval identity validation; reconcile its saved plan before retrying')
-        if pending['occurrence_id'] != completed['occurrence_id'] or pending['request'] != request:
-            raise HTTPException(409, 'Annual Policy completion is pending; retry its original occurrence and request')
+    pending = pending_retry(review, request)
+    if pending is not None:
         return pending
     next_due, skipped = advance_covered_schedule(review, completed['completed_at'])
     updates = deepcopy(updates)
@@ -176,12 +211,25 @@ async def prepare(db, review, completed, updates, request, user):
             snapshot = review_occurrences.snapshot(child, evidence, findings, user, completed['completed_at'])
             snapshot['covered_by'] = {'review_id': review['review_id'], 'occurrence_id': completed['occurrence_id']}
             snapshot['policy_coverage'] = [deepcopy({key: value for key, value in member.items() if key != 'child'})]
+            if completed.get('review_template_version'):
+                # An annual set Review covers these exact approved subjects. It
+                # does not invent individually entered Pass results for children.
+                snapshot['coverage_evaluation'] = deepcopy({
+                    'source_review_id': review['review_id'],
+                    'source_occurrence_id': completed['occurrence_id'],
+                    'review_template_id': completed.get('review_template_id'),
+                    'review_template_version': completed['review_template_version'],
+                    **({'checklist_outcome': completed['checklist_outcome']} if 'checklist_outcome' in completed else {}),
+                    'checklist': completed.get('checklist'),
+                    'checklist_results': completed.get('checklist_results'),
+                    'supporting_reference': completed.get('supporting_reference', ''),
+                    'evidence': completed.get('evidence', [])})
             child_due, child_skipped = advance_covered_schedule(child, completed['completed_at'])
             snapshot['next_review_date'] = child_due
             snapshot['covered_schedule_skipped_dates'] = child_skipped
             next_fields = {'status': 'upcoming', 'due_date': child_due, 'current_occurrence_id': updates['current_occurrence_id'] + '_' + child['review_id'],
                            'notes': None, 'started_at': None, 'started_by': None, 'completion_date': None,
-                           'completion_snapshot': None, 'updated_at': completed['completed_at'],
+                           'completion_snapshot': None, 'r4_current_checklist': None, 'updated_at': completed['completed_at'],
                            'schedule_anchor': current['schedule_anchor'], 'recurrence_due_date': None}
             next_fields.update(review_occurrences.schedule({**child, **next_fields}))
             member['child'] = {'review_id': child['review_id'], 'occurrence_id': oid, 'stored_occurrence_id': child.get('current_occurrence_id'), 'updated_at': child.get('updated_at'),

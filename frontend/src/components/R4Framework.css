@@ -1,0 +1,60 @@
+/* R4 framework surfaces inherit the protected post-login shell's theme tokens. */
+.r4-guided-assessment,.r4-assessment-context{margin:16px 0;padding:18px;border:1px solid var(--gn-line,var(--border,#ffffff1c));border-radius:14px;background:var(--gn-card,var(--surface,#ffffff05));color:var(--gn-ink,var(--text,inherit));font-family:var(--font,Inter,ui-sans-serif,system-ui,sans-serif)}
+.r4-guided-assessment h3,.r4-assessment-context h3{font-size:15px;font-weight:650;margin:0 0 8px}.r4-guided-assessment p,.r4-assessment-context p{font-size:12px;line-height:1.65;color:var(--gn-muted,var(--muted,inherit));margin:7px 0}
+.r4-guided-heading{display:flex;gap:16px;align-items:center;justify-content:space-between}.r4-guided-heading>div{min-width:0}.r4-guide-step{font-variant-numeric:tabular-nums;text-transform:uppercase;letter-spacing:.08em}.r4-guided-assessment legend,.r4-assessment-context legend{font-size:14px;font-weight:600;margin:10px 0}
+.r4-guide-options,.r4-context-tools{display:flex;flex-wrap:wrap;gap:9px}.r4-guide-options label,.r4-context-tools label{display:flex;gap:7px;align-items:center;border:1px solid var(--gn-line,var(--border,#ffffff1c));border-radius:9px;padding:9px 11px;font-size:12px}
+.r4-assessment-context>fieldset>label,.r4-context-grid>label{display:grid;gap:6px;font-size:12px;margin:12px 0}.r4-assessment-context select{min-height:36px;padding:7px 10px;border:1px solid var(--gn-line,var(--border,#ffffff1c));border-radius:8px;background:var(--gn-card,var(--input,#182035));color:inherit}.r4-context-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 12px}.r4-context-add{display:flex;gap:8px;margin:12px 0}.r4-guided-actions{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;margin-top:14px}
+.r4-framework-source{padding:16px 18px;border:1px solid var(--gn-line,var(--border,#ffffff1c));border-radius:12px;margin:16px 0}.r4-framework-source summary{font-weight:600;cursor:pointer}.r4-framework-source p{white-space:pre-line;font-size:13px;line-height:1.7;margin-top:10px}.r4-framework-source small{display:block;font-size:12px;line-height:1.65;margin:8px 0}.r4-framework-source a{color:var(--gn-accent,#8ca7ff)}
+@media(max-width:650px){.r4-guided-heading{display:block}.r4-guided-heading>button{margin-top:10px}.r4-context-grid{grid-template-columns:minmax(0,1fr)}.r4-context-add{flex-wrap:wrap}}
+html[data-native-standard] :is(.shared-program-omni,.brawndo-cis-visual-omni) .omni-free-dock{width:52px!important}
+html[data-native-standard] :is(.shared-program-omni,.brawndo-cis-visual-omni) .omni-free-dock .omni-launch-button{width:52px!important;height:52px!important;border-radius:50%;color:#0b1630;background:linear-gradient(135deg,#91b2ff,#9698fe);box-shadow:0 10px 30px #0006}
+html[data-native-standard] .omni-workspace-window{border:1px solid var(--border)!important;border-radius:18px!important;background:var(--surface-solid)!important;color:var(--text)!important;box-shadow:0 24px 70px #0007!important}
+html[data-native-standard] .omni-workspace-window .omni-panel-header{padding:12px 14px;min-height:54px;border-bottom:1px solid var(--divider);background:transparent;border-radius:18px 18px 0 0}
+html[data-native-standard] .omni-workspace-window .omni-panel-header h2{font-size:14px;font-weight:600;color:var(--text)}
+html[data-native-standard] .r4-program-guide .guided-context-prompt{width:320px;max-width:calc(100vw - 44px);padding:16px 18px;border:1px solid var(--border);border-radius:16px;background:var(--surface-solid);box-shadow:0 18px 50px #0006;color:var(--text)}
+.r4-guide-dismiss{position:absolute;right:8px;top:8px;min-width:28px;min-height:28px}.r4-guide-recommendation{display:flex;flex-direction:column;align-items:flex-start;gap:6px;padding:12px;border:1px solid var(--divider);border-radius:12px;background:var(--surface-2);margin-bottom:10px;font-size:13px}.r4-guide-recommendation button{border:1px solid var(--border);border-radius:8px;padding:7px 10px;color:var(--text)}
+
+/* Native R4 positioning must also work without an earlier pilot's HTML marker. */
+html[data-native-standard] :is(.r4-guided-assessment,.r4-program-guide) {
+  --fg2: var(--muted);
+  --rail: var(--accent);
+  --c-part: var(--accent);
+}
+html[data-native-standard] .omni-free-dock {
+  position: fixed;
+  right: auto;
+  bottom: auto;
+  z-index: 45;
+  display: flex;
+  flex-direction: column;
+}
+html[data-native-standard] .omni-workspace-window {
+  position: fixed;
+  z-index: 45;
+  transform: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  padding: 0;
+  max-width: none;
+  max-height: none;
+  overflow: visible;
+}
+html[data-native-standard] .omni-workspace-window .omni-panel-header > div {
+  padding: 0 76px 0 0;
+  min-width: 0;
+}
+html[data-native-standard] .omni-workspace-window .omni-panel-header .omni-character {
+  width: 32px;
+  height: 32px;
+}
+html[data-native-standard] .omni-launch-button .omni-character {
+  width: 36px;
+  height: 36px;
+}
+html[data-native-standard] .omni-workspace-window .guided-panel-body {
+  flex: 1;
+  min-height: 0;
+  padding: 16px;
+  overflow-y: auto;
+}

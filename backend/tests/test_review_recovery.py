@@ -8,18 +8,24 @@ from pathlib import Path
 from unittest.mock import AsyncMock, patch
 
 import test_client_dashboard_sources as harness
+from r4_fixture_inputs import supply_completion_inputs
 
 server = harness.server
 CONTRACT = json.loads((Path(__file__).parents[2] / 'shared/contracts/review-command.json').read_text(encoding='utf-8'))
 
 
 class ReviewRecoveryTests(unittest.IsolatedAsyncioTestCase):
+    r4_valid_completion_fixture = True
     asyncSetUp = harness.ClientDashboardSourcesTests.asyncSetUp
     sign_in = harness.ClientDashboardSourcesTests.sign_in
 
     async def prepare(self):
         self.sign_in("admin")
-        self.client.event_hooks["request"] = []
+        # Keep raw command-identity/assignment inputs unmodified. Only positive
+        # lifecycle completions receive their separate prospective R4 contract.
+        async def completion_inputs(request):
+            await supply_completion_inputs(self, request, server)
+        self.client.event_hooks["request"] = [completion_inputs]
         await server.db.reviews.insert_one({"review_id": "recovery", "client_id": "a", **CONTRACT['review'],
             "owner_id": "member", "status": "in_progress"})
         return {**CONTRACT['command'], "occurrence_id": "occ_recovery", "owner_id": "member"}

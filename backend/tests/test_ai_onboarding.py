@@ -57,6 +57,7 @@ class AIOnboardingTests(unittest.IsolatedAsyncioTestCase):
                 await server.db.requirements.insert_one({'requirement_id': 'selected-' + framework,
                     'client_id': 'a', 'baseline_key': framework, 'baseline_response': 'applies'})
                 body=self.payload();key=uuid.uuid4().hex
+                body['ai']['name'] += ' ' + framework
                 response=await self.add(body,key)
                 self.assertEqual(response.status_code,200,response.text)
                 result=response.json()
@@ -81,9 +82,13 @@ class AIOnboardingTests(unittest.IsolatedAsyncioTestCase):
                 self.assertEqual((await self.add(body,key)).json(),result)
                 self.assertEqual({kind:await server.db[kind].count_documents({}) for kind in counts},counts)
                 await server.db.clients.update_one({'client_id':'a'},{'$set':{'status':'archived'}})
-                self.assertEqual((await self.add(body,key)).status_code,422)
-                self.assertEqual({kind:await server.db[kind].count_documents({}) for kind in counts},counts)
-                await server.db.clients.update_one({'client_id':'a'},{'$set':{'status':'active'}})
+                try:
+                    self.assertEqual((await self.add(body,key)).status_code,403)
+                    self.assertEqual({kind:await server.db[kind].count_documents({}) for kind in counts if kind!='audit_logs'},
+                                     {kind:value for kind,value in counts.items() if kind!='audit_logs'})
+                    self.assertEqual(await server.db.audit_logs.count_documents({}),counts['audit_logs']+1)
+                finally:
+                    await server.db.clients.update_one({'client_id':'a'},{'$set':{'status':'active'}})
 
     async def test_all_native_client_cohorts_allow_explicit_guided_creation_without_implicit_records(self):
         for status in ('active','onboarding'):
@@ -148,14 +153,16 @@ class AIOnboardingTests(unittest.IsolatedAsyncioTestCase):
             with self.subTest(client_changes=changes):
                 await server.db.clients.update_one({'client_id':'a'},{'$set':{'status':'active'},'$unset':{'archived':'','archived_at':''}})
                 await server.db.clients.update_one({'client_id':'a'},{'$set':changes})
-                self.assertEqual((await self.add()).status_code,422)
+                self.assertEqual((await self.add()).status_code,403 if changes.get('status')=='archived' else 422)
         await server.db.clients.update_one({'client_id':'a'},{'$set':{'status':'active'},'$unset':{'archived':'','archived_at':''}})
         await server.db.ai_intake.insert_one({'client_id':'a','usage':'no','indicators':[]})
         self.assertEqual((await self.add()).status_code,409)
         self.assertEqual({kind:await server.db[kind].count_documents({}) for kind in counts},counts)
         denials=await server.db.audit_logs.find({}).to_list(None)
-        self.assertEqual(len(denials),4)
-        self.assertTrue(all(event['action']=='access-denied' and event['user_id']=='member' for event in denials))
+        self.assertEqual(len(denials),5)
+        self.assertTrue(all(event['action']=='access-denied' for event in denials))
+        self.assertEqual(sum(event['user_id']=='member' for event in denials),4)
+        self.assertEqual(sum(event['user_id']=='admin' for event in denials),1)
 
     async def test_unenrolled_concurrent_replay_keeps_one_explicit_native_creation(self):
         await server.db.requirements.delete_many({'client_id':'a'})
@@ -179,7 +186,10 @@ class AIOnboardingTests(unittest.IsolatedAsyncioTestCase):
                     if framework:
                         await server.db.requirements.insert_one({'requirement_id':'selected-'+framework,
                             'client_id':'a','baseline_key':framework,'baseline_response':'applies'})
-                    response=await self.add()
+                    body=self.payload()
+                    body['ai']['name'] += ' ' + (framework or 'unenrolled') + ' ' + status
+                    body['ai']['restrictions']='Synthetic approval conditions retained for this deployment'
+                    response=await self.add(body)
                     self.assertEqual(response.status_code,200,response.text)
                     created=response.json()['ai_system']
                     aid=created['ai_system_id']
@@ -190,15 +200,54 @@ class AIOnboardingTests(unittest.IsolatedAsyncioTestCase):
                     path='/api/ai_systems/'+aid
                     noop=await self.client.patch(path,json={'environment':created['environment'],'expected_updated_at':created['updated_at']})
                     self.assertEqual(noop.status_code,200,noop.text)
+                    self.assertEqual(noop.json()['approval_status'],status)
                     self.assertEqual(noop.json()['approval_history'],history)
+                    counts={kind:await server.db[kind].count_documents({}) for kind in ('ai_systems','risks','vendors','reviews')}
+                    # Reconfirming identical answers changes their review metadata, not the approved scope.
+                    unchanged_review={**copy.deepcopy(body['screening']),'reviewed':True}
+                    reconfirmed=await self.client.patch(path,json={'onboarding_screening':unchanged_review,
+                        'expected_updated_at':noop.json()['updated_at']})
+                    self.assertEqual(reconfirmed.status_code,200,reconfirmed.text)
+                    self.assertEqual(reconfirmed.json()['approval_status'],status)
+                    self.assertEqual(reconfirmed.json()['approval_history'],history)
                     before=await server.db.ai_systems.find_one({'ai_system_id':aid},{'_id':0})
                     changed=await self.client.patch(path,json={'environment':'Different unapproved account','expected_updated_at':before['updated_at']})
-                    self.assertEqual(changed.status_code,409,changed.text)
+                    self.assertEqual(changed.status_code,200,changed.text)
+                    self.assertEqual(changed.json()['approval_status'],'pending_assessment')
+                    self.assertEqual(changed.json()['approval_history'],history)
+                    self.assertTrue(changed.json()['material_change_at'])
+                    self.assertTrue(changed.json()['material_change_note'])
+                    after_environment=await server.db.ai_systems.find_one({'ai_system_id':aid},{'_id':0})
                     review={'schema_version':1,'catalog_version':CATALOG['reviewedOn'],'reviewed':True,
                         'answers':{**before['onboarding_screening']['answers'],'managed':not before['onboarding_screening']['answers']['managed']}}
-                    changed=await self.client.patch(path,json={'onboarding_screening':review,'expected_updated_at':before['updated_at']})
-                    self.assertEqual(changed.status_code,409,changed.text)
-                    self.assertEqual(await server.db.ai_systems.find_one({'ai_system_id':aid},{'_id':0}),before)
+                    stale=await self.client.patch(path,json={'onboarding_screening':review,'expected_updated_at':before['updated_at']})
+                    self.assertEqual(stale.status_code,409,stale.text)
+                    self.assertEqual(await server.db.ai_systems.find_one({'ai_system_id':aid},{'_id':0}),after_environment)
+                    # Restore a genuine current approval so the screening edit must independently invalidate it.
+                    approved=await self.client.post(path+'/approval',json={'status':status,
+                        'note':'Synthetic authenticated approval of the changed account',
+                        'expected_updated_at':after_environment['updated_at']})
+                    self.assertEqual(approved.status_code,200,approved.text)
+                    self.assertEqual(approved.json()['approval_status'],status)
+                    retained_history=approved.json()['approval_history']
+                    self.assertEqual(retained_history[:-1],history)
+                    self.assertEqual(retained_history[-1]['by'],'admin')
+                    self.assertEqual(retained_history[-1]['status'],status)
+                    original_screening=copy.deepcopy(after_environment['onboarding_screening'])
+                    changed=await self.client.patch(path,json={'onboarding_screening':review,
+                        'expected_updated_at':approved.json()['updated_at']})
+                    self.assertEqual(changed.status_code,200,changed.text)
+                    self.assertEqual(changed.json()['approval_status'],'pending_assessment')
+                    self.assertEqual(changed.json()['approval_history'],retained_history)
+                    self.assertTrue(changed.json()['material_change_at'])
+                    self.assertTrue(changed.json()['material_change_note'])
+                    screening=changed.json()['onboarding_screening']
+                    self.assertEqual(screening['answers'],review['answers'])
+                    for field in ('recorded_at','recorded_by'):
+                        self.assertEqual(screening[field],original_screening[field])
+                    self.assertEqual(screening['history'][:-1],original_screening['history'])
+                    self.assertEqual(screening['history'][-1],{key:value for key,value in original_screening.items() if key!='history'})
+                    self.assertEqual({kind:await server.db[kind].count_documents({}) for kind in counts},counts)
 
     async def test_denials_and_validation_write_nothing(self):
         self.sign_in('member')
@@ -232,9 +281,12 @@ class AIOnboardingTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual((await self.add(body,key)).status_code,403)
         self.sign_in('admin')
         await server.db.clients.update_one({'client_id':'a'},{'$set':{'status':'archived'}})
-        self.assertEqual((await self.add(body,key)).status_code,422)
-        self.assertEqual({kind:await server.db[kind].count_documents({}) for kind in counts},{**counts,'audit_logs':counts['audit_logs']+1})
+        self.assertEqual((await self.add(body,key)).status_code,403)
+        self.assertEqual({kind:await server.db[kind].count_documents({}) for kind in counts if kind!='audit_logs'},
+                         {kind:value for kind,value in counts.items() if kind!='audit_logs'})
+        self.assertEqual(await server.db.audit_logs.count_documents({}),counts['audit_logs']+2)
         self.assertEqual(await server.db.audit_logs.count_documents({'action':'access-denied','user_id':'member'}),1)
+        self.assertEqual(await server.db.audit_logs.count_documents({'action':'access-denied','user_id':'admin'}),1)
 
     async def test_calendar_anchor_leap_boundary(self):
         self.assertEqual(annual_date('2024-02-29T23:59:59Z'),'2025-02-28')

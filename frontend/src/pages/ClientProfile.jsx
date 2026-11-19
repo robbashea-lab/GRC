@@ -18,6 +18,7 @@ import ProfileSection from '@/components/ProfileSection';
 import ProgramConfiguration from '@/components/ProgramConfiguration';
 import OnboardingHandoff from '@/components/OnboardingHandoff';
 import ClientDialog from '@/components/ClientDialog';
+import ServicesTools from '@/components/ServicesTools';
 import ClientRelationshipValue from '@/components/ClientRelationshipValue';
 import {Button} from '@/components/ui/button';
 import BrawndoProfileOverview,{BrawndoProfileHeader} from '@/components/BrawndoProfileOverview';
@@ -28,11 +29,13 @@ import AdditionalPagePending from '@/components/AdditionalPagePending';
 import {useBrawndoOnboardingAppearance} from '@/lib/useBrawndoOnboardingAppearance';
 import {BrawndoOnboardingFrame} from '@/components/BrawndoOnboardingSummary';
 import {AdditionalProfileIdentity,AdditionalProfileTabs,AdditionalProfileOverview,AdditionalProfileReadSection,AdditionalProfilePeople} from '@/components/BrawndoAdditionalProfile';
-const TABS=[['overview','Overview'],['organization','Organization'],['technical','Technical Environment'],['security','Security & Data'],['program','Program Configuration'],['people','People & Ownership']];
+const TABS=[['overview','Overview'],['organization','Organization'],['technical','Technical Environment'],['security','Security & Data'],['services','Services & Tools'],['program','Program Configuration'],['people','People & Ownership']];
 export function LegacyClientSettings(){const [params]=useSearchParams();return <Navigate replace to={'/client-profile?tab='+(params.get('tab')==='compliance'?'program':'people')}/>;}
 export default function ClientProfile(){
-  const {currentClientId}=useOrg(),{user,workspaceMode}=useAuth();
+  const {currentClientId,recoveryClientId,refresh}=useOrg(),{user,workspaceMode}=useAuth();
+  const [params]=useSearchParams();
   const scope=`${user?.user_id}:${user?.role}:${user?.workspace_mode}:${workspaceMode}:${currentClientId}`;
+  if(!currentClientId&&recoveryClientId&&params.get('tab')==='services')return <><PageHeader title="Client Profile" subtitle="Organization context and program configuration."/><ServicesTools key={`${scope}:${recoveryClientId}`} clientId={recoveryClientId} recoveryOnly canEdit={['super_admin','platform_admin'].includes(user?.role)} onSaved={refresh}/></>;
   return <ProfileWorkspace key={scope} clientId={currentClientId}/>;
 }
 const SUBTITLE='Organization context and program configuration.';
@@ -50,7 +53,7 @@ function ProfileWorkspace({clientId}){
     Promise.all([api.get('/clients/'+clientId+'/profile',{signal:c.signal}),api.get('/onboarding/handoff',{params:{client_id:clientId},signal:c.signal})]).then(([p,h])=>{if(!c.signal.aborted){if(p.data?.client_id!==clientId||h.data?.client?.client_id!==clientId)throw new Error('Client Profile could not be verified for this client.');setData(p.data);setHandoff(h.data);}}).catch(e=>{if(!c.signal.aborted)setError(formatError(e));});return()=>c.abort();
   },[clientId,revision]);
   if(!clientId)return <PageHeader title="Client Profile" subtitle="Select or create a client first."/>;
-  if(additionalPresentation&&(error||!data||!handoff))return <AdditionalPagePending className="baprof-page" title={`${org.currentClient.name} Client Profile`} subtitle="Organization context · Not a control assessment. Do not enter credentials or secrets." name="Client Profile" loadingMessage="Loading Client Profile…" error={error} onRetry={reload}/>;
+  if(additionalPresentation&&(error||!data||!handoff))return <AdditionalPagePending className="baprof-page" title={`${org.currentClient?.name||'Client'} Client Profile`} subtitle="Organization context · Not a control assessment. Do not enter credentials or secrets." name="Client Profile" loadingMessage="Loading Client Profile…" error={error} onRetry={reload}/>;
   const shell=body=><div><PageHeader title="Client Profile" subtitle={SUBTITLE}/><div className="section-body">{body}</div></div>;
   if(error)return shell(<RegisterLoadError error={error} onRetry={reload} name="Client Profile"/>);
   if(!data||!handoff)return shell(<p role="status" className="text-sm text-ink-muted">Loading Client Profile…</p>);
@@ -75,6 +78,7 @@ function ProfileWorkspace({clientId}){
         <PeopleSummary client={handoff.client}/>{applicabilityPrompts(profile,requirements).map(text=><p key={text} className="text-sm border border-line rounded p-3">{text} <Link className="underline text-link" to="/client-profile?tab=program">Review configuration</Link></p>)}
       </>}
       {['organization','technical','security'].includes(tab)&&<>{tab==='organization'&&<div className="flex items-center gap-3 text-sm"><span>{org.currentClient?.name} · {org.currentClient?.industry||'Industry not provided'}</span>{canEdit&&<Button variant="outline" size="sm" onClick={()=>setEditClient(true)}>Edit client identity</Button>}</div>}<ProfileSection key={tab} section={tab} values={profile[tab]} canEdit={canEdit} onSave={save} readView={additional?<AdditionalProfileReadSection section={tab} values={profile[tab]}/>:undefined}/></>}
+      {tab==='services'&&<ServicesTools clientId={clientId} canEdit={canEdit} onSaved={()=>{org.refresh();reload();}}/>}
       {tab==='program'&&<BrawndoOnboardingFrame enabled={onboardingPresentation} theme={theme}>
         {canEdit?<ProgramConfiguration clientId={clientId} onSaved={reload}/>:<p className="text-sm text-ink-secondary">An administrator can manage program configuration. Current records are shown below.</p>}
         <OnboardingHandoff embedded presentation={onboardingPresentation} snapshot={handoff} state={data.baseline?.state} catalog={onboardingCatalog} clientId={clientId} canManage={canEdit}/>

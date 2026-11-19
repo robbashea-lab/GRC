@@ -11,6 +11,7 @@ CID = 'demo_brawndo'
 
 
 class PolicyCoverageTests(ClientDashboardSourcesTests):
+    r4_valid_completion_fixture = True
     async def asyncSetUp(self):
         await super().asyncSetUp()
         self.clock = patch.object(server, '_now', return_value=AT)

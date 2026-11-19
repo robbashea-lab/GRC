@@ -7,9 +7,10 @@ import {canExportReports} from '@/lib/permissions';
 import {BrawndoSurface,BrawndoPageHeader} from '@/components/BrawndoPage';
 import {Button} from '@/components/ui/button';
 import RegisterLoadError from '@/components/RegisterLoadError';
+import NativeReportCatalog from '@/components/NativeReportCatalog';
 import './Reports.css';
 
-function ReportForm({clientId,scopeKey,activeScope}){
+function ReportForm({clientId,scopeKey,activeScope,clientTimeZone}){
   const [frameworks,setFrameworks]=useState(null),[frameworkKey,setFrameworkKey]=useState('');
   const [detail,setDetail]=useState('full'),[trendPeriod,setTrendPeriod]=useState('6m');
   const [loadError,setLoadError]=useState(''),[revision,setRevision]=useState(0);
@@ -29,7 +30,7 @@ function ReportForm({clientId,scopeKey,activeScope}){
 
   async function generate(event){
     event.preventDefault();
-    if(downloadRequest.current||activeScope.current!==scopeKey||!frameworks?.some(f=>f.key===frameworkKey))return;
+    if(PREVIEW_MODE||downloadRequest.current||activeScope.current!==scopeKey||!frameworks?.some(f=>f.key===frameworkKey))return;
     const controller=new AbortController();downloadRequest.current=controller;
     setGenerating(true);setGenerateError('');setMessage('');
     try{
@@ -67,21 +68,21 @@ function ReportForm({clientId,scopeKey,activeScope}){
         <label htmlFor="reports-trend">Trend period<select id="reports-trend" className="ui-control" value={trendPeriod} onChange={e=>{setTrendPeriod(e.target.value);setMessage('');}}><option value="30d">30 days</option><option value="6m">6 months</option><option value="12m">12 months</option></select></label>
       </fieldset>
       {generateError&&<p role="alert" className="reports-error">{generateError}</p>}
-      <Button type="submit" disabled={generating||!selected} data-testid="generate-framework-report"><Download aria-hidden="true"/>{generating?'Generating PDF…':'Generate/download PDF'}</Button>
+      <Button type="submit" disabled={PREVIEW_MODE||generating||!selected} data-testid="generate-framework-report"><Download aria-hidden="true"/>{generating?'Generating PDF…':'Generate/download PDF'}</Button>
       {(generating||message)&&<p role="status">{generating?'Preparing the saved assessment snapshot…':message}</p>}
     </form>}
+    {selected&&<NativeReportCatalog key={frameworkKey+':'+clientTimeZone} clientId={clientId} framework={selected} scopeKey={scopeKey} activeScope={activeScope} clientTimeZone={clientTimeZone}/>}
   </div>;
 }
 
 export default function Reports(){
-  const {currentClientId,currentClient}=useOrg(),{user}=useAuth();
-  const scopeKey=`${currentClientId}:${user?.user_id||user?.email}:${user?.role}:${!!user?.password_change_required}:${!!user?.all_clients}:${(user?.client_ids||[]).join(',')}`;
+  const {currentClientId,currentClient}=useOrg(),{user,workspaceMode}=useAuth();
+  const scopeKey=JSON.stringify([currentClientId,user?.user_id||user?.email,user?.role,!!user?.password_change_required,!!user?.all_clients,user?.client_ids||[],workspaceMode,user?.workspace_mode]);
   const activeScope=useRef(scopeKey);activeScope.current=scopeKey;
   return <BrawndoSurface className="reports-page">
     <BrawndoPageHeader eyebrow={`${currentClient?.name||'Client'} · Framework reports`} title="Reports"/>
     {!canExportReports(user)?<p role="alert" className="reports-body">You do not have access to reports.</p>
       :!currentClientId?<p role="status" className="reports-body">Select a client to generate a report.</p>
-      :PREVIEW_MODE?<p role="status" className="reports-body">PDF reports are unavailable in Explore Demo. Use an authenticated client workspace to export saved assessments.</p>
-      :<ReportForm key={scopeKey} clientId={currentClientId} scopeKey={scopeKey} activeScope={activeScope}/>}
+      :<ReportForm key={scopeKey} clientId={currentClientId} scopeKey={scopeKey} activeScope={activeScope} clientTimeZone={currentClient?.timezone||currentClient?.time_zone||'UTC'}/>}
   </BrawndoSurface>;
 }

@@ -7,8 +7,11 @@ export const isPrestigeReference=(clientId,user)=>user?.workspace_mode==='demo'&
 export const isCisReference=(clientId,user,client)=>client?.client_id===clientId
   && ['active','onboarding'].includes(client.status) && !client.archived && !client.archived_at
   && cisActorMode(user,user?.workspace_mode||'standard') && !!cisClientProgram(client);
-// Retain Prestige's existing native workflow independently of the CIS rollout.
-export const isReferenceWorkflow=(clientId,user,client)=>isCisReference(clientId,user,client)||isPrestigeReference(clientId,user);
+// The approved native standard is shared by every authorized client, including
+// general-GRC clients and later framework enrollment. This controls presentation;
+// record controllers and the server still enforce assignment and tenant access.
+export const isReferenceWorkflow=(clientId,user,client)=>!!clientId&&!!user?.user_id
+  && (!client||client.client_id===clientId);
 // Shared presentation defaults; these predicates never grant record access or activate Omni.
 export const isWorkspacePresentation=(clientId,user)=>!!user&&!!clientId;
 export const isReferencePresentation=isWorkspacePresentation;

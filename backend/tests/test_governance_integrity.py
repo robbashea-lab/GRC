@@ -4,6 +4,7 @@ from test_client_dashboard_sources import ClientDashboardSourcesTests, server
 OUTCOME = {"conclusion": "Practice operated as expected", "tested_period": "Q3 2026", "tested_scope": "Access sample", "checklist_confirmed": True, "no_evidence_reason": "Interview only; rationale recorded"}
 
 class GovernanceIntegrityTests(ClientDashboardSourcesTests):
+    r4_valid_completion_fixture = True
     async def test_existing_sources_reject_other_tenants(self):
         await server.db.reviews.delete_many({})
         await super().test_existing_sources_reject_other_tenants()

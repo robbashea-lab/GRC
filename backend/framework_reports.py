@@ -16,23 +16,24 @@ from pymongo.read_concern import ReadConcern
 from starlette.concurrency import run_in_threadpool
 
 import authorization
+from r4_services import assert_settled
 from framework_catalog import CATALOGS, FRAMEWORKS, active_definitions, client_configuration
 from framework_governance import STATUSES
 from framework_summary import progress
 from portfolio_progress import current_position
 
 LOG = logging.getLogger(__name__)
-REPORT_KEYS = ('cis-ig1', 'soc-2', 'iso-27001')
+REPORT_KEYS = ('cis-ig1', 'soc-2', 'iso-27001', 'hipaa', 'nist-csf-2', 'cmmc')
 ASSESSMENT_FIELDS = ('framework_assessment_id', 'client_id', 'framework_key', 'definition_id',
-    'framework_version', 'status', 'implementation', 'verification', 'last_assessed', 'last_saved',
+    'framework_version', 'status', 'implementation', 'verification', 'last_assessed', 'last_saved', '_r4_context_pending',
     'assessment_recorded_at', 'assessment_recorded_by', 'verified_at', 'verification_notes',
     'guided_assessment_source',
     'created_at', 'archived', 'archived_at', 'assessment_history.at', 'assessment_history.status',
     'assessment_history.soa_applicability', 'assessment_history.soa_justification', 'assessment_history.na_rationale',
     'related_links', 'unlinked_evidence_ids', 'na_rationale',
     'soa_applicability', 'soa_justification', 'items_to_address', 'items_revision', 'notes')
-CLIENT_FIELDS = ('client_id', 'name', 'status', 'onboarding_baseline', 'framework_settings',
-    'cis_configuration_updated_at', 'soc_configuration_updated_at', 'cis_scope_change',
+CLIENT_FIELDS = ('client_id', 'name', 'status', 'onboarding_baseline', 'framework_settings', '_r4_context_pending',
+    'cis_configuration_updated_at', 'soc_configuration_updated_at', 'cmmc_configuration_updated_at', 'cis_scope_change', 'cmmc_scope_change',
     'timezone', 'time_zone', 'iso_scope', 'isms_scope')
 ACTOR_FIELDS = ('user_id', 'role', 'client_ids', 'all_clients', 'status', 'password_change_required',
     'password_changed_at', 'sessions_revoked_at')
@@ -57,6 +58,9 @@ def labels(key):
                       needs_attention='Needs Remediation / Validation')
     elif key == 'iso-27001':
         result['needs_attention'] = 'Not Implemented / Needs Validation'
+    elif key == 'nist-csf-2':
+        result.update(addressed='Achieved', in_progress='Partially Achieved',
+                      needs_attention='Not Achieved / Needs Validation')
     return result
 
 
@@ -77,9 +81,20 @@ def framework_option(key, client):
         else:
             scope += '. Evidence period not recorded'
         name, units, groups = 'SOC 2', 'criteria', 'Criteria groups'
-    else:
+    elif key == 'iso-27001':
         scope = client.get('isms_scope') or client.get('iso_scope') or 'ISMS scope not recorded; clauses 4–10 and Annex A / Statement of Applicability'
         name, units, groups = 'ISO/IEC 27001', 'requirements and controls', 'Sections and domains'
+    elif key == 'cmmc':
+        level=config['level']
+        scope='FAR / FCI scope: 15 parent requirements represented by 17 mapped child checks' if level==1 else 'NIST SP 800-171 Rev 2 / CUI scope: 110 requirements'
+        scope+='. Internal readiness, not CMMC Status, affirmation, certification or a weighted assessment score. Retained answers require a scope check after a level change.'
+        name,units,groups=f'CMMC Level {level}','mapped checks' if level==1 else 'requirements','Domains'
+    elif key == 'nist-csf-2':
+        scope=catalog['scope_note']
+        name,units,groups='NIST CSF 2.0','outcomes','Functions and categories'
+    else:
+        scope=catalog['scope_note']
+        name,units,groups='HIPAA','tracked provisions','Cited sections'
     return {'key': key, 'name': name, 'version': catalog['version'], 'scope': scope,
             'unit_name': units, 'group_name': groups}
 
@@ -300,7 +315,9 @@ def build_snapshot(client, key, saved, evidence, findings, now, period, read_win
         source = row.get('guided_assessment_source') or {}
         basis = 'Saved guided interview summary' if source.get('origin') == 'guided-assessment-pilot' else 'Not recorded'
         legacy_note = 'Legacy assessment date unconfirmed; the native timestamp records a save rather than a confirmed assessment judgment' if row.get('last_assessed') and not judgment else ''
-        details.append({'id': row['definition_id'], 'assessment_id': aid, 'title': row['title'],
+        display_title = (f"FAR ({row['level_one_parent']}) · {row['level_one_summary']}"
+                         if key == 'cmmc' and config['level'] == 1 else row['title'])
+        details.append({'id': row['definition_id'], 'assessment_id': aid, 'title': display_title,
             'group_id': group_id, 'group_title': title, 'status': row['status'], 'status_label': status_labels[row['status']],
             'current_implementation': row.get('implementation') or '', 'notes': row.get('notes') or '',
             'verification_state': row.get('verification') or 'not_verified', 'last_assessed': local_time(judgment, zone),
@@ -363,21 +380,26 @@ async def read_snapshot(s, cid, key, actor, period):
                 client = await s.db.clients.find_one({'client_id': cid}, projection(CLIENT_FIELDS), session=session)
                 if not client:
                     raise HTTPException(404, 'Client not found')
+                assert_settled(client)
                 programs = await s.db.requirements.distinct('baseline_key', {'client_id': cid, 'baseline_response': 'applies'}, session=session)
                 if key not in {f['key'] for f in enabled_options(client, programs)}:
                     raise HTTPException(404, 'The selected framework is not enabled for this client')
                 saved = await s.db.framework_assessments.find({'client_id': cid, 'framework_key': key}, projection(ASSESSMENT_FIELDS), session=session).to_list(10001)
                 if len(saved) > 10000:
                     raise HTTPException(413, 'Framework assessments exceed the supported report size')
+                for row in saved:
+                    assert_settled(row)
                 aids = [row['framework_assessment_id'] for row in saved]
                 definitions = [row['definition_id'] for row in saved]
                 rids = list({r['id'] for row in saved for r in row.get('related_links') or [] if r.get('kind') == 'reviews'})
                 reviews = await s.db.reviews.find({'client_id': cid, '$or': [
                     {'review_id': {'$in': rids}}, {'framework_assessment_id': {'$in': aids}},
                     {'framework_key': key, 'framework_safeguards': {'$in': definitions}}]},
-                    projection(('review_id', 'client_id', 'framework_assessment_id', 'framework_key', 'framework_safeguards')), session=session).to_list(20001)
+                    projection(('review_id', 'client_id', 'framework_assessment_id', 'framework_key', 'framework_safeguards', '_r4_context_pending')), session=session).to_list(20001)
                 if len(reviews) > 20000:
                     raise HTTPException(413, 'Framework evidence relationships exceed the supported report size')
+                for row in reviews:
+                    assert_settled(row)
                 rids = [r['review_id'] for r in reviews]
                 evidence_ids = list({r['id'] for row in saved for r in row.get('related_links') or [] if r.get('kind') == 'evidence'})
                 clauses = [
@@ -411,6 +433,7 @@ async def recheck_delivery(s, request, cid, key, prior_client, snapshot):
     client = await s.db.clients.find_one({'client_id': cid}, projection(CLIENT_FIELDS))
     if not client:
         raise HTTPException(403, 'Client access changed while generating the report')
+    assert_settled(client)
     programs = await s.db.requirements.distinct('baseline_key', {'client_id': cid, 'baseline_response': 'applies'})
     if key not in {f['key'] for f in enabled_options(client, programs)}:
         raise HTTPException(403, 'Framework access changed while generating the report')
@@ -438,12 +461,13 @@ def router_for(s):
         client = await s.db.clients.find_one({'client_id': client_id}, projection(CLIENT_FIELDS))
         if not client:
             raise HTTPException(404, 'Client not found')
+        assert_settled(client)
         programs = await s.db.requirements.distinct('baseline_key', {'client_id': client_id, 'baseline_response': 'applies'})
         return {'frameworks': enabled_options(client, programs)}
 
     @router.get('/framework')
     async def export(request: Request, client_id: str = Query(..., min_length=1, max_length=160),
-                     framework_key: Literal['cis-ig1', 'soc-2', 'iso-27001'] = Query(...),
+                     framework_key: Literal['cis-ig1', 'soc-2', 'iso-27001', 'hipaa', 'nist-csf-2', 'cmmc'] = Query(...),
                      detail: Literal['full', 'executive'] = 'full',
                      trend_period: Literal['30d', '6m', '12m'] = '6m', user=Depends(s.get_current_user)):
         require_access(user, client_id)

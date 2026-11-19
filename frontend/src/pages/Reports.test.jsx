@@ -17,7 +17,7 @@ beforeEach(()=>{
   mockOrg={currentClientId:'client-a',currentClient:{name:'Client A'}};
   mockUser={user_id:'viewer-a',role:'client_readonly'};
   require('@/lib/api').PREVIEW_MODE=false;api.get.mockReset();
-  api.get.mockImplementation(async path=>path==='/reports/frameworks'?{data:{frameworks:[cis]}}:pdf());
+  api.get.mockImplementation(async path=>path==='/reports/frameworks'?{data:{frameworks:[cis]}}:path==='/reports/history'?{data:{exports:[]}}:pdf());
   downloads=[];URL.createObjectURL=jest.fn(()=>'blob:framework-pdf');URL.revokeObjectURL=jest.fn();
   click=jest.spyOn(HTMLAnchorElement.prototype,'click').mockImplementation(function(){downloads.push({href:this.href,filename:this.download});});
   node=document.createElement('div');document.body.appendChild(node);root=createRoot(node);
@@ -42,7 +42,7 @@ test('one enabled program shows recorded scope without a redundant selector and 
 });
 
 test('only server-enabled frameworks are offered; labeled native selects submit executive and selected trend choices',async()=>{
-  api.get.mockImplementation(async path=>path==='/reports/frameworks'?{data:{frameworks:[cis,soc,iso]}}:pdf());
+  api.get.mockImplementation(async path=>path==='/reports/frameworks'?{data:{frameworks:[cis,soc,iso]}}:path==='/reports/history'?{data:{exports:[]}}:pdf());
   await render();
   expect([...node.querySelectorAll('#reports-framework option')].map(option=>option.textContent)).toEqual(['CIS IG2','SOC 2','ISO/IEC 27001']);
   for(const id of ['reports-framework','reports-detail','reports-trend'])expect(node.querySelector(`label[for="${id}"]`)).toBeTruthy();
@@ -75,7 +75,7 @@ test('unknown role, no client and Explore Demo show meaningful unavailable state
   mockUser={...mockUser,role:'client_readonly',password_change_required:true};await render();expect(node.querySelector('form')).toBeNull();
   mockUser={...mockUser,role:'client_readonly',password_change_required:false};mockOrg={currentClientId:'',currentClient:null};await render();expect(node.textContent).toContain('Select a client');
   mockOrg={currentClientId:'demo_client',currentClient:{name:'Demo'}};require('@/lib/api').PREVIEW_MODE=true;await render();
-  expect(node.textContent).toContain('PDF reports are unavailable in Explore Demo');expect(api.get).not.toHaveBeenCalled();
+  expect(node.textContent).toContain('PDF reports are unavailable in Explore Demo');expect(node.querySelectorAll('.rep-card')).toHaveLength(6);expect(api.get.mock.calls.every(([path])=>['/reports/frameworks','/reports/history'].includes(path))).toBe(true);expect(node.querySelector('[data-testid="generate-framework-report"]').disabled).toBe(true);
 });
 
 test('malformed enabled-program data fails visibly rather than offering unverifiable exports',async()=>{

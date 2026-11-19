@@ -1,6 +1,8 @@
-"""AI inventory/context only. Reviews, remediation and evidence remain authoritative elsewhere."""
+"""Native AI inventory, use approval and reassessment; linked work stays authoritative."""
 import json
+import re
 import uuid
+from copy import deepcopy
 from contextlib import asynccontextmanager
 from datetime import datetime, timezone, timedelta
 from pathlib import Path
@@ -17,6 +19,12 @@ from register_catalog_identity import validate_catalog_key
 
 CATALOG = json.loads((Path(__file__).parents[1] / 'frontend/src/lib/aiGovernanceCatalog.json').read_text(encoding='utf-8'))
 AI_METADATA_DEFAULTS = {'environment':'','restrictions':'','data_settings':'','permitted_data_types':[]}
+AI_DECISIONS = {'approved','approved_with_conditions','not_approved'}
+AI_APPROVAL_FIELDS = (
+    'name','product_model','provider','vendor_id','description','purposes','data_types',
+    'access','screening','human_review_required','human_approval_required','oversight_notes',
+    *AI_METADATA_DEFAULTS,
+)
 
 class AIInput(BaseModel):
     model_config = ConfigDict(extra='forbid')
@@ -57,6 +65,50 @@ class AIInput(BaseModel):
         if any(value not in CATALOG['data_types'] for value in values):
             raise ValueError('Invalid permitted data classifications')
         return values
+
+
+class AIMaterialChangeInput(BaseModel):
+    model_config = ConfigDict(extra='forbid', strict=True)
+    note: str = Field(min_length=1, max_length=10000)
+    expected_updated_at: Optional[str] = Field(default=None, max_length=100)
+
+    @field_validator('note')
+    @classmethod
+    def meaningful_note(cls, value):
+        if not value.strip():
+            raise ValueError('Describe the decision or material change')
+        return value.strip()
+
+
+class AIApprovalInput(AIMaterialChangeInput):
+    status: Literal['approved','approved_with_conditions','not_approved']
+
+
+def approval_scope(row):
+    """Bind decisions to the saved use and questionnaire, not a display tier or Review."""
+    scope = {
+        key: deepcopy(row.get(key, AIInput.model_fields[key].get_default(call_default_factory=True)))
+        for key in AI_APPROVAL_FIELDS
+    }
+    saved = row.get('onboarding_screening')
+    if saved:
+        # Reconfirming the same answers must not invalidate a decision because a
+        # review timestamp/history changed. The original decision keeps its basis.
+        scope['onboarding_screening'] = deepcopy({
+            key: saved.get(key) for key in ('schema_version','catalog_version','answers','scope')
+        })
+    return scope
+
+
+def reassessment_patch(old, candidate, at, note):
+    if old.get('approval_status') not in AI_DECISIONS or approval_scope(old) == approval_scope(candidate):
+        return {}
+    return {'approval_status':'pending_assessment','material_change_at':at,'material_change_note':note}
+
+
+def normalized_name(value):
+    return value.strip().lower()
+
 
 class AILinkInput(BaseModel):
     model_config = ConfigDict(extra='forbid', strict=True)
@@ -138,6 +190,10 @@ async def lease(db, ai_id):
     result = await db.ai_systems.update_one({'ai_system_id':ai_id,'$or':[{'_governance_lock':None},{'_governance_lock.until':{'$lt':now.isoformat()}}]}, {'$set':{'_governance_lock':{'token':token,'until':(now+timedelta(seconds=120)).isoformat()}}})
     if not result.modified_count: raise HTTPException(409,'Another AI governance action is being saved; retry')
     try:
+        pending=await db.ai_systems.find_one({'ai_system_id':ai_id},{'_ai_retirement_pending':1})
+        retirement=(pending or {}).get('_ai_retirement_pending')
+        if retirement and retirement!=create_requests.current.get():
+            raise HTTPException(409,'Retry the pending AI retirement before changing its linked work')
         yield
     finally:
         await db.ai_systems.update_one({'ai_system_id':ai_id,'_governance_lock.token':token},{'$unset':{'_governance_lock':''}})
@@ -166,6 +222,14 @@ def router_for(s):
         if not data['name'].strip(): raise HTTPException(422,'Name is required')
         if old and old['client_id']!=data['client_id']: raise HTTPException(422,'Cannot move records between clients')
         if old and old['status']=='retired': raise HTTPException(409,'Retired AI records remain historical')
+        if not old or normalized_name(data['name'])!=normalized_name(old['name']):
+            query={'client_id':data['client_id'],'$or':[
+                {'ai_name_key':normalized_name(data['name'])},
+                {'name':{'$regex':r'^\s*'+re.escape(data['name'].strip())+r'\s*$','$options':'i'}},
+            ]}
+            if old: query['ai_system_id']={'$ne':old['ai_system_id']}
+            if await s.db.ai_systems.find_one(query,{'ai_system_id':1}):
+                raise HTTPException(409,'An AI system with that name already exists.')
         if data['status'] in ('active','suspended','retired') and (not old or old['status']!=data['status']): await client_scope(data['client_id'],user,True,True)
         for key in ('purposes','data_types','access','roles','risk_topics'):
             if set(data[key])-set(CATALOG[key]): raise HTTPException(422,'Invalid '+key)
@@ -230,55 +294,161 @@ def router_for(s):
             counter=await s.db.business_counters.find_one_and_update({'_id':counter_key},{'$inc':{'sequence':1}},upsert=True,return_document=ReturnDocument.AFTER)
         except DuplicateKeyError:
             counter=await s.db.business_counters.find_one_and_update({'_id':counter_key},{'$inc':{'sequence':1}},return_document=ReturnDocument.AFTER)
-        row={**data,'ai_system_id':s._uid('ai'),'display_id':f"AI-{counter['sequence']:03d}",'created_at':s._now(),'updated_at':s._now(),'created_by':user['user_id'],'related_links':[]}
+        row={**data,'ai_name_key':normalized_name(data['name']),'ai_system_id':s._uid('ai'),'display_id':f"AI-{counter['sequence']:03d}",'created_at':s._now(),'updated_at':s._now(),'created_by':user['user_id'],'related_links':[],'approval_status':'pending_assessment'}
         if creation_metadata:
             row.update(creation_metadata)
             row['_ai_onboarding_initial_version']=row['updated_at']
-        row=await create_requests.insert_primary(s.db,'ai_systems',row,identity)
+        try: row=await create_requests.insert_primary(s.db,'ai_systems',row,identity)
+        except DuplicateKeyError as exc:
+            if creation_metadata is None and not await s.db.ai_systems.find_one({'_id':'create:'+identity},{'_id':1}):
+                # A unique-name race rejected this insert. Its own receipt can
+                # use the existing rejected-create flow. An onboarding child
+                # must never advertise rejection of its partially saved parent.
+                await s.db.create_requests.update_one({'_id':identity},{'$set':{'primary_started':False}})
+            raise HTTPException(409,'An AI system with that name already exists.') from exc
         await s.audit(user,'AI use case created','ai_system',row['ai_system_id'],row['client_id'])
         return await view(row)
-    @router.patch('/ai_systems/{aid}')
-    async def update_ai(aid:str,body:dict,user=Depends(s.get_current_user)):
-        old=await parent(aid,user,True)
-        s._require_snapshot(body,old)
+    async def prepare_update(old,body,user):
         changes={k:v for k,v in body.items() if k!='expected_updated_at'}
         reviewed_screening=changes.pop('onboarding_screening',None)
         if 'onboarding_screening' in body and not isinstance(reviewed_screening,dict):
             raise HTTPException(422,'Invalid screening review')
         if set(changes)-set(AIInput.model_fields): raise HTTPException(422,'Unknown or read-only AI fields')
         await metadata_scope(old['client_id'],changes)
+        try: data=AIInput(**{**{k:old[k] for k in AIInput.model_fields if k in old},**changes}).model_dump()
+        except ValidationError as exc: raise HTTPException(422,'Invalid AI fields') from exc
+        # Empty form defaults do not backfill absent legacy boundaries.
+        for key,default in AI_METADATA_DEFAULTS.items():
+            if key not in old and data[key]==default: data.pop(key)
+        await validate(data,user,old)
+        if normalized_name(data['name'])!=normalized_name(old['name']):
+            data['ai_name_key']=normalized_name(data['name'])
+        data['updated_at']=s._next_write_time(old.get('updated_at'))
+        if reviewed_screening is not None:
+            await metadata_scope(old['client_id'],{'environment'})
+            data['onboarding_screening']=ai_onboarding.reassessment(old,{**old,**data},reviewed_screening,user,data['updated_at'])
+        data.update(reassessment_patch(old,{**old,**data},data['updated_at'],
+            'Approval boundaries changed; reassessment required.'))
+        return data
+
+    async def save_update(aid,old,data):
+        try:
+            result=await s.db.ai_systems.update_one(
+                {'ai_system_id':aid,'client_id':old['client_id'],'updated_at':old.get('updated_at')},{'$set':data})
+        except DuplicateKeyError as exc:
+            raise HTTPException(409,'An AI system with that name already exists.') from exc
+        if not result.matched_count:raise HTTPException(409,'Record changed since it was opened; reload before saving')
+
+    async def retire_ai(aid,body,user):
+        selected=await parent(aid,user,True,True)
+        if 'expected_updated_at' not in body: s._require_snapshot(body,selected)
+        await metadata_scope(selected['client_id'],body)
+
+        async def execute(identity):
+            async with lease(s.db,aid):
+                row=await parent(aid,user,True,True)
+                await metadata_scope(row['client_id'],body)
+                receipt=await s.db.create_requests.find_one({'_id':identity})
+                if row.get('_ai_retirement_command')!=identity:
+                    s._require_snapshot(body,row)
+                    data=await prepare_update(row,body,user)
+                    reviews=await s.db.reviews.find({'ai_system_id':aid,'client_id':row['client_id'],
+                        'status':{'$nin':['completed','cancelled']}},{'_id':0,'_execution_lock':0}).to_list(None)
+                    plan=[]
+                    for review in reviews:
+                        updates={'recurrence':'none','next_review_date':None,
+                            'updated_at':s._next_write_time(review.get('updated_at')),'_ai_retirement_command':identity}
+                        if review['status']!='in_progress': updates['status']='cancelled'
+                        plan.append({'before':review,'updates':updates})
+                    meta={'changed_fields':[k for k in data if k!='updated_at' and data[k]!=row.get(k)],
+                        'previous_tier':screening(row)['risk_tier'],'risk_tier':screening({**row,**data})['risk_tier']}
+                    await s.db.create_requests.update_one({'_id':identity},{'$set':{
+                        'ai_retirement_reviews':plan,'ai_retirement_meta':meta,'primary_started':True}})
+                    data.update(_ai_retirement_command=identity,_ai_retirement_pending=identity)
+                    await save_update(aid,row,data)
+                    row={**row,**data}
+                    receipt={**receipt,'ai_retirement_reviews':plan,'ai_retirement_meta':meta}
+                elif row.get('status')!='retired':
+                    raise HTTPException(409,'The accepted retirement changed; no saved record was overwritten')
+                if 'ai_retirement_reviews' not in receipt:
+                    raise HTTPException(409,'The retained AI retirement plan needs review')
+                for item in receipt['ai_retirement_reviews']:
+                    review=item['before']
+                    query={'review_id':review['review_id'],'client_id':row['client_id'],'ai_system_id':aid}
+                    current=await s.db.reviews.find_one(query,{'_id':0})
+                    if not current: raise HTTPException(409,'A linked Review is missing; the retirement plan was retained')
+                    if current.get('_ai_retirement_command')!=identity:
+                        changed=await s.db.reviews.update_one({**query,'updated_at':review.get('updated_at'),
+                            'status':review.get('status'),'current_occurrence_id':review.get('current_occurrence_id')},
+                            {'$set':item['updates']})
+                        if not changed.matched_count:
+                            raise HTTPException(409,'A linked Review changed; its saved work was retained')
+                    await s._review_event(user,review,'AI retired; recurring review stopped')
+                await s.audit(user,'AI retired','ai_system',aid,row['client_id'],meta=receipt['ai_retirement_meta'])
+                await s.db.ai_systems.update_one({'ai_system_id':aid,'_ai_retirement_pending':identity},
+                    {'$unset':{'_ai_retirement_pending':''}})
+                return await view(row)
+
+        await create_requests.run(s.db,create_requests.digest(body),user['user_id'],selected['client_id'],
+            'ai_systems/'+aid+'/retire/update',body,execute)
+        return await view(await parent(aid,user,True,True))
+
+    @router.patch('/ai_systems/{aid}')
+    async def update_ai(aid:str,body:dict,user=Depends(s.get_current_user)):
+        if body.get('status')=='retired': return await retire_ai(aid,body,user)
+        old=await parent(aid,user,True)
+        s._require_snapshot(body,old)
         async with lease(s.db,aid):
             old=await parent(aid,user,True)
             s._require_snapshot(body,old)
-            await metadata_scope(old['client_id'],changes)
-            try: data=AIInput(**{**{k:old[k] for k in AIInput.model_fields if k in old},**changes}).model_dump()
-            except Exception as exc: raise HTTPException(422,'Invalid AI fields') from exc
-            # Existing forms resend empty defaults; that is not a backfill or an
-            # edit to an absent legacy boundary. Existing fields still clear.
-            for key,default in AI_METADATA_DEFAULTS.items():
-                if key not in old and data[key]==default: data.pop(key)
-            await validate(data,user,old)
-            if old.get('approval_status') in ('approved','approved_with_conditions') and any(
-                data.get(key,AIInput.model_fields[key].get_default(call_default_factory=True))
-                !=old.get(key,AIInput.model_fields[key].get_default(call_default_factory=True))
-                for key in AI_METADATA_DEFAULTS):
-                raise HTTPException(409,'This change affects a recorded AI approval scope; authenticated reassessment is not supported. The original decision and record are unchanged.')
-            data['updated_at']=s._next_write_time(old.get('updated_at'))
-            if reviewed_screening is not None:
-                await metadata_scope(old['client_id'],{'environment'})
-                data['onboarding_screening']=ai_onboarding.reassessment(old,{**old,**data},reviewed_screening,user,data['updated_at'])
-            if data['status']=='retired':
-                # Started work may finish as a one-time closure obligation; history is retained.
-                for review in await s.db.reviews.find({'ai_system_id':aid,'client_id':old['client_id'],'status':{'$nin':['completed','cancelled']}},{'_id':0}).to_list(None):
-                    changes={'recurrence':'none','next_review_date':None,'updated_at':s._now()}
-                    if review['status']!='in_progress': changes['status']='cancelled'
-                    await s.db.reviews.update_one({'review_id':review['review_id']},{'$set':changes})
-                    await s._review_event(user,review,'AI retired; recurring review stopped')
-            changed_record=await s.db.ai_systems.update_one({'ai_system_id':aid,'updated_at':old.get('updated_at')},{'$set':data})
-            if not changed_record.matched_count:raise HTTPException(409,'Record changed since it was opened; reload before saving')
+            data=await prepare_update(old,body,user)
+            await save_update(aid,old,data)
             changed=[k for k in data if k!='updated_at' and data[k]!=old.get(k)]
-            if changed: await s.audit(user,'AI '+('retired' if data['status']=='retired' else 'suspended' if data['status']=='suspended' else 'governance updated'),'ai_system',aid,old['client_id'],meta={'changed_fields':changed,'previous_tier':screening(old)['risk_tier'],'risk_tier':screening({**old,**data})['risk_tier']})
+            if changed: await s.audit(user,'AI '+('suspended' if data['status']=='suspended' else 'governance updated'),'ai_system',aid,old['client_id'],meta={'changed_fields':changed,'previous_tier':screening(old)['risk_tier'],'risk_tier':screening({**old,**data})['risk_tier']})
             return await view({**old,**data})
+    @router.post('/ai_systems/{aid}/approval')
+    async def approve_ai(aid:str,body:AIApprovalInput,user=Depends(s.get_current_user)):
+        selected=await parent(aid,user,True,True)
+        incoming=body.model_dump(exclude_unset=True)
+        if 'expected_updated_at' not in incoming: s._require_snapshot(incoming,selected)
+        await metadata_scope(selected['client_id'],AI_METADATA_DEFAULTS)
+
+        async def execute(identity):
+            async with lease(s.db,aid):
+                row=await parent(aid,user,True,True)
+                await metadata_scope(row['client_id'],AI_METADATA_DEFAULTS)
+                history=row.get('approval_history',[])
+                if not isinstance(history,list):
+                    raise HTTPException(409,'The retained approval history needs review before adding a decision')
+                decision=next((d for d in history if isinstance(d,dict) and d.get('request_id')==identity),None)
+                if not decision:
+                    s._require_snapshot(incoming,row)
+                    if row['status']=='retired': raise HTTPException(409,'Retired AI is historical')
+                    if body.status!='not_approved':
+                        permitted=row.get('permitted_data_types')
+                        if not all(isinstance(row.get(key),str) and row[key].strip() for key in ('environment','description')) or not isinstance(permitted,list) or not permitted or any(value not in CATALOG['data_types'] for value in permitted):
+                            raise HTTPException(422,'Record the environment, approved use and permitted data before approving')
+                        if body.status=='approved_with_conditions' and not (isinstance(row.get('restrictions'),str) and row['restrictions'].strip()):
+                            raise HTTPException(422,'Record the approval conditions in Restrictions / boundaries')
+                    at=s._next_write_time(row.get('updated_at'))
+                    decision={'status':body.status,'note':body.note,'scope':approval_scope(row),'at':at,
+                        'by':user['user_id'],'by_name':user.get('name') or user.get('email'),'request_id':identity}
+                    updates={'approval_status':body.status,'updated_at':at}
+                    await s.db.create_requests.update_one({'_id':identity},{'$set':{'primary_started':True}})
+                    changed=await s.db.ai_systems.update_one(
+                        {'ai_system_id':aid,'client_id':row['client_id'],'updated_at':row.get('updated_at')},
+                        {'$set':updates,'$push':{'approval_history':decision}})
+                    if not changed.matched_count:
+                        raise HTTPException(409,'Record changed since it was opened; reload before making a decision')
+                    row={**row,**updates,'approval_history':[*history,decision]}
+                await s.audit(user,'AI approval decision recorded','ai_system',aid,row['client_id'],
+                    meta={'status':decision['status'],'note':decision['note']})
+                return await view(row)
+
+        payload=body.model_dump()
+        await create_requests.run(s.db,create_requests.digest(payload),user['user_id'],selected['client_id'],
+            'ai_systems/'+aid+'/approval/update',payload,execute)
+        return await view(await parent(aid,user,True,True))
     @router.post('/ai_systems/{aid}/reviews')
     async def schedule_ai(aid:str,body:dict,user=Depends(s.get_current_user)):
         row=await parent(aid,user,True,True)
@@ -286,7 +456,7 @@ def router_for(s):
             row=await parent(aid,user,True,True)
             if row['status'] in ('retired','suspended'): raise HTTPException(409,'Inactive AI cannot start periodic reviews')
             if body.get('recurrence') not in ('quarterly','semiannual','annual','custom') or not review_occurrences.scheduled_date(body.get('due_date')): raise HTTPException(422,'Choose a valid date and cadence')
-            if body['recurrence']=='custom' and (type(body.get('custom_recurrence_days')) is not int or not 1<=body['custom_recurrence_days']<=3650): raise HTTPException(422,'Custom recurrence must be 1–3650 days')
+            if body['recurrence']=='custom' and (type(body.get('custom_recurrence_days')) is not int or not 1<=body['custom_recurrence_days']<=3660): raise HTTPException(422,'Custom recurrence must be 1–3660 days')
             existing=await s.db.reviews.find_one({'ai_system_id':aid,'ai_review_purpose':'periodic','status':{'$nin':['completed','cancelled']}},{'_id':0})
             if existing: return review_occurrences.view(existing)
             review={'review_id':s._uid('rev'),'client_id':row['client_id'],'ai_system_id':aid,'ai_review_purpose':'periodic','title':f"AI Governance Review — {row['display_id']} — {row['name']}",'review_type':'ai_governance','owner_id':row.get('owner_id'),'due_date':body['due_date'],'recurrence':body['recurrence'],'custom_recurrence_days':body.get('custom_recurrence_days'),'status':'upcoming','created_at':s._now(),'updated_at':s._now(),'created_by':user['user_id']}
@@ -296,17 +466,48 @@ def router_for(s):
             await s.audit(user,'AI Governance Review scheduled','ai_system',aid,row['client_id'],meta={'review_id':review['review_id']})
             return review_occurrences.view(review)
     @router.post('/ai_systems/{aid}/material-change')
-    async def change_ai(aid:str,body:dict,user=Depends(s.get_current_user)):
-        row=await parent(aid,user,True,True)
-        if not isinstance(body.get('note'),str) or not body['note'].strip(): raise HTTPException(422,'Describe the material change')
-        async with lease(s.db,aid):
-            row=await parent(aid,user,True,True)
-            if row['status']=='retired': raise HTTPException(409,'Retired AI is historical')
-            at=s._now()
-            await s.db.ai_systems.update_one({'ai_system_id':aid},{'$set':{'material_change_at':at,'material_change_note':body['note'],'updated_at':at}})
-            await s.audit(user,'AI material change recorded','ai_system',aid,row['client_id'],meta={'note':body['note']})
-            # The alert initiates reassessment through the existing Review; no automatic duplicate.
-            return await view({**row,'material_change_at':at,'material_change_note':body['note'],'updated_at':at})
+    async def change_ai(aid:str,body:AIMaterialChangeInput,user=Depends(s.get_current_user)):
+        selected=await parent(aid,user,True,True)
+        incoming=body.model_dump(exclude_unset=True)
+        if 'expected_updated_at' not in incoming: s._require_snapshot(incoming,selected)
+        await metadata_scope(selected['client_id'],AI_METADATA_DEFAULTS)
+
+        async def execute(identity):
+            async with lease(s.db,aid):
+                row=await parent(aid,user,True,True)
+                await metadata_scope(row['client_id'],AI_METADATA_DEFAULTS)
+                previous=row.get('_ai_material_change_command')
+                if previous!=identity:
+                    if previous:
+                        prior=await s.db.create_requests.find_one({'_id':previous})
+                        if not prior or prior.get('state')!='complete':
+                            raise HTTPException(409,'Retry the pending material change before recording another')
+                    s._require_snapshot(incoming,row)
+                    if row['status']=='retired': raise HTTPException(409,'Retired AI is historical')
+                    at=s._next_write_time(row.get('updated_at'))
+                    updates={'material_change_at':at,'material_change_note':body.note,
+                        'updated_at':at,'_ai_material_change_command':identity}
+                    if row.get('approval_status') in AI_DECISIONS:
+                        updates['approval_status']='pending_assessment'
+                    await s.db.create_requests.update_one({'_id':identity},{'$set':{
+                        'primary_started':True,'ai_material_change':{'at':at,'note':body.note}}})
+                    changed=await s.db.ai_systems.update_one(
+                        {'ai_system_id':aid,'client_id':row['client_id'],'updated_at':row.get('updated_at')},
+                        {'$set':updates})
+                    if not changed.matched_count:
+                        raise HTTPException(409,'Record changed since it was opened; reload before recording a material change')
+                    row={**row,**updates}
+                receipt=await s.db.create_requests.find_one({'_id':identity})
+                saved=receipt.get('ai_material_change')
+                if not saved: raise HTTPException(409,'The retained material-change command needs review')
+                await s.audit(user,'AI material change recorded','ai_system',aid,row['client_id'],meta={'note':saved['note']})
+                # Reassessment uses the existing Review; no duplicate is created.
+                return await view(row)
+
+        payload=body.model_dump()
+        await create_requests.run(s.db,create_requests.digest(payload),user['user_id'],selected['client_id'],
+            'ai_systems/'+aid+'/material-change/update',payload,execute)
+        return await view(await parent(aid,user,True,True))
     @router.post('/ai_systems/{aid}/links')
     async def link_ai(aid:str,body:AILinkInput,user=Depends(s.get_current_user)):
         row=await parent(aid,user,True)

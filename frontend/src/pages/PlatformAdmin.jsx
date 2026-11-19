@@ -16,14 +16,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogD
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import { Plus, MoreVertical, Send, ShieldOff, ShieldCheck, Search } from "lucide-react";
 import { toast } from "sonner";
+import {PLANNED_ROLES, nativeRoleLabel} from '@/lib/plannedRoleModel';
 
-const ROLE_LABEL = {
-  super_admin: "Super Admin",
-  platform_admin: "Service Provider GRC Administrator",
-  client_grc_manager: "Client GRC Manager",
-  client_contributor: "Client Contributor",
-  client_readonly: "Client Read Only",
-};
+const ROLE_LABEL = Object.fromEntries([...PLANNED_ROLES.map(role => [role.legacyKey, role.label]), ['client_viewer', nativeRoleLabel('client_viewer')]]);
 const STATUS_TONE = {
   active: "bg-semantic-success-bg text-semantic-success border-semantic-success-border",
   invited: "bg-semantic-info-bg text-semantic-info border-semantic-info-border",
@@ -39,6 +34,8 @@ export function UsersTable({ scope = "platform", clientId = null, allowedRoles, 
   const [page, setPage] = useState(1);
   const [addOpen, setAddOpen] = useState(false);
   const [assignmentAccount, setAssignmentAccount] = useState(null);
+  const [disableConfirmation, setDisableConfirmation] = useState(null);
+  const [disabling, setDisabling] = useState(false);
   const pendingAssignment = useRef(null);
   const [clients, setClients] = useState([]);
   const [loadedScope, setLoadedScope] = useState(null);
@@ -95,11 +92,7 @@ export function UsersTable({ scope = "platform", clientId = null, allowedRoles, 
     try {
       const { data } = await api.get(`/users/${u.user_id}/open_assignments`, { params: clientId ? { client_id: clientId } : {} });
       const total = data.total;
-      const confirmMsg = total
-        ? `${u.name || u.email} has ${total} active assignments in your authorized scope. Disable the account? Ownership and history will be retained. Review assignments to deliberately reassign work.`
-        : `Disable ${u.name || u.email}?`;
-      if (!confirm(confirmMsg)) return;
-      await patchUser(u, { status: "disabled" }, `${u.name || u.email} disabled`);
+      setDisableConfirmation({account:u, total});
     } catch (e) { toast.error(formatError(e)); }
   }
 
@@ -168,7 +161,7 @@ export function UsersTable({ scope = "platform", clientId = null, allowedRoles, 
                     {viewer?.role === "super_admin" && <DropdownMenuItem onClick={() => patchUser(u, {password_change_required: true}, "Password change required; active sessions revoked")}>Require password change</DropdownMenuItem>}
                     <EditRoleItem u={u} allowedRoles={allowedRoles} onSave={(role) => patchUser(u, { role }, `Role changed to ${ROLE_LABEL[role]}`)} />
                     {scope === "platform" && (
-                      <EditClientsItem u={u} clients={clients} canGrantAll={viewer?.role === "super_admin"} onEntitlement={(all_clients) => patchUser(u, { all_clients }, "All-client access updated")} onSave={(ids) => patchUser(u, { client_ids: ids }, "Client access updated")} />
+                      <EditClientsItem u={u} clients={clients} canGrantAll={viewer?.role === "super_admin"} onSave={(changes) => patchUser(u, changes, "Client access updated")} />
                     )}
                     {scope === "client" && u.role !== "super_admin" && (
                       <DropdownMenuItem
@@ -244,6 +237,16 @@ export function UsersTable({ scope = "platform", clientId = null, allowedRoles, 
         onCreated={() => { setAddOpen(false); load(); }}
       />
       {assignmentAccount && <UserAssignments account={assignmentAccount} clientId={clientId} onClose={() => setAssignmentAccount(null)} />}
+      <Dialog open={!!disableConfirmation} onOpenChange={open => {if (!open && !disabling) setDisableConfirmation(null);}}>
+        <DialogContent><DialogHeader><DialogTitle>Disable {disableConfirmation?.account.name || disableConfirmation?.account.email}</DialogTitle><DialogDescription>They lose access immediately and their sessions are revoked. Their history and assignments remain.</DialogDescription></DialogHeader>
+          {disableConfirmation?.total > 0 && <p>{disableConfirmation.total} active assignments remain in your authorized scope. Review assignments to deliberately reassign work.</p>}
+          <DialogFooter><Button variant="outline" disabled={disabling} onClick={() => setDisableConfirmation(null)}>Cancel</Button><Button variant="destructive" disabled={disabling} onClick={async () => {
+            setDisabling(true);
+            try {if (await patchUser(disableConfirmation.account, {status:'disabled'}, `${disableConfirmation.account.name || disableConfirmation.account.email} disabled`)) setDisableConfirmation(null);}
+            finally {setDisabling(false);}
+          }}>{disabling ? 'Disabling…' : 'Disable user'}</Button></DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   );
   if (!adminPresentation) return <div className="space-y-4">{content}</div>;
@@ -300,9 +303,11 @@ function EditRoleItem({ u, allowedRoles, onSave }) {
   );
 }
 
-function EditClientsItem({ u, clients, onSave, canGrantAll, onEntitlement }) {
+export function EditClientsItem({ u, clients, onSave, canGrantAll }) {
   const [open, setOpen] = useState(false);
   const [selected, setSelected] = useState(new Set(u.client_ids || []));
+  const [allClients, setAllClients] = useState(!!u.all_clients);
+  const [saving, setSaving] = useState(false), [error, setError] = useState('');
   const toggle = (cid) => {
     const n = new Set(selected);
     n.has(cid) ? n.delete(cid) : n.add(cid);
@@ -310,27 +315,35 @@ function EditClientsItem({ u, clients, onSave, canGrantAll, onEntitlement }) {
   };
   return (
     <>
-      <DropdownMenuItem onSelect={(e) => { e.preventDefault(); setOpen(true); setSelected(new Set(u.client_ids || [])); }} className="text-sm">
+      <DropdownMenuItem onSelect={(e) => { e.preventDefault(); setOpen(true); setSelected(new Set(u.client_ids || [])); setAllClients(!!u.all_clients); setError(''); }} className="text-sm">
         Edit client access…
       </DropdownMenuItem>
-      <Dialog open={open} onOpenChange={setOpen}>
+      <Dialog open={open} onOpenChange={value => {if (!saving) setOpen(value);}}>
         <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle>Client access for {u.name || u.email}</DialogTitle>
             <DialogDescription>Select which clients this user can access.</DialogDescription>
           </DialogHeader>
-          {canGrantAll && u.role === "platform_admin" && <label className="flex gap-2 text-sm"><input type="checkbox" checked={!!u.all_clients} onChange={async e => { if (await onEntitlement(e.target.checked)) setOpen(false); }} /> All-client entitlement</label>}
+          {canGrantAll && u.role === "platform_admin" && <label className="flex gap-2 text-sm"><input type="checkbox" checked={allClients} disabled={saving} onChange={e => setAllClients(e.target.checked)} /> All-client entitlement</label>}
           <div className="max-h-64 overflow-y-auto space-y-1 py-2">
             {clients.map((c) => (
               <label key={c.client_id} className="flex items-center gap-2 text-sm p-2 rounded hover:bg-surface-subtle cursor-pointer">
-                <input type="checkbox" checked={selected.has(c.client_id)} onChange={() => toggle(c.client_id)} />
+                <input type="checkbox" checked={selected.has(c.client_id)} disabled={saving} onChange={() => toggle(c.client_id)} />
                 <span>{c.name}</span>
               </label>
             ))}
           </div>
+          {error && <p role="alert" className="text-sm text-semantic-critical">{error}</p>}
           <DialogFooter>
-            <Button variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
-            <Button onClick={async () => { if (await onSave(Array.from(selected))) setOpen(false); }}>Save</Button>
+            <Button variant="outline" disabled={saving} onClick={() => setOpen(false)}>Cancel</Button>
+            <Button disabled={saving} onClick={async () => {
+              setSaving(true); setError('');
+              try {
+                const changes = {client_ids:Array.from(selected), ...(canGrantAll && u.role === 'platform_admin' ? {all_clients:allClients} : {})};
+                if (await onSave(changes)) setOpen(false); else setError('Changes were not saved. Your choices remain open; reload the current account before retrying a conflict.');
+              } catch (e) {setError(formatError(e));}
+              finally {setSaving(false);}
+            }}>{saving ? 'Saving…' : 'Save'}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

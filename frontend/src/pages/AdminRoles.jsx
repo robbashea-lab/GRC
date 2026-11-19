@@ -1,7 +1,9 @@
 import PageHeader from "@/components/PageHeader";
 import { Building2, ChevronDown, FileText, KeyRound, Lock, ShieldCheck, Users } from "lucide-react";
 
-import { PLANNED_ROLES as ROLES, PLANNED_CAPABILITIES as CAPS } from "@/lib/plannedRoleModel";
+import { PLANNED_ROLES as ROLES, PLANNED_CAPABILITIES as CAPS, nativeRoleDefinition } from "@/lib/plannedRoleModel";
+import {useEffect, useState} from 'react';
+import api from '@/lib/api';
 
 const ROLE_ICONS = {
   platform_owner: ShieldCheck,
@@ -13,6 +15,15 @@ const ROLE_ICONS = {
 const PERMISSION_CLASSES = {Yes: "admin-permission-yes", No: "admin-permission-no", Limited: "admin-permission-limited"};
 
 export default function AdminRoles() {
+  const [highlight, setHighlight] = useState(null);
+  const [users, setUsers] = useState(null);
+  useEffect(() => {
+    const controller = new AbortController();
+    api.get('/users', {signal:controller.signal}).then(({data}) => {if (!controller.signal.aborted && Array.isArray(data)) setUsers(data);})
+      .catch(() => {if (!controller.signal.aborted) setUsers(null);});
+    return () => controller.abort();
+  }, []);
+  const select = key => setHighlight(previous => previous === key ? null : key);
   return (
     <div className="admin-page admin-roles-page">
       <PageHeader eyebrow="Administration" title="Roles & Permissions" subtitle="Role families, client scope, and server-side authorization boundaries." />
@@ -24,14 +35,16 @@ export default function AdminRoles() {
         <section data-testid="admin-roles-grid" className="admin-role-grid" aria-label="Role families">
           {ROLES.map((r) => {
             const Icon = ROLE_ICONS[r.key] || ShieldCheck;
-            return <article key={r.key} className="admin-role-card">
+            const count = users?.filter(user => nativeRoleDefinition(user.role)?.legacyKey === r.legacyKey && user.status === 'active').length;
+            return <button type="button" key={r.key} className="admin-role-card" aria-pressed={highlight === r.key} onClick={() => select(r.key)}>
               <div className="admin-tile-icon"><Icon aria-hidden="true" /></div>
               <div>
                 <h3>{r.label}</h3>
                 <span className="admin-role-scope">{r.scope}</span>
                 <p>{r.detail}</p>
+                <span className="sub">{count == null ? 'Active user count unavailable' : `${count} active user${count === 1 ? '' : 's'}`}</span>
               </div>
-            </article>;
+            </button>;
           })}
         </section>
         <section data-testid="admin-roles-matrix" className="admin-panel">
@@ -42,14 +55,14 @@ export default function AdminRoles() {
           <div className="admin-table-wrap">
             <table className="admin-table admin-matrix">
               <thead>
-                <tr><th scope="col">Capability</th>{ROLES.map((r) => <th key={r.key} scope="col">{r.label}</th>)}</tr>
+                <tr><th scope="col">Capability</th>{ROLES.map((r) => <th key={r.key} scope="col" className={highlight === r.key ? 'hl' : ''}><button type="button" aria-pressed={highlight === r.key} onClick={() => select(r.key)}>{r.label}</button></th>)}</tr>
               </thead>
               <tbody>
                 {CAPS.map(({ label, roles }) => (
                   <tr key={label}>
                     <td>{label}</td>
                     {ROLES.map((r) => (
-                      <td key={r.key}>
+                      <td key={r.key} className={highlight === r.key ? 'hl' : ''}>
                         <span className={PERMISSION_CLASSES[roles[r.key]] || "admin-permission-scope"}>{roles[r.key]}</span>
                       </td>
                     ))}
@@ -62,7 +75,7 @@ export default function AdminRoles() {
         <details className="admin-details" data-testid="role-trust-boundaries">
           <summary><ShieldCheck aria-hidden="true" /><span>Trust boundaries</span><ChevronDown aria-hidden="true" /></summary>
           <div className="admin-details-content">
-            <p>Super Admins have global client scope. Service-provider administrators may access all clients only with an explicit all-client entitlement. An empty assignment list grants no access. Providers cannot create or manage internal administrator accounts.</p>
+            <p>Platform Owners have global client scope. Service-provider administrators may access all clients only with an explicit all-client entitlement. An empty assignment list grants no access. Providers cannot create or manage internal administrator accounts.</p>
             <p>Client managers coordinate permitted operations and assign existing client users. Contributors work assigned records. Limited assignment never permits changing another user's role or client access.</p>
             <p>Read-only users cannot approve, upload or modify business records, even when named as a business approver.</p>
             <p>History locks, optimistic concurrency and separation-of-duties checks apply in addition to role permissions. No role grants arbitrary audit-history deletion or bypasses record integrity.</p>

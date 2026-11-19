@@ -4,7 +4,7 @@ import {UsersTable} from './PlatformAdmin';
 import api from '@/lib/api';
 
 jest.mock('@/context/AuthContext',()=>({useAuth:()=>({user:{user_id:'admin',role:'super_admin'}})}));
-jest.mock('@/lib/api',()=>({__esModule:true,default:{get:jest.fn()},formatError:error=>error.message}));
+jest.mock('@/lib/api',()=>({__esModule:true,default:{get:jest.fn(),patch:jest.fn()},formatError:error=>error.message}));
 jest.mock('react-router-dom',()=>({Link:({children})=><span>{children}</span>,useNavigate:()=>jest.fn()}),{virtual:true});
 let root,container;
 beforeEach(()=>{
@@ -69,4 +69,22 @@ test('client-profile user table does not inherit Administration markup or its he
   expect(container.querySelectorAll('thead .column-control')).toHaveLength(4);
   expect(container.querySelector('tbody').textContent).toContain('Existing Member');
   expect(container.querySelector('[data-status]')).toBeNull();
+});
+
+test('native client access Save sends one versioned atomic membership and entitlement command',async()=>{
+  const user={user_id:'provider',name:'Provider',email:'provider@example.test',role:'platform_admin',status:'active',client_ids:['one'],all_clients:false,updated_at:'authoritative-version'};
+  api.get.mockImplementation(path=>Promise.resolve({data:path==='/users'?[user]:[{client_id:'one',name:'First client'},{client_id:'two',name:'Second client'}]}));
+  api.patch.mockResolvedValue({data:{}});
+  await act(async()=>root.render(<UsersTable adminPresentation allowedRoles={['platform_admin']}/>));
+  const trigger=container.querySelector('[aria-label="Actions for Provider"]');
+  await act(async()=>trigger.dispatchEvent(new MouseEvent('pointerdown',{button:0,ctrlKey:false,bubbles:true,cancelable:true})));
+  const item=[...document.querySelectorAll('[role="menuitem"]')].find(node=>node.textContent==='Edit client access…');
+  await act(async()=>item.click());
+  const form=document.querySelector('[role="dialog"]');
+  const choices=form.querySelectorAll('input[type="checkbox"]');
+  await act(async()=>choices[0].click());await act(async()=>choices[2].click());
+  expect(api.patch).not.toHaveBeenCalled();
+  await act(async()=>[...form.querySelectorAll('button')].find(node=>node.textContent==='Save').click());
+  expect(api.patch).toHaveBeenCalledTimes(1);
+  expect(api.patch).toHaveBeenCalledWith('/users/provider/client-memberships',{client_ids:['one','two'],all_clients:true,expected_updated_at:'authoritative-version'});
 });

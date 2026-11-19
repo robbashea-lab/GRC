@@ -18,7 +18,7 @@ export const unansweredPolicies = (catalog, state) => selectedPolicies(catalog,s
 export function reviewConfigurationIssues(state) {
   return sharedFrameworkPlans(state).filter(p => {
     const config=reviewConfig(state,p);
-    return config.conflict || config.recurrence==='custom' && (!Number.isInteger(config.custom_recurrence_days) || config.custom_recurrence_days<1 || config.custom_recurrence_days>3650);
+    return config.conflict || config.recurrence==='custom' && (!Number.isInteger(config.custom_recurrence_days) || config.custom_recurrence_days<1 || config.custom_recurrence_days>3660);
   });
 }
 export function existingBaseline(rows, item) {

@@ -15,7 +15,7 @@ jest.mock('@/context/AuthContext', () => ({ useAuth: () => mockAuth }));
 jest.mock('@/context/OrgContext', () => ({ useOrg: () => mockOrg }));
 jest.mock('react-router-dom', () => ({
   useLocation: () => ({ pathname: mockPath, search: mockSearch }), useNavigate: () => mockNavigate,
-  useSearchParams: () => require('react').useState(new URLSearchParams(mockSearch)),
+  useSearchParams: () => {const [params,setParams]=require('react').useState(new URLSearchParams(mockSearch));return [params,next=>{mockSearch=String(next);setParams(next);}];},
 }), { virtual: true });
 jest.mock('@/lib/api', () => ({ __esModule: true, default: { get: jest.fn(), post: jest.fn(), patch: jest.fn(), delete: jest.fn() }, formatError: error => error.message, PREVIEW_MODE: true }));
 jest.mock('@/components/RecordDrawer', () => function NativeDrawer(props) {
@@ -50,7 +50,7 @@ test('canonical target forwards original native record/tab and remains mounted t
   api.get.mockImplementationOnce(async () => { throw new Error('Refresh unavailable'); });
   await click(drawer.querySelector('button'));
   expect(container.querySelector('[role="alert"]').textContent).toContain('Refresh unavailable');
-  expect([...container.querySelectorAll('.bapv-kcell strong')].map(node => node.textContent)).toEqual(['—', '—', '—', '—']);
+  expect([...container.querySelectorAll('.native-summary .kchip strong')].map(node => node.textContent)).toEqual(['—', '—', '—', '—', '—']);
   expect(container.querySelector('[data-testid="native-vendor-drawer"]')).toBe(drawer);
   expect(input.value).toBe('Unsaved native draft');
 });
@@ -97,9 +97,22 @@ test.each([['all', ['Assigned vendor', 'Retained vendor', 'Unassigned vendor']],
     expect(!!container.querySelector('[data-testid="additional-vendors"]')).toBe(!loading);
     expect(names()).toEqual(loading?[]:expected);
     if(loading)expect(container.querySelector('[data-testid="vendors-navigation-loading"]')).not.toBeNull();
-    if (!loading) expect(container.querySelector('[aria-label="Other vendor views"]').value).toBe(view);
+    if (!loading) {
+      expect(container.querySelector('[aria-label="Other vendor views"]').value).toBe(view==='unassigned'?'':view);
+      if(view==='unassigned'){
+        expect(container.querySelector('[data-testid="vendor-view-all_active"]').getAttribute('aria-pressed')).toBe('true');
+        expect(container.querySelector('[aria-label="Remove Business Owner: Unassigned"]')).not.toBeNull();
+        expect(new URLSearchParams(mockSearch).has('view')).toBe(false);
+      }
+    }
   }
   expect(api.get).toHaveBeenCalledTimes(reads);
+  if(view==='unassigned'){
+    await click(container.querySelector('[aria-label="Remove Business Owner: Unassigned"]'));
+    expect(names()).toEqual(['Assigned vendor','Unassigned vendor']);
+    expect(api.get).toHaveBeenCalledTimes(reads);
+  }
+  expect(api.post).not.toHaveBeenCalled();expect(api.patch).not.toHaveBeenCalled();expect(api.delete).not.toHaveBeenCalled();
 });
 
 test.each([
@@ -107,14 +120,21 @@ test.each([
   { label: 'Prestige demo', clientId: 'demo_prestige' },
   { label: 'standard workspace', clientId: 'demo_brawndo', workspaceMode: 'authenticated' },
   { label: 'standard actor', clientId: 'demo_brawndo', actorMode: 'authenticated' },
-])('native extended URL views do not broaden $label workflows', async ({ clientId, workspaceMode = 'demo', actorMode = 'demo' }) => {
+])('native All records URL preserves authorized records when $label appearance is unavailable', async ({ clientId, workspaceMode = 'demo', actorMode = 'demo' }) => {
   mockSearch = '?view=all';
   mockAuth = { ...mockAuth, workspaceMode, user: { ...mockAuth.user, workspace_mode: actorMode } };
   mockOrg = { currentClientId: clientId, currentClient: { client_id: clientId, name: 'Native client', status: 'active' } };
   sessionStorage.setItem('grc_client_id', mockOrg.currentClientId);
+  const fixtures=[{...vendor,client_id:clientId},{...vendor,vendor_id:'retained',client_id:clientId,name:'Retained authorized vendor',status:'inactive'}];
+  const before=JSON.stringify(fixtures);
+  api.get.mockImplementation(async path=>({data:path==='/vendors'?fixtures:[]}));
   await act(async () => root.render(<VendorRegister />));
   expect(container.querySelector('[data-testid="additional-vendors"]')).toBeNull();
-  expect(container.querySelector('[data-testid="vendor-view-all_active"]').getAttribute('aria-pressed')).toBe('true');
+  expect(container.querySelector('[data-testid="vendor-view-all"]').getAttribute('aria-pressed')).toBe('true');
+  expect([...container.querySelectorAll('[data-testid^="vendor-row-"] .register-record-link')].map(node=>node.textContent).sort()).toEqual(['Recorded vendor','Retained authorized vendor']);
+  expect(api.get).toHaveBeenCalledWith('/vendors',{params:{client_id:clientId}});
+  expect(JSON.stringify(fixtures)).toBe(before);
+  expect(api.post).not.toHaveBeenCalled();expect(api.patch).not.toHaveBeenCalled();expect(api.delete).not.toHaveBeenCalled();
 });
 
 test.each(['authenticated', 'other-client', 'lookalike', 'other-route', 'archived'])('additional appearance fails closed for %s context', async variant => {
@@ -164,7 +184,7 @@ test('whole all-active count and accepted refresh stay stable across search, vie
   await act(async () => { Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set.call(search, 'active vendor'); search.dispatchEvent(new Event('input', { bubbles: true })); });
   const otherViews = container.querySelector('[aria-label="Other vendor views"]');
   await act(async () => { otherViews.value = 'all'; otherViews.dispatchEvent(new Event('change', { bubbles: true })); });
-  await click([...container.querySelectorAll('.bapv-head-actions button')].find(node => node.textContent === 'Dark'));
+  await click([...container.querySelectorAll('.bapv-head-actions button')].find(node => node.textContent === 'Light'));
   await click(container.querySelector('.bav-assurance button'));
   expect(container.querySelector('[data-testid="native-vendor-drawer"]')).toBeTruthy();
   expect(subtitle()).toBe(accepted);
@@ -229,7 +249,7 @@ test('common vendor appearance does not grant CIS capability to an invalid group
   await act(async()=>root.render(<VendorRegister/>));
   expect(container.querySelector('[data-testid="additional-vendors"]')).toBeTruthy();
   expect(cisClientProgram(mockOrg.currentClient)).toBeNull();
-  expect(brawndoFullRecordEligible({...mockAuth,...mockOrg,pathname:'/vendors',selectedClientId:'demo_brawndo',clientId:'demo_brawndo',record:vendor})).toBe(false);
+  expect(brawndoFullRecordEligible({...mockAuth,...mockOrg,pathname:'/vendors',selectedClientId:'demo_brawndo',clientId:'demo_brawndo',record:vendor})).toBe(true);
   expect(api.post).not.toHaveBeenCalled();expect(api.patch).not.toHaveBeenCalled();
 });
 

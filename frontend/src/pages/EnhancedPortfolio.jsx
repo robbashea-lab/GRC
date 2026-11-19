@@ -11,7 +11,8 @@ import { useBrawndoTheme, useBrawndoPortalTheme } from '@/lib/brawndoTheme';
 import { grcLead } from '@/lib/clientRelationships';
 import { applicableCounts, currentPercentage, programIdentity, validImplementationPosition } from '@/lib/portfolioProgress';
 import { ClientMark } from '@/components/EnhancedPortfolioShared';
-import { enhancedPortfolioEligible, filterPortfolio, PORTFOLIO_KPIS, portfolioKpiValue } from '@/lib/enhancedPortfolio';
+import { enhancedPortfolioEligible, filterPortfolio, operationalItems, PORTFOLIO_KPIS, portfolioKpiValue } from '@/lib/enhancedPortfolio';
+import {calendarDay, managementDay} from '@/lib/managementDates';
 import { PortfolioStatusBar, formatPortfolioDate } from '@/components/PortfolioReports';
 import EnhancedPortfolioHistory from '@/components/EnhancedPortfolioHistory';
 import './EnhancedPortfolio.css';
@@ -172,13 +173,6 @@ export function EnhancedPortfolio({
       <div style={{flex:'1 1 360px'}}><h1 className="page-title">Client portfolio</h1><p className="page-sub grad">{report.loading ? 'Loading client portfolio.' : report.error ? 'Portfolio unavailable' : <>{clients.length} clients · {programs.length} programs · as of {formatPortfolioDate(asOf)}</>}</p></div>
       <div className="ep-segment seg" role="group" aria-label="Theme">{['light', 'dark'].map(value => <button key={value} type="button" aria-pressed={theme === value} aria-checked={theme === value} onClick={() => setTheme(value)}>{value === 'light' ? 'Light' : 'Dark'}</button>)}</div>
     </header>
-    <div className="ep-kpis panel kpi" role="group" aria-label="Portfolio summary">{PORTFOLIO_KPIS.map(([key, label, help]) => {
-      const value = data ? portfolioKpiValue(key, base, asOf) : null;
-      return <button key={key} type="button" className="ep-kpi kpi-cell" aria-pressed={state.kpi === key} disabled={!data || key === 'notstarted' && value == null} onClick={() => update({kpi:state.kpi === key ? null : key})}>
-        <span className="kpi-label">{label}</span><strong className="kpi-value num" style={{color:value && ['attention','overdue'].includes(key) ? 'var(--kpi-alert)' : key === 'notstarted' ? value ? 'var(--warn)' : 'var(--faint)' : undefined}}>{value == null ? '—' : value}</strong>
-        <small className="kpi-cap">{key === 'notstarted' ? value == null ? 'Onboarding state unavailable' : 'Clients awaiting program onboarding' : help}</small>
-      </button>;
-    })}</div>
     <div className="ep-box panel">
       <div className="ep-toolbar toolbar">
         <label className="field ep-search"><Search size={15} aria-hidden="true" /><input ref={search} type="search" placeholder="Search client, lead or framework…" aria-label="Search clients" value={state.search} onChange={event => update({search:event.target.value})} /></label>
@@ -187,13 +181,25 @@ export function EnhancedPortfolio({
         <label className="sort-label">Sort <select className="select" aria-label="Sort clients" value={state.sort} onChange={event => update({sort:event.target.value})}><option value="attention">Needs attention first</option><option value="name">Client name A–Z</option></select></label>
         <div className="ep-segment seg" role="group" aria-label="View">{[['clients', 'Clients'], ['leads', 'By lead']].map(([value, label]) => <button key={value} type="button" aria-pressed={state.view === value} aria-checked={state.view === value} onClick={() => update({view:value})}>{label}</button>)}</div>
       </div>
+      <div className="pf-kstrip">
+    <div className="kstrip" role="group" aria-label="Portfolio summary">{PORTFOLIO_KPIS.map(([key, label, help]) => {
+      const value = data ? portfolioKpiValue(key, base, asOf) : null;
+      return <button key={key} type="button" className="kchip" aria-pressed={state.kpi === key} disabled={!data || key === 'notstarted' && value == null} onClick={() => update({kpi:state.kpi === key ? null : key})}>
+        <b className="num" style={{color:value && ['attention','overdue'].includes(key) ? 'var(--kpi-alert)' : key === 'notstarted' ? value ? 'var(--warn)' : 'var(--faint)' : undefined}}>{value == null ? '—' : value}</b><span className="kl">{label}</span>
+        <span className="kc">{key === 'notstarted' ? value == null ? 'Onboarding state unavailable' : 'Clients awaiting program onboarding' : help}</span>
+      </button>;
+    })}</div>
+      </div>
       {report.loading ? <p className="ep-empty empty" role="status">Loading client portfolio.</p> : report.error ? <div className="ep-empty empty" role="alert"><p>{report.error}</p><button type="button" className="ep-button ghost" onClick={load}>Retry</button></div> : state.view === 'clients' ? <div className="scroll-x"><div className="ep-table" role="table" aria-label="Client portfolio">
         <div className="ep-columns thead" role="row">{['Client', 'Programs', 'GRC lead'].map(label => <span role="columnheader" key={label}>{label}</span>)}<span role="columnheader" aria-label="Client overview" /></div>
         <div role="rowgroup">{visible.map(client => {
           const visiblePrograms = programs.filter(program => program.client_id === client.client_id && (!state.framework || program.program_key === state.framework));
           const lead = grcLead(client), first = visiblePrograms[0];
+          const overdue = operationalItems(client, asOf).overdue;
+          const oldest = Math.max(0, ...overdue.map(item => managementDay(asOf) - calendarDay(item.due_date)));
+          const overdueDetail = [...overdue].sort((a,b) => a.due_date.localeCompare(b.due_date)).slice(0,5).map(item => `${item.title} (${managementDay(asOf) - calendarDay(item.due_date)} days)`).join('; ');
           return <div className="ep-row trow" role="row" key={client.client_id} data-client-id={client.client_id} onClick={event=>{if(!event.target.closest('button,a,input,select'))preview(client,first,{currentTarget:event.currentTarget.querySelector('.ep-client-link')});}}>
-            <div className="ep-client" role="cell"><button type="button" className="client ep-client-link" aria-label={`Open ${client.name} overview`} onClick={event => preview(client, first, event)}><ClientMark client={client} /><span className="ep-client-copy"><span className="client-name">{client.name}</span><span className={`client-ind${client.industry ? '' : ' unset'}`}>{client.industry || 'Industry not set'}</span></span></button></div>
+            <div className="ep-client" role="cell"><button type="button" className="client ep-client-link" aria-label={`Open ${client.name} overview`} onClick={event => preview(client, first, event)}><ClientMark client={client} /><span className="ep-client-copy"><span className="client-name">{client.name}</span><span className={`client-ind${client.industry ? '' : ' unset'}`}>{client.industry || 'Industry not set'}</span>{overdue.length > 0 && <span className="cov-pchip od" title={`Overdue reviews and action items: ${overdueDetail}${overdue.length > 5 ? '; and more' : ''}`}>{overdue.length} overdue{oldest > 0 ? ` · oldest ${oldest} day${oldest === 1 ? '' : 's'}` : ''}</span>}</span></button></div>
             <div className="ep-programs" role="cell">{visiblePrograms.map(program => <ProgramCell key={programIdentity(program)} client={client} program={program} onPreview={event => preview(client, program, event)} />)}{!visiblePrograms.length && <button type="button" className="no-prog" onClick={() => enter(client,'/onboarding')}><span style={{fontWeight:600}}>No program yet</span><span className="prog-cap" style={{color:'var(--accent)'}}>Start GRC Program Onboarding →</span></button>}</div>
             <div className="ep-lead lead" role="cell"><span className={`av${!client.grc_lead_id && !client.assigned_owner_id ? ' none' : ''}`} aria-hidden="true">{lead.name === 'Unassigned' ? '?' : lead.name.split(' ').map(part => part[0]).slice(0, 2).join('')}</span><span className={`ellip${lead.name === 'Unassigned' ? ' lead-name none' : ''}`}>{lead.name}</span></div>
             <div role="cell"><button type="button" className="ep-preview chev" aria-label={`Preview ${client.name} implementation`} onClick={event => preview(client, first, event)}><ChevronRight size={16} aria-hidden="true" /></button></div>

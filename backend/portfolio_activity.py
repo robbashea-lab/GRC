@@ -393,7 +393,8 @@ def project_audit(document):
 def public_source(value):
     """Copy a source response without this feature's exact internal fields."""
     if isinstance(value, dict):
-        return {key: public_source(item) for key, item in value.items() if key not in SOURCE_INTERNAL_FIELDS}
+        return {key: public_source(item) for key, item in value.items()
+                if key not in SOURCE_INTERNAL_FIELDS and not key.startswith(('_r4_context_', '_ai_'))}
     if isinstance(value, list):
         return [public_source(item) for item in value]
     if isinstance(value, tuple):
@@ -417,8 +418,22 @@ def _validate_pending(kind, row, identity, event):
         raise ValueError('Invalid activity source marker')
 
 
-async def _acknowledge_pending(db, kind, row, identity, event):
+def _source_held(row, allow_owned=False):
+    claim = row.get('_r4_context_pending')
+    if not claim:
+        return False
+    if allow_owned:
+        import create_requests
+        current = create_requests.current.get()
+        if current is not None and claim == current:
+            return False
+    return True
+
+
+async def _acknowledge_pending(db, kind, row, identity, event, *, allow_owned=False):
     _validate_pending(kind, row, identity, event)
+    if _source_held(row, allow_owned):
+        return False
     key = SOURCES[kind][0]
     inserted = await persist_event(db, event)
     try:
@@ -455,30 +470,34 @@ async def acknowledge_committed(db, entity_type, entity_id, client_id, event_id)
     key = SOURCES[kind][0]
     field = '_portfolio_activity_pending.' + event_id
     row = await db[kind].find_one({key: entity_id, 'client_id': client_id, field: {'$exists': True}},
-                                 {'_id': 0, key: 1, 'client_id': 1, field: 1})
+                                 {'_id': 0, key: 1, 'client_id': 1, field: 1, '_r4_context_pending': 1})
     if row is None:
         return False
     event = row.get('_portfolio_activity_pending', {}).get(event_id)
-    return await _acknowledge_pending(db, kind, row, event_id, event)
+    # The native durable-audit hook runs after its accepted command's complete
+    # business write loop. Only that exact current command may drain its claim.
+    return await _acknowledge_pending(db, kind, row, event_id, event, allow_owned=True)
 
 
 async def reconcile_pending(db, limit=500):
     if type(limit) is not int or not 1 <= limit <= 2000:
         raise ValueError('Activity reconciliation limit must be 1 to 2000')
-    processed, inserted = 0, 0
+    processed, inserted, deferred = 0, 0, 0
     for kind, (key, _type, _label) in SOURCES.items():
         if processed >= limit:
             break
         rows = db[kind].find({'_portfolio_activity_pending': {'$exists': True, '$ne': {}}},
-                            {key: 1, 'client_id': 1, '_portfolio_activity_pending': 1}).limit(limit - processed)
+                            {key: 1, 'client_id': 1, '_portfolio_activity_pending': 1, '_r4_context_pending': 1}).limit(limit - processed)
         async for row in rows:
             pending = row.get('_portfolio_activity_pending') or {}
             for identity, event in pending.items():
                 if processed >= limit:
                     break
+                if _source_held(row):
+                    deferred += 1
                 inserted += await _acknowledge_pending(db, kind, row, identity, event)
                 processed += 1
-    return {'processed': processed, 'inserted': inserted}
+    return {'processed': processed, 'inserted': inserted, **({'deferred': deferred} if deferred else {})}
 
 
 async def reconcile(db, limit=500):
@@ -496,16 +515,23 @@ async def reconcile(db, limit=500):
                      'foreignField': '_id', 'as': '_activity_seen'}},
         {'$match': {'_activity_seen': {'$size': 0}}}, {'$limit': limit},
     ]).to_list(limit)
-    inserted = 0
+    inserted, deferred = 0, False
     for document in logs:
         event = project_audit(document)
         if event:
+            key = SOURCES[event['source_kind']][0]
+            source = await db[event['source_kind']].find_one({key: event['source_id']},
+                {'_id': 0, '_r4_context_pending': 1})
+            if _source_held(source or {}):
+                deferred = True
+                continue
             inserted += await persist_event(db, event)
         await db.portfolio_activity_receipts.update_one({'_id': document['_activity_receipt_id']},
             {'$setOnInsert': {'processed_at': now.isoformat()}}, upsert=True)
     await db.portfolio_reporting_state.update_one({'_id': 'activity'}, {'$set': {
         'last_captured_at': now.isoformat(), 'historical_coverage': 'partial',
-        'audit_batch_complete': len(logs) < limit, 'pending_batch_complete': pending['processed'] < limit}}, upsert=True)
+        'audit_batch_complete': len(logs) < limit and not deferred,
+        'pending_batch_complete': pending['processed'] < limit and not pending.get('deferred')}}, upsert=True)
     return {'pending': pending, 'audits_processed': len(logs), 'inserted': inserted}
 
 
@@ -567,8 +593,22 @@ def _pipeline(kind, identifiers, cutoff, days, change_type, cursor=None):
             'at': 1, 'type': 1, 'title': 1, 'description': 1, 'actor': 1,
             'provenance': 1, 'before': 1, 'after': 1, 'program_key': 1, 'program_label': 1, 'program_keys': 1,
             '_source.client_id': 1, '_source.archived_at': 1, '_source.archived': 1,
-            '_source.status': 1, '_source.framework_key': 1}},
+            '_source.status': 1, '_source.framework_key': 1, '_source._r4_context_pending': 1}},
     ]
+
+
+def _pending_source_facet():
+    # Inspect the same authorized population before cursor/page/count limits.
+    held = {'$eq': [{'$in': [
+        {'$ifNull': ['$$target._r4_context_pending', None]}, [None, '', False, 0, [], {}],
+    ]}, False]}
+    pending_count = {'$size': {'$filter': {'input': '$_source', 'as': 'target', 'cond': held}}}
+    return [{'$match': {'$expr': {'$gt': [pending_count, 0]}}}, {'$limit': 1}, {'$project': {'_id': 0}}]
+
+
+def _assert_no_pending_sources(batch):
+    if batch['pending']:
+        raise HTTPException(409, 'An earlier shared activity save needs recovery; retry its original command first')
 
 
 def _destination(event):
@@ -625,11 +665,13 @@ async def read_activity(db, user, clients, as_of, days=7, change_type=None, curs
         position_query = {'$or': [{'at': {'$lt': position['at']}},
             {'at': position['at'], 'event_id': {'$lt': position['event_id']}}]} if position else {}
         result = await db.portfolio_events.aggregate(population + [{'$facet': {
+            'pending': _pending_source_facet(),
             'total': [{'$count': 'total'}],
             'first': [{'$sort': {'at': 1}}, {'$limit': 1}, {'$project': {'at': 1}}],
             'events': [{'$match': position_query}, {'$sort': {'at': -1, 'event_id': -1}}, {'$limit': limit + 1}],
         }}]).to_list(1)
         batch = result[0]
+        _assert_no_pending_sources(batch)
         total += batch['total'][0]['total'] if batch['total'] else 0
         first = batch['first']
         if first and (earliest is None or first[0]['at'] < earliest):
@@ -657,6 +699,8 @@ async def count_activity(db, user, clients, as_of, days=7, change_type=None):
         if change_type and category != change_type:
             continue
         counted = await db.portfolio_events.aggregate(_pipeline(kind, identifiers, cutoff, days, change_type) +
-                                                        [{'$count': 'total'}]).to_list(1)
-        total += counted[0]['total'] if counted else 0
+            [{'$facet': {'pending': _pending_source_facet(), 'total': [{'$count': 'total'}]}}]).to_list(1)
+        batch = counted[0]
+        _assert_no_pending_sources(batch)
+        total += batch['total'][0]['total'] if batch['total'] else 0
     return total

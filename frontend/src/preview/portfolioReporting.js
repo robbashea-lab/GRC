@@ -1,6 +1,7 @@
 // Browser-local Demo projection only. No server request or historical fixture generation.
 import {FRAMEWORKS,activeDefinitions,frameworkCatalog,frameworkDefinition} from '../lib/frameworks';
 import {cisConfiguration} from '../lib/cisScope';
+import {cmmcConfiguration} from '../lib/cmmcScope';
 import {socConfiguration,SOC_CATEGORIES} from '../lib/socReadiness';
 import {cisSummary} from '../lib/cisVerification';
 import {isoProgramMetrics} from '../lib/isoProgramMetrics';
@@ -526,12 +527,13 @@ export function demoCurrentPositions(db,clients,asOf=new Date().toISOString()){
   return clients.filter(c=>!inactive(c)&&(c.onboarding_baseline?.completed||db.baselines?.[c.client_id]?.completed)).flatMap(client=>{
     const selected=new Set((db.requirements||[]).filter(r=>r.client_id===client.client_id&&!inactive(r)&&r.baseline_response==='applies').map(r=>r.baseline_key));
     return FRAMEWORKS.filter(f=>selected.has(f.key)).map(framework=>{
-      const key=framework.key,configuration=key==='cis-ig1'?cisConfiguration(client):key==='soc-2'?socConfiguration(client):{};
-      const valid=key==='cis-ig1'?Number.isInteger(configuration.implementation_group)&&frameworkCatalog(key).available_implementation_groups.includes(configuration.implementation_group):key!=='soc-2'||Array.isArray(configuration.categories)&&configuration.categories.includes('security')&&new Set(configuration.categories).size===configuration.categories.length&&configuration.categories.every(c=>Object.hasOwn(SOC_CATEGORIES,c));
-      const label=key==='cis-ig1'&&valid?`CIS IG${configuration.implementation_group}`:framework.label;
+      const key=framework.key,configuration=key==='cis-ig1'?cisConfiguration(client):key==='soc-2'?socConfiguration(client):key==='cmmc'?cmmcConfiguration(client):{};
+      const valid=key==='cis-ig1'?Number.isInteger(configuration.implementation_group)&&frameworkCatalog(key).available_implementation_groups.includes(configuration.implementation_group):key==='cmmc'?[1,2].includes(configuration.level):key!=='soc-2'||Array.isArray(configuration.categories)&&configuration.categories.includes('security')&&new Set(configuration.categories).size===configuration.categories.length&&configuration.categories.every(c=>Object.hasOwn(SOC_CATEGORIES,c));
+      const label=key==='cis-ig1'&&valid?`CIS IG${configuration.implementation_group}`:key==='cmmc'&&valid?`CMMC Level ${configuration.level}`:framework.label;
       const position={client_id:client.client_id,client_name:client.name,program_id:client.client_id+':'+key,framework_key:key,program_key:key==='cis-ig1'&&valid?`cis-ig${configuration.implementation_group}`:key,program_label:label,scope_label:label,to:'/compliance/'+key};
       const version=frameworkCatalog(key)?.version||framework.version||null,title=framework.name||framework.label;
       Object.assign(position,{framework_version:version,program_title:key==='cis-ig1'&&valid?`CIS Controls v${version} · Implementation Group ${configuration.implementation_group}`:title+(version&&!title.includes(version)?' · '+version:''),unit_label:key==='iso-27001'?'requirements and controls':(frameworkCatalog(key)?.labels?.items||(key==='cis-ig1'?'Safeguards':'Items')).toLowerCase()});
+      if(key==='cmmc'&&valid)Object.assign(position,{program_title:label+(configuration.level===1?' · FAR 52.204-21 / FCI':' · NIST SP 800-171 Rev 2 / CUI'),unit_label:configuration.level===1?'mapped checks':'requirements'});
       const unavailable={captured_at:asOf,effective_at:asOf,retrieved_at:asOf,observation_kind:'current_source',program_id:position.program_id,measure_version:VERSION,availability:'unavailable',percentage:null,implemented:null,denominator:null,total:null,excluded:null,counts:[],included_counts:[],assessed:null,not_started:false,components:[],scope_signature:null,provenance:{kind:'demo_local',label:'Current browser-local Demo records'}};
       if(!framework.implemented||!valid)return {...position,current:{...unavailable,reason:valid?'Native implementation tracking is unavailable.':'Saved framework configuration is invalid.'}};
       const definitions=activeDefinitions(key,configuration),expected=new Set(definitions.map(d=>d.id));
@@ -556,7 +558,7 @@ export function demoCurrentPositions(db,clients,asOf=new Date().toISOString()){
       const values=counts(included,key);if(excluded.length)values.push({key:'excluded',label:'Excluded / Not Applicable',count:excluded.length});
       if(undetermined.length)values.push({key:'scope_undetermined',label:'SoA applicability undetermined',count:undetermined.length});
       if(missing||duplicates)values.push({key:'missing',label:'Source records unavailable',count:missing+duplicates});
-      const config=key==='cis-ig1'?{implementation_group:configuration.implementation_group}:key==='soc-2'?{categories:[...configuration.categories].sort()}:{};
+      const config=key==='cis-ig1'?{implementation_group:configuration.implementation_group}:key==='soc-2'?{categories:[...configuration.categories].sort()}:key==='cmmc'?{level:configuration.level}:{};
       const scope={framework_key:key,catalog_version:frameworkCatalog(key).version,configuration:config,definition_ids:[...expected].sort(),applicability,source_versions:rows.map(r=>[r.definition_id,r.framework_version??null]).sort(),measure_version:VERSION};
       scope.enrollment_ids=(db.requirements||[]).filter(row=>row.client_id===client.client_id&&row.baseline_key===key&&!inactive(row)&&row.baseline_response==='applies').map(row=>row.requirement_id).sort();
       for(const definition of definitions)if(!groups.has(definition.id)||groups.get(definition.id).length>1)applicability[definition.id]=groups.has(definition.id)?'duplicate':'missing';
@@ -567,8 +569,10 @@ export function demoCurrentPositions(db,clients,asOf=new Date().toISOString()){
       }else if(key==='soc-2'){
         components=config.categories.map(category=>component(category,SOC_CATEGORIES[category],included.filter(r=>r.category===category),key));position.scope_label=config.categories.map(c=>SOC_CATEGORIES[c]).join(', ');
       }else if(key==='cis-ig1')position.scope_label=`Cumulative IG${configuration.implementation_group} safeguards`;
+      else if(key==='cmmc')position.scope_label=configuration.level===1?'17 mapped checks for 15 FAR parent requirements / FCI':'110 NIST SP 800-171 Rev 2 requirements / CUI';
       const included_counts=values.filter(value=>STATUS.includes(value.key));
       const references=sources.map(row=>({kind:'framework_assessments',id:row.framework_assessment_id,definition_id:row.definition_id,framework_version:row.framework_version??null,status:row.status,version:row.last_saved||row.last_assessed||row.created_at||null})).sort((a,b)=>a.id.localeCompare(b.id));
+      if(key==='cmmc'&&client.cmmc_configuration_updated_at)references.push({kind:'clients',id:client.client_id,field:'cmmc_configuration',version:client.cmmc_configuration_updated_at});
       const sourceDates=references.map(reference=>Date.parse(reference.version)).filter(Number.isFinite),afterCutoff=sourceDates.some(date=>date>timestamp(asOf));
       const complete=!missing&&!duplicates&&!unknown&&!invalid&&!afterCutoff;
       // normalizedCurrent supplies all three identities; preserve property order

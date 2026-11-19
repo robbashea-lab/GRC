@@ -1,0 +1,17 @@
+Official JetBrains Mono v2.304, unmodified WOFF2 weights400/500. SIL OFL1.1; see JetBrainsMono-OFL.txt.
+[
+  {
+    "name": "JetBrainsMono-Regular.woff2",
+    "bytes": 92164,
+    "git_blob": "40da427651937ac3b65ea6842f9448a810f719c6",
+    "sha256": "a9cb1cd82332b23a47e3a1239d25d13c86d16c4220695e34b243effa999f45f2",
+    "source": "https://github.com/JetBrains/JetBrainsMono/blob/v2.304/fonts/webfonts/JetBrainsMono-Regular.woff2"
+  },
+  {
+    "name": "JetBrainsMono-Medium.woff2",
+    "bytes": 93824,
+    "git_blob": "669d04cdf2d841e79bbf13d46d90e280ecbfe82d",
+    "sha256": "086c48dfbea9ddaff1320f7e09399b8e2924e88ce67453721255db3bdbb5a353",
+    "source": "https://github.com/JetBrains/JetBrainsMono/blob/v2.304/fonts/webfonts/JetBrainsMono-Medium.woff2"
+  }
+]

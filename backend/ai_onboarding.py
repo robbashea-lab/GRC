@@ -14,6 +14,7 @@ import assignment_eligibility
 import create_requests
 import review_occurrences
 import risk_lifecycle
+import r4_services
 import vendor_governance
 
 CATALOG = json.loads((Path(__file__).parents[1] / 'frontend/src/lib/aiOnboardingCatalog.json').read_text(encoding='utf-8'))
@@ -130,8 +131,6 @@ def reassessment(old,candidate,payload,user,at):
         if 'No Sensitive Data' in values and set(values)&SENSITIVE:
             raise HTTPException(422,'No Sensitive Data cannot coexist with sensitive classifications')
     scope=screening_scope(candidate)
-    if old.get('approval_status') in ('approved','approved_with_conditions') and (saved.get('answers')!=body.answers or saved.get('scope')!=scope):
-        raise HTTPException(409,'This change affects a recorded AI approval scope; authenticated reassessment is not supported. The original decision and record are unchanged.')
     previous={key:value for key,value in saved.items() if key!='history'}
     return {**saved,**body.model_dump(exclude={'reviewed'}),'scope':scope,'reviewed_at':at,'reviewed_by':user['user_id'],
         'history':[*(saved.get('history') or []),previous]}
@@ -178,6 +177,7 @@ def register(router, s, *, ai_model, create_ai, validate_ai, client_scope, metad
     async def authorize(cid,user):
         await client_scope(cid,user,True,True)
         await metadata_scope(cid,{'environment'})
+        r4_services.assert_settled(await s.db.clients.find_one({'client_id':cid}))
         intake = await s.db.ai_intake.find_one({'client_id':cid})
         if intake and intake.get('usage') == 'no':
             raise HTTPException(409,'Update the client AI profile before adding an AI system')
@@ -185,12 +185,13 @@ def register(router, s, *, ai_model, create_ai, validate_ai, client_scope, metad
     async def verify_vendor(body):
         if body.vendor.mode != 'link': return
         existing = await s.db.vendors.find_one({'vendor_id':body.vendor.id,'client_id':body.client_id})
+        r4_services.assert_settled(existing)
         if not existing or existing.get('status') in ('inactive','terminated','offboarded','retired'):
             raise HTTPException(409,'Choose an available Vendor belonging to this client')
         if existing.get('updated_at') != body.vendor.expected_updated_at:
             raise HTTPException(409,'The selected Vendor changed; review its current record')
 
-    async def validate(body,user,annual):
+    async def validate(body,user,annual,identity):
         await authorize(body.client_id,user)
         allowed = {'catalog_key','name','provider','environment','description','owner_id','restrictions','purposes','data_types','permitted_data_types','access'}
         if set(body.ai)-allowed or body.confirmations != {'details':True,'screening':True,'risk':True}:
@@ -203,7 +204,10 @@ def register(router, s, *, ai_model, create_ai, validate_ai, client_scope, metad
             ai = ai_model(**{**body.ai,'client_id':body.client_id,'status':'draft'})
         except ValidationError as exc:
             raise HTTPException(422,'Invalid AI details') from exc
-        await validate_ai(ai.model_dump(),user)
+        # An interrupted command may already own its AI record. Revalidate that
+        # identity rather than treating its original name as a different create.
+        owned_ai=await s.db.ai_systems.find_one({'client_id':body.client_id,'_ai_onboarding_command':identity})
+        await validate_ai(ai.model_dump(),user,owned_ai)
         if not ai.description.strip():
             raise HTTPException(422,'Document the intended business use')
         for values in (ai.data_types,ai.permitted_data_types):
@@ -242,6 +246,7 @@ def register(router, s, *, ai_model, create_ai, validate_ai, client_scope, metad
                 raise HTTPException(409,'Onboarding receipt is incomplete; retry the original request')
             row = await s.db[kind].find_one({id_field:identifier,'client_id':body.client_id},{'_id':0})
             if not row: raise HTTPException(409,'A required onboarding record is no longer available')
+            r4_services.assert_settled(row)
             rows[kind] = row
         ai = rows['ai_systems']
         if ai.get('vendor_id') != result.get('vendor_id') or rows['reviews'].get('ai_system_id') != ai['ai_system_id'] or not any(link.get('kind')=='risks' and link.get('id')==result['risk_id'] for link in ai.get('related_links',[])):
@@ -257,7 +262,7 @@ def register(router, s, *, ai_model, create_ai, validate_ai, client_scope, metad
             receipt = await s.db.create_requests.find_one({'_id':identity})
             anchor = receipt['created_at']
             annual = annual_date(anchor)
-            ai,risk_payload,vendor_payload = await validate(body,user,annual)
+            ai,risk_payload,vendor_payload = await validate(body,user,annual,identity)
             # This command owns a single creation instant, retained across interrupted retries.
             # Native writers apply it only on first insert; audit events keep their actual time.
             metadata = {'_ai_onboarding_command':identity,'created_at':anchor,'updated_at':anchor}

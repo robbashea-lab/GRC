@@ -143,6 +143,8 @@ jobs:
           --include-cis-six-year --include-generic-saves --include-portfolio-reporting
           --include-policy-coverage --include-evidence-integrity
           --include-ai-onboarding
+      - name: Native R4 preservation, recovery and authorization on disposable Mongo
+        run: python backend/scripts/verify_r4_mongo.py --mongo-url mongodb://127.0.0.1:27017
 
   release-gate:
     name: Release gate

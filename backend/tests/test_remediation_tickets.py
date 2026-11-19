@@ -12,12 +12,19 @@ class TicketIntegrityTests(unittest.IsolatedAsyncioTestCase):
     body = framework.FrameworkTests.body
     configure = framework.FrameworkTests.configure
 
+    async def sign_in_independent_validator(self):
+        await server.db.users.update_one({'user_id':'validator'}, {'$setOnInsert':{
+            'user_id':'validator','email':'validator@example.test','name':'Independent validator',
+            'role':'platform_admin','client_ids':['a'],'status':'active'}},upsert=True)
+        self.sign_in('validator')
+
     async def test_requestless_decisions_recover_original_generation(self):
         for action, versioned in [('validate',True),('validate',False),('accept',True)]:
             with self.subTest(action=action,versioned=versioned):
                 _,_,_,f,t=await self.pair(request_id='legacy-'+action+str(versioned))
                 if action=='validate':
                     await self.client.patch('/api/tasks/'+t['task_id'],json={'status':'done'})
+                    await self.sign_in_independent_validator()
                 current=await server.db.findings.find_one({'finding_id':f['finding_id']})
                 body={'rationale':'Legacy same decision'}
                 if versioned:body['expected_updated_at']=current['updated_at']
@@ -35,7 +42,10 @@ class TicketIntegrityTests(unittest.IsolatedAsyncioTestCase):
                 self.assertEqual((await self.client.post(path,json=body)).json(),recovered.json())
                 reopened=await self.client.post('/api/findings/'+f['finding_id']+'/reopen',json={'request_id':'legacy-reopen-cycle','expected_updated_at':recovered.json()['updated_at']})
                 self.assertEqual(reopened.status_code,200,reopened.text)
+                self.sign_in('admin')
                 await self.client.patch('/api/tasks/'+reopened.json()['primary_task_id'],json={'status':'done'})
+                if action=='validate':
+                    await self.sign_in_independent_validator()
                 if versioned:
                     current=await server.db.findings.find_one({'finding_id':f['finding_id']})
                     body['expected_updated_at']=current['updated_at']
@@ -111,6 +121,7 @@ class TicketIntegrityTests(unittest.IsolatedAsyncioTestCase):
         _,_,_,f,t=await self.pair()
         await server.db.tasks.update_one({'task_id':t['task_id']},{'$set':{'assignee_id':'member'}})
         await self.client.patch('/api/tasks/'+t['task_id'],json={'status':'done','resolution':'Original correction'})
+        await self.sign_in_independent_validator()
         closed=await self.client.post('/api/findings/'+f['finding_id']+'/validate',json={'rationale':'Original checked sample'})
         prior=await server.db.tasks.find_one({'task_id':t['task_id']})
         await server.db.users.update_one({'user_id':'member'},{'$set':{'status':'disabled'}})
@@ -225,6 +236,7 @@ class TicketIntegrityTests(unittest.IsolatedAsyncioTestCase):
     async def test_validation_retry_repairs_audit_without_duplicate_decision(self):
         _, _, _, f, t = await self.pair()
         await self.client.patch('/api/tasks/'+t['task_id'], json={'status':'done'})
+        await self.sign_in_independent_validator()
         f = await server.db.findings.find_one({'finding_id':f['finding_id']})
         path = '/api/findings/'+f['finding_id']+'/validate'
         body = {'request_id':'validation-one', 'rationale':'Checked the correction', 'expected_updated_at':f['updated_at']}
@@ -395,6 +407,7 @@ class TicketIntegrityTests(unittest.IsolatedAsyncioTestCase):
         reopened=await decision('reopen','portfolio-explicit-reopen');self.assertEqual(reopened['status'],'in_remediation')
         completed=await self.client.patch('/api/tasks/'+task['task_id'],json={'status':'done'})
         self.assertEqual(completed.status_code,200,completed.text)
+        await self.sign_in_independent_validator()
         validated=await decision('validate','portfolio-explicit-validate');self.assertEqual(validated['status'],'closed')
         self.assertEqual(len(validated['decision_history']),3)
         self.assertEqual(len(validated['_portfolio_activity_decision_event_ids']),3)
@@ -402,6 +415,7 @@ class TicketIntegrityTests(unittest.IsolatedAsyncioTestCase):
     async def test_reopen_preserves_completed_action_and_recovers_once(self):
         _,_,_,f,t=await self.pair()
         await self.client.patch('/api/tasks/'+t['task_id'],json={'status':'done','resolution':'Original correction'})
+        await self.sign_in_independent_validator()
         closed=await self.client.post('/api/findings/'+f['finding_id']+'/validate',json={'rationale':'Original validation'})
         self.assertEqual(closed.status_code,200,closed.text)
         prior=await server.db.tasks.find_one({'task_id':t['task_id']})

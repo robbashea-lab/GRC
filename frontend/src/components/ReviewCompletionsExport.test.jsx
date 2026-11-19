@@ -1,0 +1,14 @@
+import React,{act} from 'react';
+import {createRoot} from 'react-dom/client';
+import Export from './ReviewCompletionsExport';
+import api from '@/lib/api';
+jest.mock('@/lib/api',()=>({__esModule:true,default:{get:jest.fn()},formatError:error=>error.message}));
+let node,root,download;
+const render=(scopeKey='reader:c1')=>act(async()=>root.render(<Export clientId="c1" scopeKey={scopeKey}/>));
+const click=node=>act(async()=>node.click());
+const submit=()=>act(async()=>document.querySelector('[role="dialog"] form').dispatchEvent(new Event('submit',{bubbles:true,cancelable:true})));
+const change=(label,value)=>act(async()=>{const input=document.querySelector(`[aria-label="${label}"]`);Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,'value').set.call(input,value);input.dispatchEvent(new Event('input',{bubbles:true}));});
+beforeEach(()=>{global.IS_REACT_ACT_ENVIRONMENT=true;node=document.createElement('div');document.body.appendChild(node);root=createRoot(node);api.get.mockResolvedValue({data:new Blob(['review_id,title\r\nr1,Actual completion'],{type:'text/csv'}),headers:{'content-disposition':'attachment; filename="actual-completions.csv"'}});URL.createObjectURL=jest.fn(()=>'blob:completion');URL.revokeObjectURL=jest.fn();download=jest.spyOn(HTMLAnchorElement.prototype,'click').mockImplementation(()=>{});});
+afterEach(async()=>{await act(async()=>root.unmount());node.remove();download.mockRestore();jest.clearAllMocks();});
+test('Cancel has no read or write; invalid ranges stay visible, and valid dates request the actual completion CSV',async()=>{await render();await click(node.querySelector('button'));await click([...document.querySelectorAll('[role="dialog"] button')].find(button=>button.textContent==='Cancel'));expect(api.get).not.toHaveBeenCalled();await click(node.querySelector('button'));await change('Completion export from','2026-11-20');await change('Completion export to','2026-11-19');await submit();expect(document.querySelector('[role="alert"]').textContent).toContain('From on or before To');expect(api.get).not.toHaveBeenCalled();await change('Completion export from','2025-11-19');await submit();expect(api.get).toHaveBeenCalledWith('/reviews/completions/export',{params:{client_id:'c1',from_date:'2025-11-19',to_date:'2026-11-19'},responseType:'blob',signal:expect.any(AbortSignal)});expect(download).toHaveBeenCalledTimes(1);});
+test('scope changes abort a pending response and never download old-client history',async()=>{await render();await click(node.querySelector('button'));let finish;api.get.mockImplementationOnce(()=>new Promise(resolve=>{finish=resolve;}));await submit();const signal=api.get.mock.calls[0][1].signal;await render('reader:new-membership');await act(async()=>finish({data:'old-client-private-completion'}));expect(signal.aborted).toBe(true);expect(download).not.toHaveBeenCalled();});

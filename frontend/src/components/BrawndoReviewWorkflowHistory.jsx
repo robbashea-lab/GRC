@@ -5,6 +5,7 @@ import {personLabel} from '@/lib/people';
 import {reviewDisplayValue} from '@/lib/reviewPresentation';
 
 const day=value=>value?new Date(String(value).slice(0,10)+'T00:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}):'—';
+const checklistOutcome=value=>['No exceptions noted','Exceptions noted'].includes(value)?value:null;
 
 function FindingCount({count,findings,related,record,clientId,users,onOpen,current=false}) {
   const knownCount=Number.isInteger(count)&&count>=0;
@@ -29,7 +30,7 @@ export default function BrawndoReviewWorkflowHistory({record,history,related,use
     {error&&<p role="alert">Review history could not be loaded.</p>}
     <div className="overflow-x-auto"><table><thead><tr>{['Occurrence','Due','Completed','Completed by','Outcome'].map(label=><th key={label}>{label}</th>)}</tr></thead><tbody>
       {open&&<tr className="is-current"><td className="review-workflow-history-period">{record.period||reviewSchedule(record).period}</td><td>{day(record.due_date)}</td><td>—</td><td>—</td><td><span className={`review-workflow-chip is-${record.status==='in_progress'?'info':'plain'}`}>{record.status==='in_progress'?'In progress':record.status==='needs_scheduling'?'Needs Scheduling':'Not started'}</span>{!loading&&!error&&findings&&<FindingCount count={currentFindings.length} findings={currentFindings} related={related} record={reviewContext} clientId={record.client_id} users={users} onOpen={onOpen} current/>}</td></tr>}
-      {history.map(item=><tr key={item.occurrence_id}><td className="review-workflow-history-period"><button type="button" onClick={()=>onSelect(item)}>{item.period}</button></td><td>{day(item.due_date)}</td><td>{day(item.completed_at||item.completion_date)}</td><td>{item.completed_by_name||personLabel(users,item.completed_by)}</td><td>{item.status==='cancelled'?<span className="review-workflow-chip is-plain">Cancelled</span>:<FindingCount count={item.finding_count} findings={forOccurrence(item.occurrence_id)} related={related} record={reviewContext} clientId={record.client_id} users={users} onOpen={onOpen}/>}</td></tr>)}
+      {history.map(item=><tr key={item.occurrence_id}><td className="review-workflow-history-period"><button type="button" onClick={()=>onSelect(item)}>{item.period}</button></td><td>{day(item.due_date)}</td><td>{day(item.completed_at||item.completion_date)}</td><td>{item.completed_by_name||personLabel(users,item.completed_by)}</td><td>{item.status==='cancelled'?<span className="review-workflow-chip is-plain">Cancelled</span>:<>{checklistOutcome(item.checklist_outcome)&&<span aria-label="Recorded checklist outcome" className={'review-workflow-chip '+(item.checklist_outcome==='Exceptions noted'?'is-critical':'is-success')}>{item.checklist_outcome}</span>}<FindingCount count={item.finding_count} findings={forOccurrence(item.occurrence_id)} related={related} record={reviewContext} clientId={record.client_id} users={users} onOpen={onOpen}/></>}</td></tr>)}
     </tbody></table></div>
   </section>;
 }

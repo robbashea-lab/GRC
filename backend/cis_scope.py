@@ -30,12 +30,15 @@ def experience_program(client, selected):
 
 
 def validate_settings(settings):
-    if not isinstance(settings, dict) or set(settings) - {'cis-ig1'}:
+    if not isinstance(settings, dict) or set(settings) - {'cis-ig1', 'cmmc'}:
         raise ValueError('Invalid onboarding framework settings')
     cis = settings.get('cis-ig1', {})
     if not isinstance(cis, dict) or set(cis) - {'implementation_group'} or (
             'implementation_group' in cis and (type(cis['implementation_group']) is not int or cis['implementation_group'] not in available_groups())):
         raise ValueError('CIS implementation group is not available')
+    if 'cmmc' in settings:
+        from cmmc_scope import validate_settings as validate_cmmc_settings
+        validate_cmmc_settings(settings['cmmc'])
 
 
 class CisConfiguration(BaseModel):

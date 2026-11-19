@@ -9,6 +9,7 @@ from review_occurrences import schedule
 
 
 class EngineeringReliabilityTests(unittest.IsolatedAsyncioTestCase):
+    r4_valid_completion_fixture = True
     asyncSetUp = Harness.asyncSetUp
     sign_in = Harness.sign_in
 
@@ -106,11 +107,27 @@ class EngineeringReliabilityTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(await server.db.findings.count_documents({'client_id':'a','title':'Response lost'}),1)
 
     async def test_parallel_validation_records_one_decision(self):
-        self.sign_in('admin')
+        validator = 'synthetic-concurrency-validator'
+        await server.db.users.insert_one({'user_id':validator,'email':'concurrency-validator@example.test',
+            'name':'Synthetic independent concurrency validator','role':'platform_admin',
+            'client_ids':['a'],'all_clients':False,'status':'active'})
         for count in (5,10,50):
+            self.sign_in('admin')
             fid=f'validate-{count}'
-            await server.db.findings.insert_one({'finding_id':fid,'client_id':'a','title':'Ready','status':'remediated'})
-            results=await asyncio.gather(*(self.client.post(f'/api/findings/{fid}/validate',json={'rationale':'Synthetic validation','request_id':f'{fid}-{intent}'}) for intent in range(count)))
+            await server.db.findings.insert_one({'finding_id':fid,'client_id':'a','title':'Ready',
+                                                'status':'open','owner_id':'admin'})
+            created=await self.client.post(f'/api/findings/{fid}/create-task',json={'title':'Synthetic concurrency correction'})
+            self.assertEqual(created.status_code,200,created.text)
+            submitted=await self.client.patch('/api/tasks/'+created.json()['task_id'],json={'status':'done'})
+            self.assertEqual(submitted.status_code,200,submitted.text)
+            ready=await server.db.findings.find_one({'finding_id':fid})
+            self.assertEqual(ready['status'],'remediated')
+            decision={'rationale':'Synthetic validation','expected_updated_at':ready.get('updated_at')}
+            own=await self.client.post(f'/api/findings/{fid}/validate',json={**decision,'request_id':f'{fid}-self'})
+            self.assertEqual(own.status_code,403,own.text)
+            self.assertIn('Independent validation',own.text)
+            self.sign_in(validator)
+            results=await asyncio.gather(*(self.client.post(f'/api/findings/{fid}/validate',json={**decision,'request_id':f'{fid}-{intent}'}) for intent in range(count)))
             self.assertEqual(sum(r.status_code==200 for r in results),1)
             self.assertTrue(all(r.status_code in (200,409) for r in results))
             row=await server.db.findings.find_one({'finding_id':fid})

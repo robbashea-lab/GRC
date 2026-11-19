@@ -11,7 +11,7 @@ export function prepareTask(db,row,previous) {
   if(row.assurance_id){const vendor=db.vendors.find(v=>v.vendor_id===row.vendor_id&&v.client_id===row.client_id);if(!vendor?.assurance_records?.some((a,i)=>assuranceKey(a,i)===row.assurance_id))throw new Error('Assurance source must belong to the linked Vendor.');}
   if(previous) {
     if(links.some(k=>(row[k]??null)!==(previous[k]??null))) throw new Error('The originating source and relationships must be retained.');
-    if(previous.status==='done'&&row.status!=='done') throw new Error('Completed Action Items remain historical evidence.');
+    if(previous.status==='done'&&Object.keys(row).some(key=>key!=='updated_at'&&JSON.stringify(row[key])!==JSON.stringify(previous[key]))) throw new Error('Completed Action Items remain historical evidence; create new corrective work.');
     return;
   }
   if(row.status!=='open') throw new Error('New Action Items start Open.');

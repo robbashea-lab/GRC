@@ -33,7 +33,7 @@ class ClientRelationshipsTests(harness.ClientDashboardSourcesTests):
         self.assertEqual(client['shared_programs'], [{
             'client_id': 'a', 'program_id': f'a:{key}', 'framework_key': key,
             'version': CATALOGS[key]['version'], 'selected': True,
-        } for key in ('iso-27001', 'soc-2')])
+        } for key in ('hipaa', 'iso-27001', 'soc-2')])
         after = {name: await server.db[name].find({}, {'_id': 0}).to_list(None) for name in before}
         self.assertEqual(after, before)
         await server.db.requirements.delete_many({'client_id': 'a'})

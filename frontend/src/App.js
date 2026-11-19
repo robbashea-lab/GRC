@@ -26,6 +26,8 @@ import {FindingsRoute} from '@/pages/BrawndoActionItems';
 import RiskRegister from "@/pages/RiskRegister";
 import VendorRegister from "@/pages/VendorRegister";
 import AIGovernance from '@/pages/AIGovernance';
+import IVentureSetup from '@/components/IVentureSetup';
+import ToolCatalog from '@/components/ToolCatalog';
 import "@/App.css";
 
 function Protected({ children }) {
@@ -85,9 +87,11 @@ function AppRouter() {
         <Route path="admin/roles" element={<InternalOnly><AdminRoles /></InternalOnly>} />
         <Route path="admin/security" element={<InternalOnly><AdminSecurity /></InternalOnly>} />
         <Route path="admin/audit" element={<InternalOnly><AdminAudit /></InternalOnly>} />
+        <Route path="admin/tools" element={<InternalOnly><ToolCatalog /></InternalOnly>} />
         <Route path="account" element={<MyAccount />} />
         <Route path="client-settings" element={<InternalOnly><LegacyClientSettings /></InternalOnly>} />
         <Route path="client-profile" element={<ClientProfile />} />
+        <Route path="iv-setup" element={<IVentureSetup />} />
         <Route path="dashboard" element={<Dashboard />} />
         <Route path="calendar" element={<Calendar />} />
         <Route path="reviews" element={<RecordListPage kind="reviews" />} />

@@ -19,20 +19,26 @@ jest.mock('./ui/dialog', () => {
   return {Dialog: ({children}) => <div>{children}</div>, DialogContent: ({children}) => <div>{children}</div>, DialogTitle: R.forwardRef(({children}, ref) => <h2 ref={ref}>{children}</h2>), DialogDescription: ({children}) => <p>{children}</p>};
 });
 
-let container, root, anchorClick;
+let container, root, anchorClick, originalCreateUrl, originalRevokeUrl;
 const saved = {client_id: 'demo_brawndo', framework_key: 'cis-ig1', framework_assessment_id: 'native-1.1', definition_id: '1.1', status: 'addressed', verification: 'verified', implementation: 'Saved native implementation.', assessment_history: []};
 const evidence = {evidence_id: 'e-a', client_id: 'demo_brawndo', filename: 'Original native evidence.txt', linked_type: 'framework_assessment', linked_id: saved.framework_assessment_id};
 const finding = {finding_id: 'f-a', client_id: 'demo_brawndo', title: 'Original native Finding', status: 'open'};
 beforeEach(() => {
   global.IS_REACT_ACT_ENVIRONMENT = true;
   container = document.createElement('div'); document.body.appendChild(container); root = createRoot(container);
+  originalCreateUrl=URL.createObjectURL;originalRevokeUrl=URL.revokeObjectURL;
+  URL.createObjectURL=jest.fn(()=> 'blob:synthetic-omni-evidence');URL.revokeObjectURL=jest.fn();
   anchorClick = jest.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => {});
   api.get.mockImplementation(async path => ({data:
     path === '/evidence/e-a/download' ? {content_base64: 'U3ludGhldGljIGV2aWRlbmNlLg==', filename: evidence.filename, mime_type: 'text/plain'} :
       path.endsWith('/related') ? {reviews: [], evidence: [evidence], findings: [finding], tasks: [], risks: [], policies: []} :
         path.startsWith('/frameworks/') ? {configuration: {implementation_group: 1}, assessments: [saved], work: {[saved.framework_assessment_id]: {context_complete: true}}} : []}));
 });
-afterEach(async () => {await act(async () => root.unmount()); container.remove(); jest.restoreAllMocks(); jest.clearAllMocks();});
+afterEach(async () => {
+  await act(async () => root.unmount()); container.remove(); jest.restoreAllMocks(); jest.clearAllMocks();
+  if(originalCreateUrl===undefined)delete URL.createObjectURL;else URL.createObjectURL=originalCreateUrl;
+  if(originalRevokeUrl===undefined)delete URL.revokeObjectURL;else URL.revokeObjectURL=originalRevokeUrl;
+});
 async function render() {await act(async () => root.render(<FrameworkDrawer open record={saved} clientId="demo_brawndo" onOpenChange={() => {}}/>));}
 async function click(name) {const target = [...container.querySelectorAll('button')].find(button => button.textContent === name); expect(target).toBeTruthy(); await act(async () => target.click());}
 
@@ -41,6 +47,15 @@ test('Omni evidence navigation reuses the real parent download handler exactly o
   expect(api.get.mock.calls.filter(([path]) => path === '/evidence/e-a/download')).toHaveLength(1);
   expect(anchorClick).toHaveBeenCalledTimes(1);
   expect(anchorClick.mock.instances[0].download).toBe(evidence.filename);
+  expect(anchorClick.mock.instances[0].href).toBe('blob:synthetic-omni-evidence');
+  expect(URL.createObjectURL).toHaveBeenCalledTimes(1);
+  const blob=URL.createObjectURL.mock.calls[0][0];
+  expect(blob.type).toBe('application/octet-stream');expect(blob.size).toBe(Buffer.byteLength('Synthetic evidence.'));
+  const bytes=await new Promise((resolve,reject)=>{
+    const reader=new FileReader();reader.onload=()=>resolve([...new Uint8Array(reader.result)]);reader.onerror=()=>reject(reader.error);reader.readAsArrayBuffer(blob);
+  });
+  expect(bytes).toEqual([...Buffer.from('Synthetic evidence.')]);
+  expect(URL.revokeObjectURL).toHaveBeenCalledTimes(1);expect(URL.revokeObjectURL).toHaveBeenCalledWith('blob:synthetic-omni-evidence');
   expect(mockNested).not.toHaveBeenCalled();
   expect(container.querySelector('[data-testid="native-record-drawer"]')).toBeNull();
   expect(api.patch).not.toHaveBeenCalled(); expect(api.post).not.toHaveBeenCalled(); expect(api.delete).not.toHaveBeenCalled();

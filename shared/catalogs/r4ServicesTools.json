@@ -1,0 +1,1571 @@
+{
+  "version": "r4-2026-11-18",
+  "source_sha256": "865a2a2d6722f07e7d7085eef23bd2e292e2e8061cf1a174630c00ce9fa788b0",
+  "areas": [
+    {
+      "id": "endpoint",
+      "name": "Endpoint management & inventory",
+      "description": "Device inventory, configuration policies and remote management",
+      "team": "iVenture — Team Auriga (maintenance)"
+    },
+    {
+      "id": "patching",
+      "name": "Patch management",
+      "description": "Operating system and third-party application updates",
+      "team": "iVenture — Team Auriga (maintenance)"
+    },
+    {
+      "id": "edr",
+      "name": "Endpoint detection & response",
+      "description": "Malware and threat detection, response and containment on endpoints",
+      "team": "iVenture — Team Aries (security)"
+    },
+    {
+      "id": "itdr",
+      "name": "Identity threat detection (Microsoft 365)",
+      "description": "Risky sign-ins, mailbox rules and session abuse in Microsoft 365",
+      "team": "iVenture — Team Aries (security)"
+    },
+    {
+      "id": "siem",
+      "name": "Log management / SIEM",
+      "description": "Central log collection, retention and monitored detections",
+      "team": "iVenture — Team Aries (security)"
+    },
+    {
+      "id": "vuln",
+      "name": "Vulnerability scanning",
+      "description": "Scheduled internal and external scans and remediation tracking",
+      "team": "iVenture — Team Aries (security)"
+    },
+    {
+      "id": "appcontrol",
+      "name": "Application control",
+      "description": "Allowlisting, ringfencing and elevation control",
+      "team": "iVenture — Team Aries (security)"
+    },
+    {
+      "id": "identity",
+      "name": "Identity & access",
+      "description": "Accounts, groups, access policies and directory services",
+      "team": "iVenture — Team Auriga (maintenance)"
+    },
+    {
+      "id": "mfa",
+      "name": "Multi-factor authentication",
+      "description": "MFA for workforce, administrators, email and remote access",
+      "team": "iVenture — Team Auriga (maintenance)"
+    },
+    {
+      "id": "email",
+      "name": "Email security",
+      "description": "Filtering, phishing protection and DMARC",
+      "team": "iVenture — Team Auriga (maintenance)"
+    },
+    {
+      "id": "dns",
+      "name": "Web & DNS filtering",
+      "description": "Blocking malicious or unwanted web destinations",
+      "team": "iVenture — Team Auriga (maintenance)"
+    },
+    {
+      "id": "firewall",
+      "name": "Firewall & network",
+      "description": "Perimeter firewalls, VPN, segmentation and network devices",
+      "team": "iVenture — Team Auriga (maintenance)"
+    },
+    {
+      "id": "dataprot",
+      "name": "Data protection & encryption",
+      "description": "Device encryption, classification and data loss prevention",
+      "team": "iVenture — Team Auriga (maintenance)"
+    },
+    {
+      "id": "backup_server",
+      "name": "Server backup & recovery",
+      "description": "Server and VM backups, offsite copies and restores",
+      "team": "iVenture — Team Auriga (maintenance)"
+    },
+    {
+      "id": "backup_m365",
+      "name": "Microsoft 365 backup",
+      "description": "Exchange, OneDrive, SharePoint and Teams backup",
+      "team": "iVenture — Team Auriga (maintenance)"
+    },
+    {
+      "id": "backup_pc",
+      "name": "Endpoint (PC) backup",
+      "description": "User files on workstations",
+      "team": "iVenture — Team Auriga (maintenance)"
+    },
+    {
+      "id": "training",
+      "name": "Security awareness training",
+      "description": "Training campaigns and phishing simulations",
+      "team": "iVenture — Security Program Manager"
+    },
+    {
+      "id": "pentest",
+      "name": "Penetration testing",
+      "description": "Periodic testing with recommendations and retest",
+      "team": "iVenture — Security Program Manager"
+    },
+    {
+      "id": "darkweb",
+      "name": "Dark web monitoring",
+      "description": "Exposed credential monitoring for company domains",
+      "team": "iVenture — Team Aries (security)"
+    },
+    {
+      "id": "auditing",
+      "name": "Change auditing",
+      "description": "Directory, Microsoft 365 and file server change auditing",
+      "team": "iVenture — Team Aries (security)"
+    },
+    {
+      "id": "hosting",
+      "name": "Hosting & virtual desktops",
+      "description": "iVenture cloud, Azure Virtual Desktop and hosted apps",
+      "team": "iVenture — Team Auriga (maintenance)"
+    },
+    {
+      "id": "governance",
+      "name": "Governance, risk & compliance",
+      "description": "vCISO, policies, risk program, vendor oversight and incident response planning",
+      "team": "iVenture — Security Program Manager"
+    },
+    {
+      "id": "dev",
+      "name": "Secure development",
+      "description": "Application development practices and pipelines",
+      "team": "Client"
+    }
+  ],
+  "responsibilities": [
+    {
+      "id": "un",
+      "label": "Not set"
+    },
+    {
+      "id": "iv",
+      "label": "iVenture managed"
+    },
+    {
+      "id": "co",
+      "label": "Co-managed"
+    },
+    {
+      "id": "cl",
+      "label": "Client managed"
+    },
+    {
+      "id": "tp",
+      "label": "Other provider"
+    },
+    {
+      "id": "no",
+      "label": "Not in place"
+    }
+  ],
+  "tools": [
+    {
+      "tool_id": "ninjaone",
+      "name": "NinjaOne",
+      "vendor": "NinjaOne",
+      "category": "iv",
+      "area_ids": [
+        "endpoint",
+        "patching"
+      ],
+      "description": "iVenture's RMM. Agent-based inventory, monitoring, patching, scripting and remote access for Windows, macOS and Linux devices.",
+      "product_reference": "iVenture Managed PC / Managed Server (per device)",
+      "source_references": [
+        "msv-IVEN-PC-Managed-Devc",
+        "msv-IVEN-Server-Managed-Devc",
+        "sec-NinjaOne-EndpointOnly-Mgmt-Unit"
+      ],
+      "source_observation": "Managed PC on 96 and Managed Server on 79 active client agreements",
+      "capabilities": [
+        "Workstations and servers with the NinjaOne agent",
+        "Hardware, operating system, IP and MAC address, last check-in",
+        "Installed software on each device",
+        "OS and third-party patch status and install history"
+      ],
+      "gaps": [
+        "Devices without the agent: network gear, printers, IoT, unmanaged or personal devices, most phones",
+        "Asset owner, department and approved-to-connect, unless captured in custom fields",
+        "Business purpose and authorization of software",
+        "Cloud and SaaS services with no endpoint"
+      ],
+      "possible_records": [
+        "Device inventory export for the organization",
+        "Software inventory report",
+        "OS and software patch compliance reports",
+        "Patch policy settings"
+      ],
+      "verification_hints": [
+        "Device count reconciles with ConnectWise configurations and the agreement device count",
+        "Devices not checked in for 30+ days are reviewed or retired",
+        "Patch policy approves and installs within the iVenture window"
+      ],
+      "to_confirm": "",
+      "source_note": "Supplied reference snapshot, 2026-11-18; deployment and assurance require separate confirmation.",
+      "retired": false
+    },
+    {
+      "tool_id": "intune",
+      "name": "Microsoft Intune (managed via Nerdio)",
+      "vendor": "Microsoft",
+      "category": "iv",
+      "area_ids": [
+        "endpoint",
+        "patching",
+        "dataprot"
+      ],
+      "description": "Microsoft endpoint management. The ConnectWise line “Microsoft 365 Cloud Service Orchestration Tool” (Nerdio) is read here as how iVenture deploys Intune policies across tenants.",
+      "product_reference": "Microsoft 365 Cloud Service Orchestration Tool; Intune licensed through Microsoft 365 Business Premium",
+      "source_references": [
+        "sec-Nerdio-InTune-Mgmt-Unit",
+        "csp-NCE-M365BusinessPrem-P1Y-Monthly"
+      ],
+      "source_observation": "Orchestration tool on 121 and Business Premium on 108 active client agreements",
+      "capabilities": [
+        "Enrolled Windows, macOS, iOS and Android devices",
+        "Compliance policies, configuration profiles and security baselines",
+        "Windows update rings",
+        "BitLocker / FileVault enforcement and recovery keys",
+        "App deployment and remote wipe"
+      ],
+      "gaps": [
+        "Devices not enrolled",
+        "Servers (NinjaOne covers these)",
+        "Network and IoT devices"
+      ],
+      "possible_records": [
+        "Intune device list and compliance report",
+        "Configuration profile and baseline export",
+        "Encryption report",
+        "Update ring settings"
+      ],
+      "verification_hints": [
+        "Enrolled device count matches the NinjaOne workstation count",
+        "Compliance policy assigned to all users"
+      ],
+      "to_confirm": "Confirm Nerdio is how iVenture deploys the Intune baseline.",
+      "source_note": "Supplied reference snapshot, 2026-11-18; deployment and assurance require separate confirmation.",
+      "retired": false
+    },
+    {
+      "tool_id": "sentinelone",
+      "name": "SentinelOne",
+      "vendor": "SentinelOne",
+      "category": "iv",
+      "area_ids": [
+        "edr"
+      ],
+      "description": "Endpoint protection and EDR with behavioral detection and response actions. ConnectWise notes SentinelOne as the product behind iVenture Endpoint Security.",
+      "product_reference": "iVenture Endpoint Security (managed EDR/MDR)",
+      "source_references": [
+        "sec-EDR-Per User",
+        "sec-EDR-Per Device"
+      ],
+      "source_observation": "Per user on 64 and per device on 10 active client agreements",
+      "capabilities": [
+        "Workstations and servers with the agent",
+        "Malware and ransomware prevention and detection",
+        "Threat investigation, containment and remediation"
+      ],
+      "gaps": [
+        "Devices without the agent",
+        "Email and web filtering",
+        "The alert monitoring and response owner must be documented"
+      ],
+      "possible_records": [
+        "Agent coverage report",
+        "Policy settings (protect mode, exclusions)",
+        "Threat and incident history"
+      ],
+      "verification_hints": [
+        "Every managed endpoint shows an active agent in protect mode",
+        "Agent count reconciles with NinjaOne",
+        "Exclusions reviewed"
+      ],
+      "to_confirm": "Confirm who monitors and responds to alerts (vendor MDR or iVenture).",
+      "source_note": "Supplied reference snapshot, 2026-11-18; deployment and assurance require separate confirmation.",
+      "retired": false
+    },
+    {
+      "tool_id": "huntress_itdr",
+      "name": "Huntress ITDR",
+      "vendor": "Huntress",
+      "category": "iv",
+      "area_ids": [
+        "itdr",
+        "siem"
+      ],
+      "description": "Huntress-monitored detection and response for Microsoft 365 identities: risky sign-ins, malicious inbox rules, session and token abuse. The Huntress SOC escalates incidents.",
+      "product_reference": "Identity Threat Detection and Response (Huntress MDR for Microsoft 365)",
+      "source_references": [
+        "sec-HUNTRESS-ITDR-M365-User"
+      ],
+      "source_observation": "On 139 active client agreements",
+      "capabilities": [
+        "Microsoft 365 / Entra ID sign-ins and mailbox activity for licensed users",
+        "24/7 SOC review and escalation"
+      ],
+      "gaps": [
+        "On-premises Active Directory",
+        "Non-Microsoft SaaS applications",
+        "Device and server logs (Managed SIEM covers those)"
+      ],
+      "possible_records": [
+        "Protected user list",
+        "Incident reports and escalations"
+      ],
+      "verification_hints": [
+        "Protected user count matches licensed Microsoft 365 users"
+      ],
+      "to_confirm": "",
+      "source_note": "Supplied reference snapshot, 2026-11-18; deployment and assurance require separate confirmation.",
+      "retired": false
+    },
+    {
+      "tool_id": "huntress_siem",
+      "name": "Huntress Managed SIEM",
+      "vendor": "Huntress",
+      "category": "ivx",
+      "area_ids": [
+        "siem"
+      ],
+      "description": "Huntress log collection and retention with SOC-reviewed detections.",
+      "product_reference": "Managed SIEM (per device)",
+      "source_references": [
+        "sec-HUNTRESS-SIEM-Device"
+      ],
+      "source_observation": "On 11 active client agreements",
+      "capabilities": [
+        "Windows event logs from devices with the Huntress agent",
+        "Firewall syslog and Microsoft 365 logs, only if onboarded"
+      ],
+      "gaps": [
+        "Sources not onboarded",
+        "Retention must meet the framework: confirm the plan's retention period"
+      ],
+      "possible_records": [
+        "Onboarded source list",
+        "Retention setting",
+        "Escalation reports"
+      ],
+      "verification_hints": [
+        "Firewalls and servers forward logs",
+        "Retention meets the requirement"
+      ],
+      "to_confirm": "",
+      "source_note": "Supplied reference snapshot, 2026-11-18; deployment and assurance require separate confirmation.",
+      "retired": false
+    },
+    {
+      "tool_id": "connectsecure",
+      "name": "ConnectSecure",
+      "vendor": "ConnectSecure (MSP Store)",
+      "category": "ivx",
+      "area_ids": [
+        "vuln",
+        "endpoint"
+      ],
+      "description": "Vulnerability scanning with agents and network probes, external scans and remediation reports. ConnectWise lists MSP Store as the vendor for ConnectSecure.",
+      "product_reference": "iVenture Vulnerability Scanning (per device)",
+      "source_references": [
+        "sec-VULNERABILITYSCANNING-Per Device"
+      ],
+      "source_observation": "On 15 active client agreements",
+      "capabilities": [
+        "Devices with the agent and network ranges reached by a probe",
+        "External IP addresses, if an external scan is configured",
+        "Discovery of devices on scanned ranges"
+      ],
+      "gaps": [
+        "Network segments without a probe",
+        "Cloud and SaaS configuration",
+        "Remediation itself runs through patching or configuration work"
+      ],
+      "possible_records": [
+        "Latest internal and external scan reports",
+        "Scan schedule",
+        "Remediation trend"
+      ],
+      "verification_hints": [
+        "Scans run on schedule for every site",
+        "The external scan covers all public IP addresses"
+      ],
+      "to_confirm": "",
+      "source_note": "Supplied reference snapshot, 2026-11-18; deployment and assurance require separate confirmation.",
+      "retired": false
+    },
+    {
+      "tool_id": "threatlocker",
+      "name": "ThreatLocker Protect",
+      "vendor": "ThreatLocker",
+      "category": "ivx",
+      "area_ids": [
+        "appcontrol"
+      ],
+      "description": "Application allowlisting with ringfencing, network control and configuration management, per the ConnectWise product notes.",
+      "product_reference": "iVenture ThreatLocker Package (per device); Elevation Control add-on",
+      "source_references": [
+        "sec-AppWhitelisting-Per Device",
+        "sec-AppWhitelisting_Elevation-Bundle-Per Device"
+      ],
+      "source_observation": "On 27 active client agreements (6 with Elevation Control)",
+      "capabilities": [
+        "Software execution on devices with the agent",
+        "Ringfenced application behavior",
+        "Approval requests for new software"
+      ],
+      "gaps": [
+        "Devices without the agent",
+        "The business purpose of approved software still needs client sign-off"
+      ],
+      "possible_records": [
+        "Allowlist policies",
+        "Approval request log",
+        "Blocked execution audit"
+      ],
+      "verification_hints": [
+        "All managed endpoints in secured mode, not learning mode"
+      ],
+      "to_confirm": "",
+      "source_note": "Supplied reference snapshot, 2026-11-18; deployment and assurance require separate confirmation.",
+      "retired": false
+    },
+    {
+      "tool_id": "entra",
+      "name": "Microsoft Entra ID",
+      "vendor": "Microsoft",
+      "category": "iv",
+      "area_ids": [
+        "identity",
+        "mfa"
+      ],
+      "description": "Cloud identity for Microsoft 365: accounts, groups, admin roles, Conditional Access, MFA and sign-in logs.",
+      "product_reference": "iVenture Managed User; Microsoft 365 Business Premium or Entra ID P1/P2",
+      "source_references": [
+        "msv-IVEN-User-FullComp-User",
+        "msv-IVEN-User-Managed-User",
+        "csp-NCE-M365BusinessPrem-P1Y-Monthly",
+        "csp-NCE-AzureADP1-Annual",
+        "csp-NCE-AzureADP2-Annual"
+      ],
+      "source_observation": "Managed User (Full Complete) on 101 active client agreements",
+      "capabilities": [
+        "Cloud and synced user accounts, groups and admin roles",
+        "Conditional Access and MFA enforcement (P1 or Business Premium)",
+        "Sign-in and audit logs"
+      ],
+      "gaps": [
+        "Who authorized each account or access change (ConnectWise ticket or client approval)",
+        "Local accounts in other SaaS apps and on devices",
+        "Service account ownership and purpose"
+      ],
+      "possible_records": [
+        "User and admin role export",
+        "Conditional Access policy export",
+        "MFA registration report",
+        "Access request and termination tickets"
+      ],
+      "verification_hints": [
+        "Dormant accounts disabled per the CIS 5.3 45-day threshold",
+        "Admin accounts separate and MFA-protected"
+      ],
+      "to_confirm": "",
+      "source_note": "Supplied reference snapshot, 2026-11-18; deployment and assurance require separate confirmation.",
+      "retired": false
+    },
+    {
+      "tool_id": "ad",
+      "name": "Active Directory (on-premises)",
+      "vendor": "Microsoft",
+      "category": "iv",
+      "area_ids": [
+        "identity"
+      ],
+      "description": "On-premises directory for clients with domain controllers.",
+      "product_reference": "iVenture Managed Server; Managed Microsoft Infrastructure Applications",
+      "source_references": [
+        "msv-IVEN-Server-Managed-Devc",
+        "MSServerAppMicrosoft"
+      ],
+      "source_observation": "Clients with domain-joined servers",
+      "capabilities": [
+        "Domain user, computer and service accounts",
+        "Group Policy"
+      ],
+      "gaps": [
+        "Cloud-only accounts",
+        "Authorization records for access changes"
+      ],
+      "possible_records": [
+        "User export with last logon",
+        "Privileged group membership",
+        "Group Policy report"
+      ],
+      "verification_hints": [
+        "Stale accounts disabled",
+        "Privileged groups reviewed"
+      ],
+      "to_confirm": "",
+      "source_note": "Supplied reference snapshot, 2026-11-18; deployment and assurance require separate confirmation.",
+      "retired": false
+    },
+    {
+      "tool_id": "duo",
+      "name": "Duo",
+      "vendor": "Cisco",
+      "category": "ivx",
+      "area_ids": [
+        "mfa"
+      ],
+      "description": "MFA for VPN, RDP, servers and applications outside Microsoft 365.",
+      "product_reference": "iVenture DUO MFA Essentials / Advantage",
+      "source_references": [
+        "hsv-DUO-DUOMFA-User",
+        "sec-DUO-DUOMFA-User",
+        "sec-DUO-DUOACCESS-User"
+      ],
+      "source_observation": "On roughly 25 active client agreements across three Duo lines",
+      "capabilities": [
+        "Protected applications and systems enrolled in Duo"
+      ],
+      "gaps": [
+        "Applications not integrated with Duo"
+      ],
+      "possible_records": [
+        "Protected application list",
+        "Enrollment report"
+      ],
+      "verification_hints": [
+        "All remote access paths require Duo"
+      ],
+      "to_confirm": "",
+      "source_note": "Supplied reference snapshot, 2026-11-18; deployment and assurance require separate confirmation.",
+      "retired": false
+    },
+    {
+      "tool_id": "defender_o365",
+      "name": "Microsoft Defender for Office 365",
+      "vendor": "Microsoft",
+      "category": "iv",
+      "area_ids": [
+        "email"
+      ],
+      "description": "Anti-phishing, Safe Links and Safe Attachments for Exchange Online.",
+      "product_reference": "Included in Microsoft 365 Business Premium; Defender for Office 365 P1/P2 add-on",
+      "source_references": [
+        "csp-NCE-MicrosoftDefenderP1-Yearly",
+        "csp-NCE-M365BusinessPrem-P1Y-Monthly"
+      ],
+      "source_observation": "P1 add-on on 36 active client agreements, plus Business Premium",
+      "capabilities": [
+        "Exchange Online mailboxes",
+        "Links and attachments in email and Teams"
+      ],
+      "gaps": [
+        "Mail flowing outside Exchange Online",
+        "DMARC reporting (DMARC Monitoring covers this)"
+      ],
+      "possible_records": [
+        "Threat policy settings (preset or custom)",
+        "Quarantine and threat reports"
+      ],
+      "verification_hints": [
+        "Preset security policies applied to all users"
+      ],
+      "to_confirm": "",
+      "source_note": "Supplied reference snapshot, 2026-11-18; deployment and assurance require separate confirmation.",
+      "retired": false
+    },
+    {
+      "tool_id": "ivemail",
+      "name": "iVenture Hosted Email Filter",
+      "vendor": "iVenture",
+      "category": "ivx",
+      "area_ids": [
+        "email"
+      ],
+      "description": "Hosted spam and malware filtering in front of the mail system.",
+      "product_reference": "iVenture Hosted Email Filter / Spam Filter",
+      "source_references": [
+        "Hosting-SpamFilter",
+        "Hosting-SpamFilter-10",
+        "hsv-GFI-Spam Filter-User"
+      ],
+      "source_observation": "Mostly on older agreements",
+      "capabilities": [
+        "Inbound mail routed through the filter"
+      ],
+      "gaps": [
+        "Mail that bypasses the filter"
+      ],
+      "possible_records": [
+        "Filter policy",
+        "Mail flow (MX) records"
+      ],
+      "verification_hints": [
+        "MX records point to the filter"
+      ],
+      "to_confirm": "Confirm the filtering platform and whether this is still sold.",
+      "source_note": "Supplied reference snapshot, 2026-11-18; deployment and assurance require separate confirmation.",
+      "retired": false
+    },
+    {
+      "tool_id": "barracuda_email",
+      "name": "Barracuda Email Protection",
+      "vendor": "Barracuda",
+      "category": "ivx",
+      "area_ids": [
+        "email",
+        "backup_m365"
+      ],
+      "description": "Email security with advanced threat protection. The Complete Protection bundle adds archiving and cloud-to-cloud backup; ConnectWise notes mark that bundle end-of-sale as of June 2025.",
+      "product_reference": "Barracuda Email Protection / Complete Protection",
+      "source_references": [
+        "hsv-Bcuda-EmailProtection-Advanced-User",
+        "hsv-Bcuda-EmailProtection-Premium-User",
+        "hsv-Bcuda-EmailSecurityATP-User",
+        "hsv-Bcuda-CompleteProtection-User"
+      ],
+      "source_observation": "Complete Protection on 11 active client agreements",
+      "capabilities": [
+        "Mailboxes routed through Barracuda"
+      ],
+      "gaps": [
+        "Mail that bypasses the gateway"
+      ],
+      "possible_records": [
+        "Policy settings",
+        "Threat reports"
+      ],
+      "verification_hints": [],
+      "to_confirm": "",
+      "source_note": "Supplied reference snapshot, 2026-11-18; deployment and assurance require separate confirmation.",
+      "retired": false
+    },
+    {
+      "tool_id": "dmarc",
+      "name": "DMARC Monitoring",
+      "vendor": "Not recorded",
+      "category": "ivx",
+      "area_ids": [
+        "email"
+      ],
+      "description": "DMARC aggregate report monitoring for client domains.",
+      "product_reference": "DMARC Monitoring (per domain)",
+      "source_references": [
+        "sec-Dmarc-Monitoring-Domain"
+      ],
+      "source_observation": "On 17 active client agreements",
+      "capabilities": [
+        "Monitored sending domains"
+      ],
+      "gaps": [
+        "Domains not enrolled",
+        "Moving the DMARC policy to quarantine or reject"
+      ],
+      "possible_records": [
+        "DMARC policy (DNS)",
+        "Aggregate report summary"
+      ],
+      "verification_hints": [
+        "DMARC record published for each domain"
+      ],
+      "to_confirm": "ConnectWise doesn't record the vendor. Confirm.",
+      "source_note": "Supplied reference snapshot, 2026-11-18; deployment and assurance require separate confirmation.",
+      "retired": false
+    },
+    {
+      "tool_id": "abnormal",
+      "name": "Abnormal Security",
+      "vendor": "Abnormal",
+      "category": "ivx",
+      "area_ids": [
+        "email"
+      ],
+      "description": "AI-based email security.",
+      "product_reference": "Abnormal AI Email Security",
+      "source_references": [
+        "sec-Abnormal-AIEmailSec-P1Y-Monthly"
+      ],
+      "source_observation": "On 1 active client agreement",
+      "capabilities": [],
+      "gaps": [],
+      "possible_records": [],
+      "verification_hints": [],
+      "to_confirm": "",
+      "source_note": "Supplied reference snapshot, 2026-11-18; deployment and assurance require separate confirmation.",
+      "retired": false
+    },
+    {
+      "tool_id": "proofpoint",
+      "name": "Proofpoint Essentials",
+      "vendor": "Proofpoint",
+      "category": "ivx",
+      "area_ids": [
+        "email"
+      ],
+      "description": "Email gateway security.",
+      "product_reference": "Proofpoint Essentials Advanced",
+      "source_references": [
+        "hsv-PRF-SEC-ESS-C100-ADV-User"
+      ],
+      "source_observation": "On 1 active client agreement",
+      "capabilities": [],
+      "gaps": [],
+      "possible_records": [],
+      "verification_hints": [],
+      "to_confirm": "",
+      "source_note": "Supplied reference snapshot, 2026-11-18; deployment and assurance require separate confirmation.",
+      "retired": false
+    },
+    {
+      "tool_id": "fortigate",
+      "name": "Fortinet FortiGate (FortiManager-managed)",
+      "vendor": "Fortinet",
+      "category": "iv",
+      "area_ids": [
+        "firewall",
+        "dns"
+      ],
+      "description": "Next-generation firewalls managed centrally in FortiManager: configuration sync, firmware and policy packages. The Enterprise bundle includes IPS and web filtering.",
+      "product_reference": "iVenture Managed Network (per site); FortiFlex FortiGate licensing",
+      "source_references": [
+        "msv-IVEN-Network-Managed-Site",
+        "chw-IVEN-FortiFlex-FG-60F-Ent-License-Only",
+        "chw-IVEN-FortiFlex-FG-70G-BDL-Ent-Unit",
+        "chw-IVEN-FortiFlex-FG-90G-Ent-License-Only",
+        "chw-IVEN-FortiFlex-FG-VM02V-BDL-Ent-Unit"
+      ],
+      "source_observation": "Managed Network on 72 active client agreements; FortiFlex FortiGate licensing across many",
+      "capabilities": [
+        "Perimeter firewall policy, NAT and VLAN segmentation",
+        "SSL and IPsec VPN for remote access and site-to-site",
+        "IPS, antivirus and web/DNS filtering for traffic through the FortiGate",
+        "Configuration backup and sync status in FortiManager",
+        "Log forwarding (syslog or FortiAnalyzer), if configured"
+      ],
+      "gaps": [
+        "Devices off the network (roaming laptops) for web filtering, unless FortiClient or SASE is used",
+        "Switches and wireless from other vendors",
+        "Rule change approval records (keep these in ConnectWise)"
+      ],
+      "possible_records": [
+        "FortiManager device list with firmware and sync status",
+        "Firewall policy package export",
+        "VPN settings showing MFA",
+        "Syslog / FortiAnalyzer settings"
+      ],
+      "verification_hints": [
+        "Device in sync and on supported firmware",
+        "VPN requires MFA",
+        "Logs forwarded to the SIEM where purchased"
+      ],
+      "to_confirm": "",
+      "source_note": "Supplied reference snapshot, 2026-11-18; deployment and assurance require separate confirmation.",
+      "retired": false
+    },
+    {
+      "tool_id": "forticlient",
+      "name": "FortiClient EMS (ZTNA/VPN)",
+      "vendor": "Fortinet",
+      "category": "ivx",
+      "area_ids": [
+        "firewall",
+        "dns"
+      ],
+      "description": "Managed VPN and zero-trust access agent for remote devices.",
+      "product_reference": "FortiClient VPN/ZTNA agent subscription",
+      "source_references": [
+        "chw-IVEN-FortiFlex-FortiClientEMSCloud-ZTNA-VPN-25Agents"
+      ],
+      "source_observation": "On 2 active client agreements",
+      "capabilities": [],
+      "gaps": [],
+      "possible_records": [],
+      "verification_hints": [],
+      "to_confirm": "",
+      "source_note": "Supplied reference snapshot, 2026-11-18; deployment and assurance require separate confirmation.",
+      "retired": false
+    },
+    {
+      "tool_id": "timus",
+      "name": "Timus SASE",
+      "vendor": "Timus Networks",
+      "category": "ivx",
+      "area_ids": [
+        "dns",
+        "firewall"
+      ],
+      "description": "Zero-trust network access and secure web gateway for remote users.",
+      "product_reference": "Secure Access Service Edge (per user / gateway)",
+      "source_references": [
+        "sec-Timus-PerUser",
+        "sec-Timus-Gateway"
+      ],
+      "source_observation": "On 2 active client agreements",
+      "capabilities": [
+        "Users and gateways enrolled in Timus"
+      ],
+      "gaps": [],
+      "possible_records": [
+        "Policy export"
+      ],
+      "verification_hints": [],
+      "to_confirm": "",
+      "source_note": "Supplied reference snapshot, 2026-11-18; deployment and assurance require separate confirmation.",
+      "retired": false
+    },
+    {
+      "tool_id": "veeam",
+      "name": "Veeam (iVenture Windows Server Backup)",
+      "vendor": "Veeam",
+      "category": "iv",
+      "area_ids": [
+        "backup_server",
+        "backup_pc",
+        "backup_m365"
+      ],
+      "description": "Veeam backs up physical, virtual and cloud Windows servers. Per the agreement language, backups go to the client's Azure tenant (Azure Blob) unless the order says otherwise; iVenture Vault (on-site) and Offsite packages also exist. Jobs are monitored in Veeam Service Provider Console.",
+      "product_reference": "Windows Server Backup; iVenture Vault and Offsite packages; Managed Server Backup/DR",
+      "source_references": [
+        "mbk-IVEN-Veeam-Vault-On-Prem",
+        "mbk-IVEN-Vault-1000-Unit",
+        "mbk-IVEN-Offsite-1000-Gigb",
+        "mbk-WSBI-S3-HotStorage-TB",
+        "MSBUDRServer",
+        "hsv-IVEN-Veeam-Backup-for-Desktop",
+        "mbk-VDC365Adv-PerUser"
+      ],
+      "source_observation": "Windows Server Backup on 58 and S3 hot storage on 54 active client agreements",
+      "capabilities": [
+        "Servers and VMs included in backup jobs",
+        "Backup copy jobs to a second location",
+        "Restore points and job status"
+      ],
+      "gaps": [
+        "Workstations (PC Backup is a separate product)",
+        "Microsoft 365 data (separate product)",
+        "Restore testing must be scheduled and recorded",
+        "Immutability or offline copy must be confirmed for each client"
+      ],
+      "possible_records": [
+        "VSPC job status and latest restore points",
+        "Backup copy coverage check",
+        "Restore test record"
+      ],
+      "verification_hints": [
+        "Every server in NinjaOne is in a backup job",
+        "Each backup job has a backup copy job",
+        "Latest successful restore point within the agreed RPO"
+      ],
+      "to_confirm": "",
+      "source_note": "Supplied reference snapshot, 2026-11-18; deployment and assurance require separate confirmation.",
+      "retired": false
+    },
+    {
+      "tool_id": "barracuda_c2c",
+      "name": "Barracuda Cloud-to-Cloud Backup",
+      "vendor": "Barracuda",
+      "category": "iv",
+      "area_ids": [
+        "backup_m365"
+      ],
+      "description": "Cloud-to-cloud backup of Microsoft 365 data. An Entra ID backup add-on appears on a few agreements.",
+      "product_reference": "Enhanced Microsoft 365 Cloud Backup",
+      "source_references": [
+        "hsv-Bcuda-Cloud-2CloudBackup-User",
+        "hsv-Bcuda-EDUCloud-2CloudBackup-User",
+        "hsv-Bcuda-EntraID-Backup-Premium-User"
+      ],
+      "source_observation": "On 112 active client agreements",
+      "capabilities": [
+        "Licensed users' Exchange, OneDrive, SharePoint and Teams data"
+      ],
+      "gaps": [
+        "Shared or unlicensed mailboxes unless included",
+        "Restore testing records"
+      ],
+      "possible_records": [
+        "Protected user list",
+        "Backup status report",
+        "Restore test record"
+      ],
+      "verification_hints": [
+        "Protected users match licensed users"
+      ],
+      "to_confirm": "",
+      "source_note": "Supplied reference snapshot, 2026-11-18; deployment and assurance require separate confirmation.",
+      "retired": false
+    },
+    {
+      "tool_id": "backblaze",
+      "name": "Backblaze",
+      "vendor": "Backblaze",
+      "category": "ivx",
+      "area_ids": [
+        "backup_pc"
+      ],
+      "description": "Cloud backup of user-generated files on workstations.",
+      "product_reference": "PC Backup",
+      "source_references": [
+        "hsv-BackBlazeBk-Desktop-Dev"
+      ],
+      "source_observation": "On 28 active client agreements",
+      "capabilities": [
+        "Enrolled workstations"
+      ],
+      "gaps": [
+        "Workstations not enrolled"
+      ],
+      "possible_records": [
+        "Enrolled device list",
+        "Last backup report"
+      ],
+      "verification_hints": [],
+      "to_confirm": "",
+      "source_note": "Supplied reference snapshot, 2026-11-18; deployment and assurance require separate confirmation.",
+      "retired": false
+    },
+    {
+      "tool_id": "knowbe4",
+      "name": "KnowBe4",
+      "vendor": "KnowBe4",
+      "category": "ivx",
+      "area_ids": [
+        "training"
+      ],
+      "description": "Security awareness training and simulated phishing.",
+      "product_reference": "iVenture Security Awareness Training",
+      "source_references": [
+        "sec-SECURITYAWARENESS-DIAMOND-User"
+      ],
+      "source_observation": "On 68 active client agreements",
+      "capabilities": [
+        "Enrolled users' training assignments and completion",
+        "Phishing simulation results"
+      ],
+      "gaps": [
+        "Users not synced or enrolled",
+        "New-hire timing and follow-up on overdue training (client)"
+      ],
+      "possible_records": [
+        "Training completion report",
+        "Phishing campaign results",
+        "Enrollment compared with the user list"
+      ],
+      "verification_hints": [
+        "Enrollment matches active users"
+      ],
+      "to_confirm": "ConnectWise doesn't name the vendor on this line; the Diamond tier suggests KnowBe4. Confirm.",
+      "source_note": "Supplied reference snapshot, 2026-11-18; deployment and assurance require separate confirmation.",
+      "retired": false
+    },
+    {
+      "tool_id": "huntress_sat",
+      "name": "Huntress Security Awareness Training",
+      "vendor": "Huntress",
+      "category": "ivx",
+      "area_ids": [
+        "training"
+      ],
+      "description": "Security awareness training from Huntress.",
+      "product_reference": "Huntress SAT (per user)",
+      "source_references": [
+        "sec-HUNTRESS-SAT-User"
+      ],
+      "source_observation": "On 1 active client agreement",
+      "capabilities": [],
+      "gaps": [],
+      "possible_records": [],
+      "verification_hints": [],
+      "to_confirm": "",
+      "source_note": "Supplied reference snapshot, 2026-11-18; deployment and assurance require separate confirmation.",
+      "retired": false
+    },
+    {
+      "tool_id": "vonahi",
+      "name": "Vonahi Security (penetration testing)",
+      "vendor": "Vonahi Security",
+      "category": "ivx",
+      "area_ids": [
+        "pentest",
+        "vuln"
+      ],
+      "description": "Annual automated and manual penetration testing with recommendations and retest after remediation. ConnectWise notes Vonahi Security as the supplier.",
+      "product_reference": "Penetration Testing – Annual",
+      "source_references": [
+        "sec-ANNUALPENTEST"
+      ],
+      "source_observation": "On 12 active client agreements",
+      "capabilities": [
+        "Systems in the agreed test scope"
+      ],
+      "gaps": [
+        "Systems outside the scope",
+        "Remediation and retest evidence"
+      ],
+      "possible_records": [
+        "Penetration test report",
+        "Retest report"
+      ],
+      "verification_hints": [
+        "Scope matches current public IPs and sites"
+      ],
+      "to_confirm": "",
+      "source_note": "Supplied reference snapshot, 2026-11-18; deployment and assurance require separate confirmation.",
+      "retired": false
+    },
+    {
+      "tool_id": "darkweb",
+      "name": "iVenture Dark Web Monitoring",
+      "vendor": "Not recorded",
+      "category": "ivx",
+      "area_ids": [
+        "darkweb"
+      ],
+      "description": "Monitoring for exposed credentials tied to client email domains.",
+      "product_reference": "Dark Web Monitoring (per email domain)",
+      "source_references": [
+        "sec-DARKWEBMONITORING-Domain"
+      ],
+      "source_observation": "On 13 active client agreements",
+      "capabilities": [
+        "Monitored email domains"
+      ],
+      "gaps": [],
+      "possible_records": [
+        "Exposure reports"
+      ],
+      "verification_hints": [],
+      "to_confirm": "ConnectWise doesn't record the vendor. Confirm.",
+      "source_note": "Supplied reference snapshot, 2026-11-18; deployment and assurance require separate confirmation.",
+      "retired": false
+    },
+    {
+      "tool_id": "netwrix",
+      "name": "Netwrix Auditor",
+      "vendor": "Netwrix",
+      "category": "ivx",
+      "area_ids": [
+        "auditing",
+        "dataprot",
+        "siem"
+      ],
+      "description": "Change and access auditing for Active Directory, Microsoft 365 and file servers, with a data classification add-on.",
+      "product_reference": "iVenture Netwrix Auditor; Data Classification add-on",
+      "source_references": [
+        "sec-NetwrixAuditorLicenseOnly",
+        "sec-NetwrixAuditor-Premium-Bundle",
+        "sec-NetwrixData-Classification-Add-On"
+      ],
+      "source_observation": "On 4 active client agreements",
+      "capabilities": [
+        "Audited directories, tenants and file servers"
+      ],
+      "gaps": [],
+      "possible_records": [
+        "Change reports",
+        "Access reviews"
+      ],
+      "verification_hints": [],
+      "to_confirm": "",
+      "source_note": "Supplied reference snapshot, 2026-11-18; deployment and assurance require separate confirmation.",
+      "retired": false
+    },
+    {
+      "tool_id": "purview",
+      "name": "Microsoft Purview / Azure Information Protection",
+      "vendor": "Microsoft",
+      "category": "ivx",
+      "area_ids": [
+        "dataprot"
+      ],
+      "description": "Sensitivity labels, classification and protection for documents and email.",
+      "product_reference": "Microsoft Purview Suite; Azure Information Protection Premium P1",
+      "source_references": [
+        "csp-NCE-MS-PurviewSuiteforBP-Monthly",
+        "csp-NCE-MS-PurviewSuite-Monthly",
+        "csp-NCE-MS-PurviewSuite-P1Y-Monthly",
+        "csp-NCE-Azure-InfoP-P1-Annual"
+      ],
+      "source_observation": "On 6 active client agreements",
+      "capabilities": [],
+      "gaps": [],
+      "possible_records": [
+        "Label policy export"
+      ],
+      "verification_hints": [],
+      "to_confirm": "",
+      "source_note": "Supplied reference snapshot, 2026-11-18; deployment and assurance require separate confirmation.",
+      "retired": false
+    },
+    {
+      "tool_id": "nerdio_avd",
+      "name": "Nerdio Manager for AVD",
+      "vendor": "Nerdio",
+      "category": "ivx",
+      "area_ids": [
+        "hosting",
+        "endpoint"
+      ],
+      "description": "Management of Azure Virtual Desktop host pools and images.",
+      "product_reference": "Nerdio AVD Management (per unit)",
+      "source_references": [
+        "hsv-IVEN-Nerdio--Unit"
+      ],
+      "source_observation": "On 15 active client agreements",
+      "capabilities": [
+        "AVD host pools and session hosts"
+      ],
+      "gaps": [],
+      "possible_records": [
+        "Host pool and image list"
+      ],
+      "verification_hints": [],
+      "to_confirm": "",
+      "source_note": "Supplied reference snapshot, 2026-11-18; deployment and assurance require separate confirmation.",
+      "retired": false
+    }
+  ],
+  "presets": {
+    "full": {
+      "name": "Fully managed",
+      "desc": "iVenture runs IT and the managed security stack. Add-on services come from the agreement.",
+      "set": {
+        "endpoint": [
+          "iv",
+          [
+            "ninjaone",
+            "intune"
+          ]
+        ],
+        "patching": [
+          "iv",
+          [
+            "ninjaone"
+          ]
+        ],
+        "edr": [
+          "iv",
+          [
+            "sentinelone"
+          ]
+        ],
+        "itdr": [
+          "iv",
+          [
+            "huntress_itdr"
+          ]
+        ],
+        "identity": [
+          "iv",
+          [
+            "entra"
+          ]
+        ],
+        "mfa": [
+          "iv",
+          [
+            "entra"
+          ]
+        ],
+        "email": [
+          "iv",
+          [
+            "defender_o365"
+          ]
+        ],
+        "dns": [
+          "iv",
+          [
+            "fortigate"
+          ]
+        ],
+        "firewall": [
+          "iv",
+          [
+            "fortigate"
+          ]
+        ],
+        "dataprot": [
+          "iv",
+          [
+            "intune"
+          ]
+        ],
+        "backup_server": [
+          "iv",
+          [
+            "veeam"
+          ]
+        ],
+        "backup_m365": [
+          "iv",
+          [
+            "barracuda_c2c"
+          ]
+        ],
+        "governance": [
+          "co",
+          []
+        ]
+      }
+    },
+    "comanaged": {
+      "name": "Co-managed",
+      "desc": "The client has internal IT. iVenture provides the security stack and shares infrastructure work.",
+      "set": {
+        "endpoint": [
+          "co",
+          [
+            "ninjaone"
+          ]
+        ],
+        "patching": [
+          "co",
+          [
+            "ninjaone"
+          ]
+        ],
+        "edr": [
+          "iv",
+          [
+            "sentinelone"
+          ]
+        ],
+        "itdr": [
+          "iv",
+          [
+            "huntress_itdr"
+          ]
+        ],
+        "identity": [
+          "co",
+          [
+            "entra"
+          ]
+        ],
+        "mfa": [
+          "co",
+          [
+            "entra"
+          ]
+        ],
+        "email": [
+          "co",
+          [
+            "defender_o365"
+          ]
+        ],
+        "firewall": [
+          "co",
+          [
+            "fortigate"
+          ]
+        ],
+        "backup_server": [
+          "co",
+          [
+            "veeam"
+          ]
+        ],
+        "backup_m365": [
+          "iv",
+          [
+            "barracuda_c2c"
+          ]
+        ],
+        "training": [
+          "iv",
+          [
+            "knowbe4"
+          ]
+        ],
+        "governance": [
+          "co",
+          []
+        ]
+      }
+    },
+    "security": {
+      "name": "Security services only",
+      "desc": "The client or another provider runs IT. iVenture provides selected security services.",
+      "set": {
+        "edr": [
+          "iv",
+          [
+            "sentinelone"
+          ]
+        ],
+        "itdr": [
+          "iv",
+          [
+            "huntress_itdr"
+          ]
+        ],
+        "vuln": [
+          "iv",
+          [
+            "connectsecure"
+          ]
+        ],
+        "training": [
+          "iv",
+          [
+            "knowbe4"
+          ]
+        ],
+        "endpoint": [
+          "cl",
+          []
+        ],
+        "patching": [
+          "cl",
+          []
+        ],
+        "identity": [
+          "cl",
+          []
+        ],
+        "mfa": [
+          "cl",
+          []
+        ],
+        "email": [
+          "cl",
+          []
+        ],
+        "firewall": [
+          "cl",
+          []
+        ],
+        "backup_server": [
+          "cl",
+          []
+        ],
+        "backup_m365": [
+          "cl",
+          []
+        ],
+        "governance": [
+          "co",
+          []
+        ]
+      }
+    },
+    "advisory": {
+      "name": "Advisory / compliance only",
+      "desc": "iVenture runs the compliance program. The client or another provider runs the technology.",
+      "set": {
+        "endpoint": [
+          "cl",
+          []
+        ],
+        "patching": [
+          "cl",
+          []
+        ],
+        "edr": [
+          "cl",
+          []
+        ],
+        "identity": [
+          "cl",
+          []
+        ],
+        "mfa": [
+          "cl",
+          []
+        ],
+        "email": [
+          "cl",
+          []
+        ],
+        "firewall": [
+          "cl",
+          []
+        ],
+        "backup_server": [
+          "cl",
+          []
+        ],
+        "backup_m365": [
+          "cl",
+          []
+        ],
+        "training": [
+          "cl",
+          []
+        ],
+        "governance": [
+          "iv",
+          []
+        ]
+      }
+    }
+  },
+  "common_tools": {
+    "endpoint": [
+      "Microsoft Configuration Manager",
+      "Jamf Pro",
+      "Datto RMM",
+      "ManageEngine Endpoint Central",
+      "Lansweeper"
+    ],
+    "patching": [
+      "WSUS",
+      "Microsoft Configuration Manager",
+      "Automox",
+      "ManageEngine Patch Manager Plus",
+      "Jamf Pro"
+    ],
+    "edr": [
+      "Microsoft Defender for Endpoint",
+      "CrowdStrike Falcon",
+      "Sophos Intercept X",
+      "Bitdefender GravityZone",
+      "Huntress Managed EDR"
+    ],
+    "itdr": [
+      "Microsoft Entra ID Protection",
+      "Microsoft Defender for Identity",
+      "Microsoft Defender for Cloud Apps",
+      "CrowdStrike Falcon Identity Protection",
+      "Okta Identity Threat Protection"
+    ],
+    "siem": [
+      "Microsoft Sentinel",
+      "Splunk",
+      "Rapid7 InsightIDR",
+      "Blumira",
+      "Arctic Wolf"
+    ],
+    "vuln": [
+      "Tenable Nessus",
+      "Qualys VMDR",
+      "Rapid7 InsightVM",
+      "Microsoft Defender Vulnerability Management",
+      "Greenbone OpenVAS"
+    ],
+    "appcontrol": [
+      "Microsoft App Control for Business",
+      "AppLocker",
+      "Airlock Digital",
+      "Ivanti Application Control",
+      "CyberArk Endpoint Privilege Manager"
+    ],
+    "identity": [
+      "Okta Workforce Identity",
+      "Google Workspace",
+      "JumpCloud",
+      "Ping Identity",
+      "OneLogin"
+    ],
+    "mfa": [
+      "Okta Verify",
+      "Google 2-Step Verification",
+      "YubiKey (FIDO2 security keys)",
+      "RSA SecurID",
+      "JumpCloud Protect"
+    ],
+    "email": [
+      "Mimecast",
+      "Check Point Harmony Email & Collaboration",
+      "Google Workspace (Gmail security)",
+      "Cisco Secure Email",
+      "IRONSCALES"
+    ],
+    "dns": [
+      "DNSFilter",
+      "Cisco Umbrella",
+      "Cloudflare Gateway",
+      "Zscaler Internet Access",
+      "Webroot DNS Protection"
+    ],
+    "firewall": [
+      "Cisco Meraki",
+      "Palo Alto Networks",
+      "SonicWall",
+      "WatchGuard",
+      "Sophos Firewall"
+    ],
+    "dataprot": [
+      "BitLocker via Group Policy",
+      "Apple FileVault",
+      "Varonis",
+      "Google Workspace DLP",
+      "Virtru"
+    ],
+    "backup_server": [
+      "Datto BCDR",
+      "Azure Backup",
+      "Acronis Cyber Protect",
+      "AWS Backup",
+      "Rubrik"
+    ],
+    "backup_m365": [
+      "Datto SaaS Protection",
+      "AvePoint Cloud Backup",
+      "Microsoft 365 Backup",
+      "Druva",
+      "Acronis Cyber Protect Cloud"
+    ],
+    "backup_pc": [
+      "CrashPlan",
+      "Acronis Cyber Protect",
+      "Druva inSync",
+      "Carbonite Endpoint",
+      "Datto Endpoint Backup"
+    ],
+    "training": [
+      "Microsoft Attack Simulation Training",
+      "Proofpoint Security Awareness",
+      "Ninjio",
+      "Infosec IQ",
+      "Hoxhunt"
+    ],
+    "pentest": [
+      "Third-party penetration testing firm",
+      "Horizon3.ai NodeZero",
+      "Pentera",
+      "Cobalt (PTaaS)",
+      "Synack"
+    ],
+    "darkweb": [
+      "Kaseya Dark Web ID",
+      "SpyCloud",
+      "Have I Been Pwned (domain search)",
+      "Recorded Future",
+      "Flare"
+    ],
+    "auditing": [
+      "ManageEngine ADAudit Plus",
+      "Varonis",
+      "Microsoft Purview Audit",
+      "Quest Change Auditor",
+      "Lepide"
+    ],
+    "hosting": [
+      "Microsoft Azure",
+      "Amazon Web Services",
+      "Google Cloud",
+      "Citrix Cloud",
+      "VMware vSphere (on-premises)"
+    ],
+    "dev": [
+      "GitHub",
+      "Azure DevOps",
+      "GitLab",
+      "Snyk",
+      "SonarQube"
+    ]
+  }
+}

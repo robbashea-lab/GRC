@@ -169,7 +169,7 @@ class FrameworkTests(unittest.IsolatedAsyncioTestCase):
         expected = {f'{control}.{n}' for control, count in counts.items() for n in range(1, count+1)}
         self.assertEqual({d['id'] for d in active_definitions('cis-ig1')}, expected)
         self.assertEqual(len(active_definitions('cis-ig1')), 56)
-        self.assertEqual([f['key'] for f in FRAMEWORKS if f['implemented']], ['hipaa','cis-ig1','nist-csf-2','iso-27001','soc-2'])
+        self.assertEqual([f['key'] for f in FRAMEWORKS if f['implemented']], ['hipaa','cis-ig1','nist-csf-2','iso-27001','cmmc','soc-2'])
         for plan in active_plans('cis-ig1'):
             self.assertTrue(set(plan['safeguards']) <= expected)
             for field in ('basis','reason','source_cadence','default_cadence'): self.assertTrue(plan[field])
@@ -224,7 +224,7 @@ class FrameworkTests(unittest.IsolatedAsyncioTestCase):
             for key in ['hipaa','nist-csf-2','iso-27001','cmmc','soc-2']:
                 shell = (await self.client.get('/api/frameworks/'+key,params={'client_id':cid})).json()
                 self.assertEqual(shell['selected'],key in programs)
-                count={'hipaa':76,'iso-27001':123,'soc-2':33,'nist-csf-2':106}.get(key,0) if key in programs else 0
+                count={'hipaa':81,'iso-27001':123,'soc-2':33,'nist-csf-2':106}.get(key,0) if key in programs else 0
                 self.assertEqual(len(shell['definitions']),count); self.assertEqual(len(shell['assessments']),count)
 
     async def test_authoritative_workflow_and_reconfiguration_preserves_history(self):
@@ -246,8 +246,16 @@ class FrameworkTests(unittest.IsolatedAsyncioTestCase):
         related=(await self.client.get(base+'/related')).json()
         self.assertEqual(related['tasks'][0]['status'],'done');self.assertEqual(related['findings'][0]['status'],'remediated')
         self.assertEqual((await server.db.framework_assessments.find_one({'framework_assessment_id':aid}))['status'],'in_progress')
-        validated=await self.client.post('/api/findings/'+f.json()['finding_id']+'/validate',json={'rationale':'Remediation verified against inventory evidence'})
+        finding_path='/api/findings/'+f.json()['finding_id']+'/validate'
+        pending_finding=await server.db.findings.find_one({'finding_id':f.json()['finding_id']})
+        decision={'rationale':'Remediation verified against inventory evidence','expected_updated_at':pending_finding['updated_at'],'request_id':'independent-inventory-validation'}
+        self.assertEqual((await self.client.post(finding_path,json=decision)).status_code,403)
+        await server.db.users.insert_one({'user_id':'validator','email':'validator@example.test','role':'platform_admin','client_ids':['a'],'status':'active'})
+        self.sign_in('validator')
+        validated=await self.client.post(finding_path,json=decision)
         self.assertEqual(validated.status_code,200,validated.text)
+        self.assertEqual(validated.json()['validated_by'],'validator')
+        self.sign_in('admin')
         self.assertEqual((await self.client.patch(base,json={'status':'addressed'})).status_code,200)
         reviews=await server.db.reviews.find({'client_id':'a'},{'_id':0}).to_list(None)
         for r in reviews:
@@ -294,7 +302,18 @@ class FrameworkTests(unittest.IsolatedAsyncioTestCase):
         review=(await self.client.get('/api/reviews',params={'client_id':'a'})).json()
         current=next(r for r in review if r['review_id']=='existing')
         self.assertEqual(current['title'],'Client access review')
-        done=await self.client.post('/api/reviews/existing/complete',json={'occurrence_id':current['current_occurrence_id']})
+        guide_response=await self.client.get('/api/reviews/existing/completion-guide')
+        self.assertEqual(guide_response.status_code,200,guide_response.text)
+        guide=guide_response.json()
+        expected_steps=['access:operation:ticket','access:operation:due','access:operation:results',
+            'access:operation:exceptions','access:operation:next','access:client:1','access:client:2']
+        self.assertEqual([step['step_id'] for step in guide['steps']],expected_steps)
+        done=await self.client.post('/api/reviews/existing/complete',json={
+            'occurrence_id':current['current_occurrence_id'],'expected_updated_at':guide['expected_updated_at'],
+            'checklist':{'contract_token':guide['contract_token'],
+                'results':[{'step_id':step_id,'result':'Pass','reason':''} for step_id in expected_steps]},
+            'supporting_reference':'Synthetic completed account review result record ACCESS-CYCLE-001',
+            'outcome':'No exceptions noted'})
         self.assertEqual(done.status_code,200,done.text)
         self.assertEqual(done.json()['occurrence']['framework_key'],'cis-ig1')
         await self.configure()

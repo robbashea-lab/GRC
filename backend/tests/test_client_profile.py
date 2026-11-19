@@ -79,14 +79,28 @@ class ClientProfileTests(unittest.IsolatedAsyncioTestCase):
         self.assertIsNone((await server.db.clients.find_one({'client_id':'a'})).get('initial_program_baseline'))
 
     async def test_original_six_step_completion_is_recognized_without_fabrication(self):
+        from framework_catalog import active_definitions
         self.sign_in('admin')
         await server.db.audit_logs.insert_one({'client_id':'a','action':'onboarding-complete','at':'2025-01-01T00:00:00Z','user_id':'admin'})
+        collections=('clients','requirements','framework_assessments','reviews','policies','audit_logs')
+        async def saved_records():
+            return {name:await server.db[name].find({}, {'_id':0}).to_list(None) for name in collections}
+        before=await saved_records()
         p=await self.profile()
         self.assertTrue(p['completed'])
         self.assertEqual(p['baseline']['state'],{})
         self.assertEqual(p['baseline']['completed_at'],'2025-01-01T00:00:00Z')
         handoff=await self.client.get('/api/onboarding/handoff?client_id=a')
         self.assertTrue(handoff.json()['completed'])
+        self.assertEqual(await saved_records(),before)
+        self.assertEqual(await server.db.framework_assessments.count_documents({}),0)
         response=await self.client.patch('/api/onboarding/programs/cmmc',json={'client_id':'a','applicability':'applies'})
         self.assertEqual(response.status_code,200,response.text)
-        self.assertEqual(await server.db.framework_assessments.count_documents({}),0)
+        enrolled=await saved_records()
+        assessments=enrolled['framework_assessments']
+        self.assertEqual(len(assessments),110)
+        self.assertEqual({(row['client_id'],row['framework_key']) for row in assessments},{('a','cmmc')})
+        self.assertEqual({row['definition_id'] for row in assessments},{row['id'] for row in active_definitions('cmmc')})
+        self.assertEqual((await self.profile())['baseline'],p['baseline'])
+        self.assertTrue((await self.client.get('/api/onboarding/handoff?client_id=a')).json()['completed'])
+        self.assertEqual(await saved_records(),enrolled)

@@ -36,6 +36,8 @@ class OnboardingPlan:
 
 
 async def apply_rows(db, identity, rows, client_id, offset=0):
+    from r4_services import assert_settled
+    assert_settled(await db.clients.find_one({'client_id': client_id}))
     receipt = await db.create_requests.find_one({'_id': identity})
     completed = set(receipt.get('onboarding_completed_rows', []))
     for index, row in enumerate(rows, start=offset):
@@ -46,6 +48,7 @@ async def apply_rows(db, identity, rows, client_id, offset=0):
         record_id = values[row['id_field']] if row.get('insert') else row['id']
         query = {row['id_field']: record_id, 'client_id': client_id}
         current = await collection.find_one(query)
+        assert_settled(current)
         if current and current.get('_onboarding_request') == identity:
             # The write committed but its acknowledgement/checkpoint was lost.
             # A later register edit can retain this marker; never replay over it.
@@ -56,6 +59,7 @@ async def apply_rows(db, identity, rows, client_id, offset=0):
             await collection.update_one({'_id': record_id}, {'$setOnInsert': values}, upsert=True)
         else:
             query[row['version_field']] = row['expected_version']
+            query['_r4_context_pending'] = None
             changed = await collection.update_one(query, {'$set': values})
             if not changed.matched_count:
                 raise HTTPException(409, 'An onboarding record changed before its pending write; reload to reconcile it')

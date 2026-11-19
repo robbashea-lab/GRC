@@ -1,10 +1,42 @@
 """Small Task provenance contract; no new entity or shadow task store."""
+from copy import deepcopy
+
 from fastapi import HTTPException
 import assignment_eligibility
 
 SOURCES = {"review": ("reviews", "review_id"), "finding": ("findings", "finding_id"),
            "risk": ("risks", "risk_id"), "vendor": ("vendors", "vendor_id"), "policy": ("policies", "policy_id"), "audit": ("assessments", "assessment_id")}
 LINKS = {"source_type", "source_id", "review_id", "finding_id", "risk_id", "vendor_id", "policy_id", "assessment_id"}
+
+
+def submission_patch(previous, changes, user, at):
+    """Capture authenticated work once; reassignment cannot replace its workers."""
+    if changes.get("status") != "done" or previous.get("status") == "done":
+        return {}
+    worker = user.get("user_id")
+    if not isinstance(worker, str) or not worker.strip():
+        raise HTTPException(403, "An authenticated worker is required")
+    history = previous.get("submission_history", [])
+    if not isinstance(history, list):
+        raise HTTPException(409, "Reconcile the retained work submission history before saving")
+    history = deepcopy(history)
+    if previous.get("completed_by") or previous.get("completed_at"):
+        prior = {"by": previous.get("completed_by"), "at": previous.get("completed_at")}
+        if prior not in history:
+            history.append(prior)
+    history.append({"by": worker, "at": at})
+    return {"completed_by": worker, "completed_at": at, "submission_history": history}
+
+
+def work_submitters(task):
+    """None means a recorded submission has no authoritative account identity."""
+    history = task.get("submission_history", [])
+    if not isinstance(history, list):
+        return [None]
+    identities = [row.get("by") if isinstance(row, dict) else None for row in history]
+    if task.get("status") == "done" or task.get("completed_at") or task.get("completed_by"):
+        identities.append(task.get("completed_by"))
+    return [ident if isinstance(ident, str) and ident.strip() else None for ident in identities]
 
 
 def view(row):
@@ -19,10 +51,10 @@ async def prepare(db, row, can_access, previous=None):
         raise HTTPException(422, "Invalid Action Item priority")
     await assignment_eligibility.validate(db, "tasks", row, can_access, previous)
     if previous:
+        if previous.get("status") == "done" and row != previous:
+            raise HTTPException(409, "Completed Action Items remain historical evidence; create new corrective work")
         if any(row.get(k) != previous.get(k) for k in LINKS):
             raise HTTPException(422, "The originating source and relationships must be retained")
-        if previous.get("status") == "done" and row.get("status") != "done":
-            raise HTTPException(409, "Completed Action Items remain historical evidence")
         return row
     if row.get("status", "open") != "open":
         raise HTTPException(422, "New Action Items start Open")

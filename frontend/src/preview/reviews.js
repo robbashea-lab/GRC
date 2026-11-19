@@ -5,6 +5,7 @@ import { list, record, write, now, audit, uid, clone } from './store';
 import { occurrenceId, reviewView, reviewSchedule, belongsToOccurrence, assertCurrentOccurrence } from '../lib/reviewOccurrences';
 import {policySetCoverage,advanceCoveredSchedule} from './policyReviewCoverage';
 import {authorizeDemo} from './authorization';
+import {validateDemoCompletion} from './r4ReviewCompletion';
 
 export function reviewEvent(db, review, action, occurrence, meta = {}) {
   audit(db, action, 'reviews', review, {occurrence_id:occurrence || occurrenceId(review), by_name:db.user.name, ...meta});
@@ -23,9 +24,9 @@ export function history(db, review) {
   }
   return result.sort((a,b) => String(b.completed_at || '').localeCompare(String(a.completed_at || '')));
 }
-export function reviewAction(db, id, name, body, executionAt=now(), coveredByAnnual=false) {
+export function reviewAction(db, id, name, body, executionAt=now(), annualCoverage=null) {
   if(name==='complete') {
-    const supported=['occurrence_id','completion_notes','risk_assessment','risk_outcome','risk_next_review','completion_date','spawn_next','conclusion','tested_period','tested_scope','no_evidence_reason','checklist_confirmed'];
+    const supported=['occurrence_id','completion_notes','risk_assessment','risk_outcome','risk_next_review','completion_date','spawn_next','conclusion','tested_period','tested_scope','no_evidence_reason','checklist_confirmed','expected_updated_at','checklist','supporting_reference','outcome'];
     if(Object.keys(body).some(k=>!supported.includes(k)))throw new Error('Unsupported Review completion field');
     for(const [key,limit] of [['conclusion',20000],['tested_period',4000],['tested_scope',4000],['no_evidence_reason',4000]])if(body[key]!=null&&(typeof body[key]!=='string'||body[key].length>limit))throw new Error('Invalid Review evaluation field');
     if('checklist_confirmed' in body&&typeof body.checklist_confirmed!=='boolean')throw new Error('Checklist confirmation must be boolean');
@@ -49,13 +50,24 @@ export function reviewAction(db, id, name, body, executionAt=now(), coveredByAnn
   const findings = list(db,'findings',review.client_id).filter(f => f.review_id === id && belongsToOccurrence(f,review));
   const evidence = list(db,'evidence',review.client_id).filter(e => !e.archived_at&& (auditEvidenceIds(review.iso_audit).includes(e.evidence_id)||(e.linked_id === id && ['review','reviews'].includes(e.linked_type) && belongsToOccurrence(e,review)) || e.relationships?.some(r=>r.kind==='reviews'&&r.id===id&&r.occurrence_id===occurrenceId(review))));
   const {occurrences, ...execution} = current;
-  const completed = clone({...execution, ...isoCompletionSnapshot(db,review), occurrence_id:occurrenceId(review), status:'completed', completed_at:executionAt, completion_date:executionAt,
+  let completionRecord;
+  if(annualCoverage) {
+    const source=annualCoverage.source,parent=db.reviews.find(item=>item.review_id===source?.review_id&&item.client_id===review.client_id);
+    if(!parent||parent.baseline_key!=='policy-review'||parent.policy_id||occurrenceId(parent)!==source.occurrence_id||annualCoverage.member?.policy_id!==review.policy_id||annualCoverage.member?.client_id!==review.client_id)throw new Error('Annual coverage must identify this exact Policy and its authoritative source occurrence');
+    // This is covered-version provenance, not invented child checklist results.
+    completionRecord={coverage_evaluation:clone({source_review_id:source.review_id,source_occurrence_id:source.occurrence_id,
+      review_template_id:source.review_template_id,review_template_version:source.review_template_version,
+      checklist:source.checklist,checklist_results:source.checklist_results,
+      ...(source.checklist_outcome?{checklist_outcome:source.checklist_outcome}:{}),
+      supporting_reference:source.supporting_reference||'',evidence:source.evidence||[]})};
+  } else completionRecord=validateDemoCompletion(db,review,body,evidence);
+  const completed = clone({...execution, ...isoCompletionSnapshot(db,review), ...completionRecord, occurrence_id:occurrenceId(review), status:'completed', completed_at:executionAt, completion_date:executionAt,
     ...Object.fromEntries(Object.entries(body).filter(([k])=>['conclusion','tested_scope','tested_period','checklist_confirmed','no_evidence_reason'].includes(k))),
     completed_by:db.user.user_id, completed_by_name:db.user.name, notes:body.completion_notes ?? review.notes,
     outcome:findings.length ? 'findings_raised' : 'no_findings', finding_count:findings.length,
     evidence:evidence.map(e => ({evidence_id:e.evidence_id,filename:e.filename,version:e.version,sha256:e.sha256}))});
   const coverage=policySetCoverage(db,review,completed.completed_at);
-  const coveredSchedule=coverage||coveredByAnnual?advanceCoveredSchedule(review,completed.completed_at):null;
+  const coveredSchedule=coverage||annualCoverage?advanceCoveredSchedule(review,completed.completed_at):null;
   if(coverage){
     completed.policy_coverage=coverage;
     completed.covered_policy_reviews=[];
@@ -66,7 +78,7 @@ export function reviewAction(db, id, name, body, executionAt=now(), coveredByAnn
       if(child){
         const childOccurrence=occurrenceId(child);
         authorizeDemo(db,'post',['reviews',child.review_id,'complete'],{occurrence_id:childOccurrence});
-        const result=reviewAction(db,child.review_id,'complete',{occurrence_id:childOccurrence},completed.completed_at,true);
+        const result=reviewAction(db,child.review_id,'complete',{occurrence_id:childOccurrence},completed.completed_at,{source:completed,member});
         const saved=child.occurrences.find(item=>item.occurrence_id===childOccurrence);
         saved.covered_by={review_id:id,occurrence_id:completed.occurrence_id};
         saved.policy_coverage=[clone(member)];
@@ -86,7 +98,7 @@ export function reviewAction(db, id, name, body, executionAt=now(), coveredByAnn
   write(db, 'reviews', {
     occurrences:[...(occurrences || []), completed], schedule_anchor:completed.next_review_override?null:current.schedule_anchor, recurrence_due_date:null,
     ...(next ? {status:'upcoming',due_date:next,current_occurrence_id:uid('occ'),notes:null,started_by:null,started_at:null,
-      completion_date:null,completion_snapshot:null,risk_baseline:null,...(review.iso_audit?{iso_audit:initialAuditState(review.iso_audit.package_key,review.iso_audit.cycle+1)}:{})}
+      completion_date:null,completion_snapshot:null,risk_baseline:null,r4_current_checklist:null,...(review.iso_audit?{iso_audit:initialAuditState(review.iso_audit.package_key,review.iso_audit.cycle+1)}:{})}
       : {status:'completed',current_occurrence_id:occurrenceId(review),completion_date:completed.completed_at})
   }, id);
   reviewEvent(db, review, 'Review completed', completed.occurrence_id, {period:completed.period, outcome:completed.outcome, finding_count:findings.length});

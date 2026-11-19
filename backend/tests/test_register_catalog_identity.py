@@ -139,16 +139,17 @@ class RegisterCatalogIdentityTests(unittest.IsolatedAsyncioTestCase):
         for group in (1, 2, 3):
             with self.subTest(group=group):
                 await self.configure_cis_metadata(group=group)
-                row = await self.create_catalog_record('ai_systems', 'chatgpt', **AI_METADATA)
+                row = await self.create_catalog_record('ai_systems', 'chatgpt', name=f'Synthetic metadata IG{group}', **AI_METADATA)
                 self.assertEqual({key: row[key] for key in AI_METADATA}, AI_METADATA)
                 renamed = await self.client.patch('/api/ai_systems/' + row['ai_system_id'], json={
-                    'name': 'Renamed metadata fixture', **AI_METADATA, 'expected_updated_at': row['updated_at']})
+                    'name': f'Renamed metadata fixture IG{group}', **AI_METADATA, 'expected_updated_at': row['updated_at']})
                 self.assertEqual(renamed.status_code, 200, renamed.text)
                 loaded = (await self.client.get('/api/ai_systems', params={'client_id': 'a'})).json()
                 saved = next(item for item in loaded if item['ai_system_id'] == row['ai_system_id'])
                 self.assertEqual({key: saved[key] for key in AI_METADATA}, AI_METADATA)
                 self.assertEqual(saved['created_at'], row['created_at'])
-                self.assertNotIn('approval_status', saved)
+                self.assertEqual(saved['approval_status'], 'pending_assessment')
+                self.assertNotIn('approval_history', saved)
                 cleared = await self.client.patch('/api/ai_systems/' + row['ai_system_id'], json={
                     **EMPTY_AI_METADATA, 'expected_updated_at': saved['updated_at']})
                 self.assertEqual(cleared.status_code, 200, cleared.text)
@@ -209,10 +210,10 @@ class RegisterCatalogIdentityTests(unittest.IsolatedAsyncioTestCase):
                 with self.subTest(boundary=boundary, revoked=revoked):
                     await server.db.clients.update_one({'client_id': 'a'}, {'$set': {'status': 'active'}})
                     await self.configure_cis_metadata()
-                    body = {'client_id': 'a', 'name': 'Synthetic interleaving', **AI_METADATA}
+                    body = {'client_id': 'a', 'name': f'Synthetic interleaving {boundary} {revoked}', **AI_METADATA}
                     row = None
                     if boundary == 'update':
-                        row = await self.create_catalog_record('ai_systems', 'chatgpt', **AI_METADATA)
+                        row = await self.create_catalog_record('ai_systems', 'chatgpt', name=body['name'], **AI_METADATA)
                     before = await server.db.ai_systems.find_one({'ai_system_id': row['ai_system_id']}) if row else None
                     count = await server.db.ai_systems.count_documents({})
                     interleaved = []
@@ -258,7 +259,8 @@ class RegisterCatalogIdentityTests(unittest.IsolatedAsyncioTestCase):
                         self.assertEqual(await server.db.ai_systems.count_documents({}), count + (boundary == 'create'))
                         stored = await server.db.ai_systems.find_one({'ai_system_id': response.json()['ai_system_id']})
                         self.assertEqual(stored['environment'], AI_METADATA['environment'] if boundary == 'create' else 'Blocked stale capability')
-                        self.assertNotIn('approval_status', stored)
+                        self.assertEqual(stored['approval_status'], 'pending_assessment')
+                        self.assertNotIn('approval_history', stored)
                         if row:
                             for field in ('ai_system_id', 'client_id', 'created_at', 'created_by'):
                                 self.assertEqual(stored[field], before[field])
@@ -272,17 +274,19 @@ class RegisterCatalogIdentityTests(unittest.IsolatedAsyncioTestCase):
         created = await self.client.post('/api/ai_systems', json={'client_id': 'a', 'name': 'No enrollment needed', **AI_METADATA})
         self.assertEqual(created.status_code, 200, created.text)
         self.assertEqual({key: created.json()[key] for key in AI_METADATA}, AI_METADATA)
-        self.assertNotIn('approval_status', created.json())
+        self.assertEqual(created.json()['approval_status'], 'pending_assessment')
+        self.assertNotIn('approval_history', created.json())
         self.assertEqual(await server.db.requirements.count_documents({'client_id': 'a'}), 0)
         await self.configure_cis_metadata()
         for value in (None, 0, 4, True, '2'):
             with self.subTest(group=value):
                 await server.db.clients.update_one({'client_id': 'a'}, {'$set': {
                     'framework_settings': {'cis-ig1': {'implementation_group': value}}}})
-                response = await self.client.post('/api/ai_systems', json={'client_id': 'a', 'name': 'Invalid scope', **AI_METADATA})
+                response = await self.client.post('/api/ai_systems', json={'client_id': 'a', 'name': f'Invalid CIS scope {value!r}', **AI_METADATA})
                 self.assertEqual(response.status_code, 200, response.text)
                 self.assertEqual({key: response.json()[key] for key in AI_METADATA}, AI_METADATA)
-                self.assertNotIn('approval_status', response.json())
+                self.assertEqual(response.json()['approval_status'], 'pending_assessment')
+                self.assertNotIn('approval_history', response.json())
                 client = await server.db.clients.find_one({'client_id': 'a'})
                 self.assertEqual(client['framework_settings']['cis-ig1']['implementation_group'], value)
         await self.configure_cis_metadata()
@@ -291,13 +295,21 @@ class RegisterCatalogIdentityTests(unittest.IsolatedAsyncioTestCase):
             with self.subTest(client_state=field):
                 await server.db.clients.update_one({'client_id': 'a'}, {'$set': {field: value}})
                 response = await self.client.post('/api/ai_systems', json={'client_id': 'a', 'name': 'Inactive scope', **AI_METADATA})
-                self.assertEqual(response.status_code, 422, response.text)
+                self.assertEqual(response.status_code, 403 if field == 'status' else 422, response.text)
                 await server.db.clients.update_one({'client_id': 'a'}, {'$set': {'status': 'active'}, '$unset': {'archived': '', 'archived_at': ''}})
         self.assertEqual(await server.db.ai_systems.count_documents({}), count)
 
     async def test_non_cis_ai_contract_and_retained_absence_do_not_gain_metadata_defaults(self):
         self.sign_in('admin')
         row = await self.create_catalog_record('ai_systems', None)
+        self.assertEqual(row['approval_status'], 'pending_assessment')
+        self.assertNotIn('approval_history', row)
+        # This case deliberately retains a historical missing approval field;
+        # current creates start Pending Assessment without inventing a decision.
+        await server.db.ai_systems.update_one({'ai_system_id': row['ai_system_id']},
+                                             {'$unset': {'approval_status': ''}})
+        legacy = await server.db.ai_systems.find_one({'ai_system_id': row['ai_system_id']})
+        self.assertNotIn('approval_status', legacy)
         self.assertFalse(set(AI_METADATA).intersection(row))
         renamed = await self.client.patch('/api/ai_systems/' + row['ai_system_id'], json={'name': 'Ordinary legacy rename'})
         self.assertEqual(renamed.status_code, 200, renamed.text)
@@ -354,7 +366,8 @@ class RegisterCatalogIdentityTests(unittest.IsolatedAsyncioTestCase):
         await self.configure_cis_metadata()
         for status in ('approved', 'approved_with_conditions'):
             with self.subTest(approval=status):
-                row = await self.create_catalog_record('ai_systems', 'chatgpt', **AI_METADATA)
+                row = await self.create_catalog_record('ai_systems', 'chatgpt',
+                    name='Synthetic retained approval ' + status, description='Owned synthetic approved use', **AI_METADATA)
                 decision = {'status': status, 'at': '2026-10-21T12:00:00Z', 'by': 'original-synthetic-approver',
                             'by_name': 'Original synthetic approver', 'note': 'Retained synthetic decision',
                             'scope': {**AI_METADATA, 'name': row['name']}}
@@ -365,25 +378,47 @@ class RegisterCatalogIdentityTests(unittest.IsolatedAsyncioTestCase):
                 decoration = await self.client.patch('/api/ai_systems/' + row['ai_system_id'], json={
                     'catalog_key': 'claude', **AI_METADATA, 'expected_updated_at': before['updated_at']})
                 self.assertEqual(decoration.status_code, 200, decoration.text)
-                # Existing name/provider edits remain the native contract; this
-                # storage approval adds no new reassessment rules for those fields.
+                decorated = await server.db.ai_systems.find_one({'ai_system_id': row['ai_system_id']})
+                for key, value in approval.items():
+                    self.assertEqual(decorated[key], value)
+                # R4 resets authorization when the saved use changes while the
+                # original decision and its actual historical actor stay intact.
                 ordinary = await self.client.patch('/api/ai_systems/' + row['ai_system_id'], json={
-                    'name': 'Native approved-row rename', 'provider': 'Native provider edit',
+                    'name': 'Native approved-row rename ' + status, 'provider': 'Native provider edit',
                     'expected_updated_at': decoration.json()['updated_at']})
                 self.assertEqual(ordinary.status_code, 200, ordinary.text)
-                unchanged_scope = await server.db.ai_systems.find_one({'ai_system_id': row['ai_system_id']})
-                for key, value in approval.items():
-                    self.assertEqual(unchanged_scope[key], value)
+                current = await server.db.ai_systems.find_one({'ai_system_id': row['ai_system_id']})
+                self.assertEqual(current['approval_status'], 'pending_assessment')
+                for key in ('approval_history', 'approved_at', 'approved_by'):
+                    self.assertEqual(current[key], approval[key])
                 for change in ({'environment': 'Different workspace'}, {'restrictions': ''},
                                {'data_settings': 'Changed retention'}, {'permitted_data_types': ['Public']}):
+                    restored = await self.client.patch('/api/ai_systems/' + row['ai_system_id'], json={
+                        **AI_METADATA, 'expected_updated_at': current['updated_at']})
+                    self.assertEqual(restored.status_code, 200, restored.text)
+                    authenticated = await self.client.post('/api/ai_systems/' + row['ai_system_id'] + '/approval', json={
+                        'status': status, 'note': 'Current administrator reviewed the restored synthetic boundaries',
+                        'expected_updated_at': restored.json()['updated_at']})
+                    self.assertEqual(authenticated.status_code, 200, authenticated.text)
+                    self.assertEqual(authenticated.json()['approval_status'], status)
+                    self.assertEqual(authenticated.json()['approval_history'][-1]['by'], 'admin')
+                    approved = await server.db.ai_systems.find_one({'ai_system_id': row['ai_system_id']})
                     response = await self.client.patch('/api/ai_systems/' + row['ai_system_id'], json={
-                        **change, 'expected_updated_at': unchanged_scope['updated_at']})
-                    self.assertEqual(response.status_code, 409, response.text)
-                    self.assertIn('authenticated reassessment is not supported', response.json()['detail'])
-                    self.assertEqual(await server.db.ai_systems.find_one({'ai_system_id': row['ai_system_id']}), unchanged_scope)
+                        **change, 'expected_updated_at': approved['updated_at']})
+                    self.assertEqual(response.status_code, 200, response.text)
+                    current = await server.db.ai_systems.find_one({'ai_system_id': row['ai_system_id']})
+                    for key, value in change.items():
+                        self.assertEqual(current[key], value)
+                    self.assertEqual(current['approval_status'], 'pending_assessment')
+                    self.assertEqual(current['material_change_at'], current['updated_at'])
+                    self.assertEqual(current['approval_history'], approved['approval_history'])
+                    self.assertEqual(current['approval_history'][0], decision)
+                    for key in ('approved_at', 'approved_by'):
+                        self.assertEqual(current[key], approval[key])
                 forged = await self.client.patch('/api/ai_systems/' + row['ai_system_id'], json={
-                    'approval_status': 'approved', 'expected_updated_at': unchanged_scope['updated_at']})
+                    'approval_status': 'approved', 'expected_updated_at': current['updated_at']})
                 self.assertEqual(forged.status_code, 422, forged.text)
+                self.assertEqual(await server.db.ai_systems.find_one({'ai_system_id': row['ai_system_id']}), current)
 
     async def test_ai_metadata_replay_recovers_each_retained_schema_without_ignoring_real_edits(self):
         self.sign_in('admin')
@@ -501,7 +536,8 @@ class RegisterCatalogIdentityTests(unittest.IsolatedAsyncioTestCase):
     async def test_distinct_products_and_new_clients_use_exact_keys(self):
         self.sign_in('admin')
         for key in ('m365', 'cstudio', 'ghcopilot'):
-            row = await self.create_catalog_record('ai_systems', key, client_id='b', provider='Microsoft')
+            row = await self.create_catalog_record('ai_systems', key, client_id='b', provider='Microsoft',
+                                                   name='Synthetic Microsoft product ' + key)
             self.assertEqual(row['catalog_key'], key)
         rows = (await self.client.get('/api/ai_systems', params={'client_id': 'b'})).json()
         self.assertEqual({row['catalog_key'] for row in rows}, {'m365', 'cstudio', 'ghcopilot'})

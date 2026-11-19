@@ -1,0 +1,17 @@
+{
+  "content_revision": "r4-2026-11-19",
+  "frameworks": ["hipaa", "nist-csf-2", "cmmc"],
+  "version_prefix": "r4-guided-v1:",
+  "qualification": "Client-reported implementation, not independent verification. Confirm the complete source, actual scope and operating evidence separately. Not sure records an item to confirm rather than a gap.",
+  "questions": [
+    {"id": "practice", "type": "select", "prompt": "Is this practice in place within the actual scope?", "choices": ["Yes", "Partially", "No", "Not sure"], "required": true},
+    {"id": "implementation", "type": "text", "prompt": "Describe what operates today, including responsibility, scope and limitations.", "required": true},
+    {"id": "scope", "type": "text", "prompt": "What scope or applicability conditions need to be recorded?", "required": false},
+    {"id": "operation", "type": "text", "prompt": "How is this performed, and what actual operating or event timing applies?", "required": false},
+    {"id": "evidence", "type": "text", "prompt": "Which supporting records are actually available?", "required": false},
+    {"id": "gap", "type": "select", "prompt": "Is a specific requirement deficiency confirmed?", "choices": ["Yes", "No", "Not sure"], "required": true},
+    {"id": "gap_reason", "type": "text", "prompt": "Describe the confirmed deficiency.", "when": {"gap": ["Yes"]}, "required": true},
+    {"id": "unknown", "type": "select", "prompt": "Does substantive information still need confirmation?", "choices": ["Yes", "No", "Not sure"], "required": true},
+    {"id": "unknown_reason", "type": "text", "prompt": "What needs confirmation?", "when": {"unknown": ["Yes"]}, "required": true}
+  ]
+}

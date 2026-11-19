@@ -10,7 +10,7 @@ jest.mock('./EvidenceLibraryControls',()=>({
   useLibraryRequest:()=>({data:{evidence_id:'file',filename:'Synthetic.txt',client_id:'client',references:[{kind:mockKind,id:'assessment',title:'ISO requirement',origin:mockOrigin,available:true}]}}),
   MetadataFields:()=>null,SourcePicker:()=>null,selectClass:''
 }));
-jest.mock('@/lib/evidenceContext',()=>({EvidenceSource:()=>null,downloadEvidence:jest.fn(),uploaderLabel:()=>''}));
+jest.mock('@/lib/evidenceContext',()=>{const downloadEvidence=jest.fn();return {EvidenceSource:()=>null,downloadEvidence,useEvidenceDownload:()=>downloadEvidence,uploaderLabel:()=>''};});
 jest.mock('./ui/sheet',()=>({Sheet:({children})=><div>{children}</div>,SheetContent:({children})=><div>{children}</div>,SheetHeader:({children})=><div>{children}</div>,SheetTitle:({children})=><h2>{children}</h2>,SheetDescription:({children})=><p>{children}</p>}));
 
 test.each(['module','supporting'])('Evidence Library %s unlink removes only the framework relationship using the supported command',async origin=>{

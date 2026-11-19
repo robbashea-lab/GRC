@@ -43,13 +43,13 @@ afterEach(async()=>{await act(async()=>root.unmount());host.remove();jest.clearA
 test.each(['demo','standard'].flatMap(mode=>[null,'general','hipaa','nist-csf-2','cmmc'].map(framework=>[mode,framework])))('%s %s Vendor counts and rows preserve the linked native 90-day and assurance populations',async(mode,framework)=>{
   context(mode,framework);const before=JSON.stringify([records,reviews]);
   await act(async()=>root.render(<VendorRegister/>));
-  expect(host.querySelector('[data-testid=vendor-view-review_due] span').textContent).toBe('2');
+  expect(host.querySelector('[aria-label="Other vendor views"] option[value="review_due"]').textContent).toMatch(/\(2\)$/);
   expect(host.querySelector('[data-testid=vendor-view-review_overdue] span').textContent).toBe('1');
-  expect(host.querySelector('[data-testid=vendor-view-assurance] span').textContent).toBe('1');
-  await click(host.querySelector('[data-testid=vendor-view-review_due]'));
+  expect(host.querySelector('[aria-label="Other vendor views"] option[value="assurance"]').textContent).toMatch(/\(1\)$/);
+  await select(host.querySelector('[aria-label="Other vendor views"]'),'review_due');
   expect(names()).toEqual(['Linked Review in 60 days','Linked past Review']);
   expect(host.querySelector('.bapv-summary').textContent).toContain('Showing 2 of 2 vendors');
-  await click(host.querySelector('[data-testid=vendor-view-assurance]'));
+  await select(host.querySelector('[aria-label="Other vendor views"]'),'assurance');
   expect(names()).toEqual(['Required assurance missing']);
   expect(JSON.stringify([records,reviews])).toBe(before);noWrites();
 });
@@ -74,31 +74,50 @@ test('retained generic Unassigned URL resolves through the native empty-owner fi
   expect(host.querySelector('[aria-label="Remove Business Owner: Unassigned"]')).not.toBeNull();
   expect(mockParams).not.toContain('view=unassigned');noWrites();
 });
+test.each([
+  ['review_due',['Linked Review in 60 days','Linked past Review']],
+  ['review_overdue',['Linked past Review']],
+  ['assurance',['Required assurance missing']],
+  ['assurance_attention',['Required assurance missing']],
+])('native Dashboard view=%s opens the identical authoritative population',async(view,expected)=>{
+  mockParams='view='+view;const before=JSON.stringify([records,reviews]);
+  await act(async()=>root.render(<VendorRegister/>));
+  expect(names()).toEqual(expected);expect(JSON.stringify([records,reviews])).toBe(before);noWrites();
+});
+test('native configured contract deep link and R4 notice focus retain different recorded dates',async()=>{
+  records=[vendor('within','Configured lead includes 60',{contract_renewal:day(60),contract_lead_days:60}),vendor('outside','Configured lead excludes 61',{contract_renewal:day(61),contract_lead_days:60}),vendor('notice','Recorded notice in 60',{contract_notice_deadline:day(60)})];
+  reviews=[];mockParams='view=contract_soon';const before=JSON.stringify(records);
+  await act(async()=>root.render(<VendorRegister/>));expect(names()).toEqual(['Configured lead includes 60']);
+  await select(host.querySelector('[aria-label="Other vendor views"]'),'notice_due_60');expect(names()).toEqual(['Recorded notice in 60']);
+  expect(JSON.stringify(records)).toBe(before);noWrites();
+});
 
-test('generic contract expiration/end values display without becoming renewal events or mutating records',async()=>{
+test('saved contract expiration/end remain distinct from the shared renewal column and events',async()=>{
   records=[vendor('expiration','Expiration only',{contract_expiration:day(15)}),vendor('end','Historical end only',{contract_end:day(21)}),vendor('renewal','Actual renewal',{contract_renewal:day(9),contract_expiration:day(18)})];reviews=[];
   const before=JSON.stringify(records);await act(async()=>root.render(<VendorRegister/>));
   const row=name=>[...host.querySelectorAll('[data-testid^="vendor-row-"]')].find(node=>node.querySelector('.bapv-name').textContent===name);
-  expect(row('Expiration only').querySelector('.bav-renewal').textContent).toContain(savedDate(day(15)));
-  expect(row('Historical end only').querySelector('.bav-renewal').textContent).toContain(savedDate(day(21)));
+  expect(row('Expiration only').querySelector('.bav-renewal').textContent).toContain('No renewal date');
+  expect(row('Historical end only').querySelector('.bav-renewal').textContent).toContain('No renewal date');
   expect(row('Actual renewal').querySelector('.bav-renewal').textContent).toContain(savedDate(day(9)));
-  expect(row('Expiration only').querySelector('.bav-renewal').textContent).toContain('Expiration / end');
-  expect(row('Historical end only').querySelector('.bav-renewal').textContent).toContain('Expiration / end');
+  expect(records[0].contract_expiration).toBe(day(15));expect(records[1].contract_end).toBe(day(21));
+  await select(host.querySelector('[aria-label="Other vendor views"]'),'contract_soon');
+  expect(names()).toEqual(['Actual renewal','Expiration only','Historical end only']);
   expect(vendorQuarterlyTimelineEvents(records,[]).filter(event=>event.kind==='ren').map(event=>event.vendor.vendor_id)).toEqual(['renewal']);
   await click(row('Expiration only').querySelector('.bapv-name'));
   expect(host.querySelector('[data-testid=native-vendor-record]').textContent).toBe('expiration');
   expect(JSON.stringify(records)).toBe(before);noWrites();
 });
 
-test('generic headers do not fabricate an interactive column, while enrolled assurance and renewal meaning remain native',async()=>{
+test('shared assurance headers retain native filtering and renewal meaning without invented Reviews',async()=>{
   await act(async()=>root.render(<VendorRegister/>));
-  expect(host.querySelector('[aria-label="Security assurance: sort and filter"], [aria-label="Security assurance: filter"]')).toBeNull();
+  expect(host.querySelector('[aria-label="Security assurance: filter"]')).not.toBeNull();
   expect(host.querySelector('.bav-header').textContent).toContain('Security assurance');
   await act(async()=>root.unmount());root=createRoot(host);context('standard','cis-ig1');
   records=[vendor('cis-expiration','Enrolled expiration only',{contract_expiration:day(15)}),vendor('cis-no-linked','Enrolled saved date',{next_review:day(10)})];reviews=[];
   await act(async()=>root.render(<VendorRegister/>));
   expect(host.querySelector('[aria-label="Security assurance: filter"]')).not.toBeNull();
-  expect(host.querySelector('[data-testid=vendor-view-review_due] span').textContent).toBe('1');
+  expect(host.querySelector('[data-testid=vendor-view-review_due_30] span').textContent).toBe('0');
+  expect(host.querySelector('[aria-label="Other vendor views"] option[value="review_due"]').textContent).toMatch(/\(0\)$/);
   const expiration=[...host.querySelectorAll('[data-testid^="vendor-row-"]')].find(node=>node.textContent.includes('Enrolled expiration only'));
   expect(expiration.querySelector('.bav-renewal').textContent).toContain('No renewal date');noWrites();
 });

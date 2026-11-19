@@ -6,7 +6,7 @@ import api,{formatError} from '@/lib/api';
 import {useAuth} from '@/context/AuthContext';
 import {Sheet,SheetContent,SheetHeader,SheetTitle,SheetDescription} from './ui/sheet';
 import {Button} from './ui/button';
-import {EvidenceSource,downloadEvidence,uploaderLabel} from '@/lib/evidenceContext';
+import {EvidenceSource,useEvidenceDownload,uploaderLabel} from '@/lib/evidenceContext';
 import {MetadataFields,SourcePicker,useLibraryRequest,selectClass} from './EvidenceLibraryControls';
 import {evidenceSources} from '@/lib/evidenceReferences';
 import {toast} from 'sonner';
@@ -16,6 +16,7 @@ import './EvidenceRepository.css';
 export default function EvidenceItemDrawer({id,onClose,onOpen:onSourceOpen,onChanged}){
   const {user}=useAuth(),[refresh,setRefresh]=useState(0),[tab,setTab]=useState('Overview'),[draft,setDraft]=useState(null),[draftVersion,setDraftVersion]=useState(null),[kind,setKind]=useState('findings'),[busy,setBusy]=useState(false),[activityPage,setActivityPage]=useState(1);
   const {data:item,error,loading}=useLibraryRequest(`/evidence-library/items/${encodeURIComponent(id)}`,{},refresh);
+  const downloadEvidence=useEvidenceDownload(item?.client_id,id);
   const fullRecord=useBrawndoFullRecord(item,item?.client_id)&&item?.evidence_id===id;
   const activity=useLibraryRequest(tab==='Activity'?`/evidence-library/items/${encodeURIComponent(id)}/activity`:null,{page:activityPage},refresh);
   const canWrite=!item?.archived_at&&isInternal(user),canDelete=!item?.archived_at&&['super_admin','platform_admin'].includes(user?.role);

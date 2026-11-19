@@ -1,7 +1,10 @@
 import React, { act } from "react";
 import { createRoot } from "react-dom/client";
 import AdminRoles from "./AdminRoles";
-import { PLANNED_ROLES, PLANNED_CAPABILITIES, FUTURE_CLIENT_APPROVER } from "@/lib/plannedRoleModel";
+import { PLANNED_ROLES, PLANNED_CAPABILITIES, FUTURE_CLIENT_APPROVER, nativeRoleLabel } from "@/lib/plannedRoleModel";
+import api from '@/lib/api';
+jest.mock('@/lib/api', () => ({__esModule:true,default:{get:jest.fn().mockResolvedValue({data:[]})}}));
+beforeEach(() => api.get.mockResolvedValue({data:[]}));
 
 test("planned matrix has explicit values and separates contribution from approvals", () => {
   const keys = PLANNED_ROLES.map(r => r.key);
@@ -16,6 +19,8 @@ test("planned matrix has explicit values and separates contribution from approva
   expect(approval.roles.client_grc_manager).toBe("No");
   expect(FUTURE_CLIENT_APPROVER.assignable).toBe(false);
   expect(keys).not.toContain(FUTURE_CLIENT_APPROVER.key);
+  expect(nativeRoleLabel('client_viewer')).toBe('Client Read Only');
+  expect(nativeRoleLabel('ClientReadOnly')).toBe('ClientReadOnly');
 });
 
 test("page clearly separates the five planned roles from current permissions", async () => {
@@ -36,8 +41,48 @@ test("page clearly separates the five planned roles from current permissions", a
     expect(container.textContent).not.toMatch(/future|coming soon|planned/i);
     expect([...container.querySelectorAll("tbody tr")].map(row => [...row.cells].map(cell => cell.textContent)))
       .toEqual(PLANNED_CAPABILITIES.map(row => [row.label, ...PLANNED_ROLES.map(role => row.roles[role.key])]));
-    expect(container.querySelectorAll("button, input, select, textarea, form")).toHaveLength(0);
+    expect(container.querySelectorAll("input, select, textarea, form")).toHaveLength(0);
+    expect(container.querySelectorAll('button')).toHaveLength(10);
+    const role = cards.querySelector('button');
+    await act(async () => role.click());
+    expect(role.getAttribute('aria-pressed')).toBe('true');
+    expect(container.querySelectorAll('table .hl')).toHaveLength(PLANNED_CAPABILITIES.length + 1);
+    await act(async () => container.querySelector('thead th button').click());
+    expect(role.getAttribute('aria-pressed')).toBe('false');
+    expect(container.querySelectorAll('table .hl')).toHaveLength(0);
   } finally { await act(async () => root.unmount()); }
+});
+
+test('role counts use actual active native accounts and remain unknown after a failed read', async () => {
+  global.IS_REACT_ACT_ENVIRONMENT = true;
+  const users=Object.freeze([
+    {role:'super_admin',status:'active'},
+    {role:'super_admin',status:'disabled'},
+    {role:'client_readonly',status:'active'},
+    {role:'client_viewer',status:'active'},
+    {role:'client_readonly',status:'invited'},
+    {role:'client_viewer',status:'invited'},
+    {role:'client_readonly',status:'disabled'},
+    {role:'client_viewer',status:'disabled'},
+    {role:'ClientReadOnly',status:'active'},
+    {role:'Client Read Only',status:'active'},
+    {role:'Platform Owner',status:'active'},
+    {role:'not_a_role',status:'active'},
+  ].map(Object.freeze));
+  const original=JSON.stringify(users);
+  api.get.mockResolvedValueOnce({data:users});
+  const container = document.createElement('div'), root = createRoot(container);
+  try {
+    await act(async () => root.render(<AdminRoles/>));
+    expect(container.querySelector('[data-testid="admin-roles-grid"]').children[0].textContent).toContain('1 active user');
+    expect([...container.querySelector('[data-testid="admin-roles-grid"]').children].map(card=>card.querySelector('.sub').textContent))
+      .toEqual(['1 active user','0 active users','0 active users','0 active users','2 active users']);
+    expect(JSON.stringify(users)).toBe(original);
+    await act(async () => root.render(null));
+    api.get.mockRejectedValueOnce(new Error('Unavailable'));
+    await act(async () => root.render(<AdminRoles/>));
+    expect(container.querySelector('[data-testid="admin-roles-grid"]').textContent).toContain('Active user count unavailable');
+  } finally {await act(async () => root.unmount());}
 });
 
 test("read-only disclosures retain the complete native trust and effective-permissions contract", async () => {
@@ -45,7 +90,7 @@ test("read-only disclosures retain the complete native trust and effective-permi
   const container = document.createElement("div"); const root = createRoot(container);
   const sections = [
     ["role-trust-boundaries", "Trust boundaries", [
-      "Super Admins have global client scope. Service-provider administrators may access all clients only with an explicit all-client entitlement. An empty assignment list grants no access. Providers cannot create or manage internal administrator accounts.",
+      "Platform Owners have global client scope. Service-provider administrators may access all clients only with an explicit all-client entitlement. An empty assignment list grants no access. Providers cannot create or manage internal administrator accounts.",
       "Client managers coordinate permitted operations and assign existing client users. Contributors work assigned records. Limited assignment never permits changing another user's role or client access.",
       "Read-only users cannot approve, upload or modify business records, even when named as a business approver.",
       "History locks, optimistic concurrency and separation-of-duties checks apply in addition to role permissions. No role grants arbitrary audit-history deletion or bypasses record integrity.",

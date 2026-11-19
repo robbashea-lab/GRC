@@ -8,7 +8,7 @@ export const riskSnapshot = risk => Object.fromEntries(['likelihood_score','impa
 export function ensureRiskReview(db,risk) {
   const cadence=risk.review_cadence||'annual';
   if(!['none','monthly','quarterly','semiannual','annual','custom'].includes(cadence)) throw new Error('Invalid Risk review cadence.');
-  if(cadence==='custom'&&(!Number.isInteger(risk.custom_recurrence_days)||risk.custom_recurrence_days<1||risk.custom_recurrence_days>3650)) throw new Error('Custom cadence requires 1–3650 days.');
+  if(cadence==='custom'&&(!Number.isInteger(risk.custom_recurrence_days)||risk.custom_recurrence_days<1||risk.custom_recurrence_days>3660)) throw new Error('Custom cadence requires 1–3660 days.');
   if(risk.next_review&&!Number.isFinite(Date.parse(risk.next_review))) throw new Error('Invalid next review date.');
   const relations={review:['reviews','review_id'],finding:['findings','finding_id'],vendor:['vendors','vendor_id'],audit:['assessments','assessment_id']};
   if(risk.source_type&&!['manual','annual_assessment','management',...(isCisClient(db,risk.client_id)?['other']:[]),...Object.keys(relations)].includes(risk.source_type)) throw new Error('Invalid Risk source.');

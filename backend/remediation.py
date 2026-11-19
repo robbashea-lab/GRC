@@ -1,6 +1,22 @@
 """Synchronize remediation readiness without performing validation or closure."""
 from fastapi import HTTPException
+import action_items
 import create_requests
+
+
+async def require_independent_validator(db, finding, user):
+    """All retained work contributes to independence, including prior rework."""
+    actions = await db.tasks.find({"finding_id": finding["finding_id"],
+                                   "client_id": finding["client_id"]}, {"_id": 0}).to_list(None)
+    if not actions or any(task.get("status") not in ("done", "cancelled") for task in actions):
+        raise HTTPException(409, "Complete outstanding remediation first")
+    submitters = [worker for task in actions for worker in action_items.work_submitters(task)]
+    if not submitters or any(worker is None for worker in submitters):
+        raise HTTPException(409, "Reconcile unknown legacy work submitter identities before independent validation")
+    owners = {task.get("assignee_id") or task.get("owner_id") for task in actions}
+    if user["user_id"] in owners or user["user_id"] in submitters:
+        raise HTTPException(403, "Independent validation requires a different account from every work submitter and current Action owner")
+    return actions
 
 
 async def synchronize(db, task, user, now, audit):

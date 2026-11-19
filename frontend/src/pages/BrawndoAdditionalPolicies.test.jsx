@@ -198,7 +198,11 @@ test('accepted Policies + Reviews refresh stays stable across native filters, th
   const reads = api.get.mock.calls.length;
   await input(container.querySelector('[data-testid="policies-search"]'), 'Missing');
   await click(container.querySelector('[data-testid="additional-policy-view-missing"]'));
-  await click([...container.querySelectorAll('.bapv-head-actions button')].find(node => node.textContent === 'Dark'));
+  const previousTheme=container.querySelector('[data-testid="additional-policies"]').dataset.theme;
+  const themeButton=[...container.querySelectorAll('.bapv-head-actions button')].find(node=>node.textContent===(previousTheme==='light'?'Dark':'Light'));
+  expect(themeButton).toBeTruthy();
+  await click(themeButton);
+  expect(container.querySelector('[data-testid="additional-policies"]').dataset.theme).toBe(previousTheme==='light'?'dark':'light');
   await click(container.querySelector('.bapv-name'));
   expect(policySubtitle()).toBe(accepted);
   expect(api.get.mock.calls.length).toBe(reads);

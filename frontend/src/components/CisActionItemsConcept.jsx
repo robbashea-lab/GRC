@@ -41,7 +41,7 @@ export function CisActionItemsSummary({metrics,ready,onSelect,activeKey}){
     ['upcoming','Due in 30 days',metrics.windows.next14.length+metrics.windows['15_30'].length,'Saved active Action deadlines',CalendarDays],
     ['unassigned','Needs an owner',metrics.needsOwner.length,metrics.ownerDetail||(metrics.needsOwner.length?'Missing or ineligible owner':'Every action has an active owner'),Users],
   ];
-  return <section className="kpis cia-summary bda-summary" aria-label="Action summaries">{cards.map(([key,label,count,detail,Icon])=><button type="button" key={key} className={`kpi bda-cell bda-${key} ${key==='overdue'?'overdue':''} ${key==='unassigned'?'needs-owner':''}`} disabled={!ready} aria-pressed={activeKey===key} onClick={()=>onSelect(key)}><span className="kpi-icon"><Icon aria-hidden="true"/></span><span><span className="label">{label}</span><strong>{ready?count:'—'}</strong><small>{ready?detail:'—'}</small></span></button>)}</section>;
+  return <div className="reg-kstrip native-summary" data-native-summary><div className="kstrip" role="group" aria-label="Action summaries">{cards.map(([key,label,count,detail])=><button type="button" key={key} data-summary={key} className={`kchip ${key==='overdue'&&count?'is-overdue':''}`} disabled={!ready} aria-pressed={activeKey===key} onClick={()=>onSelect(key)}><span className="klabel">{label}</span><strong className="kvalue">{ready?count:'—'}</strong><small className="kdetail">{ready?detail:'Counts unavailable'}</small></button>)}</div></div>;
 }
 const actionConceptDays=date=>calendarDay(date)===null?0:calendarDay(date)-quarterToday();
 

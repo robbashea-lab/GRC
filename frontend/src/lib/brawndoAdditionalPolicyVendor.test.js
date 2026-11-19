@@ -1,6 +1,7 @@
 import { eventCycleProgress, policyOverview, policyVisualMatches, policyMappingPresentation, policyMappedFilterUnavailable, timelineBounds, vendorOverview, vendorTimelineEvents } from './brawndoAdditionalPolicyVendor';
 import {CATALOGS} from './frameworks';
 import {policyAlignment} from './brawndoPolicies';
+import {vendorSignals} from './vendorGovernance';
 
 const now = new Date('2026-10-16T12:00:00Z');
 const policy = { policy_id: 'p1', client_id: 'demo_brawndo', title: 'Recorded policy', category: 'Governance', status: 'draft' };
@@ -122,11 +123,43 @@ test.each(['hipaa','nist-csf-2'])('%s common appearance preserves its native cat
   expect(JSON.stringify({mapped,custom,assessment})).toBe(before);
 });
 
-test.each([[[]],[['cmmc']]])('no mapped catalog in %j remains honest without a fabricated CIS scope',programs=>{
+test.each([[[]]])('no mapped catalog in %j remains honest without a fabricated CIS scope',programs=>{
   expect(policyMappingPresentation(programs)).toEqual({mappedLabel:'Framework-mapped',alignmentHeading:'Framework alignment'});
   expect(policyOverview([policy],[],programs).mapped).toBe(0);
   expect(policyMappedFilterUnavailable('mapped','Read failed',programs)).toBe(true);
   expect(policyMappedFilterUnavailable('approved','Read failed',programs)).toBe(false);
+});
+test('CMMC presentation uses its actual catalog while a healthy unmapped policy remains zero',()=>{
+  expect(policyMappingPresentation(['cmmc'])).toEqual({mappedLabel:'Mapped to CMMC',alignmentHeading:'Framework alignment'});
+  expect(policyOverview([policy],[],['cmmc']).mapped).toBe(0);
+  expect(policyMappedFilterUnavailable('mapped','Read failed',['cmmc'])).toBe(true);
+  expect(policyMappedFilterUnavailable('approved','Read failed',['cmmc'])).toBe(false);
+});
+test('CMMC policy alignment requires an explicit same-client link to a genuine selected requirement',()=>{
+  const requirement=CATALOGS.cmmc.requirements.find(item=>item.id==='3.1.1');
+  expect(requirement).toBeDefined();
+  const unlinked={...policy,baseline_key:'policy-information-security-policy'};
+  const linked={...policy,policy_id:'explicit-cmmc-policy'};
+  const assessment={client_id:policy.client_id,framework_key:'cmmc',definition_id:requirement.id,
+    related_links:[{kind:'policies',id:linked.policy_id}]};
+  const before=JSON.stringify({unlinked,linked,assessment});
+  expect(policyAlignment(unlinked,['cmmc'],[assessment])).toEqual([]);
+  expect(policyVisualMatches(unlinked,'mapped','',['cmmc'],[assessment])).toBe(false);
+  const alignment=policyAlignment(linked,['cmmc'],[assessment]);
+  expect(alignment).toHaveLength(1);
+  expect(alignment[0]).toMatchObject({key:'cmmc',id:requirement.id,title:requirement.title,
+    version:CATALOGS.cmmc.version,label:'CMMC',relation:'Supports',source:requirement.source});
+  expect(policyOverview([unlinked,linked],[],['cmmc'],[assessment]).mapped).toBe(1);
+  expect(policyOverview([linked,{...linked}],[],['cmmc'],[assessment]).mapped).toBe(1);
+  expect(policyVisualMatches(linked,'mapped','',['cmmc'],[assessment])).toBe(true);
+  for(const invalid of [{...assessment,client_id:'foreign'},
+    {...assessment,framework_key:'hipaa'},{...assessment,definition_id:'not-a-CMMC-requirement'}]){
+    expect(policyAlignment(linked,['cmmc'],[invalid])).toEqual([]);
+    expect(policyOverview([linked],[],['cmmc'],[invalid]).mapped).toBe(0);
+    expect(policyVisualMatches(linked,'mapped','',['cmmc'],[invalid])).toBe(false);
+  }
+  expect(policyOverview([linked],[],[],[assessment]).mapped).toBe(0);
+  expect(JSON.stringify({unlinked,linked,assessment})).toBe(before);
 });
 
 test.each(['iso-27001','soc-2'])('healthy zero %s mapping is zero without inventing enrollment or policy identity',framework=>{
@@ -147,7 +180,9 @@ test('only the expanded target mapped filter becomes unavailable after a read fa
 
 test('vendor figures use native 30-day cohorts and distinguish legal expiration from renewal', () => {
   const rows = [vendor, { ...vendor, vendor_id: 'expiration', next_review: null, contract_renewal: null, contract_expiration: '2026-10-20', criticality: 'low' }, { ...vendor, vendor_id: 'inactive', status: 'inactive' }];
-  expect(vendorOverview(rows, now)).toEqual([1, 1, 0, 0]);
+  const reviews=[{review_id:'actual-review',client_id:vendor.client_id,vendor_id:vendor.vendor_id,status:'upcoming',due_date:vendor.next_review}];
+  expect(vendorOverview(rows.map(row=>vendorSignals(row,reviews,now)), now)).toEqual([1, 1, 0, 0]);
+  expect(vendorOverview(rows.map(row=>vendorSignals(row,[],now)), now)).toEqual([1, 0, 0, 0]);
 });
 
 test('vendor timeline contains only saved dates and original native identities', () => {

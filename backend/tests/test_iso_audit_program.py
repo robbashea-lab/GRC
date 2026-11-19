@@ -8,6 +8,7 @@ from framework_catalog import ISO
 
 
 class IsoAuditTests(unittest.IsolatedAsyncioTestCase):
+    r4_valid_completion_fixture = True
     asyncSetUp = Harness.asyncSetUp
     sign_in = Harness.sign_in
     configure = test_iso_framework.IsoTests.configure

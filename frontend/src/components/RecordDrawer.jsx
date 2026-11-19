@@ -55,7 +55,7 @@ import CorrectiveActions from './CorrectiveActions';
 import EvidencePanel from './EvidencePanel';
 import ActionSourceChain from './ActionSourceChain';
 import RequirementBasis, {GovernanceContextFields} from './RequirementBasis';
-import {resolveEvidenceSource,downloadEvidence as downloadEv} from '@/lib/evidenceContext';
+import {resolveEvidenceSource,useEvidenceDownload} from '@/lib/evidenceContext';
 import ContactWorkspace from './ContactWorkspace';
 import AssignmentHelp from './AssignmentHelp';
 import RemediationTicketDrawer from './RemediationTicketDrawer';
@@ -160,6 +160,7 @@ function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, user
   const riskDecisionOrigin=useRef(null);
   const { user } = useAuth();
   const {currentClient}=useOrg()||{};
+  const downloadEv=useEvidenceDownload(record?.client_id||clientId,`${kind}:${record?.[ID_FIELD[kind]]||'new'}`,open);
   const updateRecord = useCreateIntent((...args)=>api.patch(...args), `${user?.user_id}:${record?.client_id||clientId}:${kind}:${record?.[ID_FIELD[kind]]}:update`, true);
   const pilot=(['risks','policies'].includes(kind)||['tasks','findings','vendors'].includes(kind)&&isReferencePresentation(clientId,user))&&(!record||record.client_id===clientId);
   const vendorPilot=pilot&&kind==='vendors'&&isReferenceWorkflow(clientId,user,currentClient);
@@ -258,7 +259,7 @@ function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, user
       if (kind === "tasks") Object.assign(base,{source_type:record?.source_type || (record ? taskSource(record).type : "manual"),source_id:record?.source_id || null,assignee_id:record?.assignee_id ?? record?.owner_id ?? null,status:record?.status||"open",priority:pilot&&record?record.priority??'':record?.priority||"medium"});
       if (!record && kind === "findings") Object.assign(base, {status: "open", severity: "medium"});
       if (!record && kind === "risks") Object.assign(base, {...(riskPilot?newRiskDefaults():{}),status: "identified", review_cadence: "annual", source_type: "manual"});
-      if (!record && kind === "vendors") Object.assign(base, {status: "onboarding", criticality: "medium", review_frequency: "annual"});
+      if (!record && kind === "vendors") Object.assign(base, {status: "onboarding", category: "SaaS", criticality: "medium", review_frequency: "annual"});
       if(['policies','tasks'].includes(kind))base.governance_context=record?.governance_context||null;
       if(policyPilot&&!record)Object.assign(base,{status:'draft',presence:'needs_confirmation',next_review_date:'',last_reviewed_at:''});
       base.client_id = record?.client_id || clientId;
@@ -412,6 +413,9 @@ function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, user
     setSaveError('');
     try {
       const clean = cleanForm();
+      if(kind==='vendors'&&form.confirm_criticality===true&&record?.criticality_provisional) {
+        clean.criticality=form.criticality;clean.confirm_criticality=true;
+      }
       if(kind==="risks" && clean.custom_recurrence_days==="") clean.custom_recurrence_days=null;
       if(kind==="vendors") {for(const key of ["last_review","assurance_status","services","assurance_expires_at"])delete clean[key];for(const key of ["assurance_records"])if(clean[key])clean[key]=clean[key].map(({status,...a})=>a);if(clean.custom_recurrence_days==="")delete clean.custom_recurrence_days;if(!clean.assurance_cadence)delete clean.assurance_cadence;}
       if(kind==="risks") for(const key of ["last_reviewed","risk_score","risk_level","date_identified","display_id","legacy_display_id","linked_review_id","review_sync_occurrence_id","rating_history","decision_history","created_at","created_by","updated_at","closed_at","closed_by","closure_reason","closure_note","accepted","accepted_by","acceptance_date","acceptance_rationale","acceptance_expires_at"]) delete clean[key];
@@ -1086,7 +1090,7 @@ function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, user
               <div>
                 <Label className="text-xs text-ink-secondary">Acceptance expiry (required)</Label>
                 <Input type="date" data-testid="accept-expiry" value={acceptForm.expiry_date} onChange={(e) => setAcceptForm({ ...acceptForm, expiry_date: e.target.value })} className="text-sm" />
-                <div className="text-xs text-ink-help mt-1">{riskPilot?"Acceptance does not lower severity. The next review is brought forward if this expiry is earlier.":"The risk will reappear in \"Due for Review\" as this date approaches."}</div>
+                <div className="text-xs text-ink-help mt-1">Acceptance does not lower severity or change the Review schedule. Its expiry is tracked separately.</div>
               </div>
               <div>
                 <Label className="text-xs text-ink-secondary">Compensating controls (optional)</Label>

@@ -5,6 +5,7 @@ from test_iso_framework import IsoTests
 from test_client_dashboard_sources import ClientDashboardSourcesTests as Harness, server
 
 class IsoWorkPackageTests(unittest.IsolatedAsyncioTestCase):
+    r4_valid_completion_fixture = True
     asyncSetUp=Harness.asyncSetUp
     sign_in=Harness.sign_in
     configure=IsoTests.configure

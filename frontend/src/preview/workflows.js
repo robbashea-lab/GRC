@@ -12,6 +12,7 @@ import {requireCreationAssignee} from './authorization';
 import {guardEdit} from './decisions';
 import {auditPackage,blankAuditItem} from '../lib/isoAudit';
 import {eligible} from './assignmentEligibility';
+import {independentValidationIssue} from '../lib/r4Remediation';
 
 function commandFields(body, allowed) {
   if(Object.entries(body).some(([key,value])=>!allowed.includes(key)||(value!=null&&typeof value!=='string')))
@@ -150,7 +151,9 @@ export function action(db, kind, id, name, body) {
   const r = record(db, kind, id),
     cid = r.client_id;
   if(Object.prototype.hasOwnProperty.call(body,'expected_updated_at')&&body.expected_updated_at!==(r.updated_at??null))throw new Error('Record changed since it was opened; reload before saving');
-  body={...body};delete body.expected_updated_at;
+  body={...body};
+  // Review completion validates the explicit revision as part of its Guide contract.
+  if(kind!=='reviews'||name!=='complete')delete body.expected_updated_at;
   const patch = b => write(db, kind, b, id);
   if(kind==='findings'&&name==='reopen'){
     if(!['super_admin','platform_admin'].includes(db.user.role))throw new Error('Only platform-level roles can reopen remediation');
@@ -176,10 +179,26 @@ export function action(db, kind, id, name, body) {
     if (kind === 'exceptions' && (!r.expires_at || r.expires_at.slice(0,10) <= now().slice(0,10))) throw new Error('A future exception expiry is required.');
     return patch({status:kind === 'exceptions' ? 'approved' : 'accepted', ...(kind === 'exceptions' ? {approver_id:db.user.user_id,approved_at:now()} : {}), decision_history:[...(r.decision_history || []), {action:name,by:db.user.user_id,at:now(),rationale:body.rationale}]});
   }
-  if ((kind === 'risks' && name === 'accept' || kind === 'findings' && name === 'validate' || kind === 'policies' && ['approve','reject','verify'].includes(name)) && !['super_admin','platform_admin'].includes(db.user.role)) throw new Error('Only platform-level roles can record this decision.');
-  if (kind === 'findings' && name === 'validate') {
-    if (r.status !== 'remediated' || list(db, 'tasks', cid).some(t => t.finding_id === id && !['done','cancelled'].includes(t.status))) throw new Error('Complete remediation before validation.');
+  if ((kind === 'risks' && name === 'accept' || kind === 'findings' && ['validate','reject'].includes(name) || kind === 'policies' && ['approve','reject','verify'].includes(name)) && !['super_admin','platform_admin'].includes(db.user.role)) throw new Error('Only platform-level roles can record this decision.');
+  if (kind === 'findings' && ['validate','reject'].includes(name)) {
+    if(r.status!=='remediated')throw new Error('Finding must be pending validation.');
+    const actions=list(db,'tasks',cid).filter(task=>task.finding_id===id),issue=independentValidationIssue(actions,db.user.user_id);
+    if(issue)throw new Error(issue);
     if (!body.rationale?.trim()) throw new Error('Validation rationale is required.');
+    if(name==='reject') {
+      commandFields(body,['request_id','rationale']);
+      if(!body.request_id)throw new Error('A retained rework request identity is required.');
+      const source=actions.find(task=>task.task_id===r.primary_task_id)||actions[0],owner=source.assignee_id||source.owner_id;
+      const task=write(db,'tasks',{client_id:cid,finding_id:id,source_type:'finding',source_id:id,
+        title:source.title||r.remediation_title||r.title,description:source.description,
+        assignee_id:owner&&eligible(db.users.find(user=>user.user_id===owner),cid)?owner:null,
+        due_date:source.due_date,priority:source.priority||r.severity||'medium',status:'open'});
+      const result=patch({status:'in_remediation',primary_task_id:task.task_id,decision_history:[...(r.decision_history||[]),
+        {action:'rejected',by:db.user.user_id,at:now(),rationale:body.rationale,request_id:body.request_id,
+          previous_primary_task_id:r.primary_task_id,rework_task_id:task.task_id}]});
+      audit(db,'Work returned for rework','findings',result,{task_id:task.task_id});
+      return result;
+    }
     const result = patch({status:'closed', validated_by:db.user.user_id, validated_at:now(), closed_by:db.user.user_id,closed_at:now(),decision_history:[...(r.decision_history || []), {action:'validated',by:db.user.user_id,at:now(),rationale:body.rationale}]});
     for (const task of list(db,'tasks',cid).filter(t=>t.finding_id===id)) audit(db,'Related Finding validated and closed','tasks',task,{finding_id:id});
     if (r.review_id) reviewEvent(db,record(db,'reviews',r.review_id),'Finding validated and closed',r.occurrence_id || 'occ_' + r.review_id,{finding_id:id,title:r.title});
@@ -298,7 +317,6 @@ export function action(db, kind, id, name, body) {
       acceptance_date: now(),
       acceptance_rationale: body.rationale,
       acceptance_expires_at: body.expiry_date,
-      next_review: [r.next_review,body.expiry_date].filter(Boolean).sort()[0],
       decision_history: [...(r.decision_history || []), {action:'accepted', by:db.user.user_id,at:now(),rationale:body.rationale,expires_at:body.expiry_date}],
       compensating_controls: body.compensating_controls
     });

@@ -5,6 +5,9 @@ from test_soc_framework import SocTests
 from framework_catalog import NIST
 
 
+from r4_fixture_inputs import validate_with_independent_actor
+
+
 class CsfTests(unittest.IsolatedAsyncioTestCase):
     asyncSetUp = Harness.asyncSetUp
     sign_in = Harness.sign_in
@@ -57,7 +60,7 @@ class CsfTests(unittest.IsolatedAsyncioTestCase):
         reviews=await server.db.reviews.find({'client_id':'a'},{'_id':0}).to_list(None)
         policies=await server.db.policies.find({'client_id':'a'},{'_id':0}).to_list(None)
         self.assertEqual((await self.client.patch('/api/onboarding/programs/nist-csf-2',json={'client_id':'a','applicability':'applies'})).status_code,200)
-        self.assertEqual(await server.db.framework_assessments.count_documents({'client_id':'a'}),394)
+        self.assertEqual(await server.db.framework_assessments.count_documents({'client_id':'a'}),399)
         self.assertEqual(await server.db.reviews.count_documents({'client_id':'a'}),23)
         for r in reviews:
             after=await server.db.reviews.find_one({'review_id':r['review_id']},{'_id':0})
@@ -97,5 +100,8 @@ class CsfTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(f.status_code,200,f.text)
         t=await server.db.tasks.find_one({'finding_id':f.json()['finding_id']})
         self.assertEqual((await self.client.patch('/api/tasks/'+t['task_id'],json={'status':'done'})).status_code,200)
-        self.assertEqual((await self.client.post('/api/findings/'+f.json()['finding_id']+'/validate',json={'rationale':'Dependency evidence reviewed'})).status_code,200)
+        pending=await server.db.findings.find_one({'finding_id':f.json()['finding_id']})
+        self.assertEqual((await validate_with_independent_actor(self,server,f.json()['finding_id'],{
+            'rationale':'Dependency evidence reviewed','expected_updated_at':pending['updated_at'],
+            'request_id':'csf-independent-validation'})).status_code,200)
         self.assertEqual((await self.client.get(path)).json()['status'],'not_assessed')

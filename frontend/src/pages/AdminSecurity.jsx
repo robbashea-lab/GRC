@@ -19,9 +19,9 @@ export default function AdminSecurity() {
           <Info aria-hidden="true" />
           <div><strong>Configuration reference.</strong> This page describes the product configuration; it does not inspect or verify the live environment.</div>
         </div>
-        <section className="admin-panel admin-security-list" data-testid="admin-security-list" aria-label="Authentication and hardening information">
+        <section className="sec-grid" data-testid="admin-security-list" aria-label="Authentication and hardening information">
           {ROWS.map((r) => (
-            <article key={r.label} className="admin-security-row">
+            <article key={r.label} className="sec-card">
               <div className="admin-tile-icon"><r.icon aria-hidden="true" /></div>
               <div className="admin-security-copy">
                 <h2>{r.label}</h2>

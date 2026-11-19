@@ -1,5 +1,6 @@
 import {useEffect,useLayoutEffect,useRef,useState} from 'react';
 import {Maximize2,Minimize2,Minus,X,MoreHorizontal} from 'lucide-react';
+import useOmniModalVisibility from '@/lib/useOmniModalVisibility';
 
 export function fitOmniRect(rect,width=window.innerWidth,height=window.innerHeight,minWidth=490,minHeight=470){
   const pad=8,top=height>350?82:8,maxW=Math.max(1,width-pad*2),maxH=Math.max(1,height-top-pad);
@@ -17,8 +18,8 @@ const EDGES=['n','ne','e','se','s','sw','w','nw'];
 export const OMNI_ESCAPE_EVENT='omni-guide-escape';
 
 export function cisOmniProgramRect(anchor,width=window.innerWidth,height=window.innerHeight){
-  const w=Math.max(1,Math.min(360,width-32));
-  let h=Math.max(1,Math.min(520,height-120));
+  const w=Math.max(1,Math.min(380,width-32));
+  let h=Math.max(1,Math.min(640,height-120));
   // A saved middle-screen launcher needs a shorter scrollable popup to stay reachable.
   const above=anchor?Math.max(0,anchor.top-10-82):0,below=anchor?Math.max(0,height-anchor.bottom-10-8):0;
   if(anchor)h=Math.max(1,Math.min(h,Math.max(above,below)));
@@ -30,13 +31,14 @@ export function cisOmniProgramRect(anchor,width=window.innerWidth,height=window.
 }
 
 // Presentation only: interview answers, saves and replacement protection stay in GuidedAssessor.
-export default function OmniWindow({id,children,onOpenAutoFocus,onCloseAutoFocus,onMinimize,onClose,anchor,name='Omni',refined=false,program=false,visualReference=false}){
-  const visualProgram=visualReference&&program;
-  const fit=rect=>fitOmniRect(rect,undefined,undefined,visualProgram?Math.min(360,window.innerWidth-32):490,visualProgram?Math.min(470,cisOmniProgramRect(anchor?.()).h):470);
+export default function OmniWindow({id,children,onOpenAutoFocus,onCloseAutoFocus,onMinimize,onClose,anchor,name='Omni',refined=false,program=false}){
+  const visualProgram=program;
+  const fit=rect=>fitOmniRect(rect,undefined,undefined,visualProgram?Math.min(380,window.innerWidth-32):490,visualProgram?Math.min(470,cisOmniProgramRect(anchor?.()).h):470);
   const initialRect=()=>visualProgram?cisOmniProgramRect(anchor?.()):anchor?besideOmniRect(anchor(),undefined,undefined,refined?{w:620,h:program?520:755}:undefined):defaultRect();
   const [rect,setRect]=useState(initialRect),[maximized,setMaximized]=useState(false);
   const rectRef=useRef(rect),restore=useRef(null),drag=useRef(null),focusHandlers=useRef({onOpenAutoFocus,onCloseAutoFocus});rectRef.current=rect;
   const surface=useRef(null),closeHandler=useRef(onClose);closeHandler.current=onClose;
+  useOmniModalVisibility(surface);
   useEffect(()=>{
     const node=surface.current,close=()=>closeHandler.current?.();
     node.addEventListener(OMNI_ESCAPE_EVENT,close);
@@ -46,7 +48,7 @@ export default function OmniWindow({id,children,onOpenAutoFocus,onCloseAutoFocus
   useLayoutEffect(()=>{if(anchor)setRect(initialRect());},[]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(()=>{const handlers=focusHandlers.current;handlers.onOpenAutoFocus?.({preventDefault(){}});return()=>handlers.onCloseAutoFocus?.({preventDefault(){}});},[]);
   useEffect(()=>{const resize=()=>setRect(r=>fit(maximized?{x:8,y:82,w:window.innerWidth-16,h:window.innerHeight-90}:r));window.addEventListener('resize',resize);return()=>window.removeEventListener('resize',resize);},[maximized,visualProgram]); // eslint-disable-line react-hooks/exhaustive-deps
-  function expand(){if(maximized){setRect(fit(restore.current||initialRect()));}else{restore.current=rectRef.current;setRect(fit({x:8,y:82,w:window.innerWidth-16,h:window.innerHeight-90}));}setMaximized(!maximized);}
+  function expand(){if(maximized){setRect(fit(restore.current||initialRect()));}else{restore.current=rectRef.current;setRect(fit(visualProgram?{x:window.innerWidth-Math.min(560,window.innerWidth-44)-22,y:82,w:Math.min(560,window.innerWidth-44),h:window.innerHeight-110}:{x:8,y:82,w:window.innerWidth-16,h:window.innerHeight-90}));}setMaximized(!maximized);}
   function start(event,edge){
     if(event.button!==0||maximized||(!edge&&!event.target.closest('.omni-panel-header'))||(!edge&&event.target.closest('button,details,input,select,textarea,a')))return;
     drag.current={id:event.pointerId,x:event.clientX,y:event.clientY,rect:rectRef.current,edge};event.currentTarget.setPointerCapture(event.pointerId);event.preventDefault();

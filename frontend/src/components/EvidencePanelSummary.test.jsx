@@ -6,7 +6,7 @@ import api from '@/lib/api';
 let mockUser;
 jest.mock('@/context/AuthContext',()=>({useAuth:()=>({user:mockUser})}));
 jest.mock('@/lib/api',()=>({__esModule:true,default:{get:jest.fn(),post:jest.fn()},formatError:error=>error.message}));
-jest.mock('@/lib/evidenceContext',()=>({downloadEvidence:jest.fn(),EvidenceSource:()=>null,uploaderLabel:()=> 'Recorded uploader'}));
+jest.mock('@/lib/evidenceContext',()=>{const downloadEvidence=jest.fn();return {downloadEvidence,useEvidenceDownload:()=>downloadEvidence,EvidenceSource:()=>null,uploaderLabel:()=> 'Recorded uploader'};});
 
 const catalog=total=>({items:[],counts:{direct:0},total,page:1,page_size:25});
 const deferred=()=>{let resolve;const promise=new Promise(done=>{resolve=done;});return {promise,resolve};};

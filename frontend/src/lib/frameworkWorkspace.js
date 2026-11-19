@@ -10,6 +10,7 @@ const HIERARCHY = {
   'cis-ig1': d => [{id:String(d.control),label:`Control ${d.control} — ${d.control_name}`}],
   'nist-csf-2': d => [{id:d.function,label:d.function_name},{id:d.category,label:`${d.category} — ${d.control_name}`}],
   hipaa: d => [{id:d.control,label:d.control_name}],
+  cmmc: d => [{id:d.control,label:`${d.family} — ${d.control_name}`}],
   'iso-27001': d => [{id:d.specification,label:d.specification==='annex_control'?'Annex A / Statement of Applicability':'ISMS Requirements'},{id:d.control,label:ISO_GROUPS[d.control]||d.control_name}],
   'soc-2': d => [{id:d.category,label:d.category==='security'?'Security / Common Criteria':d.category?.replace(/^./,s=>s.toUpperCase())},{id:d.control,label:`${d.control} — ${d.control_name}`}],
 };
@@ -39,7 +40,7 @@ const VIEWS={
   overdue_actions:r=>(r.work?.overdue_actions||0)>0,
 };
 // Retained SOC criteria remain available, but are outside the default active scope.
-export const workspaceScope=(key,data,definition)=>!['soc-2','cis-ig1'].includes(key)||
+export const workspaceScope=(key,data,definition)=>!['soc-2','cis-ig1','cmmc'].includes(key)||
   (key==='cis-ig1'&&!data?.active_definition_ids?(definition.implementation_group||1)<=(data?.configuration?.implementation_group||1):!!data?.active_definition_ids?.includes(definition.definition_id??definition.id));
 export function matchesAssessment(row,filter,search=''){
   const status=filter==='all'||(VIEWS[filter]?VIEWS[filter](row):row.status===filter);
@@ -54,7 +55,7 @@ export function sourcePresentation(definition){
   const explicit=['OFFICIAL_TEXT','LICENSED_TEXT'].includes(definition.official_text_mode)&&definition.official_text;
   const mode=explicit?definition.official_text_mode:definition.source_type==='regulatory_text'?'OFFICIAL_TEXT':'REFERENCE_ONLY';
   let url=null;try{const u=new URL(definition.source_url||definition.source);if(u.protocol==='https:')url=u.href;}catch{}
-  return {mode,url,text:explicit?definition.official_text:mode==='OFFICIAL_TEXT'?definition.guidance:null,citation:definition.source_citation||definition.id};
+  return {mode,url,text:explicit?definition.official_text:mode==='OFFICIAL_TEXT'?definition.guidance:definition.source_text||null,citation:definition.source_citation||definition.id};
 }
 export function recurrencePresentation(definition,catalog){
   const plans=(catalog.review_plans||[]).filter(p=>p.safeguards.includes(definition.id));

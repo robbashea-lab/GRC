@@ -1,11 +1,11 @@
 import { clientAccess } from './assignmentEligibility';
 import {cisProgramProjection} from './cisCapability';
-import {frameworkCatalog} from '../lib/frameworks';
+import {frameworkCatalog,CATALOGS} from '../lib/frameworks';
 
 const internal = user => ['super_admin', 'platform_admin'].includes(user?.role);
 export const leadEligible = (user, cid) => internal(user) && user.status === 'active' && clientAccess(user, cid);
 // Finalized native enrollment only; no contact/user lookups or mutation are needed.
-export const sharedProgramProjection = (db,client) => ['cis-ig1','iso-27001','soc-2'].filter(key=>db.requirements?.some(row=>
+export const sharedProgramProjection = (db,client) => Object.keys(CATALOGS).filter(key=>db.requirements?.some(row=>
   row.client_id===client.client_id&&row.baseline_key===key&&row.baseline_response==='applies'))
   .map(key=>key==='cis-ig1'?cisProgramProjection(db,client):{
     client_id:client.client_id,program_id:`${client.client_id}:${key}`,framework_key:key,

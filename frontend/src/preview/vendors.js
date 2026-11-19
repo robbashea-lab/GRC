@@ -1,5 +1,5 @@
 import {isCisClient} from './cisCapability';
-import {vendorPlans,VENDOR_PURPOSES} from '../lib/vendorGovernance';
+import {vendorPlans,vendorStatusOptions,VENDOR_PURPOSES} from '../lib/vendorGovernance';
 import {reviewView,reviewSchedule} from '../lib/reviewOccurrences';
 import {recordUuid} from '../lib/recordUuid';
 import {validateAssignment} from './assignmentEligibility';
@@ -10,11 +10,10 @@ const hasNativeAssurance = vendor => vendor?.assurance_records?.some(row=>
 export function validateVendor(db,v,previous) {
   if(!v.name?.trim()||!(v.service||v.services)?.trim()) throw new Error('Vendor name and Service / Product are required.');
   if(!['critical','high','medium','moderate','low'].includes(v.criticality)) throw new Error('Invalid Vendor criticality.');
-  const stages={onboarding:['under_review','offboarding'],under_review:['active','offboarding'],active:['under_review','offboarding'],offboarding:['inactive'],inactive:[]};
-  if(isCisClient(db,v.client_id)){stages.onboarding=['active','offboarding'];stages.active=['offboarding'];validatePilotVendor(db,v,previous);}
+  if(isCisClient(db,v.client_id))validatePilotVendor(db,v,previous);
   else if(hasNativeAssurance(previous))validateAssuranceRecords(db,v,previous);
   if(!previous&&v.status!=='onboarding') throw new Error('New Vendors start Onboarding.');
-  if(previous&&previous.status!==v.status&&!stages[previous.status]?.includes(v.status)) throw new Error('Use the next Vendor lifecycle stage.');
+  if(previous&&previous.status!==v.status&&!vendorStatusOptions(previous.status).includes(v.status)) throw new Error('Use the next Vendor lifecycle stage.');
   validateAssignment(db,'vendors',v,previous);
   for(const key of ['contract_lead_days','assurance_window_days']) if(v[key]!=null&&(!Number.isInteger(v[key])||v[key]<1||v[key]>3650)) throw new Error('Lead time must be 1–3650 days.');
   if(v.assurance_required&&!(v.assurance_records||[]).some(a=>a.required!==false)) throw new Error('Select at least one expected assurance artifact.');
@@ -24,11 +23,11 @@ export function validateVendor(db,v,previous) {
   for(const [due,cadence,custom] of Object.values(vendorPlans(v))) {
     if(due&&!Number.isFinite(Date.parse(due))) throw new Error('Invalid Review date.');
     if(!['none','monthly','quarterly','semiannual','annual','custom'].includes(cadence)) throw new Error('Invalid Review frequency.');
-    if(cadence==='custom'&&(!Number.isInteger(custom)||custom<1||custom>3650)) throw new Error('Custom recurrence requires 1–3650 days.');
+    if(cadence==='custom'&&(!Number.isInteger(custom)||custom<1||custom>3660)) throw new Error('Custom recurrence requires 1–3660 days.');
   }
 }
 function validatePilotVendor(db,v,previous){
-  if(!['onboarding','active','offboarding','inactive'].includes(v.status)&&v.status!==previous?.status&&!(previous?.status==='under_review'&&v.status==='active'))throw new Error('Invalid relationship status.');
+  if(!['onboarding','under_review','active','offboarding','inactive'].includes(v.status)&&v.status!==previous?.status)throw new Error('Invalid relationship status.');
   for(const key of ['next_review','contract_renewal','contract_expiration','contract_notice_deadline'])if(v[key]&&calendarDay(v[key])===null)throw new Error('Enter a valid '+key.replaceAll('_',' ')+' date.');
   if(v.contact_email&&!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v.contact_email))throw new Error('Enter a valid Vendor Contact Email.');
   for(const id of v.connected_system_ids||[])if(!(previous?.connected_system_ids||[]).includes(id)&&!db.assets.some(a=>a.asset_id===id&&a.client_id===v.client_id))throw new Error('Connected Systems must belong to this client.');

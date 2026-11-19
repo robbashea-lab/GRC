@@ -13,11 +13,13 @@ import test_framework_three_year as lifecycle
 import test_framework_governance as framework
 import framework_governance
 from framework_catalog import CIS, active_definitions
+from r4_fixture_inputs import validate_with_independent_actor
 
 server = framework.server
 
 
 class CisSixYearTests(unittest.IsolatedAsyncioTestCase):
+    r4_valid_completion_fixture = True
     asyncSetUp = lifecycle.FrameworkThreeYearTests.asyncSetUp
     sign_in = lifecycle.FrameworkThreeYearTests.sign_in
     clock = lifecycle.FrameworkThreeYearTests.clock
@@ -183,7 +185,12 @@ class CisSixYearTests(unittest.IsolatedAsyncioTestCase):
                         self.assertEqual(len(tasks), 1)
                         await self.edit('/tasks/' + tasks[0]['task_id'], {'status': 'done'})
                         self.assertEqual((await self.get('/findings/' + fid))['status'], 'remediated')
-                        self.assertEqual((await self.post('/findings/' + fid + '/validate', {'rationale': 'Synthetic independent resampling confirms the corrected coverage.'}))['status'], 'closed')
+                        ready = await server.db.findings.find_one({'finding_id': fid})
+                        validated = await validate_with_independent_actor(self, server, fid, {
+                            'rationale': 'Synthetic independent resampling confirms the corrected coverage.',
+                            'request_id': f'cis-validation-{year}-{fid}',
+                            'expected_updated_at': ready.get('updated_at')})
+                        self.assertEqual(validated.json()['status'], 'closed')
 
                 executions = 0
                 while True:

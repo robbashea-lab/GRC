@@ -73,6 +73,7 @@ CLIENT_OPERATIONS = {
     ('POST', '/api/reviews/{review_id}/start'),
     ('POST', '/api/reviews/{review_id}/complete'),
     ('POST', '/api/reviews/{review_id}/create-finding'),
+    ('PUT', '/api/reviews/{review_id}/completion-guide'),
     ('PATCH', '/api/reviews/{review_id}/iso-audit'),
     ('PATCH', '/api/reviews/{review_id}/iso-audit/{item_key}'),
     ('PATCH', '/api/framework_assessments/{aid}'),
@@ -124,6 +125,11 @@ async def authorize_request(request, user, db):
         ('POST','/api/auth/logout'),
     }:
         return
+    if method == 'POST' and path == '/api/reports/exports':
+        # Export is the existing authorized read capability even though an
+        # immutable export receipt/file is now retained. The route rechecks the
+        # actual account and tenant before rendering, retaining and delivery.
+        return
     # Archived tenants retain history but accept no ordinary program changes.
     # Resolve the resource's trusted tenant, never the caller's claimed tenant.
     client_id = request.path_params.get('client_id') or request.path_params.get('cid')
@@ -143,7 +149,8 @@ async def authorize_request(request, user, db):
         if kind == 'evidence': key = 'evidence_id'
         row = await db[kind].find_one({key: identity})
         client_id = (row or {}).get('client_id')
-    if role != OWNER and method in {'POST', 'PATCH', 'PUT'} and 'application/json' in request.headers.get('content-type', ''):
+    body = None
+    if method in {'POST', 'PATCH', 'PUT'} and 'application/json' in request.headers.get('content-type', ''):
         body = await object_body(request)
         if not client_id:
             client_id = body.get('client_id')
@@ -162,8 +169,12 @@ async def authorize_request(request, user, db):
             tenants = await db[collection].distinct('client_id', {key: {'$in': body.get('ids', [])}})
             if await db.clients.find_one({'client_id': {'$in': tenants}, 'status': 'archived'}):
                 raise HTTPException(403, 'Archived clients are read-only; ask a Super Admin to restore the client')
-    if role != OWNER and client_id and await db.clients.find_one({'client_id': client_id, 'status': 'archived'}):
-        raise HTTPException(403, 'Archived clients are read-only; ask a Super Admin to restore the client')
+    if client_id and await db.clients.find_one({'client_id': client_id, 'status': 'archived'}):
+        restoring = (role == OWNER and method == 'PATCH' and path == '/api/clients/{client_id}'
+                     and isinstance(body, dict) and body.get('status') in {'active', 'onboarding', 'inactive'}
+                     and not set(body) - {'status', 'expected_updated_at'})
+        if not restoring:
+            raise HTTPException(403, 'Archived clients are read-only; ask a Super Admin to restore the client')
     if role in {OWNER, PROVIDER}:
         if role != OWNER and (path == '/api/clients' or path.startswith('/api/reminders/')):
             raise HTTPException(403, 'Platform Owner required')

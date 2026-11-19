@@ -5,7 +5,7 @@ from fastapi import HTTPException
 import review_occurrences
 from vendor_governance import day
 
-COMMON = ['client_id', 'title', 'status', 'due_date', 'owner_id', 'assignee_id', 'updated_at']
+COMMON = ['client_id', 'title', 'status', 'due_date', 'owner_id', 'assignee_id', 'updated_at', '_r4_context_pending']
 REVIEW_FIELDS = ['review_id', 'review_type', 'recurrence', 'custom_recurrence_days', 'schedule_anchor',
                  'current_occurrence_id', 'vendor_purpose', 'period', 'recurrence_due_date']
 
@@ -36,6 +36,7 @@ def item(row, kind, user, closed, historical=False):
 
 
 async def read(s, query, user, start=None, end=None, scope: Literal['active', 'history', 'all']='active', overdue_before=None):
+    from r4_services import assert_settled, require_settled_population
     first, last = window(start, end)
     date_query = {'$gte': first, '$lt': (date.fromisoformat(last)+timedelta(days=1)).isoformat()}
     entries = {}
@@ -45,6 +46,9 @@ async def read(s, query, user, start=None, end=None, scope: Literal['active', 'h
                 raise ValueError()
         except (ValueError, TypeError):
             raise HTTPException(422, 'Choose a valid overdue cutoff date.')
+    # A pending move can leave the selected date/status window. Refuse it before
+    # filtering, rather than publishing an apparently complete but partial grid.
+    await require_settled_population(s.db, query, collections=('reviews', 'vendors'))
 
     def add(row, kind, historical=False):
         value = item(row, kind, user, s.CLOSED, historical)
@@ -62,6 +66,7 @@ async def read(s, query, user, start=None, end=None, scope: Literal['active', 'h
         if len(rows) > 5000:
             raise HTTPException(413, 'Too many Calendar entries. Choose a shorter period; no partial results are shown.')
         for row in rows:
+            assert_settled(row)
             add(row, kind)
     # A Finding with an active Action is represented by that Action in work counts (both stay on the grid).
     finding_ids = [v['id'] for v in entries.values() if v['kind'] == 'finding']
@@ -76,12 +81,13 @@ async def read(s, query, user, start=None, end=None, scope: Literal['active', 'h
         history = await s.db.reviews.aggregate([
             {'$match': {**query, 'occurrences': {'$elemMatch': {'due_date': date_query}}}},
             {'$unwind': '$occurrences'}, {'$match': {'occurrences.due_date': date_query}},
-            {'$project': {'_id': 0, 'client_id': 1, 'review_id': 1, **dict.fromkeys(['occurrences.'+f for f in fields], 1)}},
+            {'$project': {'_id': 0, 'client_id': 1, 'review_id': 1, '_r4_context_pending': 1, **dict.fromkeys(['occurrences.'+f for f in fields], 1)}},
             {'$limit': 5001},
         ]).to_list(5001)
         if len(history) > 5000:
             raise HTTPException(413, 'Too many historical Calendar entries. Choose a shorter period.')
         for parent in history:
+            assert_settled(parent)
             occurrence = parent['occurrences']
             if occurrence.get('client_id') not in (None,parent['client_id']) or occurrence.get('review_id') not in (None,parent['review_id']):
                 continue
@@ -91,19 +97,22 @@ async def read(s, query, user, start=None, end=None, scope: Literal['active', 'h
     for value in sorted(entries.values(), key=lambda r: (r['due_date_iso'],r['historical'],r['title'] or '',r['key'])):
         result[value['kind']+'s'].setdefault(value['due_date_iso'][:10], []).append(value)
     # Existing derived Vendor dates are read-only, alongside their linked Reviews.
-    fields = ['vendor_id','client_id','name','status','business_owner_id','assurance_records','contract_renewal','contract_notice_deadline']
+    fields = ['vendor_id','client_id','name','status','business_owner_id','assurance_records','contract_renewal','contract_notice_deadline','_r4_context_pending']
     vendor_dates = [{field:date_query} for field in ('assurance_records.next_follow_up','assurance_records.refresh_due','contract_renewal','contract_notice_deadline')]
     if overdue_before and scope!='history':
         vendor_dates.extend({field:{'$gte':'0001-01-01','$lt':overdue_before}} for field in ('assurance_records.next_follow_up','assurance_records.refresh_due'))
     vendors = await s.db.vendors.find({**query, 'status':{'$nin':['inactive','terminated']}, '$or':vendor_dates}, {'_id':0, **dict.fromkeys(fields,1)}).to_list(5001)
     if len(vendors)>5000:
         raise HTTPException(413, 'Too many Vendor Calendar records; no partial results are shown.')
+    for vendor in vendors:
+        assert_settled(vendor)
     vendor_ids = [v['vendor_id'] for v in vendors]
-    reviews = await s.db.reviews.find({**query, 'vendor_id':{'$in':vendor_ids}, 'status':{'$nin':s.CLOSED['reviews']}}, {'_id':0,'vendor_id':1,'client_id':1,'vendor_purpose':1,'due_date':1}).to_list(5001) if vendor_ids else []
+    reviews = await s.db.reviews.find({**query, 'vendor_id':{'$in':vendor_ids}, 'status':{'$nin':s.CLOSED['reviews']}}, {'_id':0,'vendor_id':1,'client_id':1,'vendor_purpose':1,'due_date':1,'_r4_context_pending':1}).to_list(5001) if vendor_ids else []
     if len(reviews)>5000:
         raise HTTPException(413, 'Too many linked Vendor Reviews; no partial results are shown.')
     linked_by_vendor = {}
     for review in reviews:
+        assert_settled(review)
         linked_by_vendor.setdefault((review['client_id'],review['vendor_id']),[]).append(review)
     today = day(overdue_before) or date.today()
     def vendor_date(v, kind, due, suffix, label, **extra):

@@ -4,7 +4,7 @@ import {FRAMEWORKS,frameworkCatalog} from './frameworks';
 export const SHARED_CLIENT_ROUTES = Object.freeze([
   '/dashboard','/calendar','/reviews','/action-items','/risks','/policies','/vendors','/ai-governance',
 ]);
-const TARGET_FRAMEWORKS = ['iso-27001','soc-2'];
+const TARGET_FRAMEWORKS = ['iso-27001','soc-2','hipaa','nist-csf-2','cmmc'];
 const object = value => !!value && typeof value === 'object' && !Array.isArray(value);
 export const sharedClientRoute = pathname => SHARED_CLIENT_ROUTES.includes(pathname);
 export const sharedAppearanceClientRoute = pathname => sharedClientRoute(pathname)
@@ -36,7 +36,8 @@ export function sharedClientPrograms(client) {
     }
     const saved=settings?.[frameworkKey];
     if (saved!==undefined && !object(saved)) continue;
-    const configuration=frameworkKey==='soc-2'?{categories:['security'],...saved}:{...saved};
+    const configuration=frameworkKey==='soc-2'?{categories:['security'],...saved}:frameworkKey==='cmmc'?{level:2,...saved}:{...saved};
+    if(frameworkKey==='cmmc'&&![1,2].includes(configuration.level))continue;
     if (frameworkKey==='soc-2' && (!Array.isArray(configuration.categories)
       || !configuration.categories.includes('security')
       || new Set(configuration.categories).size!==configuration.categories.length
@@ -46,8 +47,7 @@ export function sharedClientPrograms(client) {
   return programs;
 }
 
-export const sharedExperienceEligible = context => cisIdentityEligible(context)
-  && sharedClientPrograms(context.currentClient).length>0;
+export const sharedExperienceEligible = context => cisIdentityEligible(context);
 
 // Common appearance does not imply enrollment or activate framework-specific commands.
 export const sharedAppearanceEligible = context => cisIdentityEligible(context);

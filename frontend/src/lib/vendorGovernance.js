@@ -3,6 +3,15 @@ export const VENDOR_WINDOW_DAYS = 90;
 export const ASSURANCE_TYPES = ['SOC 2','ISO 27001','Security Questionnaire','Penetration Test Summary','Cyber Insurance','PCI Attestation','Other'];
 export const VENDOR_PURPOSES = {vendor:'Vendor Review',assurance:'Security Assurance Review',contract:'Contract Renewal Review',offboarding:'Offboarding Review'};
 export const VENDOR_DATA_TYPES = ['No Sensitive Data','Internal','Confidential','PII','PHI','Financial','Customer Data','Employee Data','Credentials','Source Code / IP','Operational Data','Privileged Access','Network / System Access','API / Integration Access','Other'];
+// Mirror the native lifecycle choices; the server validates the saved transition.
+const VENDOR_NEXT_STATUSES = {
+  onboarding: ['under_review','offboarding'],
+  under_review: ['active','offboarding'],
+  active: ['under_review','offboarding'],
+  offboarding: ['inactive'],
+  inactive: [],
+};
+export const vendorStatusOptions = current => [current, ...(Object.hasOwn(VENDOR_NEXT_STATUSES,current) ? VENDOR_NEXT_STATUSES[current] : [])].filter(Boolean);
 export function assuranceStatus(v,a,today=new Date()) {
   if(!v.assurance_required||a.required===false) return 'not_required';
   if(!a.evidence_ids?.length||!a.received_at||!a.refresh_due) return 'missing';

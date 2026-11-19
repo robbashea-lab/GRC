@@ -20,10 +20,10 @@ export function BrawndoPageHeader({eyebrow,title,subtitle,children,renderThemeAc
 }
 // tiles: [{id,label,count,tone:'critical'|'attention'|'good'|'neutral',context,onClick?,pressed?}]
 export function BrawndoTiles({tiles,label='Summary',loading}){
-  return <div className="bpage-tiles" role="group" aria-label={label}>{tiles.map(t=>{
-    const cls=`bpage-tile is-${t.count||t.tone==='neutral'?t.tone:'clear'}`,body=<><span className="bpage-tile-label">{t.label}</span><strong className="bpage-tile-value">{loading?'—':t.count}</strong><span className="bpage-tile-context">{loading?'Loading…':t.context}</span></>;
+  return <div className="reg-kstrip native-summary" data-native-summary><div className="kstrip" role="group" aria-label={label}>{tiles.map(t=>{
+    const cls=`kchip is-${t.count||t.tone==='neutral'?t.tone:'clear'}`,body=<><b className="num" style={{color:t.count?({critical:'var(--alert)',attention:'var(--warn)',good:'var(--ok)'})[t.tone]:undefined}}>{loading?'—':t.count}</b><span className="kl">{t.label}</span><span className="kc">{loading?'Loading…':t.context}</span></>;
     return t.onClick?<button key={t.id} type="button" className={cls} aria-pressed={!!t.pressed} disabled={loading} onClick={t.onClick} data-testid={`tile-${t.id}`}>{body}</button>:<div key={t.id} className={cls} data-testid={`tile-${t.id}`}>{body}</div>;
-  })}</div>;
+  })}</div></div>;
 }
 // chips: [{id,label,count?,pressed,onClick}]
 export function BrawndoChips({chips,label}){

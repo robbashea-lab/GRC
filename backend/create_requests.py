@@ -70,7 +70,7 @@ async def run(db, key, actor, client_id, route, payload, execute):
         raise
     except Exception as exc:
         logging.getLogger(__name__).error("Create recovery pending: %s (%s)", identity, type(exc).__name__)
-        message = "Save is pending recovery. Retry the original save with its Idempotency-Key; do not start a new edit." if route.endswith('/update') else "Create could not finish. Retry the same request with its Idempotency-Key; do not start a new create."
+        message = "Save is pending recovery. Retry the original save; do not start a new edit." if route.endswith(('/update', '/save')) else "Create could not finish. Retry the same request with its Idempotency-Key; do not start a new create."
         raise HTTPException(503, message) from exc
     finally:
         current.reset(context)

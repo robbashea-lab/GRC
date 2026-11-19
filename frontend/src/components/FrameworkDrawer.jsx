@@ -18,6 +18,10 @@ import {assessmentRolloutEligible} from '@/lib/assessmentRolloutEligibility';
 import {selectedClient} from '@/lib/clientSelection';
 import {frameworkCatalog,frameworkDefinition,frameworkWorkspace} from '@/lib/frameworks';
 import {recordUuid} from '@/lib/recordUuid';
+import {frameworkContextRequest,frameworkContextResponse,frameworkContextScope,useFrameworkContextIntent} from '@/lib/frameworkContextIntent';
+import {clientDestination} from '@/lib/clientSelection';
+import {canOperate} from '@/lib/permissions';
+import {useEvidenceDownload} from '@/lib/evidenceContext';
 import policyCatalog from '@catalogs/onboardingCatalog.json';
 import {actionStatus} from '@/lib/actionItems';
 import {SCHEMAS} from '@/lib/schemas';
@@ -33,6 +37,14 @@ import FrameworkContext from './FrameworkContext';
 import {operatorStatuses,operatorProgram,STATUS_HELP} from '@/lib/frameworkOperator';
 import FrameworkReviewSetup from './FrameworkReviewSetup';
 import FrameworkAssessmentWorkspace from './FrameworkAssessmentWorkspace';
+import AssessmentItems from './AssessmentItems';
+import GenericGuidedAssessor from './GenericGuidedAssessor';
+import R4AssessmentContext from './R4AssessmentContext';
+import R4FrameworkSource from './R4FrameworkSource';
+import {genericGuidedFramework} from '@/lib/genericGuidedAssessment';
+import {cmmcRequirementPresentation} from '@/lib/cmmcScope';
+import {OMNI_ESCAPE_EVENT} from './OmniWindow';
+import './R4Framework.css';
 import {cisVisualRecordMatches} from '@/lib/brawndoCisVisual';
 import BrawndoCisSafeguard from './BrawndoCisSafeguard';
 import PrestigeSocAssessment from './PrestigeSocAssessment';
@@ -69,6 +81,17 @@ export default function FrameworkDrawer({open,onOpenChange,record,clientId,onSav
     user?.role==='client_contributor' && record?.owner_id===user?.user_id;
   const [tab,setTab]=useState(recordManagement&&record.framework_key==='iso-27001'?'Related':''),[form,setForm]=useState(record),[ctx,setCtx]=useState(null),[error,setError]=useState(''),[busy,setBusy]=useState(false),[revision,setRevision]=useState(0),[nested,setNested]=useState(null),[comment,setComment]=useState(''),[finding,setFinding]=useState(null),[link,setLink]=useState({kind:'risks',id:''});
   const [reviewDraft,setReviewDraft]=useState(false),[guidedDraft,setGuidedDraft]=useState(false);
+  const [coordination,setCoordination]=useState(null),[contextDraft,setContextDraft]=useState(false);
+  const contextIdentity={mode:workspaceMode,actorId:user?.user_id,clientId,frameworkKey,assessmentId:aid};
+  const contextCommand=useFrameworkContextIntent(contextIdentity),contextSubmission=useRef(null);
+  const guardedDownload=useEvidenceDownload(clientId,aid,open);
+  const contextOwner=JSON.stringify([frameworkContextScope(contextIdentity),user?.role,user?.status,user?.updated_at,user?.client_ids,user?.all_clients]);
+  const activeContextOwner=useRef(contextOwner),activeContextOperation=useRef(null);activeContextOwner.current=contextOwner;
+  useEffect(()=>{
+    activeContextOwner.current=contextOwner;
+    if(activeContextOperation.current&&activeContextOperation.current!==contextOwner){activeContextOperation.current=null;setBusy(false);}
+    return()=>{if(activeContextOwner.current===contextOwner)activeContextOwner.current=null;};
+  },[contextOwner]);
   const [controlDraft,setControlDraft]=useState(false);
   const [itemsDraft,setItemsDraft]=useState(false);
   const [stagedImplementationForm,setStagedImplementationForm]=useState(null);
@@ -76,7 +99,7 @@ export default function FrameworkDrawer({open,onOpenChange,record,clientId,onSav
   const [assessmentSurface,setAssessmentSurface]=useState(null);
   const pendingFocus=useRef(null),restorePilotFocus=useRef(false);
   const guideConfiguration=useRef(null);
-  const liveGuideContext=prototype&&ctx?.current?.framework_assessment_id===aid&&ctx.current.client_id===clientId&&ctx.current.framework_key===record.framework_key?ctx:null;
+  const liveGuideContext=ctx?.current?.framework_assessment_id===aid&&ctx.current.client_id===clientId&&ctx.current.framework_key===record.framework_key?ctx:null;
   const liveCisContext=brawndoCis?liveGuideContext:null;
   const cisVisualReference=!!visualOriginKey&&cisVisualRecordMatches(record,liveCisContext,visualOriginKey);
   // Appearance follows this live, verified opener only; it grants no native write permission.
@@ -85,7 +108,7 @@ export default function FrameworkDrawer({open,onOpenChange,record,clientId,onSav
   if(liveGuideContext)guideConfiguration.current={client_id:clientId,assessment_id:aid,framework_key:record.framework_key,configuration:liveGuideContext.configuration};
   // Keep only this identity's guide mounted on context failure; saving still requires live context.
   const guidedConfiguration=ctx===null?guideConfiguration.current?.configuration:null;
-  const dirty=JSON.stringify(form)!==JSON.stringify(savedForm),linkDraft=recordManagement&&!!link.id;
+  const dirty=JSON.stringify(form)!==JSON.stringify(savedForm)||!!coordination||contextDraft,linkDraft=recordManagement&&!!link.id;
   const leave=useCallback(fn=>{
     if(busy)return;
     if(dirty||guidedDraft||reviewDraft||controlDraft||itemsDraft||finding||comment.trim()||linkDraft){
@@ -140,7 +163,14 @@ export default function FrameworkDrawer({open,onOpenChange,record,clientId,onSav
     }).catch(e=>{if(!c.signal.aborted)setError(formatError(e));});
     return()=>c.abort();
   },[contextLoaded,clientId,aid,tab,link.kind,reviewDraft,revision]);
-  async function run(fn){setBusy(true);setError('');try{await fn();setRevision(n=>n+1);onSaved?.();return true;}catch(e){setError(formatError(e));return false;}finally{setBusy(false);}}
+  async function run(fn,owner=null){
+    const live=()=>owner===null||activeContextOwner.current===owner;
+    if(owner!==null)activeContextOperation.current=owner;
+    setBusy(true);setError('');
+    try{await fn();if(!live())return false;setRevision(n=>n+1);onSaved?.();return true;}
+    catch(e){if(live())setError(formatError(e));return false;}
+    finally{if(live()){if(owner!==null&&activeContextOperation.current===owner)activeContextOperation.current=null;setBusy(false);}}
+  }
   const put=(key,value)=>{setFeedback('');setForm(p=>({...p,[key]:value,...(p.guided_assessment_source&&['status','implementation'].includes(key)?{guided_assessment_source:undefined}:{}),...(brawndoCis&&p.cis_operation&&['owner_id','process_owner_id','implementation'].includes(key)?{cis_operation:{...p.cis_operation,confirmed:false}}:{})}));};
   const applyGuided=values=>{setForm(p=>({...p,...values,...(p.cis_operation?{cis_operation:{...p.cis_operation,confirmed:false}}:{})}));setGuidedDraft(false);setFeedback('Guided pilot applied to draft. Review and Save assessment; verification is unchanged.');};
   const stageGuidedImplementation=(text,expected)=>{
@@ -151,7 +181,41 @@ export default function FrameworkDrawer({open,onOpenChange,record,clientId,onSav
     setFeedback('Omni answer is saved to the interview. Current implementation remains a draft until Save assessment. Status and verification are unchanged.');return true;
   };
   const guidedSavePending=useRef(false);
-  const nativeSnapshot=useRef(null);nativeSnapshot.current={form,savedForm,busy,writable,guidedContextAvailable:!!liveGuideContext,relatedDraft:itemsDraft||reviewDraft||controlDraft||itemsDraft||!!finding||!!comment.trim()||linkDraft};
+  async function patchAssessment(body){
+    if(contextDraft)throw new Error('Apply or discard context edits before saving the assessment.');
+    const payload=coordination?{...body,coordination}:body;
+    if(!coordination&&!contextCommand.unconfirmed())return api.patch('/framework_assessments/'+aid,payload);
+    if(!frameworkContextResponse(record,contextIdentity))throw new Error('The assessment identity does not match this client workspace.');
+    if(!contextCommand.unconfirmed())contextSubmission.current={form:JSON.stringify(form)};
+    const response=await contextCommand('/framework_assessments/'+aid,payload);
+    if(activeContextOwner.current!==contextOwner)throw new Error('This assessment editor has ended. Reopen the current record.');
+    return {...response,contextReceipt:{payload,draft:contextSubmission.current}};
+  }
+  function acceptAssessment(response){
+    const {data,contextReceipt}=response;
+    setSavedForm(data);
+    if(!contextReceipt){setForm(data);return false;}
+    const newerForm=!contextReceipt.draft||JSON.stringify(nativeSnapshot.current.form)!==contextReceipt.draft.form;
+    const newer=newerForm||nativeSnapshot.current.contextDraft
+      ||JSON.stringify(nativeSnapshot.current.coordination)!==JSON.stringify(contextReceipt.payload.coordination);
+    setForm(previous=>newerForm?{...previous,last_saved:data.last_saved,last_assessed:data.last_assessed}:data);
+    setCoordination(previous=>JSON.stringify(previous)===JSON.stringify(contextReceipt.payload.coordination)?null:previous);
+    contextSubmission.current=null;
+    return newer;
+  }
+  async function retryContextSave(){
+    const request=contextCommand.pendingRequest();
+    if(!writable||!canOperate(user)||!frameworkContextResponse(record,contextIdentity)
+      ||!frameworkContextRequest(request,contextIdentity))return false;
+    return run(async()=>{
+      const response=await contextCommand.retry();
+      if(activeContextOwner.current!==contextOwner)throw new Error('This assessment editor has ended. Reopen the current record.');
+      const newer=acceptAssessment({...response,contextReceipt:{payload:request[1],draft:contextSubmission.current}});
+      setFeedback(newer?'The original assessment save is confirmed. Newer edits remain unsaved.':'The original assessment save is confirmed.');
+      await org.refresh?.();
+    },contextOwner);
+  }
+  const nativeSnapshot=useRef(null);nativeSnapshot.current={form,savedForm,coordination,contextDraft,busy,writable,guidedContextAvailable:!!liveGuideContext,relatedDraft:itemsDraft||reviewDraft||controlDraft||itemsDraft||!!finding||!!comment.trim()||linkDraft};
   async function saveGuidedAssessment(values,expected){
     const latest=nativeSnapshot.current;
     const socEnabled=isSoc&&socGuidedEnabled(clientId,user,record.framework_key,ctx?.configuration,record.definition_id);
@@ -167,15 +231,15 @@ export default function FrameworkDrawer({open,onOpenChange,record,clientId,onSav
         const decision=Object.hasOwn(values,'soa_applicability');
         const fields=decision?['soa_applicability','soa_justification']:['implementation','status','guided_assessment_source'];
         const body=Object.fromEntries(fields.map(key=>[key,values[key]]));
-        const {data}=await api.patch('/framework_assessments/'+aid,{...body,expected_last_assessed:latest.savedForm.last_saved||latest.savedForm.last_assessed||null});
-        setForm(data);setSavedForm(data);setCtx(previous=>previous?{...previous,current:{...data,work:previous.current?.work}}:previous);
-        if(!decision)setGuidedDraft(false);
+        const response=await patchAssessment({...body,expected_last_assessed:latest.savedForm.last_saved||latest.savedForm.last_assessed||null});
+        const {data}=response,newer=acceptAssessment(response);setCtx(previous=>previous?{...previous,current:{...data,work:previous.current?.work}}:previous);
+        if(!decision&&!newer)setGuidedDraft(false);
         setFeedback(decision?'Applicability decision saved. Implementation and prior approvals are unchanged.':'Assessment saved. Applicability, verification and linked work are unchanged.');
-      });
+      },coordination||contextCommand.unconfirmed()?contextOwner:null);
       if(socEnabled)return await run(async()=>{
-        const {data}=await api.patch('/framework_assessments/'+aid,{implementation:values.implementation,status:values.status,guided_assessment_source:values.guided_assessment_source,record_assessment:values.status!=='not_assessed',expected_last_assessed:latest.savedForm.last_saved||latest.savedForm.last_assessed||null});
-        setForm(data);setSavedForm(data);setGuidedDraft(false);setFeedback('Assessment saved. Verification and linked work are unchanged.');
-      });
+        const response=await patchAssessment({implementation:values.implementation,status:values.status,guided_assessment_source:values.guided_assessment_source,record_assessment:values.status!=='not_assessed',expected_last_assessed:latest.savedForm.last_saved||latest.savedForm.last_assessed||null});
+        const newer=acceptAssessment(response);if(!newer)setGuidedDraft(false);setFeedback('Assessment saved. Verification and linked work are unchanged.');
+      },coordination||contextCommand.unconfirmed()?contextOwner:null);
       const assessment={...latest.form,implementation:values.implementation,status:values.status,guided_assessment_source:values.guided_assessment_source,...(latest.form.cis_operation?{cis_operation:{...latest.form.cis_operation,confirmed:false}}:{})};
       const success=await save({assessment});
       if(success)setGuidedDraft(false);
@@ -183,8 +247,24 @@ export default function FrameworkDrawer({open,onOpenChange,record,clientId,onSav
     }finally{guidedSavePending.current=false;}
   }
   const who=id=>personLabel(ctx?.users,id,'Not recorded');
-  async function save({recordAssessment=false,assessment=form}={}){return run(async()=>{const body=Object.fromEntries(['status','implementation','technology','notes','na_rationale','owner_id','process_owner_id','addressable_decision','addressable_rationale',...(definition.specification==='annex_control'?['soa_applicability','soa_justification']:[]),...(isCsf?['csf_profile']:[]),...(record.framework_key==='iso-27001'?['iso_assessment_checks']:[]),...(brawndoCis?['verification','cis_assessment_criteria']:prestigeSoc?['verification','soc_assessment_checks']:[])].map(k=>[k,assessment[k]??(k==='csf_profile'?EMPTY_CSF_PROFILE:k==='verification'?'not_verified':['cis_assessment_criteria','soc_assessment_checks','iso_assessment_checks'].includes(k)?[]:k.endsWith('_id')?null:'')]));const {data}=await api.patch(`/framework_assessments/${aid}`,{...body,...(brawndoCis&&assessment.cis_operation?{cis_operation:assessment.cis_operation}:{}),...(assessment.guided_assessment_source&&JSON.stringify(assessment.guided_assessment_source)!==JSON.stringify(savedForm.guided_assessment_source)?{guided_assessment_source:Object.fromEntries(['version','revision','generated_at'].map(k=>[k,assessment.guided_assessment_source[k]]))}:{}),...(isSoc&&recordAssessment?{record_assessment:true}:{}),expected_last_assessed:savedForm.last_saved??savedForm.last_assessed??null});setForm(data);setSavedForm(data);if(brawndoCis||assessment!==form)setCtx(previous=>previous?{...previous,current:{...data,work:previous.current?.work}}:previous);setFeedback(isSoc?(recordAssessment||(data.assessment_recorded_at??null)!==(savedForm.assessment_recorded_at??null)?'Assessment recorded.':'Changes saved; assessment date unchanged.'):'Assessment saved.');});}
-  async function download(e){await run(async()=>{const {data}=await api.get(`/evidence/${e.evidence_id}/download`);const a=document.createElement('a');a.href=data.content_base64.startsWith('data:')?data.content_base64:`data:${data.mime_type};base64,${data.content_base64}`;a.download=data.filename;a.click();});}
+  async function save({recordAssessment=false,assessment=form}={}){
+    if(contextDraft){setError('Apply or discard the context edits before saving the assessment.');return false;}
+    let newer=false;
+    const saved=await run(async()=>{
+      const fields=['status','implementation','technology','notes','na_rationale','owner_id','process_owner_id','addressable_decision','addressable_rationale',...(definition.specification==='annex_control'?['soa_applicability','soa_justification']:[]),...(isCsf?['csf_profile']:[]),...(record.framework_key==='iso-27001'?['iso_assessment_checks']:[]),...(brawndoCis?['verification','cis_assessment_criteria']:prestigeSoc?['verification','soc_assessment_checks']:[])];
+      const body=Object.fromEntries(fields.map(key=>[key,assessment[key]??(key==='csf_profile'?EMPTY_CSF_PROFILE:key==='verification'?'not_verified':['cis_assessment_criteria','soc_assessment_checks','iso_assessment_checks'].includes(key)?[]:key.endsWith('_id')?null:'')]));
+      if(brawndoCis&&assessment.cis_operation)body.cis_operation=assessment.cis_operation;
+      if(assessment.guided_assessment_source&&JSON.stringify(assessment.guided_assessment_source)!==JSON.stringify(savedForm.guided_assessment_source))body.guided_assessment_source=Object.fromEntries(['version','revision','generated_at'].map(key=>[key,assessment.guided_assessment_source[key]]));
+      if(isSoc&&recordAssessment)body.record_assessment=true;
+      body.expected_last_assessed=savedForm.last_saved??savedForm.last_assessed??null;
+      const response=await patchAssessment(body),{data}=response;
+      newer=acceptAssessment(response);
+      if(brawndoCis||assessment!==form)setCtx(previous=>previous?{...previous,current:{...data,work:previous.current?.work}}:previous);
+      setFeedback(newer?'The original assessment save is confirmed. Newer edits remain unsaved.':isSoc?(recordAssessment||(data.assessment_recorded_at??null)!==(savedForm.assessment_recorded_at??null)?'Assessment recorded.':'Changes saved; assessment date unchanged.'):'Assessment saved.');
+    },coordination||contextCommand.unconfirmed()?contextOwner:null);
+    return saved&&!newer;
+  }
+  async function download(e){await run(()=>guardedDownload(e),contextOwner);}
   const current=(prototype?liveGuideContext?.current:ctx?.current)||(prototype&&savedForm.client_id===clientId&&savedForm.framework_assessment_id===aid&&savedForm.framework_key===record.framework_key?savedForm:record),related=ctx?.related||{};
   const rolloutPresentation=assessmentRolloutEligible({clientId,record,current,ctx,user});
   const pilotPresentation=pilotContextOnly&&cisVisualReference&&brawndoAssessmentPilotEligible({demoMode:PREVIEW_MODE,
@@ -215,6 +295,9 @@ export default function FrameworkDrawer({open,onOpenChange,record,clientId,onSav
     setFinding({request_id:recordUuid(),item_id:item.item_id,title,description:item.text+(item.resolution?'\n\nRecorded resolution: '+item.resolution:''),severity:'medium',owner_id:current.owner_id||'',due_date:'',remediation_title:title});
   }
   async function saveOwner(){return run(async()=>{const {data}=await api.patch(`/framework_assessments/${aid}`,{owner_id:form.owner_id||null,...(record.framework_key==='iso-27001'?{process_owner_id:form.process_owner_id||null}:{}),expected_last_assessed:savedForm.last_saved??savedForm.last_assessed??null});setForm(data);setSavedForm(data);setFeedback('Changes saved.');});}
+  const retainedContext=frameworkContextRequest(contextCommand.pendingRequest(),contextIdentity);
+  const recoveryUrl=clientDestination(clientId,`/compliance/${encodeURIComponent(frameworkKey)}?assessment=${encodeURIComponent(aid)}`);
+  const contextEditor=<>{retainedContext&&writable&&canOperate(user)&&<section className="panel space-y-2" aria-label="Unconfirmed assessment save"><p>The original assessment and shared-context save is unconfirmed. Retry sends only that original request; newer assessment edits remain in this draft.</p><Button variant="outline" disabled={busy} onClick={retryContextSave}>Retry unconfirmed assessment save</Button><p><a href={recoveryUrl} onClick={event=>{event.preventDefault();leave(()=>window.location.assign(recoveryUrl));}}>Open assessment recovery</a></p></section>}{!recordManagement&&!reviewManagement&&ctx&&<><R4FrameworkSource framework={record.framework_key} definition={definition} configuration={ctx.configuration}/><R4AssessmentContext key={aid} record={record} disabled={busy||contextCommand.unconfirmed()||!['super_admin','platform_admin'].includes(user?.role)} value={coordination} onApply={setCoordination} onDraftChange={setContextDraft}/></>}</>;
   const overlays=<><AlertDialog open={!!pending} onOpenChange={v=>{if(!v)cancelLeave();}}>
     <AlertDialogContent {...pilotDialogProps}>
       <AlertDialogTitle>{pilotPresentation?'Unsaved changes':'Leave unsaved changes?'}</AlertDialogTitle>
@@ -225,9 +308,9 @@ export default function FrameworkDrawer({open,onOpenChange,record,clientId,onSav
       </AlertDialogFooter>
     </AlertDialogContent>
   </AlertDialog>{nested&&<RecordDrawer {...nested} open clientId={clientId} users={ctx?.users||[]} cisVisualOrigin={nestedCisVisualOrigin} schema={SCHEMAS[nested.kind]?.fields} onOpenChange={v=>{if(!v){setNested(null);setRevision(n=>n+1);}}} onSaved={()=>{setRevision(n=>n+1);onSaved?.();}}/>}</>;
-  if(recordManagement||reviewManagement)return <><FrameworkRecordAccess reviewsOnly={reviewManagement} state={{isoView,assessmentRollout:rolloutPresentation,open,current,definition,catalog,ctx,form,dirty,busy,error,feedback,writable,comment,link}} controlsManagement={current.framework_key==='iso-27001'&&!reviewManagement?<OrganizationalControls clientId={current.client_id} onDraftChange={setControlDraft} onSaved={()=>{setRevision(n=>n+1);onSaved?.();}}/>:undefined} actions={{put,saveOwner,run,setComment,setLink,setNested,setReviewDraft,close:()=>leave(()=>onOpenChange(false)),openReviews:url=>leave(()=>onReviews?.(url)),reviewSaved:()=>{setRevision(n=>n+1);onSaved?.();setFeedback('Review linked.');}}}/>{overlays}</>;
-if(prototype)return <>{brawndoCis?<BrawndoCisSafeguard state={{assessmentRollout:rolloutPresentation,visualReference:cisVisualReference,directProgramOpener:visualReference===true,pilotSurfaceRef:setAssessmentSurface,pilotPortalContainer:assessmentSurface,manageRecord:onManage?()=>leave(onManage):undefined,open,record,definition,form,current,ctx:liveCisContext,guidedConfiguration,related,finding,error,busy,dirty,focusedImplementationOnly:stagedImplementationForm===JSON.stringify(form),feedback,writable,position,otherDraft:itemsDraft||guidedDraft||reviewDraft||!!finding,breadcrumb:breadcrumb?.map(c=>c.onClick?{...c,onClick:()=>leave(c.onClick)}:c)}} actions={{itemsSaved,createItemFinding,setItemsDraft,put,save,run,download,applyGuided,saveGuidedAssessment,stageGuidedImplementation,setGuidedDraft,setFinding,setNested,setFeedback,setReviewDraft,reviewSaved:()=>{setRevision(n=>n+1);onSaved?.();setFeedback('Review linked.');},retry:()=>setRevision(n=>n+1),close:()=>leave(()=>onOpenChange(false)),previous:onPrevious?()=>leave(onPrevious):null,next:onNext?()=>leave(onNext):null,saveAndNext:onNext?async()=>{if(!itemsDraft&&!guidedDraft&&!reviewDraft&&!finding&&await save())onNext();}:null}}/>:prestigeSoc?<PrestigeSocAssessment state={{isoView,assessmentRollout:rolloutPresentation,pilotSurfaceRef:setAssessmentSurface,pilotPortalContainer:assessmentSurface,manageRecord:onManage?()=>leave(onManage):undefined,focusedImplementationOnly:stagedImplementationForm===JSON.stringify(form),open,record,definition,form,current,ctx,guidedConfiguration,error,busy,dirty,relatedDraft:itemsDraft||reviewDraft||controlDraft||!!finding||!!comment.trim()||linkDraft,otherDraft:itemsDraft||guidedDraft||reviewDraft||controlDraft||!!finding||!!comment.trim(),feedback,writable,position,related,finding,breadcrumb:breadcrumb?.map(c=>c.onClick?{...c,onClick:()=>leave(c.onClick)}:c)}} actions={{itemsSaved,createItemFinding,setItemsDraft,put,save,stageGuidedImplementation,saveGuidedAssessment,setGuidedDraft,run,download,setFinding,setNested,setFeedback,retry:()=>setRevision(n=>n+1),close:()=>leave(()=>onOpenChange(false)),previous:onPrevious?()=>leave(onPrevious):null,next:onNext?()=>leave(onNext):null,saveAndNext:onNext?async()=>{if(!itemsDraft&&!guidedDraft&&!reviewDraft&&!controlDraft&&!finding&&!comment.trim()&&await save())onNext();}:null}}/>:<FrameworkAssessmentWorkspace
-    state={{isoView,assessmentRollout:rolloutPresentation,pilotSurfaceRef:setAssessmentSurface,pilotPortalContainer:assessmentSurface,manageRecord:onManage?()=>leave(onManage):undefined,focusedImplementationOnly:stagedImplementationForm===JSON.stringify(form),open,record,definition,catalog,form,current,ctx,guidedConfiguration,related,error,busy,dirty,feedback,writable,comment,finding,tab,position,link,breadcrumb:breadcrumb?.map(c=>c.onClick?{...c,onClick:()=>leave(c.onClick)}:c),otherDraft:itemsDraft||guidedDraft||reviewDraft||controlDraft||!!finding||!!comment.trim(),relatedDraft:itemsDraft||reviewDraft||controlDraft||!!finding||!!comment.trim()}}
+  if(recordManagement||reviewManagement)return <><FrameworkRecordAccess reviewsOnly={reviewManagement} state={{contextEditor,isoView,assessmentRollout:rolloutPresentation,open,current,definition,catalog,ctx,form,dirty,busy,error,feedback,writable,comment,link}} controlsManagement={current.framework_key==='iso-27001'&&!reviewManagement?<OrganizationalControls clientId={current.client_id} onDraftChange={setControlDraft} onSaved={()=>{setRevision(n=>n+1);onSaved?.();}}/>:undefined} actions={{put,saveOwner,run,setComment,setLink,setNested,setReviewDraft,close:()=>leave(()=>onOpenChange(false)),openReviews:url=>leave(()=>onReviews?.(url)),reviewSaved:()=>{setRevision(n=>n+1);onSaved?.();setFeedback('Review linked.');}}}/>{overlays}</>;
+if(prototype)return <>{brawndoCis?<BrawndoCisSafeguard state={{contextEditor,assessmentRollout:rolloutPresentation,visualReference:cisVisualReference,directProgramOpener:visualReference===true,pilotSurfaceRef:setAssessmentSurface,pilotPortalContainer:assessmentSurface,manageRecord:onManage?()=>leave(onManage):undefined,open,record,definition,form,current,ctx:liveCisContext,guidedConfiguration,related,finding,error,busy,dirty,focusedImplementationOnly:stagedImplementationForm===JSON.stringify(form),feedback,writable,position,otherDraft:itemsDraft||guidedDraft||reviewDraft||!!finding,breadcrumb:breadcrumb?.map(c=>c.onClick?{...c,onClick:()=>leave(c.onClick)}:c)}} actions={{itemsSaved,createItemFinding,setItemsDraft,put,save,run,download,applyGuided,saveGuidedAssessment,stageGuidedImplementation,setGuidedDraft,setFinding,setNested,setFeedback,setReviewDraft,reviewSaved:()=>{setRevision(n=>n+1);onSaved?.();setFeedback('Review linked.');},retry:()=>setRevision(n=>n+1),close:()=>leave(()=>onOpenChange(false)),previous:onPrevious?()=>leave(onPrevious):null,next:onNext?()=>leave(onNext):null,saveAndNext:onNext?async()=>{if(!itemsDraft&&!guidedDraft&&!reviewDraft&&!finding&&await save())onNext();}:null}}/>:prestigeSoc?<PrestigeSocAssessment state={{contextEditor,isoView,assessmentRollout:rolloutPresentation,pilotSurfaceRef:setAssessmentSurface,pilotPortalContainer:assessmentSurface,manageRecord:onManage?()=>leave(onManage):undefined,focusedImplementationOnly:stagedImplementationForm===JSON.stringify(form),open,record,definition,form,current,ctx,guidedConfiguration,error,busy,dirty,relatedDraft:itemsDraft||reviewDraft||controlDraft||!!finding||!!comment.trim()||linkDraft,otherDraft:itemsDraft||guidedDraft||reviewDraft||controlDraft||!!finding||!!comment.trim(),feedback,writable,position,related,finding,breadcrumb:breadcrumb?.map(c=>c.onClick?{...c,onClick:()=>leave(c.onClick)}:c)}} actions={{itemsSaved,createItemFinding,setItemsDraft,put,save,stageGuidedImplementation,saveGuidedAssessment,setGuidedDraft,run,download,setFinding,setNested,setFeedback,retry:()=>setRevision(n=>n+1),close:()=>leave(()=>onOpenChange(false)),previous:onPrevious?()=>leave(onPrevious):null,next:onNext?()=>leave(onNext):null,saveAndNext:onNext?async()=>{if(!itemsDraft&&!guidedDraft&&!reviewDraft&&!controlDraft&&!finding&&!comment.trim()&&await save())onNext();}:null}}/>:<FrameworkAssessmentWorkspace
+    state={{contextEditor,isoView,assessmentRollout:rolloutPresentation,pilotSurfaceRef:setAssessmentSurface,pilotPortalContainer:assessmentSurface,manageRecord:onManage?()=>leave(onManage):undefined,focusedImplementationOnly:stagedImplementationForm===JSON.stringify(form),open,record,definition,catalog,form,current,ctx,guidedConfiguration,related,error,busy,dirty,feedback,writable,comment,finding,tab,position,link,breadcrumb:breadcrumb?.map(c=>c.onClick?{...c,onClick:()=>leave(c.onClick)}:c),otherDraft:itemsDraft||guidedDraft||reviewDraft||controlDraft||!!finding||!!comment.trim(),relatedDraft:itemsDraft||reviewDraft||controlDraft||!!finding||!!comment.trim()}}
     actions={{itemsSaved,createItemFinding,setItemsDraft,put,save,stageGuidedImplementation,saveGuidedAssessment,setGuidedDraft,run,download,setComment,setFinding,setTab,setNested,setFeedback,setReviewDraft,setLink,setControlDraft,
       controlSaved:()=>{setRevision(n=>n+1);onSaved?.();},
       retry:()=>setRevision(n=>n+1),close:()=>leave(()=>onOpenChange(false)),
@@ -235,10 +318,14 @@ if(prototype)return <>{brawndoCis?<BrawndoCisSafeguard state={{assessmentRollout
       saveAndNext:onNext?async()=>{if(!itemsDraft&&!guidedDraft&&!reviewDraft&&!controlDraft&&!finding&&!comment.trim()&&await save())onNext();}:null,
       reviewSaved:()=>{setRevision(n=>n+1);onSaved?.();setFeedback('Review linked.');}}}
   />}{overlays}</>;
-  return <><Sheet open={open} onOpenChange={v=>{if(!v)leave(()=>onOpenChange(false));}}><SheetContent className="w-full sm:max-w-3xl overflow-y-auto bg-surface-card" data-testid="framework-drawer"><SheetHeader><SheetTitle>{program} {definition.id} · {definition.title}</SheetTitle><SheetDescription>Assess the scoped implementation, link evidence and follow remediation.</SheetDescription></SheetHeader>
+  const displayDefinition=record.framework_key==='cmmc'?cmmcRequirementPresentation(definition,ctx?.configuration):definition;
+  return <><Sheet open={open} onOpenChange={v=>{if(!v)leave(()=>onOpenChange(false));}}><SheetContent ref={setAssessmentSurface} className="w-full sm:max-w-3xl overflow-y-auto bg-surface-card" data-testid="framework-drawer" data-assessment-shell onEscapeKeyDown={event=>{const guide=assessmentSurface?.querySelector('.omni-workspace-window');if(guide){event.preventDefault();event.stopPropagation();guide.dispatchEvent(new Event(OMNI_ESCAPE_EVENT));}}}><SheetHeader><SheetTitle>{program} {displayDefinition.id} · {displayDefinition.title}</SheetTitle><SheetDescription>Assess the scoped implementation, link evidence and follow remediation.</SheetDescription></SheetHeader>
     <div className="sticky top-0 z-10 bg-surface-card py-2 flex flex-wrap items-center justify-between gap-2 mt-3"><div className="text-xs text-ink-secondary"><p>{position||'Assessment record'}</p><p className="font-medium text-ink-primary mt-1" aria-label="Saved conclusion">Saved assessment: {statuses[current.status]||'Status not recorded'}</p><p>Owner: {current.owner_id?who(current.owner_id):'Unassigned'} · Last assessed: {current.last_assessed?.slice(0,10)||'Not assessed'}</p></div><div className="flex gap-1"><Button variant="ghost" size="sm" disabled={!onPrevious||busy} onClick={()=>leave(onPrevious)}>Previous</Button><Button variant="ghost" size="sm" disabled={!onNext||busy} onClick={()=>leave(onNext)}>Next</Button></div></div>
     {!ctx&&!error&&<p role="status" className="text-xs text-ink-secondary mb-3">Loading linked work…</p>}
     {error&&<p role="alert" className="text-sm text-semantic-critical mb-3">{error}</p>}
+    {genericGuidedFramework(record.framework_key)&&ctx&&<GenericGuidedAssessor key={aid} record={record} disabled={!writable||busy} onDraftChange={setGuidedDraft} onApply={values=>{setForm(previous=>({...previous,...values}));setGuidedDraft(false);setFeedback('Implementation proposal applied to the draft. Save assessment commits it.');}}/>}
+    {contextEditor}
+    {genericGuidedFramework(record.framework_key)&&ctx&&<AssessmentItems record={current} ctx={ctx} disabled={!writable||busy} onDraftChange={setItemsDraft} onSaved={itemsSaved} onCreateFinding={createItemFinding}/>}
     {<div className="space-y-4"><FrameworkContext framework={record.framework_key} definition={definition} catalog={catalog} related={related} loading={!ctx}/><FrameworkReviewSetup record={current} definition={definition} catalog={catalog} reviews={ctx?.options.reviews||[]} users={ctx?.users||[]} clientId={clientId} writable={writable&&!busy&&!!ctx} onDraftChange={setReviewDraft} onOpen={r=>setNested({kind:'reviews',record:r})} onSaved={()=>{setRevision(n=>n+1);onSaved?.();setFeedback('Review linked.');}}/><fieldset disabled={!writable||busy||!ctx} className="space-y-4"><label className="block text-sm font-medium">Assessment<select aria-label="Assessment Status" aria-describedby="assessment-status-help" className={SELECT} value={form.status} onChange={e=>put('status',e.target.value)}>{Object.entries(statuses).map(([v,label])=><option key={v} value={v}>{label}</option>)}</select></label><p id="assessment-status-help" className="text-xs text-ink-secondary">{STATUS_HELP[form.status]}</p><label className="block text-sm">Assessment notes<Textarea aria-label="Assessment notes" placeholder="Current practice, scope, observations, evidence reviewed and the reason for this assessment." maxLength={20000} value={form.implementation||''} onChange={e=>put('implementation',e.target.value)}/></label>{definition.specification==='addressable'&&<div className="space-y-3"><p className="text-sm">{definition.decision_guidance}</p><label className="block text-sm">Addressability decision<select aria-label="Addressability decision" className={SELECT} value={form.addressable_decision||''} onChange={e=>put('addressable_decision',e.target.value)}><option value="">Not yet determined</option><option value="as_written">Implement as written</option><option value="equivalent_alternative">Equivalent alternative</option><option value="not_reasonable_appropriate">Neither is reasonable and appropriate</option></select></label><label className="block text-sm">Decision rationale<Textarea aria-label="Decision rationale" maxLength={4000} value={form.addressable_rationale||''} onChange={e=>put('addressable_rationale',e.target.value)}/></label></div>}{definition.specification==='annex_control'&&<section className="space-y-3 border border-line rounded p-3"><h3 className="text-sm font-semibold">Statement of Applicability</h3><p className="text-xs text-ink-secondary">Selection follows risk treatment. Document why the control is included or excluded; link Risks, Policies, Reviews and Evidence through Linked records below. Exclusion requires Not Applicable status.</p><label className="block text-sm">SoA applicability<select aria-label="SoA applicability" className={SELECT} value={form.soa_applicability||''} onChange={e=>put('soa_applicability',e.target.value)}><option value="">Not yet determined</option><option value="included">Included</option><option value="excluded">Excluded</option></select></label><label className="block text-sm">SoA justification<Textarea aria-label="SoA justification" maxLength={4000} value={form.soa_justification||''} onChange={e=>put('soa_justification',e.target.value)}/></label></section>}<div className="space-y-3 mt-3"><label className="block text-sm">Technology / Products<Input aria-label="Technology / Products" value={form.technology||''} onChange={e=>put('technology',e.target.value)}/></label><div className="grid sm:grid-cols-2 gap-3"><div className="text-sm">Assessment Owner<AssigneeSelect clientId={clientId} label="Assessment Owner" value={form.owner_id} onChange={v=>put('owner_id',v)} users={ctx?.users||[]} disabled={!writable||busy}/></div><label className="block text-sm">Process Owner (Contact)<select aria-label="Process Owner (Contact)" className={SELECT} value={form.process_owner_id||''} onChange={e=>put('process_owner_id',e.target.value||null)}><option value="">Unassigned</option>{ctx?.contacts.map(c=><option key={c.contact_id} value={c.contact_id}>{c.name}</option>)}</select><span className="block mt-1.5 text-xs text-ink-secondary">Business responsibility only; does not grant platform access.</span></label></div>{form.notes&&<><label className="block text-sm">Additional notes (previously recorded)<Textarea aria-label="Additional notes (previously recorded)" value={form.notes} onChange={e=>put('notes',e.target.value)}/></label><span className="text-xs text-ink-secondary">Retained separately; use Assessment notes for the primary narrative.</span></>}</div>{form.status==='not_applicable'&&definition.specification!=='annex_control'&&<label className="block text-sm">N/A Rationale (required)<Textarea aria-label="N/A Rationale" value={form.na_rationale||''} onChange={e=>put('na_rationale',e.target.value)}/></label>}<p className="text-xs text-ink-muted">Evidence and completed remediation do not change the assessment automatically. Review the result, then save your current conclusion.</p></fieldset>{['in_progress','needs_attention'].includes(form.status)&&<div className="border-t border-line pt-3 text-sm"><p>Record the gap and supporting evidence. A Finding identifies the deficiency; its Action Item manages remediation.</p><div className="flex gap-2 mt-2"><Button variant="outline" onClick={()=>setTab('Evidence')}>Link evidence</Button><Button variant="outline" onClick={()=>setTab('Related')}>Findings &amp; actions</Button></div></div>}</div>}
     {isCsf&&<fieldset disabled={!writable||busy} className="space-y-4"><CsfProfile value={form.csf_profile} current={form} onChange={v=>put('csf_profile',v)}/></fieldset>}
     {['cis-ig1','iso-27001'].includes(record.framework_key)&&<OrganizationalControls clientId={clientId} assessmentId={aid} onDraftChange={setControlDraft} onSaved={()=>{setRevision(n=>n+1);onSaved?.();}}/>}

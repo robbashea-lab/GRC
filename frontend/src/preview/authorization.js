@@ -40,12 +40,18 @@ export function authorizeDemo(db, method, parts, body = {}, requestKey) {
   const user = db.user, role = roleOf(user);
   if (!ROLES.includes(role)) deny('Unsupported role');
   if (method === 'get') return;
+  if(method==='post'&&parts.join('/')==='reports/exports')return; // Native read-equivalent export; handler rechecks tenant/role.
   const route = `${method} /${parts.join('/')}`;
   if (SELF.some(pattern => pattern.test(route))) return;
-  if (role === OWNER) return;
   const target = (db[parts[0]] || []).find(r => r[ids[parts[0]]] === parts[1]);
-  const cid = target?.client_id || body.client_id;
-  if (cid && (db.clients || []).some(c => c.client_id === cid && c.status === 'archived')) deny('Archived clients are read-only; ask a Super Admin to restore the client');
+  const cid = target?.client_id || (parts[0] === 'clients' ? parts[1] : body.client_id);
+  if (cid && (db.clients || []).some(c => c.client_id === cid && c.status === 'archived')) {
+    const restoring = role === OWNER && method === 'patch' && parts[0] === 'clients' && parts.length === 2
+      && ['active','onboarding','inactive'].includes(body.status)
+      && Object.keys(body).every(key => ['status','expected_updated_at'].includes(key));
+    if (!restoring) deny('Archived clients are read-only; ask a Super Admin to restore the client');
+  }
+  if (role === OWNER) return;
   if (role === PROVIDER) {
     if ((method === 'post' && route === 'post /clients') || parts[0] === 'reminders') deny('Platform Owner required');
     return;
@@ -56,6 +62,7 @@ export function authorizeDemo(db, method, parts, body = {}, requestKey) {
   const allowed = (method === 'post' && parts.length === 1 && (generic || ['evidence', 'comments'].includes(kind)))
     || (method === 'patch' && parts.length === 2 && generic)
     || (method === 'post' && kind === 'reviews' && ['start', 'complete', 'create-finding'].includes(action) && parts.length === 3)
+    || (method === 'put' && kind === 'reviews' && action === 'completion-guide' && parts.length === 3)
     || (method === 'patch' && kind === 'reviews' && action === 'iso-audit' && [3,4].includes(parts.length))
     || (method === 'post' && kind === 'framework_assessments' && action === 'findings' && parts.length === 3)
     || (method === 'patch' && kind === 'framework_assessments' && action === 'items' && parts.length === 4);

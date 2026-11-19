@@ -10,7 +10,7 @@ beforeEach(()=>{global.IS_REACT_ACT_ENVIRONMENT=true;container=document.createEl
 afterEach(async()=>{await act(async()=>root.unmount());container.remove();});
 test('approved summary selects the native destination independently of quarter presentation',async()=>{
   const onView=jest.fn();await act(async()=>root.render(<BrawndoDemoReviews rows={[review]} view="all" onView={onView} theme="light"/>));
-  const cards=[...container.querySelectorAll('.kpi')];expect(cards).toHaveLength(4);
+  const cards=[...container.querySelectorAll('.kchip')];expect(cards).toHaveLength(4);
   expect(cards[0].textContent).toContain('Active reviews');expect(cards[0].querySelector('strong').textContent).toBe('1');
   await act(async()=>cards[1].click());expect(onView).toHaveBeenCalledWith('overdue');
   expect(container.querySelector('.bdr-workload')).toBeNull();expect(container.textContent).toContain('Calendar quarter');
@@ -99,8 +99,8 @@ test('legacy missing historical dates and actor never inherit latest parent comp
 });
 test('unavailable summaries use unknown values and keep the chart frame without fabricated zero totals',async()=>{
   await act(async()=>root.render(<BrawndoDemoReviews rows={[]} available={false} view="all" onView={()=>{}} theme="light"/>));
-  expect([...container.querySelectorAll('.kpi strong')].map(node=>node.textContent)).toEqual(['—','—','—','—']);
-  expect([...container.querySelectorAll('.kpi')].every(node=>node.disabled)).toBe(true);expect(container.querySelector('.plot')).toBeTruthy();expect(container.querySelector('.review-dot')).toBeNull();
+  expect([...container.querySelectorAll('.kchip strong')].map(node=>node.textContent)).toEqual(['—','—','—','—']);
+  expect([...container.querySelectorAll('.kchip')].every(node=>node.disabled)).toBe(true);expect(container.querySelector('.plot')).toBeTruthy();expect(container.querySelector('.review-dot')).toBeNull();
 });
 
 test('genuine native controls remain reachable in the compact result-row disclosure',async()=>{

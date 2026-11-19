@@ -13,12 +13,14 @@ import test_ten_year_operation as clocks
 import iso_audit, onboarding_recovery, policy_reviews, review_commands, risk_lifecycle
 from framework_catalog import FRAMEWORKS, active_definitions, active_plans
 from routes.onboarding import BASELINE_CATALOG
+from r4_fixture_inputs import validate_with_independent_actor
 
 server=harness.server
 TIMELINE=json.loads((Path(__file__).resolve().parents[2]/'shared/contracts/program-lifecycle.json').read_text())
 
 
 class FrameworkThreeYearTests(unittest.IsolatedAsyncioTestCase):
+    r4_valid_completion_fixture = True
     sign_in=clocks.TenYearOperationTests.sign_in
 
     async def asyncSetUp(self):
@@ -145,7 +147,11 @@ class FrameworkThreeYearTests(unittest.IsolatedAsyncioTestCase):
                         task=next(t for t in task if t.get('finding_id')==first_finding['finding_id'])
                         original_action=await self.edit('/tasks/'+task['task_id'],{'status':'done'})
                         self.assertEqual((await self.get('/findings/'+first_finding['finding_id']))['status'],'remediated')
-                        first_closed=await self.post('/findings/'+first_finding['finding_id']+'/validate',{'rationale':'Synthetic independent effectiveness check'})
+                        ready=await server.db.findings.find_one({'finding_id':first_finding['finding_id']})
+                        first_closed=(await validate_with_independent_actor(self,server,first_finding['finding_id'],{
+                            'rationale':'Synthetic independent effectiveness check',
+                            'request_id':'three-year-2028-'+first_finding['finding_id'],
+                            'expected_updated_at':ready.get('updated_at')})).json()
                         current=await self.get('/reviews/'+probe['review_id'])
                         self.assertTrue(any(o['due_date'][:10]=='2028-02-29' for o in current['occurrences']))
                         pending=await self.get('/tasks/'+handoff['task_id'])
@@ -167,7 +173,10 @@ class FrameworkThreeYearTests(unittest.IsolatedAsyncioTestCase):
                         pending_validation=await self.get('/findings/'+first_finding['finding_id'])
                         self.assertEqual(pending_validation['status'],'remediated')
                         self.assertEqual(pending_validation['decision_history'],first_closed['decision_history'])
-                        closed=await self.post('/findings/'+first_finding['finding_id']+'/validate',{'rationale':'Synthetic second independent effectiveness check after reopening'})
+                        closed=(await validate_with_independent_actor(self,server,first_finding['finding_id'],{
+                            'rationale':'Synthetic second independent effectiveness check after reopening',
+                            'request_id':'three-year-2029-'+first_finding['finding_id'],
+                            'expected_updated_at':pending_validation.get('updated_at')})).json()
                         self.assertEqual(closed['status'],'closed')
                         self.assertEqual(closed['decision_history'][:len(first_closed['decision_history'])],first_closed['decision_history'])
                         self.assertEqual(len([h for h in closed['decision_history'] if h['action']=='validated']),2)

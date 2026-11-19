@@ -545,15 +545,22 @@ async def _baseline_client(cid, user, writable=False):
     client = await server.db.clients.find_one({'client_id': cid}, {'_id': 0})
     if not client:
         raise HTTPException(404, 'Client not found')
+    import r4_services
+    r4_services.assert_settled(client)
     return client
 
 
 async def baseline_record_versions(cid):
     import server
+    import r4_services
+    scope = {'client_id': cid}
+    # Assessment-only coordinated saves need not claim the client document.
+    await r4_services.require_settled_population(server.db, scope, collections=('reviews', 'framework_assessments'))
     versions = {}
     for group, id_field in [('policies','policy_id'),('requirements','requirement_id'),('reviews','review_id')]:
-        rows = await server.db[group].find({'client_id':cid}, {'_id':0,'title':1,'baseline_key':1,id_field:1,'updated_at':1}).to_list(2001)
+        rows = await server.db[group].find(scope, {'_id':0,'title':1,'baseline_key':1,id_field:1,'updated_at':1,'_r4_context_pending':1}).to_list(2001)
         if len(rows)>2000:raise HTTPException(413,'Setup population is too large; use the operational registers')
+        await r4_services.require_settled_population(server.db, scope, rows=rows)
         for item in BASELINE_CATALOG[group]:
             row = _baseline_match(rows,item)
             versions[group+':'+item['key']] = {id_field:row[id_field],'updated_at':row.get('updated_at')} if row else None
@@ -614,7 +621,8 @@ async def _prepare_baseline(body, user, identity):
         raise HTTPException(400, 'Invalid policy selection')
     framework_governance.validate_configuration(state)
     if previous_baseline:
-        state['framework_settings']={'cis-ig1':client.get('framework_settings',{}).get('cis-ig1',{'implementation_group':1})}
+        state['framework_settings']={**client.get('framework_settings',{}),
+            'cis-ig1':client.get('framework_settings',{}).get('cis-ig1',{'implementation_group':1})}
     if state['version']>=3:
         for item in BASELINE_CATALOG['requirements']:
             state['requirements'].setdefault(item['key'],'does_not_apply')
@@ -690,7 +698,9 @@ async def _prepare_baseline(body, user, identity):
 async def _finish_baseline(identity, plan, user):
     import server
     import framework_governance
+    import r4_services
     cid, state = plan['client_id'], plan['result']
+    r4_services.assert_settled(await server.db.clients.find_one({'client_id': cid}))
     receipt = await server.db.create_requests.find_one({'_id': identity}) if identity else {}
     if plan['finalize'] and not receipt.get('onboarding_reconciled'):
         client = await server.db.clients.find_one({'client_id': cid})
@@ -703,11 +713,13 @@ async def _finish_baseline(identity, plan, user):
     if completion is None:
         updates = {'onboarding_baseline': state}
         if plan['finalize']:
-            updates['framework_settings.cis-ig1'] = state.get('framework_settings', {}).get('cis-ig1', {'implementation_group': 1})
+            saved_settings = {**state.get('framework_settings', {}),
+                'cis-ig1': state.get('framework_settings', {}).get('cis-ig1', {'implementation_group': 1})}
+            updates.update({'framework_settings.' + key: value for key, value in saved_settings.items()})
             source_client = await server.db.clients.find_one({'client_id': cid})
             after_client = {**source_client, 'onboarding_baseline': state,
                 'framework_settings': {**(source_client.get('framework_settings') or {}),
-                    'cis-ig1': updates['framework_settings.cis-ig1']}}
+                    **saved_settings}}
             portfolio_patch, _portfolio_event = server._portfolio_event_patch(
                 'client', cid, cid, user, source_client, after_client, state['updated_at'])
             updates.update(portfolio_patch)
@@ -731,7 +743,8 @@ async def _finish_baseline(identity, plan, user):
     else:
         # Draft saves keep normal optimistic concurrency and never create receipts.
         changed = await server.db.clients.update_one(
-            {'client_id': cid, 'onboarding_baseline.updated_at': plan['expected_updated_at']}, {'$set': completion[0]['values']})
+            {'client_id': cid, '_r4_context_pending': None,
+             'onboarding_baseline.updated_at': plan['expected_updated_at']}, {'$set': completion[0]['values']})
         if not changed.matched_count:
             raise HTTPException(409, 'Record changed since it was opened; reload before saving')
     if plan['finalize']:
@@ -749,16 +762,20 @@ async def onboarding_handoff(client_id: str, user: Dict = Depends(get_current_us
     import assignment_eligibility
     import client_relationships
     import framework_governance
+    import r4_services
     client = await _baseline_client(client_id, user)
     from client_profile import recorded_baseline
     completed=await recorded_baseline(server,client) is not None
     fields = json.loads((CATALOG_ROOT / 'onboardingHandoffFields.json').read_text(encoding='utf-8'))
+    scope = {'client_id': client_id}
+    await r4_services.require_settled_population(server.db, scope, collections=tuple(fields))
 
     async def rows(kind, names):
         supporting_fields = ('implementation', 'notes', 'related_links', 'owner_id', 'process_owner_id', 'cis_operation') if kind == 'framework_assessments' else ()
-        result = await server.db[kind].find({'client_id': client_id}, {'_id': 0, **dict.fromkeys((*names, *supporting_fields), 1)}).to_list(2001)
+        result = await server.db[kind].find(scope, {'_id': 0, '_r4_context_pending': 1, **dict.fromkeys((*names, *supporting_fields), 1)}).to_list(2001)
         if len(result) > 2000:
             raise HTTPException(413, 'Setup summary is too large. Use the operational registers for this client.')
+        await r4_services.require_settled_population(server.db, scope, rows=result)
         for row in result:
             if kind == 'framework_assessments' and row.get('framework_key') == 'cis-ig1':
                 # Derived setup facts only; do not expose narratives or imply effectiveness.
@@ -796,6 +813,7 @@ class ProgramApplicabilityChange(BaseModel):
     effective_date: Optional[str] = Field(default=None,max_length=10)
     expected_updated_at: Optional[str] = Field(default=None,max_length=100)
     implementation_group: Optional[int] = Field(default=None,strict=True,ge=1,le=3)
+    cmmc_level: Optional[int] = Field(default=None,strict=True,ge=1,le=2)
 
 
 @router.patch('/onboarding/programs/{key}')
@@ -821,6 +839,16 @@ async def adjust_program(key: str, body: ProgramApplicabilityChange, user: Dict 
     cid = body.client_id
     old = await server.db.requirements.find_one({'client_id': cid, 'baseline_key': key})
     server._require_snapshot(body.model_dump(exclude_unset=True),old or {})
+    if body.cmmc_level is not None:
+        if key != 'cmmc':
+            raise HTTPException(422, 'CMMC level applies only to CMMC')
+        from framework_catalog import client_configuration
+        if old and old.get('baseline_response') == 'applies' and client_configuration(key,client)['level'] != body.cmmc_level:
+            raise HTTPException(409, 'Use CMMC scope settings to change an active level')
+        changed = await server.db.clients.update_one({'client_id':cid,'updated_at':client.get('updated_at'),
+            '_r4_context_pending':None}, {'$set':{'framework_settings.cmmc':{'level':body.cmmc_level}}})
+        if not changed.matched_count:
+            raise HTTPException(409, 'Client configuration changed; reload before saving')
     if body.implementation_group is not None:
         if key!='cis-ig1':raise HTTPException(422,'Implementation group applies only to CIS')
         from cis_scope import validate_settings

@@ -4,6 +4,7 @@ import { syncPolicyReview, ensurePolicyReview } from './policyReviews';
 import {isCisClient} from './cisCapability';
 import { initializeRiskIds, allocateRiskId } from './riskIds';
 import { prepareTask } from './actionItems';
+import {workSubmissionPatch} from '../lib/r4Remediation';
 import { validateAssignment } from './assignmentEligibility';
 import { validateClientRelationships } from './clientRelationships';
 import { buildDemoStore } from './demoSeed';
@@ -257,6 +258,8 @@ export function write(db, kind, body, id) {
   body = { ...body };
   delete body.expected_updated_at;
   validateAssignment(db, kind, { ...existing, ...body }, existing);
+  if(kind==='tasks'&&existing?.status==='done'
+    &&Object.entries(body).every(([key,value])=>JSON.stringify(value)===JSON.stringify(existing[key])))return existing;
   const defaults = {
     clients: {
       status: 'onboarding',
@@ -314,7 +317,13 @@ export function write(db, kind, body, id) {
     prepareTask(db,row,existing);
     if ('assignee_id' in body && existing && 'owner_id' in existing) row.owner_id=null;
   }
-  if(kind==='vendors') {validateVendor(db,row,existing);row.service=row.service||row.services;}
+  if(kind==='vendors') {
+    validateVendor(db,row,existing);row.service=row.service||row.services;
+    if(existing?.criticality_provisional&&(body.confirm_criticality===true||('criticality' in body&&body.criticality!==existing.criticality))) {
+      row.criticality_provisional=false;row.criticality_confirmed_at=now();row.criticality_confirmed_by=db.user.user_id;
+    }
+    delete row.confirm_criticality;
+  }
   validate(db, kind, row, existing);
   if (kind === 'clients') {
     validateClientRelationships(db, row, existing);
@@ -340,8 +349,7 @@ export function write(db, kind, body, id) {
   }
   if (kind === 'tasks' && existing && row.status !== existing.status) {
     if (row.status === 'in_progress' && !row.started_at) {row.started_at=now();row.started_by=db.user.user_id;}
-    row.completed_by = row.status === 'done' ? db.user.user_id : null;
-    row.completed_at = row.status === 'done' ? now() : null;
+    Object.assign(row,workSubmissionPatch(existing,body,db.user.user_id,now()));
   }
   if (kind === 'tasks' && row.review_id && (!existing || row.status !== existing.status || row.assignee_id !== existing.assignee_id)) {
     const review = db.reviews.find(r => r.review_id === row.review_id && r.client_id === row.client_id);

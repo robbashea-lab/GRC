@@ -4,7 +4,7 @@ import api,{formatError} from '@/lib/api';
 import {displayDay} from '@/lib/managementDates';
 import {useBrawndoTheme} from '@/lib/brawndoTheme';
 import {collectEvidencePages,evidenceOverview,evidenceCoverage,evidenceFileSize} from '@/lib/brawndoAdditionalEvidence';
-import {EvidenceSource,downloadEvidence,uploaderLabel} from '@/lib/evidenceContext';
+import {EvidenceSource,useEvidenceDownload,uploaderLabel} from '@/lib/evidenceContext';
 import {useEvidenceCatalog,EvidencePagination} from './EvidencePanel';
 import {PROGRAM_AREAS} from './EvidenceLibraryControls';
 import {toast} from 'sonner';
@@ -52,7 +52,8 @@ function useEvidenceOverview(clientId,revision,cisProgram){
   return {...(state.key===key?state:{loading:true}),reload:()=>setAttempt(value=>value+1)};
 }
 
-export default function AdditionalEvidence({clientId,clientName='Client',cisProgram=null,frameworkItems=[],frameworkError='',frameworkLoading=false,frameworkFolderName=nativeFolderLabel,canUpload,onUpload,onOpenItem,onOpenSource,revision=0,viewState,onViewStateChange}){
+export default function AdditionalEvidence({clientId,clientName='Client',cisProgram=null,frameworkItems=[],frameworkError='',frameworkLoading=false,frameworkFolderName=nativeFolderLabel,canUpload,onUpload,onOpenItem,onOpenSource,revision=0,viewState,onViewStateChange,archive}){
+  const downloadEvidence=useEvidenceDownload(clientId);
   const [theme,setTheme]=useBrawndoTheme();
   const [localView,setLocalView]=useState(initialEvidenceView);
   const {area,folder,recent,q,type,year,page,archived,sort,missing}=viewState||localView;
@@ -85,14 +86,15 @@ export default function AdditionalEvidence({clientId,clientName='Client',cisProg
   return <div className="brawndo-additional bae-page">
     <header className="bae-page-head"><div><h1>{clientName} Evidence Library</h1><p>Evidence repository</p></div><div className="bae-head-actions"><button type="button" className="bae-btn bae-ghost" aria-label={`Switch to ${theme==='dark'?'light':'dark'} theme`} onClick={()=>setTheme(theme==='dark'?'light':'dark')}><Sun size={15} aria-hidden="true"/>{theme==='dark'?'Light':'Dark'}</button>{canUpload&&<button type="button" className="bae-btn bae-primary" data-testid="add-evidence" onClick={()=>onUpload(area)}><Plus size={15} aria-hidden="true"/>Add evidence</button>}</div></header>
     <section className="bae-card" aria-label="Evidence overview"><div className="bae-overview">
-      <div className="bae-metrics" aria-label="Evidence summary">{figures.map(figure=><button type="button" className="bae-metric" key={figure.key} data-testid={`evidence-figure-${figure.key}`} aria-pressed={figure.selected} aria-controls={figure.key==='coverage'?'bae-review-coverage':undefined} onClick={figure.onClick}><span>{figure.label}</span><strong>{figure.value??'—'}{figure.detail&&<em>{figure.detail}</em>}</strong></button>)}</div>
       {summary.loading&&<p role="status" className="bae-note">Loading the authorized evidence overview…</p>}{summary.error&&<p role="alert" className="bae-note">Overview unavailable: {summary.error} <button type="button" className="bae-retry" onClick={summary.reload}>Retry overview</button></p>}
-      <div className="bae-section-head"><h2>Browse</h2><span className="bae-note">Files appear from existing relationships. A file can sit in more than one folder.</span></div>
-      <div className="bae-folders" role="group" aria-label="Evidence areas">{PROGRAM_AREAS.map(a=><button key={a} type="button" aria-pressed={area===a} className={`bae-folder${overview&&counts[a]===0?' bae-zero':''}`} onClick={()=>browse(area===a?'':a)}><Folder size={18} aria-hidden="true"/><b>{areaName(a)}</b><small>files</small><span className="bae-n">{overview?counts[a]:'—'}</span></button>)}</div>
+      <div className="bae-section-head"><h2>Browse</h2><span className="bae-note">Files appear from existing relationships. A file can sit in more than one folder.</span>{archive&&<button type="button" className="bae-btn bae-ghost" disabled={archive.busy||!data} onClick={()=>archive.run({state:JSON.stringify({include_archived:archived})})}>Download all</button>}</div>
+      <div className="reg-kstrip native-summary" data-native-summary><div className="kstrip" role="group" aria-label="Evidence summary">{figures.map(figure=><button type="button" className="kchip" key={figure.key} data-testid={`evidence-figure-${figure.key}`} aria-pressed={figure.selected} aria-controls={figure.key==='coverage'?'bae-review-coverage':undefined} onClick={figure.onClick}><span className="klabel">{figure.label}</span><strong className="kvalue">{figure.value??'—'}{figure.detail&&<em>{figure.detail}</em>}</strong></button>)}</div></div>
+      <div className="bae-folders" role="group" aria-label="Evidence areas">{PROGRAM_AREAS.map(a=><div className="ev-folder native-evidence-folder" key={a}><button type="button" aria-pressed={area===a} className={`bae-folder${overview&&counts[a]===0?' bae-zero':''}`} onClick={()=>browse(area===a?'':a)}><Folder size={18} aria-hidden="true"/><b>{areaName(a)}</b><small>files</small><span className="bae-n">{overview?counts[a]:'—'}</span></button>{archive&&<button type="button" className="ev-dl" disabled={archive.busy||!data} aria-label={`Download ${areaName(a)} folder`} onClick={()=>archive.run({state:JSON.stringify({include_archived:archived,filters:{program_areas:[a]}})},a)}><Download size={15} aria-hidden="true"/></button>}</div>)}</div>
+      {archive&&<p className="bae-note">ZIP downloads include the complete Library or chosen folder across all pages. The Include archived setting applies. Large or unverifiable selections remain available through individual file downloads.</p>}
       {area&&<nav aria-label="Evidence location" className="bae-breadcrumb"><button type="button" onClick={()=>browse('')}>Evidence Library</button><span>›</span><button type="button" onClick={()=>browse(area)} aria-current={!folder?'page':undefined}>{areaName(area)}</button>{folder&&<><span>›</span><span aria-current="page">{folder.label}</span></>}</nav>}
       {area==='Frameworks'&&frameworkLoading&&<p role="status" className="bae-note">Loading framework configuration…</p>}
       {area==='Frameworks'&&frameworkError&&<p role="alert" className="bae-note">Framework configuration could not be loaded: {frameworkError}</p>}
-      {area&&folders.length>0&&<div className="bae-subfolders" aria-label={`${areaName(area)} folders`}>{folders.map(f=>{const label=area==='Frameworks'?frameworkFolderName(f):f.label;return <button type="button" key={f.path} aria-pressed={folder?.path===f.path} onClick={()=>browse(area,folder?.path===f.path?null:{...f,label})}>{label}<span>{f.count}</span></button>;})}</div>}
+      {area&&folders.length>0&&<div className="bae-subfolders" aria-label={`${areaName(area)} folders`}>{folders.map(f=>{const label=area==='Frameworks'?frameworkFolderName(f):f.label;return <div className="ev-folder native-evidence-folder" key={f.path}><button type="button" aria-pressed={folder?.path===f.path} onClick={()=>browse(area,folder?.path===f.path?null:{...f,label})}>{label}<span>{f.count}</span></button>{archive&&<button type="button" className="ev-dl" disabled={archive.busy} aria-label={`Download ${label} folder`} onClick={()=>archive.run({state:JSON.stringify({include_archived:archived,filters:{program_areas:[area],folder_paths:[f.path]}})},area)}><Download size={15} aria-hidden="true"/></button>}</div>;})}</div>}
       {area==='Frameworks'&&groups.some(f=>!enabled.has(f.key))&&<p className="bae-note">Evidence from inactive or unrecorded frameworks remains available in search and All files below.</p>}
     </div></section>
     <section className="bae-card" aria-label="Evidence files">

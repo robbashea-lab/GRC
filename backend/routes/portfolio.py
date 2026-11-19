@@ -6,7 +6,9 @@ from management_obligations import METRICS, calendar_day, load_records, manageme
 from grc_rules import represented_finding
 from client_relationships import project
 import portfolio_overview
+import portfolio_activity
 import authorization
+from r4_services import require_settled_population
 from server import db, get_current_user
 
 router = APIRouter(prefix="/api", tags=["portfolio"])
@@ -19,6 +21,7 @@ async def clients_directory(include_archived: bool = Query(False), user: Dict = 
     query = {} if include_archived else {"status": {"$ne": "archived"}}
     query.update(authorization.scope(user))
     clients = await db.clients.find(query, {"_id": 0}).to_list(None)
+    await require_settled_population(db, authorization.scope(user), clients)
     clients = await project(db, clients)
     client_ids = [c["client_id"] for c in clients]
     now = datetime.now(timezone.utc).isoformat()
@@ -92,11 +95,11 @@ async def clients_directory(include_archived: bool = Query(False), user: Dict = 
             team.append({**w, "client_ids": sorted(w["client_ids"]), "clients": len(w["client_ids"]),
                          "name": u.get("name") or u.get("email") or uid, "email": u.get("email"), "role": u["role"]})
     team.sort(key=lambda w: (-w["past_due"], -w["critical_high"], -w["due_30d"]))
-    return {"clients": rows, "metric_items": metric_items, "attention_queue": attention[:15], "team_workload": team,
+    return portfolio_activity.public_source({"clients": rows, "metric_items": metric_items, "attention_queue": attention[:15], "team_workload": team,
             "portfolio": {**{k: len(metric_items[k]) for k in METRICS}, "total_clients": len(rows),
                 "clients_requiring_attention": action+needs, "action_required": action, "needs_attention": needs,
                 "total_overdue_reviews": sum(r["overdue_reviews"] for r in active),
                 "total_critical_high": sum(r["critical_high_findings"] for r in active),
                 "total_significant_risks": sum(r["significant_risks"] for r in active),
                 "upcoming_reviews_30d": sum(r["upcoming_reviews"] for r in active),
-                "generated_at": now, "as_of": today}}
+                "generated_at": now, "as_of": today}})

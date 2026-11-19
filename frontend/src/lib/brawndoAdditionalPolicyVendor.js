@@ -55,7 +55,7 @@ export function policyVisualMatches(row, view, category, programs, assessments, 
 }
 
 export function vendorOverview(rows, now = new Date()) {
-  return ['critical_high', 'review_due', 'assurance', 'renewal_soon'].map(view => rows.filter(row => vendorMatches(row, view, now)).length);
+  return ['critical_high', 'review_due_30', 'assurance_followup', 'renewal_soon'].map(view => rows.filter(row => vendorMatches(row, view, now)).length);
 }
 
 export function vendorTimelineEvents(rows, reviews = []) {

@@ -86,6 +86,8 @@ def definition_ids(key, configuration):
 
 
 class PlatformTenYearTests(unittest.IsolatedAsyncioTestCase):
+    # Synthetic positive completions answer the actual current native Guide.
+    r4_valid_completion_fixture = True
     sign_in = lifecycle.FrameworkThreeYearTests.sign_in
     clock = lifecycle.FrameworkThreeYearTests.clock
 
@@ -396,7 +398,9 @@ class PlatformTenYearTests(unittest.IsolatedAsyncioTestCase):
         await self.edit('/tasks/' + first['task_id'], {'status': 'done'})
         self.assertEqual((await self.get('/findings/' + finding['finding_id']))['status'], 'in_remediation')
         self.sign_in(self.validator)
-        await self.post('/findings/' + finding['finding_id'] + '/validate', {'rationale': 'Synthetic premature validation'}, status=409)
+        pending = await self.get('/findings/' + finding['finding_id'])
+        await self.post('/findings/' + finding['finding_id'] + '/validate', {'rationale': 'Synthetic premature validation',
+            'expected_updated_at': pending.get('updated_at'), 'request_id': 'synthetic-premature-' + str(year)}, status=409)
         self.sign_in('admin')
         if year == 2028:
             self.clock('2028-05-15')
@@ -408,7 +412,8 @@ class PlatformTenYearTests(unittest.IsolatedAsyncioTestCase):
         pending = await self.get('/findings/' + finding['finding_id'])
         self.assertEqual(pending['status'], 'remediated')
         self.sign_in(self.validator)
-        closed = await self.post('/findings/' + finding['finding_id'] + '/validate', {'rationale': 'SYNTHETIC independent resampling'})
+        closed = await self.post('/findings/' + finding['finding_id'] + '/validate', {'rationale': 'SYNTHETIC independent resampling',
+            'expected_updated_at': pending.get('updated_at'), 'request_id': 'synthetic-resampling-' + str(year)})
         self.assertEqual(closed['status'], 'closed')
         self.sign_in('admin')
         if year == 2027:
@@ -421,7 +426,11 @@ class PlatformTenYearTests(unittest.IsolatedAsyncioTestCase):
             original = await self.get('/reviews/' + self.probes['monthly'])
             self.assertEqual(original['occurrences'][0]['owner_id'], self.owner)
             await self.edit('/users/' + self.owner, {'status': 'disabled', 'role': 'client_readonly'})
-            self.owner = self.validator
+            # Keep the original validator independent after the operating handoff.
+            self.owner = 'synthetic_replacement_owner'
+            await server.db.users.insert_one({'user_id': self.owner, 'name': 'Synthetic replacement operator',
+                'email': 'replacement-owner@example.test', 'role': 'client_contributor',
+                'status': 'active', 'client_ids': [self.cid]})
             for rid, row in list(self.reviews.items()):
                 if row['status'] not in ('completed', 'cancelled'):
                     self.reviews[rid] = await self.edit('/reviews/' + rid, {'owner_id': self.owner,
@@ -473,7 +482,9 @@ class PlatformTenYearTests(unittest.IsolatedAsyncioTestCase):
                 self.assertEqual(await server.db.tasks.find_one({'task_id': task['task_id']}, {'_id': 0}), task)
             await self.edit('/tasks/' + action['task_id'], {'status': 'done'})
             self.sign_in(self.validator)
-            closed = await self.post('/findings/' + reopened['finding_id'] + '/validate', {'rationale': 'SYNTHETIC separate second validation'})
+            pending = await self.get('/findings/' + reopened['finding_id'])
+            closed = await self.post('/findings/' + reopened['finding_id'] + '/validate', {'rationale': 'SYNTHETIC separate second validation',
+                'expected_updated_at': pending.get('updated_at'), 'request_id': 'synthetic-second-validation-' + str(year)})
             self.assertEqual(closed['decision_history'][:len(self.original_finding['decision_history'])], self.original_finding['decision_history'])
             self.sign_in('admin')
             self.event(number, 'accepted risk retains exposure; future exception decision; reopened deterioration independently revalidated')

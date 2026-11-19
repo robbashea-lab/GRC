@@ -16,6 +16,9 @@ import test_framework_governance as harness
 server = harness.server
 
 
+from r4_fixture_inputs import validate_with_independent_actor
+
+
 class AssessmentItemsTests(unittest.IsolatedAsyncioTestCase):
     asyncSetUp = harness.FrameworkTests.asyncSetUp
     sign_in = harness.FrameworkTests.sign_in
@@ -217,7 +220,7 @@ class AssessmentItemsTests(unittest.IsolatedAsyncioTestCase):
         response=await self.client.patch('/api/tasks/'+tasks[0]['task_id'],json={'status':'done','expected_updated_at':tasks[0]['updated_at']})
         self.assertEqual(response.status_code,200,response.text)
         pending=await server.db.findings.find_one({'finding_id':finding['finding_id']})
-        response=await self.client.post('/api/findings/'+finding['finding_id']+'/validate',json={
+        response=await validate_with_independent_actor(self,server,finding['finding_id'],{
             'request_id':'close-ranking-connector','rationale':'Controlled validation of completed work','expected_updated_at':pending['updated_at']})
         self.assertEqual(response.status_code,200,response.text)
         workspace=(await self.client.get('/api/frameworks/cis-ig1',params={'client_id':'a'})).json();work=workspace['work'][row['framework_assessment_id']]

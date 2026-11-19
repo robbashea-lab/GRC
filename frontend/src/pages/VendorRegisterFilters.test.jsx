@@ -45,10 +45,15 @@ test.each([['demo_brawndo',1],['demo_dunder',null],['future-client',null],['synt
   await input(container.querySelector('[data-testid="vendor-search"]'),'zulu');expect(names()).toEqual(['Zulu boundary']);expect(chip('renewal_soon').textContent).toContain('2');
   expect(container.querySelector('[data-testid="vendor-foot"]').textContent).toBe('Showing 1 of 6 active vendors');
   await click([...container.querySelectorAll('button')].find(n=>n.textContent==='Clear filters'));expect(names()).toHaveLength(6);expect(chip('all_active').getAttribute('aria-pressed')).toBe('true');
-  // Generic contract display retains its expiration fallback; reference workflow retains renewal-only display.
+  // The shared register shows legal expiration separately from the approved renewal column.
   const expirationRow=[...container.querySelectorAll('[data-testid^="vendor-row-"]')].find(n=>n.textContent.includes('Expiration only'));
-  if(group)expect(expirationRow.textContent).toContain('No renewal date');
-  else expect(expirationRow.textContent).not.toContain('No renewal date');
+  expect(expirationRow.textContent).toContain('No renewal date');
+  const expiration=fixtures.find(vendor=>vendor.vendor_id==='expiration');
+  expect(expiration.contract_expiration).toBe(day(10));expect(expiration.contract_renewal).toBeUndefined();
+  await click(chip('contract_expiring'));
+  expect(names()).toContain('Expiration only');
+  for(const absent of ['Missing date','Invalid date','Inactive vendor','Terminated vendor','Other client'])expect(names()).not.toContain(absent);
+  expect(expiration.contract_expiration).toBe(day(10));expect(expiration.contract_renewal).toBeUndefined();
 });
 
 test.each([['demo_brawndo',1],['demo_dunder',null],['future-client',null],['synthetic-ig2',2],['synthetic-ig3',3]])('%s Dashboard attention link selects only matching vendors and exposes selected view',async(client,group)=>{
@@ -63,7 +68,9 @@ test('same-client Dashboard navigation updates its filter and an Assurance row a
   await act(async()=>root.render(<VendorRegister/>));
   await act(async()=>mockSetSearch(new URLSearchParams('view=assurance_attention')));expect(names()).toEqual(['Zulu boundary']);
   await input(container.querySelector('[data-testid="vendor-search"]'),'zulu');
-  await click([...container.querySelectorAll('button')].find(n=>n.textContent==='Assurance follow-up due'));
+  const row=container.querySelector('[data-testid="vendor-row-0"]');
+  expect(row.textContent).toContain('Zulu boundary');
+  await click(row.querySelector('button[aria-label="View assurance"]'));
   expect(document.querySelector('[data-testid="tab-assurance"]').className).toContain('active');
   expect(document.querySelector('[data-testid="vendors-drawer"]').textContent).toContain('Security Assurance Required');
   await click(document.querySelector('[data-testid="drawer-cancel"]'));

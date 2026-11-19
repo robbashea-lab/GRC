@@ -1,0 +1,63 @@
+# Native standard R4 implementation handoff
+
+Status: implementation in progress. **Deployment, hosted migrations, live-data QA, merge and automatic releases are not authorized.**
+
+## Authority and baseline
+
+Robb's November 19 request authorizes the complete native R4 standard, including approved workflow changes, across authenticated and Demo use. The current deployed login and authentication behavior are protected. The separate future staging-release instructions are planning material only.
+
+- Branch: `codex/native-standard-r4-20261119`.
+- Source baseline: `9ec2f690ec2d91b0f56d11b466a149673a188fda`; tree `20d7c30e85ec42aed6fb49adc34ce02a694f94ab`.
+- Current provider read confirms that exact revision is Live on the existing staging service; auto-deploy and preview generation are off. This is baseline evidence, not deployment of R4.
+- Package ZIP SHA256: `1ec879feb89d154bf6529b61461eca419ac611d1062abc9fac23a50e4936f665`.
+- Approved HTML SHA256: `865a2a2d6722f07e7d7085eef23bd2e292e2e8061cf1a174630c00ce9fa788b0`.
+- All 23 manifested files passed size/hash verification. The standalone no-deploy instruction matches the package copy. Nested final HTML copies match the approved HTML.
+
+## Ownership
+
+Agent 007 owns integration, shared route/server wiring, native Review completion UI integration, qualification and release holds. Disjoint implementers own presentation/shell/admin/account; framework catalogs and assessment programs; new Services/Tools/Setup and completion contracts. Agent 69 owns the separately coordinated remediation/AI/risk integrity changes. Everyone shares this isolated worktree; no implementer stages or commits another owner's changes. Old worktrees and their untracked builds are preserved.
+
+## Required evidence
+
+The implementation ledger must account for all 32 surface groups and their controls. Record source implementation, focused tests, complete tests/builds, CI, visual/native browser checks, authenticated persistence/recovery and human acceptance separately. No reference HTML test or dated package receipt qualifies the native application. Preserve assertions and deadlines and retain failures.
+
+Data preservation requires stable IDs, original assessments and approvals, immutable completed occurrences, file/version bytes and links, unknown legacy facts, additive compatibility, retry safety and an isolated restore rehearsal. No reseed, startup migration or live-data mutation is authorized.
+
+## Publication and recovery hold
+
+The tracked release-verification workflow performs checks/builds and artifact upload with read-only repository permissions; it contains no deployment job. The proposed new branch is outside its push allowlist. Existing provider auto-deploy is off and bound to main. Complete independent automation review before any optional feature publication/CI. Do not merge, change provider settings, publish the private preview, execute a deploy hook, or trigger a release.
+
+Future staging review requires explicit approval of the exact qualified revision and a separately reviewed additive migration/backup/restore plan. Code rollback does not reverse database changes. Keep the previous Live revision and original records available; test compatibility and recovery on disposable synthetic data first.
+
+## Implementation and verification checkpoint
+
+Implementation is on the isolated integration branch. No candidate commit or publication has been made yet. The exact commit will be recorded after the final source review. This working tree is not fully qualified or deployed.
+
+- Shared post-login shell, scoped R4 tokens and bundled fonts; Portfolio strip, native admin/account controls, atomic user-membership/entitlement Save/Cancel and notification destinations implemented. Login/authentication source remains frozen. The actual baseline login was inspected read-only through supported Browser; no hosted Demo entry or business record was changed.
+- New versioned Services/Tools/Setup and Review completion contracts, routes and components implemented. Completion binds the actual occurrence/template, explicit results/reasons and reported support before writes. Native ISO gates remain additional requirements. Review completion does not implicitly save dirty configuration first.
+- Completion with Exceptions uses the existing explicit native Raise finding workflow; its corrective work may remain open. Annual Policy coverage retains the parent evaluation and exact approved subject/version as provenance, without fabricating individually entered child Pass results.
+- Framework work adds native CMMC Level 1/2 and generic guided support; preserves source identifiers and qualified HIPAA granularity. Scope settings and later enrollment use native configuration. Source-specific migration/reconciliation evidence remains required.
+- Risk acceptance expiry is independent of recurrence. Work submitter histories, independent Finding validation/rework and native AI decisions/recovery are being integrated with server-owned identities.
+
+Latest checkpoint (working-tree evidence, not final qualification):
+
+- All 23 classified native R4 modules passed the final complete real-Mongo inventory: 184 cases in 280.226 seconds, including 169 actual-storage cases and 15 pure rule/format cases. All 309 participating backend/JSON/pin hashes matched before/after. The actual BSON restore preserves IDs, approvals/history, file bytes/versions/links and indexes on newly generated synthetic databases. Intentional report adapters in those tests remain distinct from transaction proof. Access-blocked run06 and run07's invalid synthetic timestamp failure remain retained; the latter required only a reviewed test setup correction, preserving the actual foreign403 and no-business-change assertions.
+- The three original real-Mongo report snapshot tests separately passed (1.40 seconds): actual concurrent assessment/Evidence read isolation, no source writes, and current role/membership/program/session fences. Their 309-file participating source comparison remained unchanged. This is not native Browser or new report HTTP/PDF acceptance.
+- The second full offline backend run reached its original 1,800-second cutoff: 1,269 logged passes, three then-unconfigured snapshot skips, and the final SOC ten-year case unfinished. No failing status was logged. It is incomplete, not a full pass or independent worker crash. It also captured source drift after module load. Both incomplete runs and all failed focused attempts remain retained; no deadlines or assertions were relaxed.
+- New shared-context consumers now fail closed before publishing incomplete client profiles, Dashboard/Calendar work, onboarding/version summaries, assignments, Evidence metadata/facets, or activity counts. Pending Vendor dependencies cannot be adopted by a different save. Genuine source envelopes/history are retained for exact recovery, and independent source review is recorded. The affected native regressions passed, including all five new consumer modules on real Mongo.
+- A client-directory failure now exposes only current-authorized client IDs for exact retained command recovery, separately from normal Client data. Services/Setup retry after reload keeps the original body/key and no partial profile; four focused frontend suites passed 26 cases. Coordinated framework assessment persistence and its targeted canonical recovery entry are in final frontend verification. A nested Review/Action hard reload without first following the provided canonical assessment recovery link remains an explicit coverage limitation.
+- Individual Evidence downloads now use the shared mounted owner/scope guard. The initial six-caller batch passed 75 cases; the two additional Framework/RecordDrawer callers are in the final integrated UI checks. Actual Vendor document tests passed exact binary-byte/filename delivery and late close/client-change suppression, while the encompassing older register batch remains failing pending the corrections below. No Browser file delivery is inferred.
+- Broader UI verification found real native Vendor preservation gaps after the presentation became universal: under-review visibility, Category, assurance-required/artifact-required and contract-expiration controls. These are being restored without conflating expiration and renewal. Older theme/dialog selectors are being reconciled only while retaining their native value, payload, filter, Save/Cancel and reload assertions.
+- The Vendor cross-check also identified a domain-rule regression: universal presentation selected short-focus rules in place of the native linked-Review 90-day and required-assurance filters. The correction uses explicit, consistently matched view IDs for the native rules and the approved 30/60-day focuses. Unassigned retains the native Owner filter. Client identity must not determine business semantics.
+- The final control inventory identified the approved Tool Catalog usage/impact inspection gap. Its correction uses actual currently authorized client/service-area usage and native Services links in the existing editor/replacement flow. Unknown or failed reads cannot become zero usage, hidden client information is not disclosed, and existing replacement permissions remain unchanged.
+- Tool usage is now implemented in authenticated and Demo modes with distinct unknown/zero/error states, complete authorized populations, actual client/service-area links and current tool-version/grant checks. Component and Demo regressions passed; all ten mounted native cases passed in the complete real-Mongo run. A valid retained client with no recorded name/status is identified by its actual ID with an honest qualifier. This is not Browser acceptance.
+- Demo Review completion now retains the already-checked saved revision through its shared command handler; the previous handler stripped it before canonical validation. Four raw-adapter cases pass for actual current null/checkpoint revisions, missing428 and stale no-write refusals. No revision is invented or filled in by the adapter.
+- Demo Vendor transitions now reuse the native five-state map. The former CIS-only shortcut conflicted with the backend and the shared native editor. Six actual raw-adapter enrollment paths (CIS1/2/3, general, ISO and SOC) passed legal transitions, illegal no-write refusal and retained field/history checks. No backend lifecycle rule or saved history changed. The affected CIS native-parity suite passed all13 cases after updating one obsolete assertion to the approved universal AI pending-assessment state, retaining field/role/tenant denials.
+- The final local standard05 and separate Demo04 builds passed with warnings treated as errors; all 1,414 participating frontend/shared/public/script/config hashes remained unchanged. Windows assets are standard main.5d12c3cc.js and private Demo main.c840addc.js, with main.6cc7688d.css. They are working-tree build evidence, not hosted/Linux byte-match or CI evidence. All six protected login/auth source hashes also match their baseline in the final comparison.
+- The owned loopback MongoDB is the verified nativeR4QA single-node replica set at 127.0.0.1:52619. Native application/bootstrap/fixture scripts are prepared but have not started an application server or created QA accounts/clients. All native Browser, reference-pixel, second-browser, light/dark/narrow/150–200% zoom and authenticated save/reload journeys remain UNRUN. No source/Jest/ASGI result is substituted for those gates.
+
+All exact commands, retained failures and receipts are under the task's `verification` directory. Focused results from earlier source states must not be combined into a claim that the delivered integrated revision passed full checks.
+
+Earlier attempts are retained: dependency junction creation was denied; existing reviewed dependencies were copied into the new checkout without installation or source changes (65,138 files, zero failed copies). Default Python event-loop and old temporary-directory access failed before test execution; narrowly reviewed loopback test execution and fresh task-owned output then succeeded. One presentation run was stopped/incomplete; subsequent introduced failures were corrected, without weakening assertions/deadlines.
+
+Still required: complete integration and final diff review; global control ledger and all surface/workflow checks; complete required checks and both builds; real disposable Mongo migration/interruption/retry/restore and authenticated native-browser checks; matched visual/responsive/zoom comparisons. CI and feature publication have not run. R4 is **not deployed**; full acceptance remains open.

@@ -10,7 +10,7 @@ jest.mock('@/context/AuthContext',()=>({useAuth:()=>({user:{user_id:'admin',role
 jest.mock('@/lib/brawndoFullRecord',()=>({useBrawndoFullRecord:()=>true}));
 jest.mock('@/lib/createIntent',()=>({useCreateIntent:()=>jest.fn()}));
 jest.mock('@/lib/api',()=>({__esModule:true,default:{get:jest.fn(),post:jest.fn(),patch:jest.fn()},formatError:error=>error.message}));
-jest.mock('@/lib/evidenceContext',()=>({downloadEvidence:jest.fn()}));
+jest.mock('@/lib/evidenceContext',()=>{const downloadEvidence=jest.fn();return {downloadEvidence,useEvidenceDownload:()=>downloadEvidence};});
 jest.mock('./AssigneeSelect',()=>()=> <span>Native owner picker</span>);
 jest.mock('./RecordDrawer',()=>({kind,record,onSaved,onOpenChange,aiRiskCreation})=>kind==='policies'?<button type="button" data-testid="save-nested-policy" onClick={()=>{mockPolicySaveCount++;void onSaved({policy_id:'native-created-policy',client_id:'demo_brawndo',title:'Saved native Policy'});}}>Save native Policy</button>:record?<button type="button" data-testid="open-saved-risk" data-ai-risk-creation={!!aiRiskCreation} onClick={()=>onOpenChange(false)}>{record.risk_id}</button>:<button type="button" data-testid="save-nested-risk" data-ai-risk-creation={!!aiRiskCreation} onClick={()=>{mockRiskCreated=true;mockRiskSaveCount++;void onSaved({risk_id:'native-created-risk',display_id:'RISK-20',title:'Saved native Risk',client_id:'demo_brawndo'});onOpenChange(false);}}>Save native Risk</button>);
 jest.mock('./ui/dialog',()=>{

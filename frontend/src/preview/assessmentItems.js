@@ -1,6 +1,7 @@
 import {visibleQuestions,generateResult} from '../lib/guidedAssessment';
 import {socQuestions,socGuidedResult,socUsesIntentGates} from '../lib/socGuidedAssessment';
 import {isoQuestions,isoGuidedResult,isoUsesIntentGates} from '../lib/isoGuidedAssessment';
+import {genericGuidedFramework,genericQuestions,genericGuidedResult} from '../lib/genericGuidedAssessment';
 
 const copy=value=>JSON.parse(JSON.stringify(value));
 const fail=(message,status=422)=>{throw Object.assign(new Error(message),{status});};
@@ -39,8 +40,8 @@ function cisItemResult(row,draft,questions){
 
 export function generatedItems(row,draft){
   const {answers,version}=draft;
-  const questions=Object.fromEntries((row.framework_key==='soc-2'?socQuestions(row.definition_id,answers,version):row.framework_key==='iso-27001'?isoQuestions(row.definition_id,answers,version):visibleQuestions(row.definition_id,answers,version)).map(question=>[question.id,question]));
-  const result=row.framework_key==='soc-2'?socGuidedResult(row.definition_id,answers,version):row.framework_key==='iso-27001'?isoGuidedResult(row.definition_id,answers,version):cisItemResult(row,draft,questions);
+  const questions=Object.fromEntries((genericGuidedFramework(row.framework_key)?genericQuestions(answers):row.framework_key==='soc-2'?socQuestions(row.definition_id,answers,version):row.framework_key==='iso-27001'?isoQuestions(row.definition_id,answers,version):visibleQuestions(row.definition_id,answers,version)).map(question=>[question.id,question]));
+  const result=genericGuidedFramework(row.framework_key)?genericGuidedResult(row.definition_id,answers,version):row.framework_key==='soc-2'?socGuidedResult(row.definition_id,answers,version):row.framework_key==='iso-27001'?isoGuidedResult(row.definition_id,answers,version):cisItemResult(row,draft,questions);
   const origins=new Map();
   for(const signal of result.signals||[]){
     const question=questions[signal.questionId];if(!question)fail('Follow-up origin must belong to this interview');

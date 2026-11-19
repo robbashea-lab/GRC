@@ -11,6 +11,7 @@ import create_requests
 import guided_assessment
 import iso_guided_assessment
 import soc_guided_assessment
+import generic_guided_assessment
 
 
 class ItemPatch(BaseModel):
@@ -31,7 +32,9 @@ def item_id(row, question_id, kind):
 
 def _questions(row, draft):
     framework, definition, version = row['framework_key'], row['definition_id'], draft['version']
-    if framework == 'soc-2':
+    if framework in generic_guided_assessment.FRAMEWORKS:
+        questions = generic_guided_assessment.visible_questions(draft['answers'])
+    elif framework == 'soc-2':
         questions = soc_guided_assessment._active_questions(definition, draft['answers'], version)
     elif framework == 'iso-27001':
         questions = iso_guided_assessment._active_questions(definition, draft['answers'], version)
@@ -75,6 +78,8 @@ def _origins(row, draft, questions):
     """Mirror existing answer signals; client result metadata is not task authority."""
     answers, framework = draft['answers'], row['framework_key']
     origins = {}
+    if framework in generic_guided_assessment.FRAMEWORKS:
+        return generic_guided_assessment.origins(answers)
     if framework in ('soc-2', 'iso-27001'):
         engine = soc_guided_assessment if framework == 'soc-2' else iso_guided_assessment
         def sentence(fragment):
@@ -250,7 +255,7 @@ async def save_items(s, row, items, user, at):
         row['client_id'], user, before, {**before, 'items_to_address': items, 'items_revision': revision + 1}, at)
     result = await s.db.framework_assessments.update_one({
         'framework_assessment_id': row['framework_assessment_id'], 'client_id': row['client_id'],
-        'items_revision': row.get('items_revision')},
+        'items_revision': row.get('items_revision'), '_r4_context_pending': None},
         {'$set': {'items_to_address': items, 'items_revision': revision + 1, **patch}})
     if not result.matched_count:
         raise HTTPException(409, 'Items changed in another window; refresh before saving')

@@ -19,6 +19,23 @@ test('current and actual completed occurrences preserve actors, periods and nati
   await act(async()=>rows[1].querySelector('button').click());expect(onSelect).toHaveBeenCalledWith(completed);
 });
 
+test.each([['No exceptions noted',0,'No findings'],['Exceptions noted',2,'2 findings']])('recorded checklist outcome %s remains separate from the native Finding count',async(checklist_outcome,finding_count,countLabel)=>{
+  const occurrence=Object.freeze({...completed,checklist_outcome,finding_count,outcome:'Assessment Updated'});
+  await render({history:[occurrence]});
+  const cell=container.querySelectorAll('tbody tr')[1].cells[4];
+  expect(cell.querySelector('[aria-label="Recorded checklist outcome"]').textContent).toBe(checklist_outcome);
+  expect(cell.textContent).toContain(countLabel);
+  expect(occurrence.outcome).toBe('Assessment Updated');expect(occurrence.finding_count).toBe(finding_count);
+});
+
+test('legacy history does not infer a checklist outcome from a zero Finding count',async()=>{
+  await render({history:[{...completed,finding_count:0}]});
+  const cell=container.querySelectorAll('tbody tr')[1].cells[4];
+  expect(cell.textContent).toContain('No findings');
+  expect(cell.querySelector('[aria-label="Recorded checklist outcome"]')).toBeNull();
+  expect(cell.textContent).not.toContain('No exceptions noted');
+});
+
 test('only an explicit numeric zero earns the green No findings chip; missing counts are neutral',async()=>{
   await render({history:[{...completed,finding_count:0},{...completed,occurrence_id:'missing-count',period:'Q2 2026',finding_count:undefined}]});
   const rows=container.querySelectorAll('tbody tr');

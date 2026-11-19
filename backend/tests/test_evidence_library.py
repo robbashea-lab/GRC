@@ -5,6 +5,7 @@ from test_client_dashboard_sources import ClientDashboardSourcesTests, server
 
 
 class EvidenceLibraryTests(ClientDashboardSourcesTests):
+    r4_valid_completion_fixture = True
     async def test_binary_unicode_integrity_after_fresh_authenticated_client(self):
         """Reload the transport, not its cached response; real-Mongo runner reuses this test."""
         import httpx

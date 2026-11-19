@@ -392,9 +392,23 @@ process.stdout.write(JSON.stringify(cases.map(({id, answers}) => ({
         draft, payload = await self.finish(row)
         write = self.native(row, draft)
         hipaa = (await self.client.get('/api/frameworks/hipaa?client_id=a')).json()['assessments'][0]
-        for suffix, method, body in (('/guided-assessment', self.client.get, None), ('/guided-assessment/history', self.client.get, None), ('/guided-assessment', self.client.put, payload)):
-            response = await method(self.path(hipaa) + suffix, **({'json': body} if body else {}))
-            self.assertEqual(response.status_code, 404, response.text)
+        hipaa_path = self.path(hipaa) + '/guided-assessment'
+        hipaa_before = await server.db.framework_assessments.find_one({'framework_assessment_id': hipaa['framework_assessment_id']})
+        # HIPAA has its own native interview; an ISO question set remains invalid there.
+        response = await self.client.get(hipaa_path)
+        self.assertEqual(response.status_code, 200, response.text)
+        self.assertEqual(response.json()['version'], 'r4-guided-v1:hipaa')
+        self.assertEqual(response.json()['answers'], {})
+        history = await self.client.get(hipaa_path + '/history')
+        self.assertEqual(history.status_code, 200, history.text)
+        self.assertEqual(history.json(), {'items': [], 'has_more': False, 'next_before_revision': None})
+        response = await self.client.put(hipaa_path, json=payload)
+        self.assertEqual(response.status_code, 409, response.text)
+        self.assertEqual(response.json()['detail'], 'Question set is unavailable')
+        self.assertEqual(await server.db.framework_assessments.find_one({'framework_assessment_id': hipaa['framework_assessment_id']}), hipaa_before)
+        self.assertIsNone(await server.db.guided_assessment_pilot.find_one({'_id': hipaa['framework_assessment_id'] + ':admin'}))
+        self.assertEqual(await server.db.guided_assessment_history.count_documents({'assessment_id': hipaa['framework_assessment_id']}), 0)
+        self.assertEqual((await self.client.get(path + '/guided-assessment')).json(), draft)
         collection = server.db.iso_guided_locks
         for user_change, expected in [({'role': 'client_readonly'}, 403), ({'role': 'client_grc_manager', 'client_ids': ['b']}, 403)]:
             await server.db.users.update_one({'user_id': 'member'}, {'$set': user_change})

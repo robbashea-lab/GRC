@@ -3,6 +3,7 @@ from test_client_dashboard_sources import ClientDashboardSourcesTests, server
 
 
 class RiskLifecycleTests(ClientDashboardSourcesTests):
+    r4_valid_completion_fixture = True
     async def test_omitted_reassessment_preserves_saved_decisions_and_native_history(self):
         cases = [('missing', {}, 'admin'), ('null', {'treatment': None, 'assessment_rationale': None}, 'admin'),
                  ('blank', {'treatment': '', 'assessment_rationale': ''}, 'admin'),

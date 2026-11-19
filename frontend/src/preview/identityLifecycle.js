@@ -115,15 +115,19 @@ export function identityRequest(db, path, method, params, body) {
   if(method==='patch'&&Object.prototype.hasOwnProperty.call(body,'expected_updated_at')&&body.expected_updated_at!==(target.updated_at??null))throw new Error('Record changed since it was opened; reload before saving');
   const foreign = (target.client_ids || []).filter(cid => !clientAccess(db.user, cid));
   if (method === 'patch' && action === 'client-memberships') {
+    if (body.all_clients != null && (typeof body.all_clients !== 'boolean' || db.user.role !== 'super_admin' || body.all_clients && target.role !== 'platform_admin')) throw new Error('Only a Super Admin can grant internal all-client access');
     for (const cid of body.client_ids || []) { admin(db, cid); record(db, 'clients', cid); }
     const preserved = (target.client_ids || []).filter(cid => !clientAccess(db.user, cid));
     const desired = [...new Set([...body.client_ids, ...preserved])];
     if (target.role === 'platform_admin' && !desired.length && db.user.role !== 'super_admin') throw new Error('Removing the last membership would grant global internal scope');
     const previous = target.client_ids;
+    const previousEntitlement = !!target.all_clients;
     target.client_ids = desired;
+    if (body.all_clients != null) target.all_clients = body.all_clients;
     target.updated_at=new Date(Math.max(Date.now(),(Date.parse(target.updated_at)||0)+1)).toISOString();
     audit(db, 'update-memberships', 'users', target, { previous, client_ids: desired });
-    return { user_id: target.user_id, client_ids: desired.filter(cid => clientAccess(db.user, cid)), updated_at:target.updated_at };
+    if (previousEntitlement !== !!target.all_clients) audit(db,'all-client-entitlement','users',target,{previous:previousEntitlement,all_clients:target.all_clients});
+    return { user_id: target.user_id, client_ids: desired.filter(cid => clientAccess(db.user, cid)), all_clients:!!target.all_clients, updated_at:target.updated_at };
   }
   if (method === 'post' && action === 'resend-invite') {
     if (db.user.role !== 'super_admin' && foreign.length) throw new Error('Invitation administration requires authority over all client memberships');

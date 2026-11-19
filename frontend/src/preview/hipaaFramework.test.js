@@ -14,7 +14,7 @@ beforeEach(async()=>{sessionStorage.clear();localStorage.clear();await api.post(
 
 test('HIPAA uses native regulation identifiers, 22 addressable specifications and recommendation-only review cadences',()=>{
   const c=CATALOGS.hipaa;
-  expect(c.requirements).toHaveLength(76);expect(new Set(c.requirements.map(d=>d.id)).size).toBe(76);
+  expect(c.requirements).toHaveLength(81);expect(new Set(c.requirements.map(d=>d.id)).size).toBe(81);
   expect(c.requirements.filter(d=>d.specification==='addressable')).toHaveLength(22);
   for(const d of c.requirements)expect(d.source).toMatch(/^https:\/\/www.ecfr.gov\/on\/2026-09-18\/title-45\/section-/);
   for(const p of c.review_plans){expect(p.classification).toBe('recommended');expect(p.source_cadence).toContain('does not prescribe');}
@@ -24,10 +24,10 @@ test('read-only loads do not seed; Settings activation and repeated applies pres
   expect((await get('/frameworks/hipaa')).assessments).toHaveLength(0);
   await configure([]);
   for(let n=0;n<2;n++)await api.patch('/onboarding/programs/hipaa',{client_id:cid,applicability:'applies'});
-  expect((await get('/frameworks/hipaa')).assessments).toHaveLength(76);
+  expect((await get('/frameworks/hipaa')).assessments).toHaveLength(81);
   expect(await get('/reviews')).toHaveLength(8);
   for(const applicability of ['does_not_apply','unsure','applies'])await api.patch('/onboarding/programs/hipaa',{client_id:cid,applicability});
-  expect((await get('/frameworks/hipaa')).assessments).toHaveLength(76);expect(await get('/reviews')).toHaveLength(8);
+  expect((await get('/frameworks/hipaa')).assessments).toHaveLength(81);expect(await get('/reviews')).toHaveLength(8);
 });
 
 test('shared Review counts match onboarding preview and CIS operational records remain unchanged',async()=>{
@@ -36,7 +36,7 @@ test('shared Review counts match onboarding preview and CIS operational records 
   const s=state(['cis-ig1','hipaa']),snapshot=await get('/onboarding/handoff');
   const preview=onboardingPreview(baseline,s,snapshot.records);
   expect(preview.reviews).toMatchObject({total:18,create:6,retain:12});
-  expect(preview.assessmentsByProgram).toEqual({'cis-ig1':0,hipaa:76,'iso-27001':0,'soc-2':0,'nist-csf-2':0});
+  expect(preview.assessmentsByProgram).toEqual({'cis-ig1':0,hipaa:81,'iso-27001':0,'soc-2':0,'nist-csf-2':0,cmmc:0});
   await configure(['cis-ig1','hipaa']);
   const after=await get('/reviews');expect(after).toHaveLength(18);
   for(const r of before){

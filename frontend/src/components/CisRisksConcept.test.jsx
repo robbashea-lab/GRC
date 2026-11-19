@@ -32,6 +32,22 @@ beforeEach(() => {
 });
 afterEach(async () => { await act(async () => root.unmount()); container.remove(); });
 
+test('Risk profile keeps unknown scores separate and uses the native status filter after the full timeline', async () => {
+  props.table.setFilter=jest.fn();
+  await render();
+  const profile=container.querySelector('.native-risk-profile');
+  expect(profile.querySelector('.high .pb-n').textContent).toBe('1');
+  expect(profile.querySelector('.unrated .pb-n').textContent).toBe('1');
+  expect(profile.querySelector('.low .pb-n').textContent).toBe('0');
+  expect(container.querySelector('.quarter-card').nextElementSibling.contains(profile)).toBe(true);
+  const summary=container.querySelector('.native-summary');
+  expect(summary.previousElementSibling.classList.contains('register-heading')).toBe(true);
+  await click([...profile.querySelectorAll('button')].find(button=>button.textContent.startsWith('Open · decision needed')));
+  expect(props.onView).toHaveBeenCalledWith('all_active');
+  expect(props.table.setFilter).toHaveBeenCalledWith('status',['Open']);
+  expect(api.post).not.toHaveBeenCalled();
+});
+
 test.each(['light', 'dark'])('accessible Risk header stays within its internal scroller in %s', async theme => {
   const previousTheme = localStorage.getItem(THEME_KEY), style = document.createElement('style');
   // CSS imports are mocked by Jest; inspect the authored relationship, not JSDOM geometry.
@@ -122,7 +138,7 @@ test('quarter and legend selection are presentation only, keep summaries/registe
   const rows = [{...base, risk_id: 'r1', title: 'January review', next_review: '2027-01-17'},
     {...base, risk_id: 'r2', title: 'Second January review', next_review: '2027-01-17'}];
   await render({rows, filtered: rows});
-  const summaries = container.querySelector('.kpis').textContent, register = container.querySelector('.register').textContent;
+  const summaries = container.querySelector('.native-summary').textContent, register = container.querySelector('.register').textContent;
   const readCount = api.get.mock.calls.length;
   await click(container.querySelector('[aria-label="Next quarter"]'));
   expect(container.querySelector('.quarter-controls strong').textContent).toBe('Q1 2027');
@@ -130,7 +146,7 @@ test('quarter and legend selection are presentation only, keep summaries/registe
   expect(container.querySelectorAll('.review-dot')).toHaveLength(2);
   await click(container.querySelector('[aria-label="Show treatment action events"]'));
   expect(container.querySelectorAll('.review-dot')).toHaveLength(0);
-  expect(container.querySelector('.kpis').textContent).toBe(summaries);
+  expect(container.querySelector('.native-summary').textContent).toBe(summaries);
   expect(container.querySelector('.register').textContent).toBe(register);
   expect(api.get.mock.calls).toHaveLength(readCount);
   for (const method of ['post', 'put', 'patch', 'delete']) expect(api[method]).not.toHaveBeenCalled();

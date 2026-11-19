@@ -4,6 +4,7 @@ import vendor_governance
 
 
 class VendorGovernanceTests(ClientDashboardSourcesTests):
+    r4_valid_completion_fixture = True
     async def create_vendor(self, **extra):
         self.sign_in('admin')
         response = await self.client.post('/api/vendors', json={'name':'CloudCore SaaS','service':'Primary CRM & data storage',

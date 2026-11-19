@@ -1,11 +1,11 @@
 import {useEffect,useState} from 'react';
 
-// One light/dark preference for the Brawndo reference workspace (sidebar and
-// converted pages). Per-browser convenience only; never state that must persist.
+// One light/dark preference for the protected application and its portals.
+// Retain the existing key; this is a browser preference, never business data.
 export const THEME_KEY='omnisciente:brawndo-dashboard-theme';
 const EVENT='omnisciente:brawndo-theme';
-export function readTheme(fallback='light'){try{const saved=localStorage.getItem(THEME_KEY);return ['dark','light'].includes(saved)?saved:fallback;}catch{return fallback;}}
-export function useBrawndoTheme(fallback='light'){
+export function readTheme(fallback='dark'){try{const saved=localStorage.getItem(THEME_KEY);return ['dark','light'].includes(saved)?saved:fallback;}catch{return fallback;}}
+export function useBrawndoTheme(fallback='dark'){
   const [theme,setThemeState]=useState(()=>readTheme(fallback));
   useEffect(()=>{
     const sync=()=>setThemeState(readTheme(fallback));

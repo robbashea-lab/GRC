@@ -38,6 +38,10 @@ import {restoredDunderDemoEvidence} from './dunderDemoEvidence';
 import {restoredPrestigeDemoEvidence} from './prestigeDemoEvidence';
 import {canForkPortfolioStore} from './portfolioReporting';
 import {pendingPolicyCoverage} from './policyReviewCoverage';
+import {prepareR4Completion,r4ReviewCompletionRequest} from './r4ReviewCompletion';
+import {r4ServicesRequest,prepareServiceContext,commitServiceContext} from './r4ServicesTools';
+import {completionExport} from './r4ReviewExports';
+import {r4ReportsRequest} from './r4Reports';
 import {validateCatalogKey} from '../lib/registerCatalogIdentity';
 const CREATE_REPLAY_KINDS=['clients','reviews','findings','tasks','risks','vendors','policies','contacts','assets','exceptions','requirements','ai_systems'];
 const SESSION = 'grc_demo_entered';
@@ -53,7 +57,7 @@ let requestQueue=Promise.resolve(),sessionGeneration=0;
 // session controls stay immediate so sign-out can invalidate a pending save.
 export async function previewAdapter(config){
   const generation=sessionGeneration,request={...config};
-  const path=new URL(request.url,'https://demo.invalid').pathname;
+  const path=new URL(request.url,'https://demo.invalid').pathname.replace(/^\/api(?=\/|$)/,'');
   if(path==='/auth/logout'||path==='/demo/enter'&&(request.method||'get').toLowerCase()==='post'){
     sessionGeneration++;
     return executePreviewAdapter(request,sessionGeneration);
@@ -97,7 +101,7 @@ function frameworkDateResponse(data,db){
 // Loaded only by the explicit demo build. No request is forwarded to any server.
 async function executePreviewAdapter(config,generation) {
   const url = new URL(config.url, 'https://demo.invalid'),
-    path = url.pathname;
+    path = url.pathname.replace(/^\/api(?=\/|$)/,'');
   const params = {
     ...Object.fromEntries(url.searchParams),
     ...config.params
@@ -186,6 +190,43 @@ async function executePreviewAdapter(config,generation) {
       await commitStore();
       return respond(data);
     };
+    if(kind==='reports') {
+      if(path==='/reports/framework'&&method==='get')return fail(501,'PDF reports are unavailable in Explore Demo. Use an authenticated client workspace to export saved assessments.');
+      const result=await r4ReportsRequest(db,path,method,params,body,
+        config.headers?.get?.('Idempotency-Key')||config.headers?.['Idempotency-Key']);
+      if(result!==undefined) {
+        if(config.signal?.aborted)throw new axios.CanceledError('Demo request cancelled',config);
+        if(generation!==sessionGeneration||sessionStorage.getItem(SESSION)!=='true'||db.user.user_id!==actorId)return fail(401,'Demo session changed; reopen Reports.');
+        if(sessionStorage.getItem(STORE_KEY)!==expectedSaved||evidenceRevision!==getEvidenceCacheRevision())return fail(409,'Demo data changed; reload before generating the report.');
+        assertClientBoundary(db,parts,params,authorizationBody);
+        authorizeDemo(db,method,parts,authorizationBody,config.headers?.get?.('Idempotency-Key')||config.headers?.['Idempotency-Key']);
+        authorizedSaved=expectedSaved;
+        if(result.persist)await commitStore();
+        return {...respond(result.data),headers:result.headers||{}};
+      }
+    }
+    if(path==='/reviews/completions/export'&&method==='get') {
+      if(!params.client_id) return fail(422,'Choose a client for the completion export');
+      record(db,'clients',params.client_id);
+      const csv=completionExport((db.reviews||[]).filter(row=>row.client_id===params.client_id),params.from_date,params.to_date);
+      return {...respond(new Blob([csv],{type:'text/csv;charset=utf-8'})),headers:{'content-type':'text/csv;charset=utf-8',
+        'content-disposition':`attachment; filename="completed-reviews-${params.from_date}-to-${params.to_date}.csv"`}};
+    }
+    if(kind==='reviews'&&['complete','completion-guide'].includes(name)
+      && !(name==='complete'&&record(db,'reviews',id).occurrences?.some(item=>item.occurrence_id===body.occurrence_id))) {
+      await prepareR4Completion(db,path,method,body);
+      // Web Crypto yields; never apply a contract to a different persisted
+      // snapshot, actor, session or document-local file set after that await.
+      if(generation!==sessionGeneration||sessionStorage.getItem(SESSION)!=='true'||db.user.user_id!==actorId)return fail(401,'Demo session changed; reopen this Review.');
+      if(sessionStorage.getItem(STORE_KEY)!==expectedSaved||evidenceRevision!==getEvidenceCacheRevision())return fail(409,'Demo data changed; reload the current Review before retrying.');
+      assertClientBoundary(db,parts,params,authorizationBody);
+      authorizeDemo(db,method,parts,authorizationBody,config.headers?.get?.('Idempotency-Key')||config.headers?.['Idempotency-Key']);
+      authorizedSaved=expectedSaved;
+    }
+    const guideResult=r4ReviewCompletionRequest(db,path,method,body,config.headers?.get?.('Idempotency-Key')||config.headers?.['Idempotency-Key']);
+    if(guideResult!==undefined)return method==='get'?respond(guideResult):await save(guideResult);
+    const serviceResult=r4ServicesRequest(db,path,method,body,config.headers?.get?.('Idempotency-Key')||config.headers?.['Idempotency-Key']);
+    if(serviceResult!==undefined)return method==='get'?respond(serviceResult):await save(serviceResult);
     if(kind==='iso-audit'||kind==='reviews'&&name==='iso-audit'){
       const result=isoAuditRequest(db,parts,method,params,body);
       return method==='get'?respond(result):await save(result);
@@ -204,7 +245,7 @@ async function executePreviewAdapter(config,generation) {
     if(path==='/ai-intake'||kind==='ai_systems')return await save(aiRequest(db,path,method,params,body));
     if(path==='/frameworks/summary'&&method==='get')return respond(frameworkSummary(db,params.client_id,params));
     if(kind==='framework_assessments'&&method==='post'&&name==='findings')return await save(commandRequest(db,path,record(db,kind,id).client_id,body.request_id,body,()=>frameworkRequest(db,path,method,params,body)));
-    if(path==='/frameworks/cis-ig1/configuration'&&method==='patch')return await save(commandRequest(db,path,body.client_id,config.headers?.['Idempotency-Key'],body,()=>frameworkRequest(db,path,method,params,body)));
+    if(['/frameworks/cis-ig1/configuration','/frameworks/cmmc/configuration'].includes(path)&&method==='patch')return await save(commandRequest(db,path,body.client_id,config.headers?.get?.('Idempotency-Key')||config.headers?.['Idempotency-Key'],body,()=>frameworkRequest(db,path,method,params,body)));
     if(kind==='frameworks'||kind==='framework_assessments'){
       const pendingContext=prepareGuidedContext(db,path,method,body);
       let context=null;
@@ -234,7 +275,16 @@ async function executePreviewAdapter(config,generation) {
         assertFrameworkParentBoundary(db,method,params,authorizationBody);
         authorizedSaved=expectedSaved;
       }
-      const result=frameworkRequest(db,path,method,params,body,context);
+      const coordinated=kind==='framework_assessments'&&method==='patch'&&parts.length===2&&body.coordination;
+      const execute=()=>{
+        const plan=coordinated?prepareServiceContext(db,record(db,kind,id),body.coordination):null;
+        const input={...body};delete input.coordination;
+        const result=frameworkRequest(db,path,method,params,input,context);
+        if(plan)commitServiceContext(db,record(db,kind,id),plan);
+        return result;
+      };
+      const result=coordinated?commandRequest(db,path,record(db,kind,id).client_id,
+        config.headers?.get?.('Idempotency-Key')||config.headers?.['Idempotency-Key'],body,execute):execute();
       // Ordinary reads stay pure; CIS export retains its existing audit write.
       const auditedExport=kind==='frameworks'&&id==='cis-ig1'&&name==='export';
       if(method==='get'&&!auditedExport)return respond(frameworkDateResponse(result,db));
@@ -364,9 +414,29 @@ async function executePreviewAdapter(config,generation) {
         const original = record(db, kind, id);
         // Native authorization above remains authoritative. Only known immutable
         // synthetic artifacts can supply missing bytes; nothing is re-persisted.
-        const r = original.content_base64 ? original : restoredCisDemoEvidence(db,original)||restoredDunderDemoEvidence(db,original)||restoredPrestigeDemoEvidence(db,original)||original;
+        const descriptor=db.cis_demo_refresh?.clients?.[original.client_id]?.artifacts?.[original.evidence_id];
+        // An inline fixture must match its guarded provider's original bytes;
+        // the provider is a comparison here and never replaces inline contents.
+        const inlineFixture=original.content_base64&&descriptor;
+        const inlineBaseline=inlineFixture&&original.demo_file_storage!=='cleared'&&restoredCisDemoEvidence(db,{...original,content_base64:undefined,demo_file_storage:'session_only'});
+        if(inlineFixture&&!inlineBaseline)return fail(409,'The immutable Demo file descriptor or file availability changed.');
+        if(inlineBaseline&&atob(original.content_base64.split(',').pop())!==atob(inlineBaseline.content_base64))return fail(409,'The inline Demo file no longer matches its verified immutable fixture bytes.');
+        const restoredCis = !original.content_base64 && restoredCisDemoEvidence(db,original);
+        const r = original.content_base64 ? original : restoredCis||restoredDunderDemoEvidence(db,original)||restoredPrestigeDemoEvidence(db,original)||original;
         if (!r.content_base64) throw new Error('Demo file content is not available after reload, clearing or cache eviction. Its metadata and relationships are preserved. Upload a new sample file to download content.');
-        return respond(r);
+        // Delivery verification tokens are produced here, never trusted from stored metadata.
+        const delivery={...r};delete delivery.computed_sha256;delete delivery.computed_sha256_source;
+        if((restoredCis||inlineBaseline)&&!r.sha256&&globalThis.crypto?.subtle){
+          const bytes=Uint8Array.from(atob(r.content_base64.split(',').pop()),character=>character.charCodeAt(0));
+          const digest=await globalThis.crypto.subtle.digest('SHA-256',bytes);
+          if(config.signal?.aborted)throw new axios.CanceledError('Demo request cancelled',config);
+          if(generation!==sessionGeneration||sessionStorage.getItem(SESSION)!=='true'||db.user.user_id!==actorId)return fail(401,'Demo session changed; reopen the Evidence Library.');
+          if(sessionStorage.getItem(STORE_KEY)!==expectedSaved||evidenceRevision!==getEvidenceCacheRevision())return fail(409,'Demo data or file availability changed; reload before downloading Evidence.');
+          assertClientBoundary(db,parts,params,authorizationBody);
+          authorizeDemo(db,method,parts,authorizationBody,config.headers?.get?.('Idempotency-Key')||config.headers?.['Idempotency-Key']);
+          return respond({...delivery,computed_sha256:Array.from(new Uint8Array(digest),byte=>byte.toString(16).padStart(2,'0')).join(''),computed_sha256_source:'verified_immutable_fixture_bytes'});
+        }
+        return respond(delivery);
       }
       if (ids[kind]) {
         if (id) {
@@ -414,7 +484,7 @@ async function executePreviewAdapter(config,generation) {
       if (body.kind === 'contacts' && body.action === 'delete' && db.clients.some(c => rows.some(r => r.client_id === c.client_id && r.contact_id === c.primary_contact_id))) throw new Error('A selected Contact is a Primary Contact. Archive it or change the client relationship before deleting it.');
       if (body.kind === 'reviews' && body.action === 'delete' && rows.some(r => r.status === 'completed' || r.occurrences?.length))
         throw new Error('Review history must be retained.');
-      if (body.kind === 'tasks' && body.action === 'delete' && rows.some(r=>r.status==='done'||r.completed_at)) throw new Error('Completed Action Items must be retained.');
+      if (body.kind === 'tasks' && body.action === 'delete' && rows.some(r=>r.status==='done'||r.completed_at||r.submission_history?.length)) throw new Error('Completed Action Items must be retained.');
       if(body.kind==='findings'&&body.action==='delete')rows.forEach(r=>retainFinding(db,r));
       if(body.kind==='ai_systems'||body.action==='delete'&&(['risks','vendors'].includes(body.kind)||body.kind==='reviews'&&rows.some(r=>r.risk_id||r.vendor_id||r.ai_system_id))) throw new Error('Governance records and their Review obligations must be retained.');
       const payload = body.payload || {};
@@ -480,7 +550,7 @@ async function executePreviewAdapter(config,generation) {
       return await save(db.user);
     }
     if (ids[kind] && name) {
-      if(kind==='findings'&&['validate','reopen','accept'].includes(name)&&body.request_id){
+      if(kind==='findings'&&['validate','reject','reopen','accept'].includes(name)&&body.request_id){
         const finding=record(db,kind,id);
         return await save(commandRequest(db,path,finding.client_id,body.request_id,body,()=>{
           const result=action(db,kind,id,name,body);audit(db,name,kind,result);return result;
@@ -536,7 +606,7 @@ async function executePreviewAdapter(config,generation) {
         if(kind==='evidence'&&['risk','risks'].includes(r.linked_type)&&db.risks.some(x=>x.risk_id===r.linked_id&&['closed','retired'].includes(x.status))) throw new Error('Closed Risk evidence must be retained.');
         if(kind==='evidence'&&['ai_system','ai_systems'].includes(r.linked_type)&&(db.ai_systems||[]).some(x=>x.ai_system_id===r.linked_id&&x.status==='retired'))throw new Error('Retired AI evidence must be retained');
         if(['risks','vendors'].includes(kind)||kind==='reviews'&&(r.risk_id||r.vendor_id||r.ai_system_id)) throw new Error('Governance records and their Review obligations must be retained.');
-        if (kind==='tasks'&&(r.status==='done'||r.completed_at) || kind==='evidence'&&db.tasks.some(t=>t.task_id===r.linked_id&&t.client_id===r.client_id&&t.status==='done')) throw new Error('Completed Action Items and their evidence must be retained.');
+        if (kind==='tasks'&&(r.status==='done'||r.completed_at||r.submission_history?.length) || kind==='evidence'&&db.tasks.some(t=>t.task_id===r.linked_id&&t.client_id===r.client_id&&t.status==='done')) throw new Error('Completed Action Items and their evidence must be retained.');
         if (kind === 'reviews' && (r.status === 'completed' || r.occurrences?.length) || kind === 'evidence' && db.reviews.some(v => v.completion_snapshot?.evidence?.some(e => e.evidence_id === id) || v.occurrences?.some(o => o.evidence?.some(e => e.evidence_id === id)))) throw new Error('Completed reviews and their evidence must be retained.');
         if(kind==='evidence'){
           if(r.relationships?.some(l=>['risks','tasks','vendors','ai_systems'].includes(l.kind)&&(db[l.kind]||[]).some(p=>p.client_id===r.client_id&&p[ids[l.kind]]===l.id&&['closed','retired','done','inactive','terminated'].includes(p.status))))throw new Error('Evidence supporting retained history must be retained');

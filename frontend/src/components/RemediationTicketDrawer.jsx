@@ -14,6 +14,7 @@ import {useOrg} from '@/context/OrgContext';
 import {canOperate,editableFields,isAssignedTo,isInternal} from '@/lib/permissions';
 import {useActionRegisterData} from '@/lib/useActionRegisterData';
 import {ticketRecords,ticketStage} from '@/lib/remediationTickets';
+import {independentValidationIssue} from '@/lib/r4Remediation';
 import {actionOrigin} from '@/lib/brawndoActions';
 import {daysDue} from '@/lib/actionItems';
 import {useCreateIntent} from '@/lib/createIntent';
@@ -304,7 +305,7 @@ export default function RemediationTicketDrawer({open,onOpenChange,kind,record,c
   async function validate(action='validate'){
     setBusy(true);setCommandError('');
     const body={rationale,expected_updated_at:ticket.finding.updated_at??null};
-    try{await decision('/findings/'+ticket.finding.finding_id+'/'+action,body);setRationale('');await saved();setFeedback(action==='validate'?'Ticket completed. Validation saved.':'Ticket accepted, not remediated.');}
+    try{await decision('/findings/'+ticket.finding.finding_id+'/'+action,body);setRationale('');await saved();setFeedback(action==='validate'?'Ticket completed. Validation saved.':action==='reject'?'Returned for rework. Prior submissions and decisions are retained.':'Ticket accepted, not remediated.');}
     catch(e){setCommandError(formatError(e));}finally{setBusy(false);}
   }
   const uploadableActions=ticket?.actions.filter(task=>canMutate&&mayEdit(user,task))||[];
@@ -331,7 +332,7 @@ export default function RemediationTicketDrawer({open,onOpenChange,kind,record,c
       {!ticket.actions.length&&ticket.finding&&isInternal(user)&&canMutate&&<Button disabled={busy||!canMutate} onClick={async()=>{setBusy(true);setCommandError('');try{await api.post('/findings/'+ticket.finding.finding_id+'/create-task',{title:ticket.title});await saved();}catch(e){setCommandError(formatError(e));}finally{setBusy(false);}}}>Start remediation</Button>}
       <ActionDetailState ticket={ticket} stage={stage} users={users} detail={detail} evidenceCount={evidenceCount}>
       {ticket.finding&&['closed','accepted'].includes(ticket.finding.status)&&isInternal(user)&&canMutate&&<Button disabled={busy||!canMutate} onClick={async()=>{setBusy(true);setCommandError('');try{await reopen('/findings/'+ticket.finding.finding_id+'/reopen',{expected_updated_at:ticket.finding.updated_at??null});await saved();setFeedback('Ticket reopened. Previous completed work and decisions are retained.');}catch(e){setCommandError(formatError(e));}finally{setBusy(false);}}}>Reopen ticket</Button>}
-      {stage==='pending_validation'&&<section className="space-y-3">{!detail&&<p>Work is complete. A platform administrator must validate the resolution before this ticket is Completed.</p>}{isInternal(user)&&canMutate&&<><label className="block">{detail?'Validation note (required)':'Validation rationale (required)'}<Textarea aria-label="Validation rationale" value={rationale} disabled={busy||!canMutate} onChange={e=>setRationale(e.target.value)}/></label><Button disabled={busy||!rationale.trim()} onClick={()=>validate()}>{detail?'Validate and close':'Validate and complete'}</Button></>}</section>}
+      {stage==='pending_validation'&&<section className="space-y-3">{!detail&&<p>Work is submitted. An independent authorized validator records their own decision.</p>}{isInternal(user)&&canMutate&&<>{independentValidationIssue(ticket.actions,user.user_id)&&<p role="status">{independentValidationIssue(ticket.actions,user.user_id)}</p>}<label className="block">{detail?'Validation note (required)':'Validation rationale (required)'}<Textarea aria-label="Validation rationale" value={rationale} disabled={busy||!canMutate} onChange={e=>setRationale(e.target.value)}/></label><Button disabled={busy||!rationale.trim()||!!independentValidationIssue(ticket.actions,user.user_id)} onClick={()=>validate()}>{detail?'Validate and close':'Validate and complete'}</Button><Button variant="outline" disabled={busy||!rationale.trim()||!!independentValidationIssue(ticket.actions,user.user_id)} onClick={()=>validate('reject')}>Return for rework</Button></>}</section>}
       </ActionDetailState>
       {ticket.finding&&!['closed','accepted'].includes(ticket.finding.status)&&isInternal(user)&&canMutate&&<details className="bad-accept"><summary>{detail?'Accept the issue instead of fixing it':'Accept the issue instead of remediation'}</summary><p>Acceptance is recorded separately from successful remediation. Existing work and evidence are retained.</p><label>Acceptance rationale (required)<Textarea aria-label="Acceptance rationale" value={rationale} disabled={busy||!canMutate} onChange={e=>setRationale(e.target.value)}/></label><Button disabled={busy||!rationale.trim()} onClick={()=>validate('accept')}>Accept issue</Button></details>}
       {!detail&&ticket.finding&&['open','in_progress','blocked'].includes(stage)&&<p className="text-sm">Complete outstanding work, then validate the resolution here. Control implementation and verification are unchanged.</p>}

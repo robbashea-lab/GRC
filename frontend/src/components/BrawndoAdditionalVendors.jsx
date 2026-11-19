@@ -9,14 +9,15 @@ import {vendorOutstandingWork, vendorWorkUnits} from '@/lib/vendorOutstandingWor
 import VendorsConceptTimeline, {VendorsEventList} from './VendorsConceptTimeline';
 import { ColumnControl, TableFilterChips } from './TableControls';
 import { assuranceAttention, assuranceName, assuranceState, vendorMatches } from '@/lib/brawndoVendors';
+import {vendorSignals} from '@/lib/vendorGovernance';
 import { calendarDay, managementDay } from '@/lib/managementDates';
 import { vendorTimelineEvents, timelineBounds, eventCycleProgress } from '@/lib/brawndoAdditionalPolicyVendor';
 import { AdditionalOwner, savedDate, relativeDate } from './BrawndoAdditionalPolicyVendorCells';
 import './BrawndoAdditionalPolicyVendor.css';
 import './CisVendorsConcept.css';
 
-const VIEWS = [['all_active', 'All active'], ['review_due', 'Reviews due'], ['review_overdue', 'Reviews past due'], ['critical_high', 'Critical / High'], ['renewal_soon', 'Renewal / notice actions'], ['assurance', 'Assurance follow-up due'], ['inactive', 'Inactive']];
-const EXTRA_VIEWS = [['contract_soon', 'Contracts expiring'], ['assurance_attention', 'Assurance needs attention'], ['unassigned', 'Unassigned'], ['all', 'All records'], ['critical', 'Critical'], ['high', 'High']];
+const VIEWS = [['all_active', 'All active'], ['review_due_30', 'Linked Reviews due / past due in 30 days'], ['review_overdue', 'Reviews past due'], ['critical_high', 'Critical / High'], ['renewal_soon', 'Renewal / notice actions in 30 days'], ['assurance_followup', 'Assurance follow-up due'], ['inactive', 'Inactive']];
+const EXTRA_VIEWS = [['review_due', 'Linked Reviews due / past due in 90 days'], ['assurance', 'Required assurance needs attention'], ['contract_soon', 'Contract actions within configured lead'], ['contract_expiring', 'Contracts expiring in 30 days'], ['notice_due_60', 'Recorded notice deadlines in 60 days'], ['assurance_attention', 'Required assurance needs attention (Dashboard)'], ['unassigned', 'Unassigned'], ['all', 'All records'], ['critical', 'Critical'], ['high', 'High']];
 const CRITICALITY = { critical: 'Critical', high: 'High', medium: 'Moderate', moderate: 'Moderate', low: 'Low' };
 
 
@@ -87,13 +88,13 @@ export default function BrawndoAdditionalVendors({ clientName = 'Client', rows =
   const selectEvents = (events, title, opener) => setSelection({scope: scopeKey, ids: events.map(event => event.id), title, opener});
   const openEvent = event => event.task ? onOpenTask?.(event.task) : event.review && onOpenReview ? onOpenReview(event.review) : onOpen(event.vendor, event.tab, event.assuranceId);
   const refreshLabel = !loading && !error ? formatAcceptedRefresh(acceptedRefresh) : '';
-  const figures = [['critical_high', 'Critical / High'], ['review_due', 'Reviews due in 30 days'], ['assurance', 'Assurance follow-up due'], ['renewal_soon', 'Renewal / notice actions in 30 days']];
+  const figures = [['critical_high', 'Critical / High'], ['review_due_30', 'Linked Reviews due / past due in 30 days'], ['assurance_followup', 'Assurance follow-up due'], ['renewal_soon', 'Renewal / notice actions in 30 days']];
   const header = (key, label) => {
     const column=table?.columns.find(column=>column.key===key);
     return column?<ColumnControl table={table} column={{...column,label}}/>:label;
   };
   const today = managementDay();
-  const counts = viewCounts||Object.fromEntries([...VIEWS, ...EXTRA_VIEWS].map(([id]) => [id, rows.filter(row => vendorMatches(row, id)).length]));
+  const counts = viewCounts||Object.fromEntries([...VIEWS, ...EXTRA_VIEWS].map(([id]) => [id, rows.filter(row => vendorMatches(vendorSignals(row,reviews,now),id,now)).length]));
   const metrics = figures.map(([id])=>counts[id]);
   const countsAvailable = !loading && !error;
   const cohort = Object.prototype.hasOwnProperty.call(counts, view) ? view : 'all_active';
@@ -104,25 +105,27 @@ export default function BrawndoAdditionalVendors({ clientName = 'Client', rows =
   const inactiveCount = counts.inactive;
   const critical = counts.critical;
   const high = counts.high;
+  const notRated = rows.filter(vendor=>vendorMatches(vendor,'all_active')&&!['critical','high','medium','moderate','low'].includes(vendor.criticality));
   const cards = [
-    {id: 'all', label: 'All vendors', count: rows.length, detail: `${activeCount} active · ${inactiveCount} inactive`, Icon: BriefcaseBusiness, open: () => onView('all'), ready: countsAvailable},
-    {id: 'critical_high', label: 'Critical / High', count: critical + high, detail: `${critical} critical · ${high} high`, Icon: TriangleAlert, open: () => onView('critical_high'), ready: countsAvailable},
-    {id: 'overdue', label: 'Overdue', count: work.overdue.length, detail: vendorWorkUnits(work.overdue), Icon: TriangleAlert, open: event => selectEvents(work.overdue, 'Overdue vendor work', event.currentTarget), ready: workReady},
-    {id: 'due30', label: 'Due in 30 days', count: work.due30.length, detail: vendorWorkUnits(work.due30), Icon: CalendarDays, open: event => selectEvents(work.due30, 'Due in the next 30 days', event.currentTarget), ready: workReady},
+    {id:'all_active',label:'Active vendors',count:activeCount,detail:inactiveCount+' inactive',open:()=>onView('all_active'),ready:countsAvailable},
+    {id:'critical_high',label:'Critical / High',count:critical+high,detail:critical+' critical · '+high+' high',open:()=>onView('critical_high'),ready:countsAvailable},
+    {id:'not_rated',label:'Not rated',count:notRated.length,detail:'Criticality not recorded',open:()=>{onView('all_active');const column=table?.columns.find(column=>column.key==='criticality');if(column)table.setFilter('criticality',[...new Set(['__empty__',...notRated.map(row=>column.value?column.value(row):row.criticality).map(value=>value==null||value===''?'__empty__':String(value))])]);},ready:countsAvailable},
+    {id:'overdue',label:'Overdue',count:work.overdue.length,detail:vendorWorkUnits(work.overdue),open:event=>selectEvents(work.overdue,'Overdue vendor work',event.currentTarget),ready:workReady},
+    {id:'due30',label:'Due in 30 days',count:work.due30.length,detail:vendorWorkUnits(work.due30),open:event=>selectEvents(work.due30,'Due in the next 30 days',event.currentTarget),ready:workReady},
   ];
   return <div className={`brawndo-additional bav-page${quarterlyChart ? ' cv-page' : ''}`} data-theme={theme} data-testid="additional-vendors">
     <div className="bapv-page-head"><div><h1>{clientName} Vendors</h1><p>{countsAvailable ? `Third-party register · ${counts.all_active} active ${counts.all_active === 1 ? 'vendor' : 'vendors'}` : 'Third-party register'}{refreshLabel && ` · As of ${refreshLabel}`}</p></div><div className="bapv-head-actions">{actions}</div></div>
     <section className={quarterlyChart ? 'cv-overview' : 'bapv-card bav-overview'} aria-label="Vendor overview">
-      {quarterlyChart ? <><div className="cv-kpis" aria-label="Vendor summaries">{cards.map(({id, label, count, detail, Icon, open, ready}) => <button type="button" key={id} className={`cv-kpi bapv-kcell${id === 'overdue' && count ? ' has-overdue' : ''}`} disabled={!ready} onClick={open} data-testid={`additional-vendor-metric-${id}`}><Icon aria-hidden="true"/><div><span>{label}</span><strong>{ready ? count : '—'}</strong><small>{ready ? detail : 'Counts unavailable'}</small></div></button>)}</div>{workError && <p className="cv-work-error" role="alert">{workError} Work counts unavailable.</p>}
+      {quarterlyChart ? <>{workError && <p className="cv-work-error" role="alert">{workError} Work counts unavailable.</p>}
       <VendorsConceptTimeline key={scopeKey} scopeKey={scopeKey} events={work.events} users={users} available={workReady} theme={theme} onSelect={selectEvents}/></> : <><div className="bapv-kstrip" aria-label="Vendor summary. Select a figure to filter the register.">{figures.map(([id, label], index) => <button type="button" className="bapv-kcell" key={id} aria-pressed={view === id} disabled={!countsAvailable} onClick={() => onView(view === id ? 'all_active' : id)} data-testid={`additional-vendor-metric-${id}`}><span>{label}</span><strong>{countsAvailable ? metrics[index] : '—'}</strong></button>)}</div><div><div className="bav-timeline-head"><div><h3>Next 12 months</h3><p className="bapv-sub">Reviews, assurance follow-ups and contract renewals for each vendor.</p></div><div className="bav-legend" aria-label="Timeline markers"><span><i className="bav-marker rev" />Review</span><span><i className="bav-marker asr" />Assurance follow-up</span><span><i className="bav-marker ren" />Contract renewal</span></div></div>{!loading && !error && <VendorTimeline key={acceptedRefresh || 'unacknowledged'} rows={rows} reviews={reviews} onOpen={onOpen} onOpenReview={onOpenReview} theme={theme} />}</div></>}
     </section>
     <section className="bapv-card" aria-label="Vendor register">
-      {quarterlyChart && <div className="cv-register-heading"><h2>Vendor register</h2></div>}
-      <div className="bapv-filters"><label className="bapv-search"><span className="sr-only">Search vendors</span><Search size={16} aria-hidden="true" /><input type="search" placeholder="Search vendors…" value={q} onChange={event => onSearch(event.target.value)} data-testid="vendor-search" /></label><div className="bapv-segment" role="group" aria-label="Show vendors">{VIEWS.map(([id, label]) => <button type="button" key={id} aria-pressed={view === id} onClick={() => onView(id)} data-testid={`vendor-view-${id}`}>{label}<span>{countsAvailable ? counts[id] : '—'}</span></button>)}</div><label className="bapv-field">More views <select aria-label="Other vendor views" value={EXTRA_VIEWS.some(([id]) => id === view) ? view : ''} onChange={event => onView(event.target.value || 'all_active')}><option value="">Select</option>{EXTRA_VIEWS.map(([id, label]) => <option value={id} key={id}>{countsAvailable ? `${label} (${counts[id]})` : label}</option>)}</select></label></div>
+      <div className="cv-register-heading"><h2>Vendor register</h2></div>{quarterlyChart&&<div className="reg-kstrip native-summary" data-native-summary><div className="kstrip" role="group" aria-label="Vendor summaries">{cards.map(({id,label,count,detail,open,ready})=><button type="button" key={id} className="kchip" disabled={!ready} onClick={open} data-testid={`additional-vendor-metric-${id}`}><span className="klabel">{label}</span><strong className="kvalue">{ready?count:'—'}</strong><small className="kdetail">{ready?detail:'Counts unavailable'}</small></button>)}</div></div>}
+      <div className="bapv-filters"><label className="bapv-search"><span className="sr-only">Search vendors</span><Search size={16} aria-hidden="true" /><input type="search" placeholder="Search vendors…" value={q} onChange={event => onSearch(event.target.value)} data-testid="vendor-search" /></label><div className="bapv-segment" role="group" aria-label="Show vendors">{VIEWS.map(([id, label]) => <button type="button" key={id} aria-pressed={view === id} onClick={() => onView(id)} data-testid={`vendor-view-${id}`}>{label}<span>{countsAvailable ? counts[id] : '—'}</span></button>)}</div><span>{table&&<ColumnControl table={table} columnKey="status" />}</span><label className="bapv-field">More views <select aria-label="Other vendor views" value={EXTRA_VIEWS.some(([id]) => id === view) ? view : ''} onChange={event => onView(event.target.value || 'all_active')}><option value="">Select</option>{EXTRA_VIEWS.map(([id, label]) => <option value={id} key={id}>{countsAvailable ? `${label} (${counts[id]})` : label}</option>)}</select></label></div>
       {table && <TableFilterChips table={table} />}
       {error && <div className="bapv-empty" role="alert"><p>{error}</p><button type="button" onClick={onRetry}>Retry</button></div>}
       <div className="bav-table" role="table" aria-label="Vendors">
-        <div className="bav-row bav-header" role="row">{[['name', 'Vendor'], ['criticality', 'Criticality'], ['data_types', quarterlyChart ? 'Data access' : 'Data types'], ['business_owner_id', quarterlyChart ? 'Owner' : 'Business owner'], ['next_review', 'Next review'], ['security_assurance', 'Security assurance'], ['contract_renewal', quarterlyChart ? 'Renewal' : 'Contract renewal']].map(([key, label]) => <div role="columnheader" key={key}>{header(key, label)}</div>)}<span aria-hidden="true" /></div>
+        <div className="bav-row bav-header" role="row">{[['name', 'Vendor'], ['criticality', 'Criticality'], ['data_types', quarterlyChart ? 'Data access' : 'Data types'], ['business_owner_id', quarterlyChart ? 'Owner' : 'Business owner'], ['next_review', 'Next review'], ['security_assurance', 'Security assurance'], ['contract_renewal', quarterlyChart ? 'Renewal' : 'Contract renewal']].map(([key, label]) => <div role="columnheader" key={key}>{header(key, label)}{key==='name'&&table&&<ColumnControl table={table} columnKey="service" />}</div>)}<span aria-hidden="true" /></div>
         {loading && <div className="bapv-empty" role="status">Loading vendors…</div>}
         {!loading && !error && !filteredRows.length && <div className="bapv-empty"><h3>No vendors match</h3><p>Try a different search or filter.</p><button type="button" onClick={() => { onSearch(''); onView('all_active'); table?.clear(); }}>Clear filters</button></div>}
         {!loading && !error && filteredRows.map((vendor, index) => {
@@ -132,7 +135,7 @@ export default function BrawndoAdditionalVendors({ clientName = 'Client', rows =
           const nextDay = calendarDay(vendor.next_review), renewalDay = calendarDay(contract);
           return <div className="bav-row" role="row" key={vendor.vendor_id} onClick={() => onOpen(vendor)} data-testid={`vendor-row-${index}`}>
             <div role="cell" className="bav-item">{quarterlyChart && <RegisterIdentityLogo kind="vendor" src={registerCatalogLogo('vendors', vendor)}/>}<div><button type="button" className="bapv-name" onClick={event => { event.stopPropagation(); onOpen(vendor); }}>{vendor.name}</button><div className="bapv-meta">{[vendor.service || vendor.services, vendor.status !== 'active' ? vendor.status : ''].filter(Boolean).join(' · ')}</div></div></div>
-            <div role="cell" className="bav-criticality"><span className={`bav-critical ${vendor.criticality}`}><i />{CRITICALITY[vendor.criticality] || vendor.criticality || 'Not recorded'}</span></div>
+            <div role="cell" className="bav-criticality"><span className={`bav-critical ${vendor.criticality}`}><i />{CRITICALITY[vendor.criticality] || vendor.criticality || 'Not rated'}</span>{vendor.source_services&&vendor.criticality_provisional&&<small className="native-provisional" title="Added from Services & Tools; provisional conservative default—confirm actual business impact and access in Edit vendor. Responsibility does not establish privileges/data access.">Provisional · confirm in Edit vendor</small>}</div>
             <div role="cell" className="bav-types">{vendor.data_types?.length ? vendor.data_types.map(type => <span className="bav-data-type" key={type}>{type}</span>) : <span>Not recorded</span>}</div>
             <div role="cell" className="bav-owner"><AdditionalOwner users={users} id={vendor.business_owner_id} /></div>
             <div role="cell" className="bav-next bapv-two"><span>{savedDate(vendor.next_review) || 'Not scheduled'}</span><small className={nextDay !== null && nextDay <= today + 30 ? 'warn' : ''}>{vendor.next_review ? relativeDate(vendor.next_review) : ''}{vendor.last_review ? `${vendor.next_review ? ' · ' : ''}last ${savedDate(vendor.last_review, true)}` : ''}</small></div>

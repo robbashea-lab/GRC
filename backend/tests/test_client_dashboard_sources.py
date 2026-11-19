@@ -30,6 +30,8 @@ class ClientDashboardSourcesTests(unittest.IsolatedAsyncioTestCase):
             await server.db.users.insert_one({"user_id": uid, "email": uid + "@example.test", "name": uid, "role": role, "client_ids": clients, "status": "active"})
         await server.db.clients.insert_many([{"client_id": "a", "name": "Populated", "status": "active"}, {"client_id": "b", "name": "Minimal", "status": "active"}])
         async def identify_create(request):
+            from r4_fixture_inputs import supply_completion_inputs
+            await supply_completion_inputs(self, request, server)
             # Each test POST is a distinct intent unless the scenario explicitly
             # supplies a repeated key. Match the frontend transport contract.
             if request.method == "POST" and request.url.path.removeprefix('/api/') in {*server.ENTITY_MAP, 'clients', 'evidence', 'ai_systems'}:

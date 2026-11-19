@@ -34,3 +34,20 @@ test('password change refreshes the invalidated current session and accurately e
     container.remove();
   }
 });
+
+test('digest switch is a draft and uses the actual preferences command only on Save', async () => {
+  global.IS_REACT_ACT_ENVIRONMENT = true;mockPatch.mockClear();mockSuccess.mockClear();
+  const container = document.createElement('div'), root = createRoot(container);
+  document.body.appendChild(container);
+  try {
+    await act(async () => root.render(<MyAccount/>));
+    await act(async () => container.querySelector('[data-testid="account-tab-notifications"]').click());
+    const toggle = container.querySelector('[role="switch"]');
+    await act(async () => toggle.click());
+    expect(toggle.getAttribute('aria-checked')).toBe('true');expect(mockPatch).not.toHaveBeenCalled();
+    await act(async () => container.querySelector('[data-testid="me-save-prefs"]').click());
+    expect(mockPatch).toHaveBeenCalledWith('/me/preferences',{weekly_digest_optout:true});
+    expect(mockSuccess).toHaveBeenCalledWith('Preferences saved');
+    expect(container.querySelector('h1').textContent).toBe('My Account');
+  } finally {await act(async () => root.unmount());container.remove();}
+});

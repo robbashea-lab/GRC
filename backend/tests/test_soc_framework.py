@@ -8,6 +8,9 @@ from framework_catalog import SOC
 from routes.onboarding import BASELINE_CATALOG
 
 
+from r4_fixture_inputs import validate_with_independent_actor
+
+
 class SocTests(unittest.IsolatedAsyncioTestCase):
     async def test_draft_save_and_explicit_assessment_dates_are_independent(self):
         workspace = await self.configure()
@@ -182,7 +185,7 @@ class SocTests(unittest.IsolatedAsyncioTestCase):
         await self.configure(('cis-ig1','hipaa','iso-27001'))
         before=await server.db.reviews.find({'client_id':'a'},{'_id':0}).to_list(None)
         w=await self.configure(('cis-ig1','hipaa','iso-27001','soc-2'))
-        self.assertEqual(await server.db.framework_assessments.count_documents({'client_id':'a'}),288)
+        self.assertEqual(await server.db.framework_assessments.count_documents({'client_id':'a'}),293)
         self.assertEqual(await server.db.reviews.count_documents({'client_id':'a'}),23)
         for row in before:
             after=await server.db.reviews.find_one({'review_id':row['review_id']},{'_id':0})
@@ -238,5 +241,8 @@ class SocTests(unittest.IsolatedAsyncioTestCase):
         related=(await self.client.get(base+'/related')).json()
         self.assertEqual(len(related['tasks']),1)
         self.assertEqual((await self.client.patch('/api/tasks/'+related['tasks'][0]['task_id'],json={'status':'done'})).status_code,200)
-        self.assertEqual((await self.client.post('/api/findings/'+f.json()['finding_id']+'/validate',json={'rationale':'Fixture evidence validated'})).status_code,200)
+        pending=await server.db.findings.find_one({'finding_id':f.json()['finding_id']})
+        self.assertEqual((await validate_with_independent_actor(self,server,f.json()['finding_id'],{
+            'rationale':'Fixture evidence validated','expected_updated_at':pending['updated_at'],
+            'request_id':'soc-independent-validation'})).status_code,200)
         self.assertEqual((await self.client.get(base)).json()['status'],'not_assessed')
