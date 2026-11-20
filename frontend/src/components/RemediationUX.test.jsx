@@ -7,8 +7,9 @@ import {completionHandoff,remediationOrigin} from '@/lib/remediation';
 import {buildLegacyDemoStore,readStore,saveStore} from '../preview/store';
 import {currentReviewCompletion} from '../testUtils/r4ReviewFixture';
 
-let mockUser={user_id:'demo_admin',role:'super_admin'};
-jest.mock('@/context/AuthContext',()=>({useAuth:()=>({user:mockUser})}));
+let mockUser={user_id:'demo_admin',role:'super_admin'},mockOrg;
+jest.mock('@/context/AuthContext',()=>({useAuth:()=>({user:mockUser,workspaceMode:'demo',loading:false,error:''})}));
+jest.mock('@/context/OrgContext',()=>({useOrg:()=>mockOrg}));
 jest.mock('@/lib/api',()=>({__esModule:true,default:require('axios').default.create({adapter:require('../preview/commandTestAdapter').previewAdapter}),formatError:e=>e.message,API:'/api'}));
 jest.mock('react-router-dom',()=>({Link:({children,to})=><a href={to}>{children}</a>}),{virtual:true});
 jest.mock('@/components/ui/sheet',()=>({Sheet:({open,children})=>open?<div>{children}</div>:null,SheetContent:({children,...props})=><section {...props}>{children}</section>,SheetHeader:({children})=><header>{children}</header>,SheetTitle:({children})=><h2>{children}</h2>}));
@@ -29,6 +30,7 @@ beforeEach(async()=>{
   global.IS_REACT_ACT_ENVIRONMENT=true;sessionStorage.clear();localStorage.clear();
   container=document.createElement('div');document.body.appendChild(container);root=createRoot(container);
   await api.post('/demo/enter');client=(await api.post('/clients',{name:'Phase 2 component client'})).data;
+  mockOrg={currentClientId:client.client_id,currentClient:client,clients:[client],loading:false,error:''};
   review=(await api.post('/reviews',{client_id:client.client_id,title:'Policy Review and Approval',review_type:'policy',recurrence:'quarterly',due_date:'2026-09-30'})).data;
   finding=(await api.post(`/reviews/${review.review_id}/create-finding`,{occurrence_id:review.current_occurrence_id,request_id:'single',title:'NO ISP',description:'Policy is not documented.',remediation_title:'MAKE AN ISP'})).data;
   task=(await api.get('/tasks',{params:{client_id:client.client_id}})).data[0];
@@ -114,6 +116,9 @@ test('seeded framework ticket validates without changing its control conclusion'
   await asExternalActor(scopedActor('framework-worker','demo_brawndo'),async()=>{
     await api.patch('/tasks/'+seeded.task_id,{status:'done',expected_updated_at:seeded.updated_at});
   });
+  const seededClients=(await api.get('/clients')).data,seededClient=seededClients.find(row=>row.client_id==='demo_brawndo');
+  expect(seededClient).toBeDefined();
+  mockOrg={currentClientId:seededClient.client_id,currentClient:seededClient,clients:seededClients,loading:false,error:''};
   await act(async()=>root.render(<RecordDrawer open kind="tasks" record={seeded} clientId="demo_brawndo" onOpenChange={()=>{}}/>));
   expect(container.textContent).not.toContain('Primary Action unavailable');
   expect(container.textContent).toContain('Pending validation');

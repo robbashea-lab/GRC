@@ -5,6 +5,7 @@ from datetime import date, datetime, timedelta, timezone
 import csv
 import io
 import json
+from pathlib import Path
 import re
 import unittest
 from unittest.mock import AsyncMock, patch
@@ -95,6 +96,67 @@ class R4ReportFormatTests(unittest.TestCase):
         dto['sections'][0]['rows'][0][1] = 'Unsupported \U0001f984'
         with self.assertRaises(ValueError):
             render_report(dto)
+
+    def test_pdf_full_public_cmmc_scope_retains_contiguous_values_across_pages(self):
+        catalog_path = Path(__file__).resolve().parents[2] / 'shared' / 'catalogs' / 'cmmc.json'
+        catalog = json.loads(catalog_path.read_text(encoding='utf-8'))
+        requirements = catalog['requirements']
+        self.assertEqual(len(requirements), 110)
+        self.assertEqual(len({item['id'] for item in requirements}), 110)
+        dto = pdf_dto('R4 synthetic public CMMC pagination client')
+        dto['header'].update(title='Synthetic CMMC scope',
+                             program={'key': 'cmmc', 'name': 'CMMC', 'version': catalog['version']})
+        dto['stats'] = [{'label': 'Catalog rows', 'value': 110, 'detail': 'Public definitions; synthetic scope only'}]
+        dto['sections'] = [{'title': 'Synthetic public CMMC scope',
+                            'columns': ['ID', 'Title', 'Control', 'Scope', 'Reason'],
+                            'rows': [[item['id'], item['title'], item['control_name'],
+                                      'Synthetic scope', 'Synthetic scope reason; no implementation claim']
+                                     for item in requirements]}]
+        rows = dto['sections'][0]['rows']
+        self.assertEqual(len(rows), 110)
+        self.assertEqual([row[0] for row in rows], [item['id'] for item in requirements])
+        self.assertEqual([row[1] for row in rows], [item['title'] for item in requirements])
+        original = deepcopy(dto)
+        header = dto['header']
+        values = [('header/client/name', header['client']['name']), ('header/title', header['title']),
+                  ('header/program/name', header['program']['name']), ('header/program/version', header['program'].get('version')),
+                  ('header/as_of', header['as_of']), ('header/qualifier', header['qualifier']),
+                  ('header/prepared_by', header['prepared_by']['name'] or header['prepared_by']['id'] or 'Not recorded'),
+                  ('header/lead', header['lead']['name'] or header['lead']['id'] or 'Not recorded')]
+        for index, item in enumerate(dto['stats']):
+            rendered = str(item['value']) if item['value'] is not None else 'Not recorded'
+            values.extend([(f'stats/{index}/label_value', item['label'] + ': ' + rendered),
+                           (f'stats/{index}/detail', item.get('detail'))])
+        for index, section in enumerate(dto['sections']):
+            values.append((f'sections/{index}/title', section['title']))
+            values.extend((f'sections/{index}/columns/{column}', value)
+                          for column, value in enumerate(section['columns']))
+            values.extend((f'sections/{index}/rows/{row}/{column}', 'Not recorded' if value is None else str(value))
+                          for row, cells in enumerate(section['rows']) for column, value in enumerate(cells))
+        self.assertTrue(all(str(value).isascii() for _, value in values if value))
+
+        def assert_complete_values(content):
+            # Same contiguous-value predicate as the native probe: ignore only whitespace.
+            text = pdf_fixtures.pdf_streams(content).decode('latin-1')
+            compact = re.sub(r'\s+', '', text)
+            for path, value in values:
+                if value:
+                    self.assertIn(re.sub(r'\s+', '', str(value)), compact, path)
+
+        content = render_report(dto)
+        self.assertTrue(content.startswith(b'%PDF-'))
+        self.assertGreater(len(re.findall(rb'/Type\s*/Page\b', content)), 1)
+        self.assertEqual(dto, original)
+        assert_complete_values(content)
+        omitted = deepcopy(dto)
+        title = rows[0][1]
+        self.assertEqual(sum(row[1] == title for row in rows), 1)
+        omitted['sections'][0]['rows'][0][1] = 'Synthetic deliberately omitted description'
+        omitted_original = deepcopy(omitted)
+        with self.assertRaisesRegex(AssertionError, 'sections/0/rows/0/1'):
+            assert_complete_values(render_report(omitted))
+        self.assertEqual(omitted, omitted_original)
+        self.assertEqual(dto, original)
 
     def test_pdf_long_row_and_final_record_survive_pagination(self):
         dto = pdf_dto()

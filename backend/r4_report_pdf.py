@@ -72,8 +72,9 @@ def _render_report(report):
         minimum = min(54, width / len(columns))
         remaining = width - minimum * len(columns)
         widths = [minimum + remaining * weight / sum(weights) for weight in weights]
+        # Keep ordinary rows intact; split oversized rows only when needed.
         table = Table(data, colWidths=widths, hAlign='LEFT',
-                      repeatRows=1, splitByRow=0, splitInRow=1)
+                      repeatRows=1, splitByRow=1, splitInRow=1)
         table.setStyle(TableStyle([
             ('VALIGN', (0, 0), (-1, -1), 'TOP'),
             ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#f1f5f6')),

@@ -2,7 +2,7 @@ import React,{act} from 'react';
 import {createRoot} from 'react-dom/client';
 import ReviewDrawer from './ReviewDrawer';
 import api from '@/lib/api';
-import {ids,readStore,saveStore} from '@/preview/store';
+import {ids,readStore,saveStore,STORE_KEY} from '@/preview/store';
 import {rememberClient} from '@/lib/clientSelection';
 import {reviewExecutions} from '@/lib/brawndoDemoReviews';
 import {toast} from 'sonner';
@@ -379,6 +379,44 @@ test('a genuinely completed native occurrence retains its recorded date, actor a
   const reassessment=[...document.querySelectorAll('section')].find(section=>section.querySelector('h3')?.textContent==='Risk reassessment');
   expect(reassessment).toBeTruthy();expect(reassessment.textContent).toContain('Reviewed — No Change');
   expect(node('review-complete')).toBeNull();expect(node('drawer-save')).toBeNull();expect(post).not.toHaveBeenCalled();expect(patch).not.toHaveBeenCalled();
+});
+
+test.each([
+  ['missing',undefined,undefined,'Not recorded → Not recorded'],
+  ['null',null,null,'Not recorded → Not recorded'],
+  ['empty','','','Not recorded → Not recorded'],
+  ['only before missing',undefined,'monitor','Not recorded → monitor'],
+  ['only after missing','mitigate',undefined,'mitigate → Not recorded'],
+  ['retained mitigate to monitor','mitigate','monitor','mitigate → monitor'],
+  ['retained monitor to mitigate','monitor','mitigate','monitor → mitigate'],
+])('historical treatment is read only and never inferred from the current Risk (%s)',async(label,beforeTreatment,afterTreatment,expected)=>{
+  const target=await fixture('cis-ig1',{treatment:'mitigate'});
+  const done=(await api.post('/reviews/'+target.review.review_id+'/complete',{
+    ...await riskCompletion(target.review),risk_assessment:{treatment:'monitor'},risk_outcome:'Reviewed — No Change'})).data;
+  const completedRisk=await riskRow(target.risk);
+  await api.patch('/risks/'+target.risk.risk_id,{treatment:'avoid',expected_updated_at:completedRisk.updated_at??null});
+  target.review=await reviewRow(target.review);target.risk=await riskRow(target.risk);
+  expect(target.risk.treatment).toBe('avoid');
+  const nativeHistory=await riskHistory(target.risk);
+  expect(nativeHistory).toEqual([done.occurrence]);
+  // Synthetic retained-DTO variants exercise the renderer; native saved history is not rewritten.
+  const occurrence={...done.occurrence,risk_before:{...done.occurrence.risk_before},risk_after:{...done.occurrence.risk_after}};
+  for(const [key,value] of [['risk_before',beforeTreatment],['risk_after',afterTreatment]]){
+    if(value===undefined)delete occurrence[key].treatment;else occurrence[key].treatment=value;
+  }
+  const inputBefore=JSON.parse(JSON.stringify(occurrence)),storedBefore=sessionStorage.getItem(STORE_KEY);
+  const post=jest.spyOn(api,'post'),patch=jest.spyOn(api,'patch'),setItem=jest.spyOn(Storage.prototype,'setItem');
+  await renderReview(target,{initialValues:{occurrence}});
+  const reassessment=[...document.querySelectorAll('section')].find(section=>section.querySelector('h3')?.textContent==='Risk reassessment');
+  expect(reassessment).toBeTruthy();
+  expect([...reassessment.querySelectorAll('p')].find(value=>value.textContent.startsWith('Treatment:'))?.textContent).toBe('Treatment: '+expected);
+  expect(reassessment.textContent).not.toContain('avoid');
+  expect(document.querySelector('[aria-label="Risk treatment"]')).toBeNull();
+  expect(node('review-complete')).toBeNull();expect(node('review-start')).toBeNull();expect(node('drawer-save')).toBeNull();
+  expect(occurrence).toEqual(inputBefore);expect(post).not.toHaveBeenCalled();expect(patch).not.toHaveBeenCalled();
+  expect(await riskRow(target.risk)).toEqual(target.risk);expect(await reviewRow(target.review)).toEqual(target.review);
+  expect(await riskHistory(target.risk)).toEqual(nativeHistory);expect(sessionStorage.getItem(STORE_KEY)).toBe(storedBefore);
+  expect(setItem.mock.calls.filter(([key])=>key===STORE_KEY)).toEqual([]);
 });
 
 test('retained legacy completed history still reports its original actor and Legacy completion wording',async()=>{

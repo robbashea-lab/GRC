@@ -62,7 +62,8 @@ test('a superseded actual revision still refuses completion and preserves the sa
   const review=await vendorReview(),oldGuide=await performedGuide(review),current=await saveCheckpoint(review,oldGuide);
   expect(current.expected_updated_at).not.toBe(oldGuide.expected_updated_at);
   const body={...completionPayload(current),expected_updated_at:oldGuide.expected_updated_at},before=sessionStorage.getItem(STORE_KEY);
-  await expect(api.post('/reviews/'+review.review_id+'/complete',body)).rejects.toThrow(/Record changed since it was opened/);
+  await expect(api.post('/reviews/'+review.review_id+'/complete',body)).rejects.toMatchObject({
+    response:{status:409,data:{detail:'Review changed; reopen before completing'}}});
   expect(sessionStorage.getItem(STORE_KEY)).toBe(before);
   expect((await api.get('/reviews/'+review.review_id+'/history')).data).toHaveLength(0);
   expect((await api.get('/reviews/'+review.review_id)).data.updated_at).toBe(current.expected_updated_at);
