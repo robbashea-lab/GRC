@@ -35,6 +35,43 @@ def pdf_dto(client='R4 synthetic client A'):
             'provenance': {'source_hash': 'synthetic', 'consistency': 'Isolated test fixture'}}
 
 
+def native_shaped_public_cmmc_report():
+    catalog_path = Path(__file__).resolve().parents[2] / 'shared' / 'catalogs' / 'cmmc.json'
+    catalog = json.loads(catalog_path.read_text(encoding='utf-8'))
+    requirements = catalog['requirements']
+    assessments = [
+        {'id': item['id'], 'title': item['title'], 'assessment_id': 'synthetic-assessment-' + item['id'],
+         'status': 'not_assessed', 'status_label': 'Not assessed', 'verification_state': 'Not verified',
+         'items_to_address': []}
+        for item in requirements]
+    snapshot = {
+        'framework': {'key': 'cmmc', 'name': 'CMMC', 'version': catalog['version']},
+        'client_id': 'synthetic-public-cmmc-client',
+        'client_name': 'R4 synthetic native-shaped CMMC pagination client',
+        'generated_at': '2026-11-19T12:00:00+00:00',
+        'source_hash': 'synthetic-public-framework-source', 'source_cutoff': '2026-11-19T12:00:00+00:00',
+        'assessments': assessments,
+        'summary': {
+            'status_labels': {'addressed': 'Implemented', 'in_progress': 'In progress',
+                              'needs_attention': 'Needs attention', 'not_assessed': 'Not assessed'},
+            'applicable_status_counts': {'addressed': 0, 'in_progress': 0, 'needs_attention': 0, 'not_assessed': 110},
+            'denominator_note': 'Synthetic applicable CMMC Level 2 requirements; no implementation claim.',
+            'implementation_position': {'implemented': 0, 'denominator': 110, 'percentage': 0.0,
+                'scope': {'applicability': {item['id']: 'included' for item in requirements}}}},
+    }
+    records = {'client': {'assigned_owner_id': 'synthetic-lead'},
+        'users': [{'user_id': 'synthetic-preparer', 'name': 'Synthetic report preparer'},
+                  {'user_id': 'synthetic-lead', 'name': 'Synthetic GRC lead'}],
+        'risks': [], 'policies': [], 'findings': [], 'tasks': [], 'assessment_owners': [],
+        'reviews': [{'review_id': 'synthetic-review-' + item['id'],
+                     'title': 'Synthetic scheduled review for public requirement ' + item['id'],
+                     'status': 'upcoming', 'framework_assessment_id': 'synthetic-assessment-' + item['id']}
+                    for item in requirements]}
+    operational = {'records': records, 'source_hash': 'synthetic-operational-source',
+                   'read_started_at': '2026-11-19T12:00:00+00:00', 'read_completed_at': '2026-11-19T12:00:00+00:00'}
+    return reports.build_preview(snapshot, operational, 'scope', {'user_id': 'synthetic-preparer'}), requirements
+
+
 class R4ReportFormatTests(unittest.TestCase):
     def test_exact_six_report_type_and_framework_format_contract(self):
         for key in framework_reports.REPORT_KEYS:
@@ -156,6 +193,128 @@ class R4ReportFormatTests(unittest.TestCase):
         with self.assertRaisesRegex(AssertionError, 'sections/0/rows/0/1'):
             assert_complete_values(render_report(omitted))
         self.assertEqual(omitted, omitted_original)
+        self.assertEqual(dto, original)
+
+    def test_pdf_native_shaped_cmmc_scope_keeps_all_public_values_contiguous(self):
+        dto, requirements = native_shaped_public_cmmc_report()
+        self.assertEqual(len(requirements), 110)
+        self.assertEqual(len({item['id'] for item in requirements}), 110)
+        self.assertEqual(dto['header']['title'], 'Requirement gap list')
+        self.assertEqual(dto['sections'][0]['columns'], ['ID', 'Title', 'Status', 'Verification', 'Linked work'])
+        self.assertEqual(len(dto['stats']), 4)
+        rows = dto['sections'][0]['rows']
+        self.assertEqual(len(rows), 110)
+        self.assertEqual([row[0] for row in rows], [item['id'] for item in requirements])
+        self.assertEqual([row[1] for row in rows], [item['title'] for item in requirements])
+        self.assertTrue(all(row[4] == 'Review synthetic-review-' + row[0]
+                            + ': Synthetic scheduled review for public requirement ' + row[0] + ' (upcoming)' for row in rows))
+        self.assertTrue({'3.7.5', '3.13.12'}.issubset({row[0] for row in rows}))
+        original = deepcopy(dto)
+        header = dto['header']
+        values = [('header/client/name', header['client']['name']), ('header/title', header['title']),
+                  ('header/program/name', header['program']['name']), ('header/program/version', header['program'].get('version')),
+                  ('header/as_of', header['as_of']), ('header/qualifier', header['qualifier']),
+                  ('header/prepared_by', header['prepared_by']['name'] or header['prepared_by']['id'] or 'Not recorded'),
+                  ('header/lead', header['lead']['name'] or header['lead']['id'] or 'Not recorded')]
+        for index, item in enumerate(dto['stats']):
+            rendered = str(item['value']) if item['value'] is not None else 'Not recorded'
+            values.extend([(f'stats/{index}/label_value', item['label'] + ': ' + rendered),
+                           (f'stats/{index}/detail', item.get('detail'))])
+        for index, section in enumerate(dto['sections']):
+            values.append((f'sections/{index}/title', section['title']))
+            values.extend((f'sections/{index}/columns/{column}', value) for column, value in enumerate(section['columns']))
+            values.extend((f'sections/{index}/rows/{row}/{column}', 'Not recorded' if value is None else str(value))
+                          for row, cells in enumerate(section['rows']) for column, value in enumerate(cells))
+        self.assertTrue(all(str(value).isascii() for _, value in values if value))
+
+        def assert_complete_values(content):
+            compact = re.sub(r'\s+', '', pdf_fixtures.pdf_streams(content).decode('latin-1'))
+            for path, value in values:
+                if value:
+                    self.assertIn(re.sub(r'\s+', '', str(value)), compact, path)
+
+        content = render_report(dto)
+        self.assertTrue(content.startswith(b'%PDF-'))
+        self.assertGreater(len(re.findall(rb'/Type\s*/Page\b', content)), 1)
+        assert_complete_values(content)
+        self.assertEqual(dto, original)
+        omitted = deepcopy(dto)
+        title = rows[0][1]
+        self.assertEqual(sum(row[1] == title for row in rows), 1)
+        omitted['sections'][0]['rows'][0][1] = 'Synthetic deliberately omitted description'
+        omitted_original = deepcopy(omitted)
+        with self.assertRaisesRegex(AssertionError, 'sections/0/rows/0/1'):
+            assert_complete_values(render_report(omitted))
+        self.assertEqual(omitted, omitted_original)
+        self.assertEqual(dto, original)
+
+
+    def test_pdf_used_frame_keeps_ordinary_row_whole_and_later_oversized_row_splits(self):
+        import r4_report_pdf as pdf_renderer
+
+        dto, requirements = native_shaped_public_cmmc_report()
+        by_id = {row[0]: row for row in dto['sections'][0]['rows']}
+        ordinary = deepcopy(by_id['3.7.5'])
+        later_long_row = ['synthetic-later-long', 'Synthetic oversized linked-work row', 'Not assessed', 'Not verified',
+                          'Saved detailed work. ' * 1200 + 'R4_LATER_LONG_ROW_END']
+        final = ['synthetic-final', 'R4_FINAL_RECORD', 'Not assessed', 'Not verified', None]
+        dto['sections'][0]['rows'] = [ordinary, *[deepcopy(by_id[item['id']]) for item in requirements if item['id'] != '3.7.5'],
+                                      later_long_row, final]
+        original = deepcopy(dto)
+        self.assertEqual(len(dto['sections'][0]['rows']), 112)
+        self.assertEqual(len({row[0] for row in dto['sections'][0]['rows']}), 112)
+        frame_pressure = []
+        captured_tables = []
+        native_document = pdf_renderer.SimpleDocTemplate
+
+        class LeavePartialOrdinaryRow(pdf_renderer.Spacer):
+            def __init__(self, remaining):
+                super().__init__(1, 0)
+                self.remaining = remaining
+
+            def wrap(self, width, height):
+                self.height = height - self.remaining
+                if self.height <= 0:
+                    raise AssertionError('Synthetic frame pressure must consume positive space')
+                frame_pressure.append({'available': height, 'remaining': self.remaining, 'consumed': self.height})
+                return self.width, self.height
+
+        class UsedFrameDocument(native_document):
+            def build(self, story, *args, **kwargs):
+                self._calc()
+                table = next(item for item in story if isinstance(item, pdf_renderer.Table))
+                table.wrap(self.width - 12, self.height - 12)
+                header_height, ordinary_height = table._rowHeights[:2]
+                if not 0 < ordinary_height < self.height - 12 - header_height:
+                    raise AssertionError('The ordinary row must fit a fresh native frame')
+                if table._rowHeights[-2] <= self.height - 12 - header_height:
+                    raise AssertionError('The later row must genuinely require in-row splitting')
+                captured_tables.append((table, self.width - 12, header_height + ordinary_height / 2))
+                story.insert(story.index(table), LeavePartialOrdinaryRow(header_height + ordinary_height / 2))
+                return super().build(story, *args, **kwargs)
+
+        with patch.object(pdf_renderer, 'SimpleDocTemplate', UsedFrameDocument):
+            content = render_report(dto)
+        self.assertTrue(frame_pressure)
+        self.assertTrue(all(item['consumed'] > 0 for item in frame_pressure))
+        self.assertTrue(content.startswith(b'%PDF-'))
+        text = pdf_fixtures.pdf_streams(content).decode('latin-1')
+        compact = re.sub(r'\s+', '', text)
+        # Ordinary-row contiguity remains exact. The declared oversized cell instead
+        # retains the established split-row end/final-record contract, not a flat join.
+        for column, value in enumerate(ordinary):
+            self.assertIn(re.sub(r'\s+', '', str(value)), compact, f'ordinary/columns/{column}')
+        self.assertIn('R4_LATER_LONG_ROW_END', compact)
+        self.assertIn('R4_FINAL_RECORD', compact)
+        self.assertLess(compact.index('R4_LATER_LONG_ROW_END'), compact.index('R4_FINAL_RECORD'))
+        self.assertGreater(len(re.findall(rb'/Type\s*/Page\b', content)), 1)
+        self.assertEqual(dto, original)
+        # Outside a live Frame, the same native Table must retain ordinary ReportLab
+        # fallback. Frame.add/split remove their temporary _frame attribute afterward.
+        self.assertEqual(len(captured_tables), 1)
+        table, width, partial_height = captured_tables[0]
+        self.assertFalse(hasattr(table, '_frame'))
+        self.assertEqual(len(table.split(width, partial_height)), 2)
         self.assertEqual(dto, original)
 
     def test_pdf_long_row_and_final_record_survive_pagination(self):

@@ -4,6 +4,8 @@ import {createRoot} from 'react-dom/client';
 import ReviewDrawer from './ReviewDrawer';
 import api from '@/lib/api';
 import {currentReviewCompletion} from '@/testUtils/r4ReviewFixture';
+import {isoAuditCatalog} from '@/lib/isoAudit';
+import {STORE_KEY} from '@/preview/store';
 
 let mockUser,mockFullRecord,mockClient;
 jest.mock('@/context/AuthContext',()=>({useAuth:()=>({user:mockUser})}));
@@ -340,4 +342,40 @@ test('normal sign-in configured CIS Policy Review defaults annually without inve
   expect(query('field-recurrence').textContent).toContain('Annual');
   expect(query('field-due_date').value).toBe('');
   expect(post).not.toHaveBeenCalled();
+});
+
+test.each([false,true])('ISO audit workpaper links retain the native client, package and history coordinate (%s)',async historical=>{
+ const clientId=record.client_id,packageKey=isoAuditCatalog.packages[0].key;
+ const requirements=(await api.get('/requirements',{params:{client_id:clientId}})).data;
+ const requirement=requirements.find(row=>row.baseline_key==='iso-27001');
+ if(requirement?.baseline_response!=='applies')await api.patch('/onboarding/programs/iso-27001',{
+  client_id:clientId,applicability:'applies',expected_updated_at:requirement?.updated_at??null,
+ },{headers:{'Idempotency-Key':global.crypto.randomUUID()}});
+ const activated=(await api.post('/iso-audit/activate',{
+  client_id:clientId,start_date:new Date().toISOString().slice(0,10),first_package:packageKey,
+  auditor_id:mockUser.user_id,scope:'SYNTHETIC navigation fixture; no audit work performed',
+  independence:'SYNTHETIC planned configuration only; no audit results or independence conclusion recorded.',
+ },{headers:{'Idempotency-Key':global.crypto.randomUUID()}})).data;
+ record=activated.reviews.find(review=>review.iso_audit?.package_key===packageKey);
+ expect(record.client_id).toBe(clientId);expect(record.framework_key).toBe('iso-27001');
+ // Historical branch is a local read-only retained-DTO variant of this actual managed Review.
+ // No completion, workpaper result or history is manufactured in the native store.
+ const occurrence=historical?{...record,occurrence_id:'synthetic_iso_link_history',period:'SYNTHETIC retained link DTO',status:'completed'}:null;
+ const before=sessionStorage.getItem(STORE_KEY),original=JSON.stringify(record);
+ const writes=['post','patch','put','delete'].map(method=>jest.spyOn(api,method));
+ sessionStorage.setItem('grc_client_id','demo_dunder');
+ await render(historical?{initialValues:{occurrence}}:{});
+ const link=document.querySelector('[aria-label="Audit workpapers"] a');
+ expect(link).not.toBeNull();
+ const target=new URL(link.href);
+ expect(target.pathname).toBe('/compliance/iso-27001');
+ expect(target.searchParams.get('client_id')).toBe(clientId);
+ expect(target.searchParams.get('iso_view')).toBe('audit');
+ expect(target.searchParams.get('package')).toBe(packageKey);
+ expect(target.searchParams.get('audit_occurrence')).toBe(historical?occurrence.occurrence_id:null);
+ expect(link.target).toBe('_blank');expect(link.rel).toBe('noopener noreferrer');
+ expect(link.textContent).toContain(historical?'historical':'current');
+ for(const spy of writes)expect(spy).not.toHaveBeenCalled();
+ expect(onOpenChange).not.toHaveBeenCalled();
+ expect(sessionStorage.getItem(STORE_KEY)).toBe(before);expect(JSON.stringify(record)).toBe(original);
 });

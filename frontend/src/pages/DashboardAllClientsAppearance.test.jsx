@@ -69,7 +69,7 @@ test.each(['demo', 'standard'].flatMap(mode => [[mode, false], [mode, true]]))(
     expect(host.querySelector('h1').textContent).toBe('Unconfigured native organization Dashboard');
     expect(host.querySelector('#bdd-work-heading').textContent).toBe('Priority work');
     expect(host.textContent).toContain('No frameworks configured.');
-    expect(host.querySelector('a[href="/client-profile"]').textContent).toBe('Review client configuration');
+    expect(host.querySelector('a[href="/client-profile?client_id='+clientId+'"]').textContent).toBe('Review client configuration');
     expect(host.textContent).not.toMatch(/CIS|A clearer view|Priority overview|program is unavailable/);
     expect(host.querySelector('[data-testid=verified-native-program], [role=progressbar]')).toBeNull();
     expect(loadClientDashboard.mock.calls.every(([, options]) => options.includeProgramMetadata === true)).toBe(true);
@@ -82,7 +82,7 @@ test.each(['hipaa', 'nist-csf-2', 'cmmc'])('%s retains its native program vocabu
   prepare({completed: true, framework}); await render();
   expect(host.querySelector('#bdd-work-heading')?.textContent).toBe('Priority work');
   expect(host.textContent).toContain(FRAMEWORKS.find(value => value.key === framework).label);
-  expect(host.querySelector(`a[href="/compliance/${framework}"]`)).not.toBeNull();
+  expect(host.querySelector(`a[href="/compliance/${framework}?client_id=${clientId}"]`)).not.toBeNull();
   expect(host.querySelector('[data-testid=verified-native-program]')).toBeNull();
   expect(host.textContent).not.toMatch(/CIS IG|CIS program|safeguards|SoA/);
   expect(host.textContent).not.toContain('program is unavailable');

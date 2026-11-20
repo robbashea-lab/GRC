@@ -63,7 +63,7 @@ test.each(['demo', 'standard'])('%s common appearance retains identity, error an
   const context = contextFor(mode);
   for (const patch of [
     {user: null}, {user: {...context.user, role: 'unknown'}}, {authLoading: true}, {authError: 'denied'},
-    {orgError: 'denied'}, {currentClient: null}, {clients: []}, {selectedClientId: 'foreign'},
+    {orgError: 'denied'}, {currentClient: null}, {clients: []},
     {routeClientId: 'foreign'}, {currentClient: {...context.currentClient, status: 'archived'}},
     {currentClient: {...context.currentClient, archived: true}},
     {user: {...context.user, workspace_mode: mode === 'demo' ? 'standard' : 'demo'}},
@@ -86,4 +86,15 @@ test.each(['demo', 'standard'])('%s common appearance retains identity, error an
   expect(brawndoDemoReviewsGate({...reader, pathname: '/reviews'})).toBe(true);
   expect(brawndoDemoActionsGate({...reader, pathname: '/action-items'})).toBe(false);
   expect(visualCorrectionSurface({...reader, pathname: '/action-items'})).toBeNull();
+});
+
+test.each(['demo', 'standard'])('%s General appearance follows authorized identity, not another remembered preference', mode => {
+  const context = contextFor(mode);
+  for (const selectedClientId of ['foreign', '', null]) {
+    const current = {...context, selectedClientId};
+    expect(sharedExperienceEligible(current)).toBe(true);
+    expect(sharedPresentationEligible(current)).toBe(true);
+    expect(brawndoDemoReviewsGate({...current, pathname:'/reviews'})).toBe(true);
+  }
+  expect(sharedClientPrograms(context.currentClient)).toEqual([]);
 });

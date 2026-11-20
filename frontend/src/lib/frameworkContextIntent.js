@@ -37,5 +37,5 @@ export function useFrameworkContextIntent(identity) {
     // Check before createIntent acknowledges and removes the retained command.
     if (!frameworkContextResponse(response.data, identity)) throw new Error('The assessment save response could not be verified. Its original request remains available for retry.');
     return response;
-  }, frameworkContextScope(identity), true);
+  }, frameworkContextScope(identity), frameworkContextIdentity(identity));
 }

@@ -12,7 +12,7 @@ test.each(Object.entries(ADDITIONAL_SECTION_ROUTES))('%s requires resolved autho
   for (const patch of [{workspaceMode: 'standard'}, {user: null}, {user: {...context.user, user_id: ''}},
     {user: {...context.user, workspace_mode: 'standard'}}, {authLoading: true}, {authError: 'denied'},
     {orgLoading: true}, {orgError: 'unavailable'}, {currentClient: null}, {currentClientId: 'lookalike'},
-    {selectedClientId: ''}, {selectedClientId: 'other'}, {routeClientId: 'other'}, {loadedClientId: undefined},
+    {routeClientId: 'other'}, {loadedClientId: undefined},
     {loadedClientId: 'other'}, {currentClient: {...context.currentClient, status: 'archived'}},
     {currentClient: {...context.currentClient, archived: true}},
     {currentClient: {...context.currentClient, archived_at: '2026-10-16'}},
@@ -60,11 +60,21 @@ test.each(Object.entries(ADDITIONAL_SECTION_ROUTES))('%s chrome is ready before 
   expect(additionalSectionSurface(pending)).toBeNull();
   expect(additionalAppearanceSurface(pending,null)).toBeNull();
   for(const patch of [{user:null},{authLoading:true},{authError:'Denied'},{orgError:'Unavailable'},
-    {currentClient:null},{selectedClientId:'other'},{routeClientId:'other'},
+    {currentClient:null},{routeClientId:'other'},
     {user:{...context.user,workspace_mode:'standard'}},{currentClient:{...context.currentClient,status:'archived'}}]){
     expect(additionalSectionChrome({...pending,...patch})).toBeNull();
   }
   expect(additionalSectionChrome({...pending,currentClient:{...context.currentClient,
     onboarding_baseline:{completed:true,requirements:{'cis-ig1':'does_not_apply'}}}})).toBe(surface);
   expect(additionalSectionChrome({...pending,pathname:pathname+'/archive'})).toBeNull();
+});
+
+test.each(Object.entries(ADDITIONAL_SECTION_ROUTES))('%s loaded and record-free appearance ignore remembered preference only', (pathname, surface) => {
+  for (const selectedClientId of ['', 'other', null]) {
+    const current = {...context, pathname, selectedClientId};
+    expect(additionalSectionChrome(current)).toBe(surface);
+    expect(additionalSectionSurface(current)).toBe(surface);
+    expect(additionalSectionSurface({...current, loadedClientId:'other'})).toBeNull();
+    expect(additionalSectionChrome({...current, routeClientId:'other'})).toBeNull();
+  }
 });

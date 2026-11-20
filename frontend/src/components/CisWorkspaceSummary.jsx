@@ -1,6 +1,7 @@
 import AssessmentMetrics from './AssessmentMetrics';
 import {AlertTriangle,Clock3,FileX2,FlagOff,ListChecks,SearchCheck,CircleDashed,PlayCircle} from 'lucide-react';
 import {Link} from 'react-router-dom';
+import {clientDestination} from '@/lib/clientSelection';
 import {Button} from './ui/button';
 import {CIS_ORDER,implementationTone,CisStatusBar} from './CisStatus';
 import {operatorVocabulary} from '@/lib/frameworkOperator';
@@ -18,12 +19,12 @@ const SIGNALS=v=>[
 ];
 
 // Operational summary: what has been evaluated, what it concluded, and what needs work.
-export default function CisWorkspaceSummary({summary:s,filter,onFilter,resume,onContinue,framework='cis-ig1',scopeLabel,children}){
+export default function CisWorkspaceSummary({clientId,summary:s,filter,onFilter,resume,onContinue,framework='cis-ig1',scopeLabel,children}){
   const pick=key=>onFilter(filter===key?'all':key),v=operatorVocabulary(framework);
   return <section className="cis-summary" aria-labelledby="cis-summary-heading">
     <div className="cis-summary-head">
       <h2 id="cis-summary-heading">{scopeLabel ? `${scopeLabel} condition` : 'Program condition'}</h2>
-      <Link className="cis-config-link" to="/client-profile?tab=program">Program configuration</Link>
+      <Link className="cis-config-link" to={clientId?clientDestination(clientId,'/client-profile?tab=program'):'/client-profile?tab=program'}>Program configuration</Link>
       {resume&&<Button size="sm" onClick={onContinue} aria-label={`Continue assessment: ${resume.definition_id} ${resume.title}`}><PlayCircle className="h-4 w-4 mr-1.5" aria-hidden="true"/>Continue with {resume.definition_id}</Button>}
     </div>
     <div className="cis-summary-grid">

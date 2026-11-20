@@ -495,5 +495,5 @@ test('invalid category hints and unconfigured enrollment keep native overview an
   await mount(result.client.client_id, currentUrl(), true);
   expect(workspace()).toBeNull(); expect(editor()).toBeNull(); expect(summary()).toBeNull();
   expect(container.textContent).toContain('Program selected for this client.');
-  expect(container.querySelector('a[href="/client-profile?tab=program"]').textContent).toBe('Configure in Client Profile');
+  expect(container.querySelector('a[href="/client-profile?tab=program&client_id=qa-scope-soc"]').textContent).toBe('Configure in Client Profile');
 });

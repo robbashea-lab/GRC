@@ -1,5 +1,6 @@
 import {useCallback,useEffect,useRef,useState} from 'react';
 import {Link} from 'react-router-dom';
+import {clientDestination} from '@/lib/clientSelection';
 import {Moon,Sun,ArrowRight,Building2} from 'lucide-react';
 import {displayDay} from '@/lib/managementDates';
 import {dashboardStatus as statusLabel} from '@/lib/dashboardItemSummary';
@@ -33,7 +34,7 @@ function WorkTable({items,onOpen,asOf,workspacePilot}) {
   </div>;
 }
 
-export default function ClientWorkDashboard({queue,programs,programRows,cisRows,clientName='Client',filter,onFilter,onOpen,loadDetail,refreshVersion=0,workspacePilot=false}) {
+export default function ClientWorkDashboard({clientId,queue,programs,programRows,cisRows,clientName='Client',filter,onFilter,onOpen,loadDetail,refreshVersion=0,workspacePilot=false}) {
   const rowsFor=programRows||(cisRows?{'cis-ig1':cisRows}:{});
   const [expanded,setExpanded]=useState(false),[page,setPage]=useState(null),[loading,setLoading]=useState(false),[error,setError]=useState('');
   const [framework,setFramework]=useState(''),[search,setSearch]=useState('');
@@ -80,9 +81,9 @@ export default function ClientWorkDashboard({queue,programs,programRows,cisRows,
     <div className="bd-grid">
       <aside className="bd-aside" aria-label="Program condition">
         <div className="bd-program-intro"><p className="bd-eyebrow">Your client workspace</p><h2>A clearer view. <span>A stronger program.</span></h2><p className="bd-muted">Your program progress and priority work, together.</p></div>
-        {carded.map(p=><FrameworkProgramCard key={p.key} program={p} rows={rowsFor[p.key]} workspacePilot={workspacePilot}/>)}
-        {programs.filter(p=>!rowsFor[p.key]).map(p=><section key={p.key} className="bd-card"><h2>{p.label}</h2><p className="bd-muted bd-small">{p.explanation}</p><Link to={p.to}>Open workspace</Link></section>)}
-        {!programs.length&&<section className="bd-card"><p className="bd-empty">No frameworks configured. <Link to="/client-profile">Review client configuration</Link></p></section>}
+        {carded.map(p=><FrameworkProgramCard clientId={clientId} key={p.key} program={p} rows={rowsFor[p.key]} workspacePilot={workspacePilot}/>)}
+        {programs.filter(p=>!rowsFor[p.key]).map(p=><section key={p.key} className="bd-card"><h2>{p.label}</h2><p className="bd-muted bd-small">{p.explanation}</p><Link to={clientId?clientDestination(clientId,p.to):p.to}>Open workspace</Link></section>)}
+        {!programs.length&&<section className="bd-card"><p className="bd-empty">No frameworks configured. <Link to={clientId?clientDestination(clientId,'/client-profile'):'/client-profile'}>Review client configuration</Link></p></section>}
       </aside>
       <section className="bd-card bd-queue" aria-labelledby="client-priority-heading" id="client-priority-queue">
         <div className="bd-card-head"><div><h2 id="client-priority-heading">Priority overview</h2>{workspacePilot&&<p className="bd-muted bd-small">Focus on work that needs a decision, an owner, or a next step.</p>}</div>

@@ -233,7 +233,7 @@ test.each([true,false])('a valid empty unconfigured CIS response preserves selec
  await act(async()=>root.render(<FrameworkWorkspace frameworkKey="cis-ig1" clientId="a"/>));
  expect(container.querySelector('[role="alert"]')).toBeNull();
  expect(container.textContent).toContain(selected?'Program selected for this client.':'Program not currently selected.');
- expect(container.querySelector('a[href="/client-profile?tab=program"]')).not.toBeNull();
+ expect(container.querySelector('a[href="/client-profile?tab=program&client_id=a"]')).not.toBeNull();
 });
 
 test('a requirement opened here is one history entry: Next replaces it and closing steps back to the view',async()=>{

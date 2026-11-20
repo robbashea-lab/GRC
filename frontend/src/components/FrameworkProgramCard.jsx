@@ -1,4 +1,5 @@
 import {Link} from 'react-router-dom';
+import {clientDestination} from '@/lib/clientSelection';
 import Donut from './ProgramDonut';
 import AssessmentMetrics from './AssessmentMetrics';
 import {cisSummary} from '@/lib/cisVerification';
@@ -20,13 +21,20 @@ export const readinessLabels=key=>LABELS[key]||operatorStatuses(key);
 export const shortName=program=>(program.key==='cis-ig1'&&program.implementation_group?`CIS IG${program.implementation_group}`:SHORT[program.key])||program.label||program.name||program.key;
 const firstWord=s=>s.split(/[\s(]/)[0];
 
-export default function FrameworkProgramCard({rows,program,workspacePilot=false}) {
+export default function FrameworkProgramCard({clientId,rows,program,workspacePilot=false}) {
   const key=program.key,name=shortName(program),labels=LABELS[key]||operatorStatuses(key),done=firstWord(labels.addressed);
   const summary=cisSummary(rows,new Date(),program.implementation_position),to=program.to||`/compliance/${key}`;
+  const scopeTo=destination=>clientId?clientDestination(clientId,destination):destination;
   // Use the same applicability calculation for the segments and the percentage.
   const counts={addressed:summary.addressed,in_progress:summary.partial,needs_attention:summary.gap,not_assessed:summary.notAssessed,not_applicable:summary.na};
   const heading=key==='cis-ig1'?'bd-cis-heading':`bd-program-${key}-heading`;
-  const Row=({view,className,children})=>LINKABLE.has(key)?<Link to={`${to}?${key==='iso-27001'?'dashboard=1&':''}view=${view}`} className={className}>{children}</Link>:<span className={`bd-static${className?` ${className}`:''}`}>{children}</span>;
+  const viewTo=view=>{
+    const target=new URL(to,window.location.origin);
+    if(key==='iso-27001')target.searchParams.set('dashboard','1');
+    target.searchParams.set('view',view);
+    return scopeTo(target.pathname+target.search+target.hash);
+  };
+  const Row=({view,className,children})=>LINKABLE.has(key)?<Link to={viewTo(view)} className={className}>{children}</Link>:<span className={`bd-static${className?` ${className}`:''}`}>{children}</span>;
   const gaps=[['unremediated','Gaps without a finding',summary.unremediated,'critical'],['needs_attention',labels.needs_attention,summary.gap,'critical'],['stale','Validation older than 12 months',summary.stale,'attention'],['unevidenced',`${done} without evidence`,summary.unevidenced,'attention']];
   const legend=summary.available===false?<p role="status" className="bd-muted bd-small">{program.implementation_position?.reason||'Implementation counts are unavailable.'}</p>:<ul className="bd-legend">{CIS_ORDER.filter(s=>s!=='not_applicable'||counts[s]).map(s=><li key={s}><Row view={s}><span className={`bd-swatch bd-seg-${s}`} aria-hidden="true"/><span>{labels[s]}</span><strong>{counts[s]}</strong></Row></li>)}</ul>;
   if(workspacePilot)return <section className="bd-card bd-program bwp-program" aria-labelledby={heading}>
@@ -38,11 +46,11 @@ export default function FrameworkProgramCard({rows,program,workspacePilot=false}
         {summary.available!==false&&CIS_ORDER.filter(s=>s!=='not_applicable'&&counts[s]>0).map(s=><span key={s} className={`bd-seg-${s}`} style={{width:`${counts[s]/summary.applicable*100}%`}}/>)}
       </div>{legend}
       <details className="bwp-validation-details"><summary>Validation and remediation</summary><ul className="bd-gaps" aria-label={`${name.split(' ')[0]} verification gaps`}>{gaps.map(([view,label,n,tone])=><li key={view}><Row view={view} className={n?`is-${tone}`:'is-clear'}><span>{label}</span><strong>{n}</strong></Row></li>)}</ul></details>
-      <div className="bwp-program-footer"><p className="bd-muted bd-small bd-program-note">{key==='soc-2'?'Internal readiness, not an auditor opinion.':'Assessment progress, not a compliance determination.'}</p><Link to={to}>View program →</Link></div>
+      <div className="bwp-program-footer"><p className="bd-muted bd-small bd-program-note">{key==='soc-2'?'Internal readiness, not an auditor opinion.':'Assessment progress, not a compliance determination.'}</p><Link to={scopeTo(to)}>View program →</Link></div>
     </div>
   </section>;
   return <section className="bd-card bd-program" aria-labelledby={heading}>
-    <div className="bd-card-head"><h2 id={heading}>{name}</h2><Link to={to}>Open workspace</Link></div>
+    <div className="bd-card-head"><h2 id={heading}>{name}</h2><Link to={scopeTo(to)}>Open workspace</Link></div>
     <p className="bd-muted bd-small">{program.name||program.label}</p>
     <div className="bd-program-body"><div className="bd-program-progress"><Donut counts={counts} summary={summary} name={name} labels={labels}/>
       {summary.available===false?<p role="status" className="bd-muted bd-small">Implementation data unavailable.</p>:summary.applicable?<AssessmentMetrics summary={summary} implementedLabel={done}/>

@@ -1,4 +1,5 @@
 import {Link} from 'react-router-dom';
+import {clientDestination} from '@/lib/clientSelection';
 import {Moon,Sun} from 'lucide-react';
 import {useBrawndoTheme} from '@/lib/brawndoTheme';
 import {catalog} from '@/lib/clientProfile';
@@ -13,13 +14,13 @@ export const listOf=v=>v==null||v===''?[]:Array.isArray(v)?v:String(v).split(/\s
 const present=v=>listOf(v).length>0;
 const initials=name=>String(name||'').replace(/[^A-Za-z ]/g,'').split(/\s+/).filter(Boolean).slice(0,2).map(w=>w[0]).join('').toUpperCase()||'•';
 
-export function BrawndoProfileHeader({tabs,tab,onTab}){
+export function BrawndoProfileHeader({clientId,tabs,tab,onTab}){
   const [theme,setTheme]=useBrawndoTheme();
   return <><header className="bprof-head">
     <div><p className="bprof-eyebrow">Organization context</p><h1>Client Profile</h1></div>
     <div className="bprof-actions">
       <button type="button" className="bprof-btn" onClick={()=>setTheme(theme==='dark'?'light':'dark')} aria-pressed={theme==='dark'} aria-label={theme==='dark'?'Switch to light mode':'Switch to dark mode'}>{theme==='dark'?<Sun size={16} aria-hidden="true"/>:<Moon size={16} aria-hidden="true"/>}<span>{theme==='dark'?'Light':'Dark'}</span></button>
-      <Link className="bprof-btn" to="/dashboard">Open dashboard</Link>
+      <Link className="bprof-btn" to={clientId?clientDestination(clientId,'/dashboard'):'/dashboard'}>Open dashboard</Link>
     </div>
   </header>
   <nav aria-label="Client Profile sections" className="bprof-tabs">{tabs.map(([id,text])=><button key={id} type="button" aria-current={tab===id?'page':undefined} onClick={()=>onTab(id)}>{text}</button>)}</nav></>;
@@ -47,7 +48,7 @@ export default function BrawndoProfileOverview({client,relationships,profile,pro
     <div className="bprof-grid">
       <div className="bprof-col">
         <Card title="Organization" link="View details" onLink={()=>onTab('organization')}>{orgRows.length?<dl>{orgRows.map(([id,tags])=><Row key={id} name={label('organization',id)}>{tags?<Tags value={o[id]}/>:String(o[id])}</Row>)}{present(o.employees)&&<Row name="Employees">{o.employees}{present(o.technology_users)?` · ${o.technology_users} use computers or technology`:''}</Row>}</dl>:<p className="bprof-empty">Optional context not yet provided.</p>}</Card>
-        <Card title="Programs" link="Program configuration" onLink={()=>onTab('program')}>{programs.length?programs.map(f=><div key={f.key} className="bprof-program"><div><p className="bprof-person-name">{f.name}</p><p className="bprof-muted">Active</p></div><Link className="bprof-link" to={'/compliance/'+f.key}>Open workspace ›</Link></div>):<p className="bprof-empty">No formal framework currently applies.</p>}</Card>
+        <Card title="Programs" link="Program configuration" onLink={()=>onTab('program')}>{programs.length?programs.map(f=><div key={f.key} className="bprof-program"><div><p className="bprof-person-name">{f.name}</p><p className="bprof-muted">Active</p></div><Link className="bprof-link" to={client?.client_id?clientDestination(client.client_id,'/compliance/'+f.key):'/compliance/'+f.key}>Open workspace ›</Link></div>):<p className="bprof-empty">No formal framework currently applies.</p>}</Card>
       </div>
       <div className="bprof-col">
         <Card title="Technical environment" link="View details" onLink={()=>onTab('technical')}>{techRows.length?<dl>{techRows.map(id=><Row key={id} name={label('technical',id)}>{listOf(t[id]).length>1?<Tags value={t[id]}/>:listOf(t[id]).join('')}</Row>)}</dl>:<p className="bprof-empty">Optional context not yet provided.</p>}</Card>

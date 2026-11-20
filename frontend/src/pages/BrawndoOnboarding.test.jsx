@@ -16,6 +16,7 @@ jest.mock('@/lib/api', () => ({__esModule: true, PREVIEW_MODE: true,
   default: {get: jest.fn(), post: jest.fn(), patch: jest.fn()}, formatError: error => error.message}));
 jest.mock('react-router-dom', () => ({
   useLocation: () => mockLocation,
+  useNavigate:()=>jest.fn(),
   useSearchParams: () => require('react').useState(new URLSearchParams(mockLocation.search)),
   Link: ({to, children, ...props}) => <a href={to} {...props}>{children}</a>, Navigate: () => null,
 }), {virtual: true});
@@ -93,13 +94,12 @@ test.each(['demo','standard'])('%s untouched no-framework creation retains nativ
   expect(JSON.stringify(mockState)).toBe(before);
 });
 
-test('mounted presentation withdraws immediately on mode, route, selection, authorization or archived context changes', async () => {
+test('mounted presentation withdraws immediately on mode, route, authorization or archived context changes', async () => {
   await act(async () => renderWizard());
   const originalAuth = mockAuth, originalOrg = mockOrg, originalLocation = mockLocation;
   const withdraw = [() => {mockAuth = {...originalAuth, workspaceMode: 'standard'};},
     () => {mockLocation = {pathname: '/onboarding', search: ''};},
     () => {mockLocation = {...originalLocation, search: '?client_id=foreign'};},
-    () => {sessionStorage.setItem('grc_client_id', 'foreign');},
     () => {mockAuth = {...originalAuth, error: 'Session denied'};},
     () => {mockOrg = {...originalOrg, loading: true};},
     () => {mockOrg = {...originalOrg, error: 'Access denied'};},
@@ -284,4 +284,24 @@ test('completed native program draft survives temporary appearance withdrawal an
   expect(document.querySelector('[role="dialog"]')).toBeNull();
   expect(api.get.mock.calls.length).toBeGreaterThan(reads);
   expect(api.patch).not.toHaveBeenCalled();
+});
+
+test('a different remembered client preserves the pinned native onboarding field, focus and saved draft',async()=>{
+  mockState={...mockState,step:2,policies:allPolicies(),requirements:{...mockState.requirements,'cis-ig1':'applies'}};
+  mockLocation={pathname:'/client-profile',search:'?client_id=demo_brawndo'};
+  mockOrg={...mockOrg,clients:[...mockOrg.clients,cisClient('foreign',1)]};
+  const before=JSON.stringify(mockState);
+  await act(async()=>renderWizard());
+  const date=container.querySelector('[aria-label="First due date — Enterprise Asset Inventory Review"]');
+  expect(date).toBeTruthy();date.focus();
+  const value=date.value,reads=api.get.mock.calls.length;
+  rememberClient('foreign');
+  await act(async()=>renderWizard());
+  expect(mockOrg.currentClientId).toBe('demo_brawndo');
+  expect(new URLSearchParams(mockLocation.search).get('client_id')).toBe('demo_brawndo');
+  expect(container.querySelector('.brawndo-onboarding')).not.toBeNull();
+  expect(container.querySelector('[aria-label="First due date — Enterprise Asset Inventory Review"]')).toBe(date);
+  expect(date.value).toBe(value);expect(document.activeElement).toBe(date);
+  expect(JSON.stringify(mockState)).toBe(before);expect(api.get.mock.calls).toHaveLength(reads);
+  expect(api.post).not.toHaveBeenCalled();expect(api.patch).not.toHaveBeenCalled();
 });

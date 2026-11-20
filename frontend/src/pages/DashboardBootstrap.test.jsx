@@ -74,7 +74,7 @@ test('a resolved unconfigured client receives common appearance with its native 
   expect(container.querySelector('h1').textContent).toBe('Synthetic native client Dashboard');
   expect(container.textContent).toContain('Priority work');
   expect(container.textContent).toContain('No frameworks configured.');
-  expect(container.querySelector('a[href="/client-profile"]').textContent).toBe('Review client configuration');
+  expect(container.querySelector('a[href="/client-profile?client_id='+client.client_id+'"]').textContent).toBe('Review client configuration');
   expect(container.querySelector('.brawndo-demo-dashboard')).not.toBeNull();
   expect(container.textContent).not.toContain('CIS IG');
 });

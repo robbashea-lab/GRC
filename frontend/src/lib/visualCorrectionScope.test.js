@@ -9,7 +9,7 @@ test('five appearance routes require resolved canonical trusted Demo context', (
   for (const pathname of ['/dashboard', '/calendar', '/reviews', '/action-items', '/risks']) {
     expect(visualCorrectionSurface({...context, pathname})).toBeTruthy();
     for (const patch of [{workspaceMode: 'standard'}, {authLoading: true}, {authError: 'denied'},
-      {selectedClientId: 'demo_other'}, {selectedClientId: ''}, {routeClientId: 'demo_other'}, {orgLoading: true}, {orgError: 'unavailable'}, {currentClientId: 'new_brawndo'},
+      {routeClientId: 'demo_other'}, {orgLoading: true}, {orgError: 'unavailable'}, {currentClientId: 'new_brawndo'},
       {currentClient: {client_id: 'new_brawndo', name: 'Brawndo', status: 'active'}},
       {currentClient: {...context.currentClient, status: 'archived'}},
       {currentClient: {...context.currentClient, archived_at: '2026-10-16'}},
@@ -27,5 +27,13 @@ test('Portfolio keeps all authorized internal contexts; Actions retains internal
     const user = {...context.user, role};
     expect(visualCorrectionSurface({...context, user, pathname: '/clients'})).toBeNull();
     expect(visualCorrectionSurface({...context, user, pathname: '/action-items'})).toBeNull();
+  }
+});
+
+test.each(['demo_other', '', null])('common surface keeps resolved identity when remembered preference is %p', selectedClientId => {
+  for (const [pathname, surface] of [['/dashboard','dashboard'], ['/calendar','calendar'], ['/reviews','reviews'],
+    ['/action-items','actions'], ['/risks','risks']]) {
+    expect(visualCorrectionSurface({...context, pathname, selectedClientId})).toBe(surface);
+    expect(visualCorrectionSurface({...context, pathname, selectedClientId, routeClientId:'demo_other'})).toBeNull();
   }
 });

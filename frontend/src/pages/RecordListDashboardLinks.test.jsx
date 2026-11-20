@@ -2,11 +2,12 @@ import React,{act} from 'react';
 import {createRoot} from 'react-dom/client';
 import RecordListPage from './RecordListPage';
 import api from '@/lib/api';
+const mockNavigate=jest.fn();
 let mockClient='a',mockSearch='',mockDrawer,mockCommitNavigation,mockFrameworkDrawer;
 jest.mock('@/context/AuthContext',()=>({useAuth:()=>({user:{user_id:'viewer',role:'client_viewer'}})}));
 jest.mock('@/context/OrgContext',()=>({useOrg:()=>({currentClientId:mockClient,currentClient:{name:'Client'}})}));
 jest.mock('@/lib/api',()=>({__esModule:true,default:{get:jest.fn()},formatError:e=>e.message,API:'/api',PREVIEW_MODE:true}));
-jest.mock('react-router-dom',()=>({useLocation:()=>({pathname:'/reviews'}),useNavigate:()=>jest.fn(),useSearchParams:()=>{
+jest.mock('react-router-dom',()=>({useLocation:()=>({pathname:'/reviews',search:mockSearch}),useNavigate:()=>mockNavigate,useSearchParams:()=>{
  const React=require('react'),[params,setParams]=React.useState(new URLSearchParams(mockSearch));
  // Control the deferred BrowserRouter 7.18.4 navigation boundary without sleeps.
  return [params,next=>{mockCommitNavigation=()=>React.startTransition(()=>setParams(next));}];
@@ -71,4 +72,24 @@ test('a pending linked response cannot replace another explicitly opened Review'
  expect(container.querySelector('[data-testid="opened"]').textContent).toBe('Other Review');
  await act(async()=>resolve({data:record}));
  expect(container.querySelector('[data-testid="opened"]').textContent).toBe('Other Review');
+});
+
+test('clearing a carried Review scope retains its exact client and original bare-register destination',async()=>{
+ const previous=sessionStorage.getItem('grc_client_id');
+ try{
+  mockSearch='client_id=a&owner=__me__&q=Exact&sortBy=title';
+  record={...record,owner_id:'viewer'};
+  api.get.mockImplementation(async path=>({data:path==='/reviews'?[record]:[]}));
+  const before=JSON.stringify(record);
+  await render();
+  sessionStorage.setItem('grc_client_id','other-authorized-client');mockNavigate.mockClear();
+  const issued=api.get.mock.calls.length;
+  const clear=container.querySelector('[data-testid="clear-carried-scope"]');
+  expect(clear).not.toBeNull();await act(async()=>clear.click());
+  expect(mockNavigate).toHaveBeenCalledTimes(1);
+  expect(mockNavigate).toHaveBeenCalledWith('/reviews?client_id=a',{replace:true});
+  expect(api.get.mock.calls).toHaveLength(issued);
+  expect(JSON.stringify(record)).toBe(before);expect(mockDrawer.open).toBe(false);
+  expect(sessionStorage.getItem('grc_client_id')).toBe('other-authorized-client');
+ }finally{previous===null?sessionStorage.removeItem('grc_client_id'):sessionStorage.setItem('grc_client_id',previous);}
 });

@@ -17,7 +17,7 @@ jest.mock('@/context/OrgContext',()=>({useOrg:()=>({currentClientId:'client',cur
 jest.mock('@/lib/sharedExperience',()=>({...jest.requireActual('@/lib/sharedExperience'),sharedAppearanceEligible:()=>mockEligible}));
 jest.mock('@/lib/brawndoActions',()=>({...jest.requireActual('@/lib/brawndoActions'),unifiedActions:()=>mockRows}));
 jest.mock('@/lib/useActionRegisterData',()=>({useActionRegisterData:()=>({data:{},users:[],loading:false,error:null,load:jest.fn()})}));
-jest.mock('react-router-dom',()=>({Navigate:()=>null,useLocation:()=>({state:null}),useNavigationType:()=> 'POP',useSearchParams:()=>require('react').useState(new URLSearchParams())}),{virtual:true});
+jest.mock('react-router-dom',()=>({Navigate:()=>null,useNavigate:()=>jest.fn(),useLocation:()=>({state:null}),useNavigationType:()=> 'POP',useSearchParams:()=>require('react').useState(new URLSearchParams())}),{virtual:true});
 jest.mock('@/components/RecordDrawer',()=>({__esModule:true,default:props=>{mockNativeProps=props;return <div data-testid="native-record">{props.kind}:{props.record.task_id}</div>;}}));
 jest.mock('@/components/CisActionItemsConcept',()=>({
   useActionConceptClock:()=>new Date(),

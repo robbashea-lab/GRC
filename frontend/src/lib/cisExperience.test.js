@@ -49,7 +49,7 @@ test('missing, unselected and non-CIS configurations cannot inherit CIS capabili
   for(const patch of [{onboarding_baseline:null},{framework_settings:{'cis-ig1':null}},{framework_settings:{'cis-ig1':{implementation_group:'2'}}},{onboarding_baseline:{completed:false,requirements:{'cis-ig1':'applies'}}},{onboarding_baseline:{completed:true,requirements:{'cis-ig1':'does_not_apply','iso-27001':'applies'}}}]) {
     expect(cisExperienceEligible({...context,currentClient:{...context.currentClient,...patch,name:'Brawndo'}})).toBe(false);
   }
-  for(const patch of [{clients:[]},{selectedClientId:'foreign'},{routeClientId:'foreign'},{loadedClientId:'foreign'},{authLoading:true},{orgError:'denied'},{user:{...context.user,role:'unknown'}},{workspaceMode:'standard'}])expect(cisExperienceEligible({...context,...patch})).toBe(false);
+  for(const patch of [{clients:[]},{routeClientId:'foreign'},{loadedClientId:'foreign'},{authLoading:true},{orgError:'denied'},{user:{...context.user,role:'unknown'}},{workspaceMode:'standard'}])expect(cisExperienceEligible({...context,...patch})).toBe(false);
 });
 
 test('multi-program clients retain CIS membership without altering their other programs or saved work',()=>{
@@ -163,11 +163,19 @@ test('record-free retained presentation survives only background org loading, ne
   const context={...cisContext(),orgLoading:true,loadedClientId:null};
   expect(cisExperienceEligible(context)).toBe(false);
   expect(cisPresentationEligible(context)).toBe(true);
-  for(const patch of [{currentClient:null},{clients:[]},{selectedClientId:'foreign'},{routeClientId:'foreign'},
+  for(const patch of [{currentClient:null},{clients:[]},{routeClientId:'foreign'},
     {user:null},{authLoading:true},{authError:'Denied'},{orgError:'Unavailable'},
     {user:{...context.user,workspace_mode:'standard'}},
     {currentClient:{...context.currentClient,status:'archived'}},
     {currentClient:{...context.currentClient,onboarding_baseline:{completed:true,requirements:{'iso-27001':'applies'}}}}]){
     expect(cisPresentationEligible({...context,...patch})).toBe(false);
   }
+});
+
+test.each(['foreign', '', null])('remembered preference %p does not replace resolved authorized CIS identity', selectedClientId => {
+  const context = {...cisContext(), selectedClientId};
+  expect(cisExperienceEligible(context)).toBe(true);
+  expect(cisPresentationEligible({...context, orgLoading:true, loadedClientId:null})).toBe(true);
+  expect(cisExperienceEligible({...context, routeClientId:'foreign'})).toBe(false);
+  expect(cisExperienceEligible({...context, loadedClientId:'foreign'})).toBe(false);
 });

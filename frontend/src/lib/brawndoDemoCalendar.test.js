@@ -1,9 +1,9 @@
 import {cisClient, cisContext} from '../testUtils/cisExperience';
 import {brawndoDemoCalendar,filterCalendarItems} from './brawndoDemoCalendar';
 const context={...cisContext(),workspaceMode:'demo',user:{user_id:'u',role:'client_viewer',workspace_mode:'demo'},currentClientId:'demo_brawndo',selectedClientId:'demo_brawndo',currentClient:cisClient(),pathname:'/calendar'};
-test('Calendar appearance requires canonical trusted resolved, selected, current and route agreement',()=>{
+test('Calendar appearance requires canonical trusted resolved authorized current and route agreement',()=>{
   expect(brawndoDemoCalendar(context)).toBe(true);
-  for(const patch of [{workspaceMode:'standard'},{user:{...context.user,workspace_mode:'standard'}},{user:null},{currentClientId:'duplicate'},{selectedClientId:'other'},{currentClient:{client_id:'duplicate',name:'Brawndo'}},{currentClient:{client_id:'demo_brawndo',archived:true}},{routeClientId:'other'},{pathname:'/reviews'},{authLoading:true},{authError:'denied'},{orgLoading:true},{orgError:'denied'}])expect(brawndoDemoCalendar({...context,...patch})).toBe(false);
+  for(const patch of [{workspaceMode:'standard'},{user:{...context.user,workspace_mode:'standard'}},{user:null},{currentClientId:'duplicate'},{currentClient:{client_id:'duplicate',name:'Brawndo'}},{currentClient:{client_id:'demo_brawndo',archived:true}},{routeClientId:'other'},{pathname:'/reviews'},{authLoading:true},{authError:'denied'},{orgLoading:true},{orgError:'denied'}])expect(brawndoDemoCalendar({...context,...patch})).toBe(false);
 });
 test('Calendar view filters retain history and vendor identity without changing native records',()=>{
   const rows=[{key:'late',kind:'review',date:'2026-10-01',historical:false,owner_id:'u'},{key:'done',kind:'task',date:'2026-10-02',historical:true},{key:'vendor',kind:'vendor_assurance',date:'2026-10-20',historical:false}];
@@ -29,4 +29,10 @@ test('native scheduled summary includes saved Vendor and represented Finding dat
   expect(filterCalendarItems(rows,{...options,nativeScheduledItems:true,highlight:'overdue'}).map(row=>row.key)).toEqual(['vendor-overdue','finding-overdue']);
   expect(filterCalendarItems(rows,{...options,nativeScheduledItems:true,highlight:'week'}).map(row=>row.key)).toEqual(['vendor-soon']);
   expect(JSON.stringify(rows)).toBe(before);
+});
+
+test.each(['other', '', null])('Calendar appearance ignores remembered preference %p while route identity stays mandatory', selectedClientId => {
+  const current = {...context, selectedClientId};
+  expect(brawndoDemoCalendar(current)).toBe(true);
+  expect(brawndoDemoCalendar({...current, routeClientId:'other'})).toBe(false);
 });

@@ -2,7 +2,7 @@ import {cisClientProgram} from '@/lib/cisExperience';
 import {sharedClientPrograms,sharedAppearanceEligible,sharedPresentationEligible} from '@/lib/sharedExperience';
 import {frameworkDashboardPrograms} from '@/lib/frameworkDashboard';
 import {visualCorrectionSurface} from '@/lib/visualCorrectionScope';
-import {selectedClient} from '@/lib/clientSelection';
+import {clientDestination,selectedClient} from '@/lib/clientSelection';
 import {useEffect,useRef,useState} from 'react';
 import {Link,useLocation,useSearchParams} from 'react-router-dom';
 import api,{formatError} from '@/lib/api';
@@ -111,10 +111,10 @@ export default function Dashboard(){
     filter={filter} onFilter={onFilter} onOpen={openItem} loadDetail={loadDetail} refreshVersion={refreshVersion} concept programOptions={programs} selectedProgram={program} onProgramSelect={chooseProgram}>
       {program?<BrawndoDemoProgram key={program.program_id} client={currentClient} program={program} members={data.members} refreshToken={refreshVersion} cisDashboardProfile concept domainSource={data.programSources?.[program.framework_key]||data.cisDomainSource} contextKey={requestKey}/>:trackedProgramUnavailable?<section className="bdd-card" aria-label={configuredCis?`CIS IG${configuredCis.implementationGroup} Status`:'Program Status'}><header><h2>{configuredCis?`CIS IG${configuredCis.implementationGroup} Status`:'Program Status'}</h2></header><p className="bdd-empty" role="status">The configured {currentClient.name} {configuredCis?`CIS v8.1 IG${configuredCis.implementationGroup} program`:'program'} is unavailable. Review its native configuration.</p></section>:null}
       {otherPrograms.map(value=>data.programRows?.[value.key]
-        ? <div key={value.key} className="bdash" style={{padding:0,minHeight:0}}><FrameworkProgramCard program={value} rows={data.programRows[value.key]} workspacePilot={pilot}/></div>
-        : <section key={value.key} className="bdd-card"><header><h2>{value.label}</h2></header><p className="bdd-empty">{value.explanation} <Link to={value.to}>Open workspace</Link></p></section>)}
-      {noFrameworksConfigured&&<section className="bdd-card"><p className="bdd-empty">No frameworks configured. <Link to="/client-profile">Review client configuration</Link></p></section>}
-    </BrawndoDemoDashboard>:<ClientWorkDashboard key={requestKey} queue={data.queue} programs={data.programs} programRows={data.programRows} clientName={currentClient?.name||'Client'}
+        ? <div key={value.key} className="bdash" style={{padding:0,minHeight:0}}><FrameworkProgramCard clientId={currentClientId} program={value} rows={data.programRows[value.key]} workspacePilot={pilot}/></div>
+        : <section key={value.key} className="bdd-card"><header><h2>{value.label}</h2></header><p className="bdd-empty">{value.explanation} <Link to={clientDestination(currentClientId,value.to)}>Open workspace</Link></p></section>)}
+      {noFrameworksConfigured&&<section className="bdd-card"><p className="bdd-empty">No frameworks configured. <Link to={clientDestination(currentClientId,'/client-profile')}>Review client configuration</Link></p></section>}
+    </BrawndoDemoDashboard>:<ClientWorkDashboard clientId={currentClientId} key={requestKey} queue={data.queue} programs={data.programs} programRows={data.programRows} clientName={currentClient?.name||'Client'}
     filter={filter} onFilter={onFilter} onOpen={openItem} loadDetail={loadDetail} refreshVersion={refreshVersion} workspacePilot={pilot}/>}
     {refreshError&&<p role="alert">{refreshError} <button onClick={()=>refreshDashboard(false)}>Retry dashboard refresh</button></p>}
     {selection?.key===requestKey&&<DashboardItemSummary selection={selection} onClose={close} opener={opener.current} fallbackFocus={demoPresentation?()=>document.getElementById('bdd-work-heading'):undefined} onOpenRecord={pilot?(item,element)=>{linkedOpener.current=element;setLinked({...item,key:recordContextKey});}:undefined}/>}

@@ -1,21 +1,18 @@
 import React,{act} from 'react';
 import {createRoot} from 'react-dom/client';
+import {MemoryRouter} from 'react-router-dom';
 import AIGovernance from './AIGovernance';
 import Evidence from './Evidence';
 import Contacts from './Contacts';
 import ClientProfile from './ClientProfile';
 import api from '@/lib/api';
 
-let mockAuth,mockOrg,mockPath,mockSelected,node,root,requests;
+let mockAuth,mockOrg,mockSelected,node,root,requests;
 jest.mock('@/context/AuthContext',()=>({useAuth:()=>mockAuth}));
 jest.mock('@/context/OrgContext',()=>({useOrg:()=>mockOrg}));
 jest.mock('@/context/ComplianceContext',()=>({useCompliance:()=>({items:[],loading:false,error:''})}));
-jest.mock('@/lib/clientSelection',()=>({selectedClient:()=>mockSelected}));
+jest.mock('@/lib/clientSelection',()=>({...jest.requireActual('@/lib/clientSelection'),selectedClient:()=>mockSelected}));
 jest.mock('@/lib/api',()=>({__esModule:true,default:{get:jest.fn(),post:jest.fn(),patch:jest.fn(),delete:jest.fn()},formatError:error=>error.message}));
-jest.mock('react-router-dom',()=>({Link:({children,to,...props})=><a href={to} {...props}>{children}</a>,Navigate:()=>null,useLocation:()=>({pathname:mockPath,search:''}),useNavigate:()=>jest.fn(),useSearchParams:()=>{
-  const [params,setParams]=require('react').useState(new URLSearchParams());
-  return [params,next=>setParams(new URLSearchParams(typeof next==='function'?next(params):next))];
-}}),{virtual:true});
 jest.mock('@/components/AIIntake',()=>({useAIIntake:()=>({}),AIIntakeView:()=>null}));
 jest.mock('@/components/ContactAccess',()=>({useContactAccess:clientId=>({status:'ready',clientId,accounts:[]})}));
 jest.mock('@/components/AIRegisterFirst',()=>({...jest.requireActual('@/components/AIRegisterFirst'),__esModule:true,default:props=><div data-testid="loaded-additional"><h1>{props.clientName} AI Governance</h1><table><tbody>{props.rows.map(row=><tr key={row.ai_system_id}><td>{row.name}</td></tr>)}</tbody></table></div>}));
@@ -55,7 +52,7 @@ beforeEach(()=>{
   node=document.createElement('div');document.body.appendChild(node);root=createRoot(node);
 });
 afterEach(async()=>{await act(async()=>root.unmount());node.remove();jest.clearAllMocks();});
-const render=async(Component,path)=>{mockPath=path;await act(async()=>root.render(<Component/>));};
+const render=async(Component,path)=>{await act(async()=>root.render(<MemoryRouter initialEntries={[path]}><Component/></MemoryRouter>));};
 const resolveReads=async from=>{await act(async()=>{requests.slice(from).forEach(request=>request.resolve({data:response(request.path)}));});};
 function expectPending(title){
   expect(node.querySelector('h1').textContent).toBe(`Brawndo ${title}`);
@@ -87,11 +84,27 @@ test.each(cases)('%s retains the qualified error header and recovers through its
   expect(node.querySelector('[data-presentation-state="pending"]')).toBeNull();
 });
 
-test.each(cases)('%s does not apply qualified pending chrome when trusted mode or selected client disagrees',async(_title,path,Component)=>{
+test.each(cases)('%s does not apply qualified pending chrome when trusted workspace and actor modes disagree',async(_title,path,Component)=>{
   mockAuth={...mockAuth,workspaceMode:'standard'};await render(Component,path);
   expect(node.querySelector('[data-presentation-state="pending"]')).toBeNull();
-  mockAuth={...mockAuth,workspaceMode:'demo'};mockSelected='different-client';await render(Component,path);
+});
+
+test.each(cases)('%s keeps the current qualified page and scoped reads when only the saved client preference changes',async(title,path,Component)=>{
+  await render(Component,`${path}?client_id=${client.client_id}`);expectPending(title);
+  const reads=api.get.mock.calls.length,actor=mockAuth.user,currentClient=mockOrg.currentClient;
+  mockSelected='different-client';await render(Component,path);expectPending(title);
+  expect(api.get.mock.calls).toHaveLength(reads);
+  for(const request of requests){
+    if(request.path.startsWith('/clients/'))expect(request.path.split('/')[2]).toBe(client.client_id);
+    else expect(request.options.params.client_id).toBe(client.client_id);
+  }
+  await resolveReads(0);
   expect(node.querySelector('[data-presentation-state="pending"]')).toBeNull();
+  expect(node.querySelector('h1').textContent).toBe(`Brawndo ${title}`);
+  expect(node.querySelector(title==='Client Profile'?'.baprof-identity':'[data-testid="loaded-additional"]')).not.toBeNull();
+  expect(api.get.mock.calls).toHaveLength(reads);expect(mockSelected).toBe('different-client');
+  expect(mockAuth.user).toBe(actor);expect(mockOrg.currentClient).toBe(currentClient);expect(mockOrg.currentClientId).toBe(client.client_id);
+  for(const method of ['post','patch','delete'])expect(api[method]).not.toHaveBeenCalled();
 });
 
 test.each(cases)('%s discards a late prior actor response until the new identity has its own accepted read',async(title,path,Component)=>{

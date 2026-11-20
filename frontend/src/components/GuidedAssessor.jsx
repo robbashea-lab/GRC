@@ -5,7 +5,6 @@ import {useAuth} from '@/context/AuthContext';
 import {useOrg} from '@/context/OrgContext';
 import api,{formatError,PREVIEW_MODE} from '@/lib/api';
 import {cisExperienceEligible, cisDefinitions} from '@/lib/cisExperience';
-import {selectedClient} from '@/lib/clientSelection';
 import {guidedCatalog,catalogForPilot,versionForSafeguard,catalogForVersion,pilotEnabled,prioritizeGuidedRows,visibleQuestions,generateResult,validateAnswers,validateGuidedCompletion,compatibleInterviewAnswers,updateGuidedAnswer,updateGuidedMultiAnswer} from '@/lib/guidedAssessment';
 import {Dialog,DialogContent,DialogTitle,DialogDescription} from './ui/dialog';
 import {Button} from './ui/button';
@@ -55,10 +54,11 @@ function Pilot({clientId,framework,configuration,invitationContext,inventoryCont
   const routeClientId=new URLSearchParams(window.location.search).get('client_id');
   // Workflow corrections use the same authorized CIS scope as the native loaded assessment.
   const boundedGuideCorrections=cisExperienceEligible({...org,...auth,authLoading:auth.loading,authError:auth.error,
-    orgLoading:org?.loading,orgError:org?.error,selectedClientId:selectedClient(),routeClientId})
+    orgLoading:org?.loading,orgError:org?.error,routeClientId})
+    &&(auth.workspaceMode==='demo'?PREVIEW_MODE===true:PREVIEW_MODE===false)
     &&framework==='cis-ig1'&&cisDefinitions(configuration?.implementation_group).some(definition=>definition.id===record?.definition_id)
     &&window.location.pathname==='/compliance/cis-ig1'&&(!routeClientId||routeClientId===clientId)
-    &&selectedClient()===clientId&&org?.currentClientId===clientId&&org.currentClient?.client_id===clientId
+    &&org?.currentClientId===clientId&&org.currentClient?.client_id===clientId
     &&['active','onboarding'].includes(org.currentClient.status)&&!org.currentClient.archived&&!org.currentClient.archived_at
     &&org.clients?.some(client=>client.client_id===clientId)&&contextComplete===true
     &&record?.client_id===clientId&&record.framework_key===framework&&record.framework_version==='8.1'

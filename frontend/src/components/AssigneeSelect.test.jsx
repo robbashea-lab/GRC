@@ -1,10 +1,10 @@
-import { act } from 'react';
+import { act, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import AssigneeSelect from './AssigneeSelect';
-import api from '@/lib/api';
+import api, * as apiModule from '@/lib/api';
 import { useAuth } from '@/context/AuthContext';
 
-jest.mock('@/lib/api', () => ({__esModule:true, default:{get:jest.fn()}, formatError:e=>e.message, PREVIEW_MODE:true}));
+jest.mock('@/lib/api', () => ({__esModule:true, default:{get:jest.fn(),post:jest.fn(),patch:jest.fn(),put:jest.fn(),delete:jest.fn()}, formatError:e=>e.message, PREVIEW_MODE:true}));
 jest.mock('@/context/AuthContext', () => ({useAuth:jest.fn()}));
 // Unit tests exercise candidate state, not Radix's browser focus/portal engine.
 // The real primitive is exercised separately in the production-build browser QA.
@@ -32,19 +32,19 @@ const finish=(request,items)=>act(async()=>request.resolve({data:{items,has_more
 test('assessment presentation can omit guidance without changing eligible assignment',async()=>{
   await render({showGuidance:false});
   expect(host.textContent).not.toContain('Only active platform users');
-  expect(host.querySelector('a[href="/contacts"]')).toBeNull();
+  expect(host.querySelector('a[href="/contacts?client_id=a"]')).toBeNull();
   expect(host.querySelector('button').getAttribute('aria-describedby')).toBeNull();
   await open();await finish(requests[0],[{user_id:'eligible',name:'Eligible Owner'}]);
   await act(async()=>[...host.querySelectorAll('button')].find(b=>b.textContent.includes('Eligible Owner')).click());
   expect(onChange).toHaveBeenCalledWith('eligible');
   await render();expect(host.textContent).toContain('Only active platform users');
-  expect(host.querySelector('a[href="/contacts"]')).not.toBeNull();
+  expect(host.querySelector('a[href="/contacts?client_id=a"]')).not.toBeNull();
 });
 
 test('record forms omit the people link while retaining assignment guidance and eligible choices',async()=>{
   await render({showManagePeople:false});
   expect(host.textContent).toContain('Only active platform users');
-  expect(host.querySelector('a[href="/contacts"]')).toBeNull();
+  expect(host.querySelector('a[href="/contacts?client_id=a"]')).toBeNull();
   await open();await finish(requests[0],[{user_id:'eligible',name:'Eligible Owner'}]);
   await act(async()=>[...host.querySelectorAll('button')].find(b=>b.textContent.includes('Eligible Owner')).click());
   expect(onChange).toHaveBeenCalledWith('eligible');
@@ -81,9 +81,95 @@ test('Demo Contacts uses its tab selection without changing the normal client',a
   localStorage.setItem('grc_client_id','normal-client');sessionStorage.setItem('grc_client_id','a');
   const tab={opener:{},location:{replace:jest.fn()}},openTab=jest.spyOn(window,'open').mockReturnValue(tab);
   try {
-    await render();await act(async()=>host.querySelector('a[href="/contacts"]').click());
+    await render();await act(async()=>host.querySelector('a[href="/contacts?client_id=a"]').click());
     expect(openTab).toHaveBeenCalledWith('about:blank','_blank');
-    expect(tab.opener).toBeNull();expect(tab.location.replace).toHaveBeenCalledWith(new URL('/contacts',window.location.origin).href);
-    expect(localStorage.getItem('grc_client_id')).toBe('normal-client');expect(onChange).not.toHaveBeenCalled();
+    expect(tab.opener).toBeNull();expect(tab.location.replace).toHaveBeenCalledWith(new URL('/contacts?client_id=a',window.location.origin).href);
+    expect(localStorage.getItem('grc_client_id')).toBe('normal-client');expect(sessionStorage.getItem('grc_client_id')).toBe('a');expect(onChange).not.toHaveBeenCalled();
   } finally {openTab.mockRestore();localStorage.clear();sessionStorage.clear();}
+});
+
+function UnsavedOwnerForm({clientId='a'}) {
+  const [note,setNote]=useState('');
+  return <form onSubmit={event=>event.preventDefault()}>
+    <input aria-label="Unsaved record note" value={note} onChange={event=>setNote(event.target.value)}/>
+    <AssigneeSelect clientId={clientId} value="retained-owner" users={[{user_id:'retained-owner',name:'Retained owner',status:'active'}]} onChange={onChange}/>
+  </form>;
+}
+async function withPeopleRoute({preview,path,stored,tab,clientId='a'},check) {
+  const original={preview:apiModule.PREVIEW_MODE,url:window.location.pathname+window.location.search+window.location.hash,
+    normal:localStorage.getItem('grc_client_id'),demo:sessionStorage.getItem('grc_client_id')};
+  const openTab=jest.spyOn(window,'open').mockReturnValue(tab);
+  apiModule.PREVIEW_MODE=preview;
+  localStorage.setItem('grc_client_id',preview?'normal-client':stored);
+  sessionStorage.setItem('grc_client_id',preview?stored:'demo-client');
+  window.history.replaceState({},'',path);
+  const selections=[localStorage.getItem('grc_client_id'),sessionStorage.getItem('grc_client_id')];
+  try {
+    await act(async()=>root.render(<UnsavedOwnerForm clientId={clientId}/>));
+    const note=host.querySelector('[aria-label="Unsaved record note"]');
+    await act(async()=>{
+      Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,'value').set.call(note,'SYNTHETIC unsaved note Ω');
+      note.dispatchEvent(new Event('input',{bubbles:true}));
+    });
+    expect(note.value).toBe('SYNTHETIC unsaved note Ω');
+    expect(host.querySelector('button').textContent).toContain('Retained owner');
+    await check({openTab,note,link:host.querySelector('[aria-label="Manage people in a new tab"]')});
+    expect(note.isConnected).toBe(true);expect(note.value).toBe('SYNTHETIC unsaved note Ω');
+    expect(host.querySelector('button').textContent).toContain('Retained owner');
+    expect(onChange).not.toHaveBeenCalled();
+    for(const method of ['get','post','patch','put','delete'])expect(api[method]).not.toHaveBeenCalled();
+    expect([localStorage.getItem('grc_client_id'),sessionStorage.getItem('grc_client_id')]).toEqual(selections);
+  } finally {
+    openTab.mockRestore();apiModule.PREVIEW_MODE=original.preview;
+    window.history.replaceState({},'',original.url);
+    for(const [storage,value] of [[localStorage,original.normal],[sessionStorage,original.demo]]) {
+      if(value===null)storage.removeItem('grc_client_id');else storage.setItem('grc_client_id',value);
+    }
+  }
+}
+
+test.each([false,true])('a pinned client opens its exact Contacts destination despite another preference (Demo=%s)',async preview=>{
+  const events=[];let opener={};
+  const tab={get opener(){return opener;},set opener(value){opener=value;events.push(['opener',value]);},
+    location:{replace:jest.fn(url=>events.push(['navigate',url]))}};
+  await withPeopleRoute({preview,path:'/reviews?client_id=a&view=active#review',stored:'other-authorized-client',tab},async({openTab,link})=>{
+    expect(link.getAttribute('href')).toBe('/contacts?client_id=a');
+    await act(async()=>link.click());
+    const destination=new URL('/contacts?client_id=a',window.location.origin).href;
+    expect(openTab).toHaveBeenCalledTimes(1);expect(openTab).toHaveBeenCalledWith('about:blank','_blank');
+    expect(tab.opener).toBeNull();expect(tab.location.replace).toHaveBeenCalledTimes(1);
+    expect(tab.location.replace).toHaveBeenCalledWith(destination);
+    expect(events).toEqual([['opener',null],['navigate',destination]]);
+    expect(host.textContent).not.toContain('Open Contacts from this client');
+  });
+});
+
+test.each([
+  ['foreign pinned route','/reviews?client_id=foreign','a'],
+  ['other authorized pinned route','/reviews?client_id=other-authorized-client','a'],
+  ['unpinned changed preference','/reviews?view=active','other-authorized-client'],
+])('%s refuses navigation without changing the current form',async(name,path,stored)=>{
+  await withPeopleRoute({preview:false,path,stored,tab:{opener:{},location:{replace:jest.fn()}}},async({openTab,link})=>{
+    expect(link.getAttribute('href')).toBe('/contacts?client_id=a');
+    await act(async()=>link.click());
+    expect(openTab).not.toHaveBeenCalled();
+    expect(host.textContent).toContain('Open Contacts from this client after saving your changes.');
+  });
+});
+
+test('a blocked new tab reports the existing safe failure while retaining the form',async()=>{
+  await withPeopleRoute({preview:false,path:'/reviews?client_id=a',stored:'other-authorized-client',tab:null},async({openTab,link})=>{
+    await act(async()=>link.click());
+    expect(openTab).toHaveBeenCalledWith('about:blank','_blank');
+    expect(host.textContent).toContain('Allow this tab to open Contacts. Your form is unchanged.');
+  });
+});
+
+test('a missing record client has no unscoped Contacts target and never opens a tab',async()=>{
+  await withPeopleRoute({preview:false,path:'/reviews?client_id=a',stored:'a',tab:null,clientId:''},async({openTab,link})=>{
+    expect(link.getAttribute('href')).toBeNull();
+    await act(async()=>link.click());
+    expect(openTab).not.toHaveBeenCalled();
+    expect(host.textContent).toContain('Open Contacts from this client after saving your changes.');
+  });
 });

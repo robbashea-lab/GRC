@@ -47,8 +47,6 @@ test.each([
   ['organization loading', source => { source.orgLoading = true; }],
   ['organization error', source => { source.orgError = new Error('Organization unavailable'); }],
   ['framework load error', source => { source.error = new Error('Framework unavailable'); }],
-  ['foreign selected client', source => { source.selectedClientId = 'demo_dunder'; }],
-  ['missing selected client', source => { source.selectedClientId = null; }],
   ['foreign explicit route client', source => { source.routeClientId = 'demo_dunder'; }],
   ['foreign resolved client', source => { source.clientId = 'demo_dunder'; }],
   ['foreign current client id', source => { source.currentClientId = 'demo_dunder'; }],
@@ -178,4 +176,11 @@ test.each([
 ])('deep-record guard rejects %s', (_name, mutate) => {
   const {record, live, originKey} = recordContext(); mutate(record, live);
   expect(cisVisualRecordMatches(record, live, originKey)).toBe(false);
+});
+
+test.each(['demo_dunder', '', null])('remembered preference %p cannot withdraw a verified current CIS response', selectedClientId => {
+  const source = {...context(), selectedClientId};
+  expect(brawndoCisVisualGate(source)).toBe(true);
+  expect(brawndoCisVisualGate({...source, routeClientId:'demo_dunder'})).toBe(false);
+  expect(brawndoCisVisualGate({...source, loadedScope:{...source.loadedScope, clientId:'demo_dunder'}})).toBe(false);
 });

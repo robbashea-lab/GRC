@@ -12,11 +12,10 @@ import {frameworkContextIdentity,frameworkContextRequest,frameworkContextScope,u
 import {formatError} from '@/lib/api';
 import {canOperate} from '@/lib/permissions';
 
-function AssessmentContextRecovery({identity,onRecovered,children}){
-  const command=useFrameworkContextIntent(identity),[busy,setBusy]=useState(false),[error,setError]=useState('');
+function AssessmentContextRetry({command,onRecovered}){
+  const [busy,setBusy]=useState(false),[error,setError]=useState('');
   const live=useRef(true);
   useEffect(()=>{live.current=true;return()=>{live.current=false;};},[]);
-  if(!frameworkContextRequest(command.pendingRequest(),identity))return children;
   async function retry(){
     setBusy(true);setError('');
     try{
@@ -30,6 +29,13 @@ function AssessmentContextRecovery({identity,onRecovered,children}){
     {error&&<p role="alert">{error}</p>}
     <button className="cta" type="button" disabled={busy} onClick={retry}>Retry unconfirmed assessment save</button>
   </section>;
+}
+
+// Scope the retry controller without remounting the normal assessment workspace.
+function AssessmentContextRecovery({enabled,identity,recoveryKey,onRecovered,children}){
+  const command=useFrameworkContextIntent(identity);
+  if(!enabled||!frameworkContextRequest(command.pendingRequest(),identity))return children;
+  return <AssessmentContextRetry key={recoveryKey} command={command} onRecovered={onRecovered}/>;
 }
 
 export default function ComplianceWorkspace() {
@@ -66,6 +72,6 @@ export default function ComplianceWorkspace() {
     </div>
   </div>;
   // Only this URL's retained command can bypass a failed-closed read, and only to retry it.
-  return canRecover?<AssessmentContextRecovery key={frameworkContextScope(recoveryIdentity)+':'+user.role}
-    identity={recoveryIdentity} onRecovered={async()=>{compliance.refresh?.();await org.refresh?.();}}>{content}</AssessmentContextRecovery>:content;
+  return <AssessmentContextRecovery enabled={canRecover} recoveryKey={frameworkContextScope(recoveryIdentity)+':'+user?.role}
+    identity={recoveryIdentity} onRecovered={async()=>{compliance.refresh?.();await org.refresh?.();}}>{content}</AssessmentContextRecovery>;
 }

@@ -5,7 +5,7 @@ import {useAdditionalSectionsSurface,useAdditionalSectionsPresentation} from '@/
 import {policyVisualMatches,policyMappedFilterUnavailable} from '@/lib/brawndoAdditionalPolicyVendor';
 import {sharedClientPrograms} from '@/lib/sharedExperience';
 import BrawndoAdditionalPolicies from '@/components/BrawndoAdditionalPolicies';
-import {selectedClient} from '@/lib/clientSelection';
+import {clientDestination,selectedClient} from '@/lib/clientSelection';
 import BrawndoDemoReviews,{BrawndoReviewRows} from './BrawndoDemoReviews';
 import {brawndoDemoReviewsGate} from '@/lib/brawndoDemoReviews';
 import TableLoadingRow from '@/components/TableLoadingRow';
@@ -760,7 +760,7 @@ function EntityListPage({ kind }) {
         <SecondaryAction icon={Download} label="Export CSV" onClick={exportCsv} disabled={!currentClientId||!rows.length||policyMappingUnavailable} testid="export-policies-button"/>
         {canWrite&&<PrimaryAction label="New policy" testid="create-policies-button" onClick={()=>{setSelected(null);setOpen(true);}}/>}</>}
       pendingDecisions={<PolicyPendingDecisions clientId={currentClientId} rows={rows} onOpen={row=>{setSelected(row);setOpen(true);}}/>}
-      nativeControls={<>{hasUrlFilters&&<div className="bap-native-scope" data-testid="carried-scope-chip">{carriedScopeLabel}<button type="button" aria-label="Clear filter" data-testid="clear-carried-scope" onClick={()=>navigate(location.pathname,{replace:true})}>Clear filter</button></div>}
+      nativeControls={<>{hasUrlFilters&&<div className="bap-native-scope" data-testid="carried-scope-chip">{carriedScopeLabel}<button type="button" aria-label="Clear filter" data-testid="clear-carried-scope" onClick={()=>navigate(clientDestination(currentClientId,location.pathname),{replace:true})}>Clear filter</button></div>}
         <div className="bap-native-columns" aria-label="Additional native policy filters"><label>Review timing <select aria-label="Policy review timing" value={['due30','overdue'].includes(policyView)?policyView:''} onChange={event=>setParam('policyView',event.target.value)}><option value="">All review dates</option><option value="due30">Review due in 30 days</option><option value="overdue">Overdue reviews</option></select></label>{columns.filter(column=>['next_review_date','version'].includes(column.key)).map(column=><ColumnControl key={column.key} table={table} column={column}/>)}</div>{nativeBulkControls}</>}
     /> : <Surface {...(reviewsPilot?{clientName:currentClient?.name||'Client',users,scopeKey:quarterlyChartScope(user,auth.workspaceMode,currentClient),onOpenReview:openReviewRow,rows:loading||loadError?[]:tableSource,available:!loading&&!loadError&&loadedReviewScope.current===reviewScope,recordOpen:open,theme,view:reviewTab,onView:setReviewTab,actions:<><SurfaceThemeAction theme={theme} onTheme={()=>setTheme(theme==='light'?'dark':'light')}/><SecondaryAction icon={Download} label="Export CSV" onClick={exportCsv} disabled={!currentClientId||!rows.length} testid="export-reviews-button"/><ReviewCompletionsExport key={reviewScope} clientId={currentClientId} scopeKey={reviewScope}/>{canWrite&&<PrimaryAction label="New review" testid="create-reviews-button" onClick={()=>{setSelected(null);setOpen(true);}}/>}</>}: {className:`register-surface${policiesPilot?' bpage':''}`, 'data-layout':isReviews?'reviews':undefined,'data-theme':policiesPilot?theme:undefined})}>
       {!reviewsPilot&&(policiesPilot ? <BrawndoPageHeader eyebrow={`${currentClient?.name||'Client'} · Policy library`} title="Policies">
@@ -788,7 +788,7 @@ function EntityListPage({ kind }) {
             <Filter className="h-3 w-3" />
             <span>{carriedScopeLabel}</span>
             <button
-              onClick={() => navigate(location.pathname, { replace: true })}
+              onClick={() => navigate(clientDestination(currentClientId,location.pathname), { replace: true })}
               aria-label="Clear filter"
               className="ml-1 hover:text-semantic-critical"
               data-testid="clear-carried-scope"

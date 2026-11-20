@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import { useOrg } from "@/context/OrgContext";
+import {clientDestination} from "@/lib/clientSelection";
 import api, { formatError } from "@/lib/api";
 import PageHeader from "@/components/PageHeader";
 import ClientDialog from "@/components/ClientDialog";
@@ -66,7 +67,7 @@ export default function ClientManagement() {
   async function saved(client) {
     const created = dialog && !dialog.client;
     setDialog(null);
-    toast.success(`${client.name} saved`, created ? {position:'top-right', closeButton:true, duration:10000, action:{label:'Open Client Profile',onClick:()=>{switchClient(client.client_id);navigate('/client-profile');}}} : undefined);
+    toast.success(`${client.name} saved`, created ? {position:'top-right', closeButton:true, duration:10000, action:{label:'Open Client Profile',onClick:()=>{switchClient(client.client_id);navigate(clientDestination(client.client_id,'/client-profile'));}}} : undefined);
     await load(); await refresh();
   }
   async function archive(client) {

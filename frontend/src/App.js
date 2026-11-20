@@ -109,7 +109,7 @@ function AppRouter() {
         <Route path="evidence" element={<Evidence />} />
         <Route path="reports" element={<Reports />} />
         <Route path="compliance/:requirementKey" element={<ComplianceWorkspace />} />
-        <Route path="onboarding" element={<Navigate to="/client-profile" replace />} />
+        <Route path="onboarding" element={<LegacyClientSettings preserveTab/>} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

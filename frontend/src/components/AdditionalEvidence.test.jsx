@@ -3,6 +3,7 @@ import {createRoot} from 'react-dom/client';
 import AdditionalEvidence from './AdditionalEvidence';
 import api from '@/lib/api';
 import {dateMatches} from '@/lib/tableFilters';
+import {THEME_KEY,useBrawndoTheme} from '@/lib/brawndoTheme';
 jest.mock('@/lib/api',()=>({__esModule:true,default:{get:jest.fn(),post:jest.fn(),put:jest.fn(),patch:jest.fn(),delete:jest.fn()},formatError:error=>error.message}));
 jest.mock('sonner',()=>({toast:{error:jest.fn()}}));
 let node,root,originalCreate,originalRevoke;
@@ -16,6 +17,31 @@ afterEach(()=>{
   if(originalRevoke===undefined)delete URL.revokeObjectURL;else URL.revokeObjectURL=originalRevoke;
 });
 const row={client_id:'demo_brawndo',evidence_id:'e1',filename:'Check.pdf',evidence_type:'Report',created_at:'2026-10-01',program_areas:['Reviews'],references:[{kind:'reviews',id:'r1',occurrence_id:'period-1',title:'Monthly check',label:'Review',available:true}]};
+function ThemeWitness(){const [theme]=useBrawndoTheme();return <output aria-label="Shared workspace theme">{theme}</output>;}
+test('Evidence theme choices synchronize the existing workspace preference without business writes',async()=>{
+  const previous=localStorage.getItem(THEME_KEY);
+  try{
+    localStorage.setItem(THEME_KEY,'dark');
+    await act(async()=>root.render(<><AdditionalEvidence clientId="demo_brawndo" onOpenItem={()=>{}} onOpenSource={()=>{}}/><ThemeWitness/></>));
+    const choices=node.querySelector('[role="group"][aria-label="Theme"]');
+    expect(choices).not.toBeNull();
+    const choice=value=>[...choices.querySelectorAll('button')].find(button=>button.textContent===value);
+    expect(choice('Dark').getAttribute('aria-pressed')).toBe('true');
+    expect(choice('Light').getAttribute('aria-pressed')).toBe('false');
+    await act(async()=>choice('Light').click());
+    expect(localStorage.getItem(THEME_KEY)).toBe('light');
+    expect(node.querySelector('[aria-label="Shared workspace theme"]').textContent).toBe('light');
+    expect(choice('Light').getAttribute('aria-pressed')).toBe('true');
+    expect(choice('Dark').getAttribute('aria-pressed')).toBe('false');
+    await act(async()=>choice('Dark').click());
+    expect(localStorage.getItem(THEME_KEY)).toBe('dark');
+    expect(node.querySelector('[aria-label="Shared workspace theme"]').textContent).toBe('dark');
+    expect(node.querySelector('[data-testid="add-evidence"]')).toBeNull();
+    for(const method of ['post','put','patch','delete'])expect(api[method]).not.toHaveBeenCalled();
+  }finally{
+    if(previous===null)localStorage.removeItem(THEME_KEY);else localStorage.setItem(THEME_KEY,previous);
+  }
+});
 beforeEach(()=>{jest.useFakeTimers('modern');jest.setSystemTime(new Date('2026-10-16T12:00:00Z'));global.IS_REACT_ACT_ENVIRONMENT=true;node=document.createElement('div');document.body.appendChild(node);root=createRoot(node);api.get.mockImplementation(async(path,{params}={})=>({data:path==='/evidence/catalog'?{items:[row],total:1,page_size:params.page_size,program_counts:{Reviews:1},facets:{evidence_type:['Report'],years:['2026']},folder_counts:[]}:path==='/frameworks/cis-ig1'?{assessments:[],active_definition_ids:[],selected:false,configured:false}:path==='/reviews'?[{client_id:'demo_brawndo',review_id:'r1',title:'Monthly check',recurrence:'monthly'}]:path.endsWith('/sets')?{items:[{occurrence_id:'period-1',period:'October',status:'completed',due_date:'2026-10-01',evidence_count:1},{occurrence_id:'cancelled',status:'cancelled',due_date:'2026-09-01',evidence_count:0}],total:2,page_size:25}:path.endsWith('/download')?{content_base64:'cGRm',mime_type:'application/pdf',filename:'Check.pdf'}:[]}));});
 afterEach(async()=>{await act(async()=>root.unmount());node.remove();jest.clearAllMocks();jest.useRealTimers();});
 test('bulk controls request the complete library/folder independently of current search and preserve Include archived',async()=>{

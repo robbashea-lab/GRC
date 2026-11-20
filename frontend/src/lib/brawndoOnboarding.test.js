@@ -17,7 +17,7 @@ test('presentation requires exact authorized active Explore demo and matching na
     {currentClient: {...context.currentClient, status: 'archived'}}, {currentClient: {...context.currentClient, archived: true}},
     {currentClient: {...context.currentClient, archived_at: '2026-10-01'}},
     {currentClient: {...context.currentClient, client_id: 'lookalike', name: 'Brawndo'}},
-    {selectedClientId: null}, {loadedClientId: null}, {profileClientId: 'other'}, {handoffClientId: 'other'},
+    {loadedClientId: null}, {profileClientId: 'other'}, {handoffClientId: 'other'},
     {routeClientId: 'other'}, {pathname: '/onboarding'}, {pathname: '/client-profile/'}]) {
     expect(brawndoOnboardingGate({...context, ...patch})).toBe(false);
   }
@@ -78,4 +78,12 @@ test('terminal records are ignored; unknown dates, conflicts and exhausted work 
   const before = JSON.stringify(rows), forecast = onboardingReviewForecast(rows, now);
   expect(forecast).toMatchObject({ignored: 2, unscheduled: 1, unavailable: 3, total: 0});
   expect(JSON.stringify(rows)).toBe(before);
+});
+
+test.each([null, '', 'other'])('onboarding appearance ignores remembered preference %p but preserves every loaded-client boundary', selectedClientId => {
+  const current = {...context, selectedClientId};
+  expect(brawndoOnboardingGate(current)).toBe(true);
+  for (const field of ['loadedClientId', 'profileClientId', 'handoffClientId']) {
+    expect(brawndoOnboardingGate({...current, [field]:'other'})).toBe(false);
+  }
 });

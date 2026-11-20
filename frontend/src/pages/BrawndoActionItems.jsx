@@ -1,11 +1,11 @@
 import {CisActionItemsOverview,CisActionItemsSummary,ActionConceptPriority,ActionConceptDue,useActionConceptClock} from '@/components/CisActionItemsConcept';
 import {quarterlyChartScope} from '@/lib/quarterlyProgramTimeline';
 import {sharedAppearanceEligible,sharedClientPrograms} from '@/lib/sharedExperience';
-import {selectedClient} from '@/lib/clientSelection';
+import {clientDestination,selectedClient} from '@/lib/clientSelection';
 import {brawndoEligibleOwnerIds,brawndoTicketMetrics} from '@/lib/brawndoDemoActions';
 import {useBrawndoTheme} from '@/lib/brawndoTheme';
 import {useEffect,useRef,useState} from 'react';
-import {Navigate,useLocation,useSearchParams,useNavigationType} from 'react-router-dom';
+import {Navigate,useLocation,useNavigate,useSearchParams,useNavigationType} from 'react-router-dom';
 import {useAuth} from '@/context/AuthContext';
 import {useOrg} from '@/context/OrgContext';
 import {useActionRegisterData} from '@/lib/useActionRegisterData';
@@ -44,7 +44,7 @@ export function FindingsRoute(){
 export default function BrawndoActionItems(){
   const org=useOrg(),auth=useAuth(),{currentClientId,currentClient}=org,{user}=auth;
   const [theme]=useBrawndoTheme();
-  const location=useLocation();
+  const location=useLocation(),navigate=useNavigate();
   const navigationType=useNavigationType();
   const [params,setParams]=useSearchParams(),view=params.get('view')||(params.get('signal')==='material'?'high_critical':'active');
   const urlQuery=params.get('q')||'', [q,setQuery]=useState(urlQuery);
@@ -52,6 +52,12 @@ export default function BrawndoActionItems(){
   // Input is immediate; an older replace navigation must not erase newer keys.
   useEffect(()=>{const search=location.state?.actionSearch;if(navigationType!=='POP'&&search?.owner===searchOwner.current&&search.revision<searchRevision.current)return;setQuery(urlQuery);},[urlQuery,location.state,navigationType]);
   function changeSearch(value){setQuery(value);const next=new URLSearchParams(params);next.set('q',value);setParams(next,{replace:true,state:{...location.state,actionSearch:{owner:searchOwner.current,revision:++searchRevision.current}}});}
+  function clearFilters(){
+    const next=new URLSearchParams(params);
+    ['q','owner','unassigned','signal'].forEach(key=>next.delete(key));next.set('view','all');
+    const path=location.pathname+'?'+next.toString()+(location.hash||'');
+    navigate(currentClientId?clientDestination(currentClientId,path):path,{replace:true});
+  }
   const {data,users,loading,error,load}=useActionRegisterData(currentClientId);
   const [drawer,setDrawer]=useState(null),[deepLinkError,setDeepLinkError]=useState('');
   const opened=useRef('');
@@ -95,7 +101,7 @@ export default function BrawndoActionItems(){
     <div className="register-body">{(params.get('owner')||params.get('unassigned')==='1')&&<div className="text-sm my-2">Assigned To: {params.get('unassigned')==='1'?'Unassigned':users.find(u=>u.user_id===(params.get('owner')==='__me__'?user.user_id:params.get('owner')))?.name||'Selected user'} <button className="underline" onClick={()=>{const next=new URLSearchParams(params);next.delete('owner');next.delete('unassigned');setParams(next,{replace:true});}}>Clear assignment filter</button></div>}<TableFilterChips table={table}/><RegisterLoadError error={error||deepLinkError} name="action items" onRetry={()=>{opened.current='';setDeepLinkError('');load();}}/>
       <div className="register-table-frame bg-surface-card border border-line rounded-lg overflow-x-auto"><table className="w-full text-sm brawndo-ai-table"><colgroup>{[49,10,16,12,13].map((width,i)=><col key={i} style={{width:width+'%'}}/>)}</colgroup><thead><tr>{['title','priority','owner_id','due_date','status'].map(key=>enrolledDetails&&view==='completed'&&key==='due_date'?<th key={key} scope="col" className="tbl-head"><span>Completed</span><ColumnControl table={table} columnKey={key}/></th>:<SortableHeader key={key} table={table} columnKey={key}/>)}</tr></thead><tbody className="divide-y divide-line">
         {loading&&!rows.length&&<TableLoadingRow colSpan={5}/>}
-        {!loading&&!error&&!filtered.length&&<tr><td colSpan={5} className="py-10"><FilterEmpty table={table} name="action items" onClear={()=>setParams(new URLSearchParams('view=all'),{replace:true})}/></td></tr>}
+        {!loading&&!error&&!filtered.length&&<tr><td colSpan={5} className="py-10"><FilterEmpty table={table} name="action items" onClear={clearFilters}/></td></tr>}
         {filtered.map((r,i)=><tr key={r.kind+':'+r.id} data-testid={`ai-row-${i}`} className={`row-hover row-open${pilotActionMatches(r,'overdue')?` bpage-late${compactOverview?' overdue-row':''}`:''}`} onClick={()=>open(r)}>
           <td className="tbl-cell"><button className="register-record-link text-left" onClick={e=>{e.stopPropagation();open(r);}}>{r.title}</button>{r.finding&&<span className="bpage-meta brawndo-ai-finding line-clamp-2"><strong>Finding:</strong> {r.issue||'Issue description not recorded'}</span>}<span className="bpage-meta brawndo-ai-origin">Originated from: {r.source.target?<button className="text-link underline text-left" onClick={e=>{e.stopPropagation();setDrawer({kind:r.source.kind,record:r.source.target,initialValues:r.source.initialValues});}}>{r.source.label}</button>:<span>{r.source.id?'Linked source unavailable · '+r.source.id:r.source.label}</span>}{r.source.detail&&` · ${r.source.detail}`}</span>{r.diagnostic&&<span className="bpage-meta">{r.diagnostic}</span>}</td>
           <td className="tbl-cell">{enrolledDetails?<ActionConceptPriority value={r.primary?.priority}/>:<SeverityBadge value={r.priority||'unknown'} label={pilotPriority(r.priority)}/>}</td>

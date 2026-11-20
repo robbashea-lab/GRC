@@ -48,7 +48,7 @@ import {auditPackage,auditProgress} from '@/lib/isoAudit';
 import CisReviewBrief from './CisReviewBrief';
 import ReviewCompletionGuide,{ReviewCompletionRecord} from './ReviewCompletionGuide';
 import {completionPayload,validateCompletionGuide} from '@/lib/r4ReviewCompletion';
-import {selectedClient} from '@/lib/clientSelection';
+import {clientDestination,selectedClient} from '@/lib/clientSelection';
 
 const tabs = ['Overview','Requirements','Related','Evidence','Comments','Activity'];
 const configFields = SCHEMAS.reviews.fields.filter(f => ['title','review_type','policy_id','owner_id','due_date','recurrence','custom_recurrence_days'].includes(f.name));
@@ -405,7 +405,7 @@ export default function ReviewDrawer({open,onOpenChange,record,clientId,onSaved,
             <h3 className="font-medium">{auditPackage(shown.iso_audit.package_key)?.title}</h3>
             <p>Cycle {shown.iso_audit.cycle} · {auditProgress(shown.iso_audit).complete} of {auditProgress(shown.iso_audit).total} workpapers complete</p>
             <p>Closure requires completed workpapers, Findings for recorded exceptions, and the issued report. Remediation remains independently tracked.</p>
-            <a className="text-link underline" target="_blank" rel="noopener noreferrer" href={'/compliance/iso-27001?iso_view=audit&package='+encodeURIComponent(shown.iso_audit.package_key)+(selected?'&audit_occurrence='+encodeURIComponent(oid):'')}>Open {selected?'historical':'current'} audit workpapers in a new tab ↗</a>
+            <a className="text-link underline" target="_blank" rel="noopener noreferrer" href={clientDestination(cid,'/compliance/iso-27001?iso_view=audit&package='+encodeURIComponent(shown.iso_audit.package_key)+(selected?'&audit_occurrence='+encodeURIComponent(oid):''))}>Open {selected?'historical':'current'} audit workpapers in a new tab ↗</a>
           </section>}
           {selected?.iso_soa_snapshot&&<details className="border border-line rounded p-3 text-sm"><summary>Annex A SoA snapshot captured at completion</summary>
             <p className="my-2">{selected.iso_soa_snapshot.assessments.length} Annex A control records · captured {date(selected.iso_soa_snapshot.captured_at)}. This historical snapshot does not change with the current SoA. Necessary custom controls and a controlled complete SoA are outside this snapshot; inspect this occurrence's retained supporting records, not current Control design. A supporting link is not a completeness conclusion.</p>

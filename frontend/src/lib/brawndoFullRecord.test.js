@@ -17,8 +17,14 @@ test.each([
   {currentClient:{...allowed.currentClient,status:'archived'}},
   {currentClient:{...allowed.currentClient,archived_at:'2026-10-01'}},
   {currentClient:{...allowed.currentClient,archived:true}},
-  {currentClient:{client_id:'demo_brawndo'}}, {selectedClientId:'demo_dunder'},
+  {currentClient:{client_id:'demo_brawndo'}},
   {routeClientId:'denied'}, {clientId:'demo_dunder'}, {record:{client_id:'demo_dunder'}}, {record:{}},
 ])('fails closed for untrusted, stale or mismatched context %j',change=>{
   expect(brawndoFullRecordEligible({...allowed,...change})).toBeFalsy();
+});
+
+test.each(['demo_dunder', '', null])('remembered preference %p does not withdraw the current authorized full editor', selectedClientId => {
+  const context = {...allowed, selectedClientId};
+  expect(brawndoFullRecordEligible(context)).toBe(true);
+  expect(brawndoFullRecordEligible({...context, record:{client_id:'demo_dunder'}})).toBe(false);
 });

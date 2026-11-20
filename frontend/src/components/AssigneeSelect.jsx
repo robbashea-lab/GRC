@@ -1,7 +1,7 @@
 import { useEffect, useId, useState } from 'react';
 import { Check, ChevronDown } from 'lucide-react';
 import api, { formatError, PREVIEW_MODE } from '@/lib/api';
-import {selectedClient} from '@/lib/clientSelection';
+import {clientDestination,selectedClient} from '@/lib/clientSelection';
 import { useAuth } from '@/context/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -17,6 +17,7 @@ export default function AssigneeSelect({ clientId, value, onChange, label = 'Own
   const [offset, setOffset] = useState(0), [retry, setRetry] = useState(0);
   const [result, setResult] = useState(null), [selected, setSelected] = useState(null);
   const [peopleError, setPeopleError] = useState('');
+  const peopleDestination = clientId ? clientDestination(clientId, '/contacts') : undefined;
   const mode = PREVIEW_MODE;
   useEffect(() => { setOpen(false); setSearch(''); setOffset(0); setSelected(null); }, [clientId, user, mode]);
   useEffect(() => {
@@ -39,14 +40,16 @@ export default function AssigneeSelect({ clientId, value, onChange, label = 'Own
     event.preventDefault();
     // A same-origin blank tab inherits the isolated Demo session. Remove its
     // opener before navigation; preserve this form and never change assignment.
-    if (selectedClient() !== clientId) {
+    // A pinned URL owns this tab; unpinned forms retain the existing preference guard.
+    const requestedClientId = new URLSearchParams(window.location.search).get('client_id');
+    if (!clientId || (requestedClientId ? requestedClientId !== clientId : selectedClient() !== clientId)) {
       setPeopleError('Open Contacts from this client after saving your changes.');
       return;
     }
     const tab = window.open('about:blank', '_blank');
     if (!tab) { setPeopleError('Allow this tab to open Contacts. Your form is unchanged.'); return; }
     tab.opener = null;
-    tab.location.replace(new URL('/contacts', window.location.origin).href);
+    tab.location.replace(new URL(peopleDestination, window.location.origin).href);
     setPeopleError('');
   }
   return <div className="space-y-1.5">
@@ -71,7 +74,7 @@ export default function AssigneeSelect({ clientId, value, onChange, label = 'Own
     </Popover>
     {showGuidance&&<p id={helpId} className="text-xs leading-relaxed text-ink-secondary">{guidanceText}</p>}
     {value && current?.status && current.status !== 'active' && <p data-assignee-inactive className="text-xs text-ink-secondary">The recorded account is not active. Its assignment is retained until you choose a replacement.</p>}
-    {showGuidance&&showManagePeople&&<a href="/contacts" onClick={managePeople} className="inline-block text-xs text-link underline" aria-label="Manage people in a new tab">Manage people →</a>}
+    {showGuidance&&showManagePeople&&<a href={peopleDestination} onClick={managePeople} className="inline-block text-xs text-link underline" aria-label="Manage people in a new tab">Manage people →</a>}
     {peopleError && <p role="status" className="text-xs text-ink-secondary">{peopleError}</p>}
   </div>;
 }

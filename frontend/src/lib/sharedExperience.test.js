@@ -91,7 +91,7 @@ test('mixed enrollment keeps independent native program identities and does not 
 test('identity denial, loading, stale route and record scope retain the existing fail-closed contract',()=>{
   const context=enrolled('soc-2');
   for(const patch of [{user:null},{user:{...context.user,role:'unknown'}},{authLoading:true},{authError:'denied'},
-    {orgLoading:true},{orgError:'denied'},{currentClient:null},{clients:[]},{selectedClientId:'foreign'},
+    {orgLoading:true},{orgError:'denied'},{currentClient:null},{clients:[]},
     {routeClientId:'foreign'},{loadedClientId:'foreign'},{currentClient:{...context.currentClient,status:'archived'}}]) {
     expect(sharedExperienceEligible({...context,...patch})).toBe(false);
   }
@@ -107,4 +107,13 @@ test('identity denial, loading, stale route and record scope retain the existing
 test('shared shell accepts only existing native client/program route boundaries',()=>{
   for(const route of [...SHARED_CLIENT_ROUTES,'/compliance/cis-ig1','/compliance/iso-27001','/compliance/soc-2','/compliance/hipaa','/compliance/nist-csf-2','/compliance/cmmc']) expect(sharedNativeClientRoute(route)).toBe(true);
   for(const route of ['/clients','/admin/security','/platform/security','/account','/compliance/unknown','/compliance/iso-27001/other']) expect(sharedNativeClientRoute(route)).toBe(false);
+});
+
+test.each(['foreign', '', null])('common identity ignores remembered preference %p without changing enrollment or record scope', selectedClientId => {
+  const context = {...enrolled('soc-2'), selectedClientId}, before = JSON.stringify(context);
+  expect(sharedExperienceEligible(context)).toBe(true);
+  expect(sharedPresentationEligible(context)).toBe(true);
+  expect(brawndoFullRecordEligible({...context, pathname:'/reviews', clientId:context.currentClientId,
+    record:{client_id:'foreign'}})).toBe(false);
+  expect(JSON.stringify(context)).toBe(before);
 });

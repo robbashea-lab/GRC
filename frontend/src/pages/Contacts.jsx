@@ -1,5 +1,6 @@
 import {useCallback,useEffect,useState} from 'react';
-import {useSearchParams} from 'react-router-dom';
+import {useLocation,useNavigate,useSearchParams} from 'react-router-dom';
+import {clientDestination} from '@/lib/clientSelection';
 import {MoreHorizontal} from 'lucide-react';
 import api,{formatError} from '@/lib/api';
 import {useAuth} from '@/context/AuthContext';
@@ -31,6 +32,7 @@ export default function Contacts(){
 }
 function ContactDirectory({clientId,user,brawndo,clientName,client}){
   const [params,setParams]=useSearchParams(),[rows,setRows]=useState([]),[loading,setLoading]=useState(true),[error,setError]=useState(''),[revision,setRevision]=useState(0);
+  const location=useLocation(),navigate=useNavigate();
   const [loadedClientId,setLoadedClientId]=useState(null);
   const additional=useAdditionalSectionsSurface('contacts',!error?loadedClientId:null);
   const additionalPresentation=useAdditionalSectionsPresentation('contacts');
@@ -44,6 +46,13 @@ function ContactDirectory({clientId,user,brawndo,clientName,client}){
   const table=useTableControls({columns,rows,module:'contacts-directory',scope:`${user?.user_id}:${clientId}`});
   const query=params.get('q')||'',access=params.get('access')||'',archived=params.get('archived')==='true';
   const setParam=(key,value)=>{const next=new URLSearchParams(params);value?next.set(key,value):next.delete(key);setParams(next,{replace:true});};
+  function clearFilters(){
+    const next=new URLSearchParams(params);
+    ['q','access','archived'].forEach(key=>next.delete(key));
+    const path=location.pathname+'?'+next.toString()+(location.hash||'');
+    table.clear();
+    navigate(clientId?clientDestination(clientId,path):path,{replace:true});
+  }
   const filtered=table.apply((additional?additionalDirectoryRows:directoryRows)(rows,{query,access,archived,clientId,context}));
   const initialLoading=loading&&!rows.length;
   const edit=row=>{setSelected(row);setOpen(true);};
@@ -58,7 +67,7 @@ function ContactDirectory({clientId,user,brawndo,clientName,client}){
     <div className="register-toolbar"><SearchField label="Search contacts" placeholder="Search contacts…" testid="contacts-search" value={query} onChange={v=>setParam('q',v)}/>
       <label className="sr-only" htmlFor="contacts-access-filter">Platform Access</label><select id="contacts-access-filter" className="contact-select" value={access} onChange={e=>setParam('access',e.target.value)}><option value="">All contacts</option><option value="none">No access</option><option value="pending">Invitation pending</option><option value="active">Active account</option><option value="disabled">Disabled</option></select>
       <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={archived} onChange={e=>setParam('archived',e.target.checked?'true':'')}/>Include archived</label>
-      {(query||access||archived)&&<Button variant="ghost" onClick={()=>{setParams({},{replace:true});table.clear();}}>Clear filters</Button>}
+      {(query||access||archived)&&<Button variant="ghost" onClick={clearFilters}>Clear filters</Button>}
     </div>
     {context.status==='error'&&<p role="alert" className="px-6 py-2 text-sm text-semantic-critical">Platform access could not be verified. <button className="underline" onClick={refresh}>Retry</button></p>}
     <RegisterLoadError error={error} onRetry={refresh} name="contacts"/>
@@ -74,7 +83,7 @@ function ContactDirectory({clientId,user,brawndo,clientName,client}){
         {!loading&&!error&&!filtered.length&&<tr><td className="empty-state" colSpan={6}>{rows.length?'No contacts match these filters.':'No contacts yet. Add a person to this client directory; platform access is optional.'}</td></tr>}
       </tbody></table></div>
   </>;
-  const surface=additionalPresentation&&!additional?<AdditionalPagePending className="bac-page" title={`${clientName} Contacts`} subtitle="People" name="contacts" loadingMessage="Loading contacts…" error={error} onRetry={refresh}/>:additional?<BrawndoAdditionalContacts client={client} clientId={clientId} rows={rows} filtered={filtered} query={query} access={access} archived={archived} context={context} table={table} onParam={setParam} onClear={()=>{setParams({},{replace:true});table.clear();}} onOpen={edit} newContact={newContact} error={error} onRetry={refresh}/>:brawndo?<BrawndoSurface className="register-surface contacts-directory bcontacts">{body}</BrawndoSurface>:<div className="register-surface contacts-directory">{body}</div>;
+  const surface=additionalPresentation&&!additional?<AdditionalPagePending className="bac-page" title={`${clientName} Contacts`} subtitle="People" name="contacts" loadingMessage="Loading contacts…" error={error} onRetry={refresh}/>:additional?<BrawndoAdditionalContacts client={client} clientId={clientId} rows={rows} filtered={filtered} query={query} access={access} archived={archived} context={context} table={table} onParam={setParam} onClear={clearFilters} onOpen={edit} newContact={newContact} error={error} onRetry={refresh}/>:brawndo?<BrawndoSurface className="register-surface contacts-directory bcontacts">{body}</BrawndoSurface>:<div className="register-surface contacts-directory">{body}</div>;
   // A same-scope appearance fallback must not remount the native editor or discard its draft.
   return <>{surface}<ContactWorkspace open={open} onOpenChange={close} record={selected} clientId={clientId} onSaved={refresh} additionalPresentation={additional}/></>;
 }

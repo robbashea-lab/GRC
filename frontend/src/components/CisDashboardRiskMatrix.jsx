@@ -1,5 +1,6 @@
 import {useEffect,useMemo,useRef,useState} from 'react';
 import {Link,useNavigate} from 'react-router-dom';
+import {clientDestination} from '@/lib/clientSelection';
 import api,{formatError} from '@/lib/api';
 import {assessedRisk,riskLevel} from '@/lib/grcWork';
 import {riskMatches,pilotRiskStatus} from '@/lib/brawndoRisks';
@@ -86,7 +87,7 @@ export default function CisDashboardRiskMatrix({clientId,contextKey,refreshToken
     </button></li>)}</ul>
   </>;
   return <section className="cis-dashboard-risk bpage brawndo-demo-risks" data-concept={concept?'true':undefined} data-theme={theme||nativeTheme} aria-label="Client risk matrix">
-    <header><h2>Risk matrix</h2><Link ref={registerLink} to="/risks">Open risk register {concept?'→':'↗'}</Link></header>
+    <header><h2>Risk matrix</h2><Link ref={registerLink} to={clientDestination(clientId,'/risks')}>Open risk register {concept?'→':'↗'}</Link></header>
     <p>{concept?'Active risks by current assessed likelihood and impact.':'Active client risks by current assessed likelihood and impact.'}</p>
     {!concept&&<p>Select an occupied cell to see its risks first.</p>}
     {loading&&<p role="status">Loading risks…</p>}

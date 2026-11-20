@@ -1,5 +1,6 @@
 import {useEffect, useState} from 'react';
 import {Link} from 'react-router-dom';
+import {clientDestination} from '@/lib/clientSelection';
 import api, {formatError} from '@/lib/api';
 import {FRAMEWORKS} from '@/lib/frameworks';
 import {cisProgramName,cisConfiguration,cisLabel} from '@/lib/cisScope';
@@ -62,7 +63,7 @@ export default function ProgramConfiguration({clientId, onSaved}) {
       const initialized=snapshot.records.framework_assessments.some(a=>a.framework_key===f.key);
       const propose=next=>{setReason('');setEffectiveDate(new Date().toISOString().slice(0,10));setProposal({framework:f,value:next});};
       return <div key={f.key}><label className="text-sm">{cisProgramName(f,cisConfiguration(snapshot.client))}<select disabled={busy} aria-label={`Applicability — ${cisProgramName(f,cisConfiguration(snapshot.client))}`} className="block mt-1 border border-line rounded p-2 bg-surface-card w-full" value={value} onChange={e=>propose(e.target.value)}>{APPLICABILITY.map(([v,label])=><option value={v} key={v}>{label}</option>)}<option value="retired">No Longer Applies / Retired</option></select></label>{f.implemented&&value==='applies'&&!initialized&&<Button variant="ghost" size="sm" disabled={busy} onClick={()=>propose('applies')}>Initialize {f.key==='cis-ig1'?cisLabel(cisConfiguration(snapshot.client)):f.label}</Button>}</div>;
-    })}</div> : <Link className="text-sm text-link underline" to="/onboarding">Continue onboarding</Link>)}
+    })}</div> : <Link className="text-sm text-link underline" to={clientDestination(clientId,'/onboarding')}>Continue onboarding</Link>)}
     <Dialog open={!!proposal} onOpenChange={open=>{if(!open&&!busy)setProposal(null);}}><DialogContent><DialogHeader><DialogTitle>Confirm program change</DialogTitle><DialogDescription>{proposal&&cisProgramName(proposal.framework,proposal.framework.key==='cis-ig1'&&proposal.value==='applies'?{implementation_group:cisGroup}:cisConfiguration(snapshot.client))} · {proposal?.value==='retired'?'No Longer Applies / Retired':APPLICABILITY.find(([v])=>v===proposal?.value)?.[1]}</DialogDescription></DialogHeader>
       <div className="text-sm space-y-3">
         {proposal?.value==='applies'?<p>{proposal.framework.implemented?'Enable the existing program workspace, initialize missing requirement assessments, and reuse or create mapped recurring Review plans. Existing assessment results, Review owners and dates remain intact.':'Enable the existing program workspace. Detailed assessments, Scope / SSP and POA&M initialization are not implemented for this program; this change does not create those capabilities.'}</p>:<p>Update current applicability and remove the active framework relationship. Existing assessments, Evidence, Findings and Action Items remain. Recurring Reviews continue until an authorized user explicitly cancels or retires them.</p>}

@@ -1,6 +1,7 @@
 import React,{act} from 'react';
 import {createRoot} from 'react-dom/client';
 import ProgramConfiguration from './ProgramConfiguration';
+import ComplianceProfile from './ComplianceProfile';
 import api from '@/lib/api';
 jest.mock('@/context/ComplianceContext',()=>({useCompliance:()=>({refresh:jest.fn()})}));
 jest.mock('@/lib/api',()=>({__esModule:true,default:{get:jest.fn(),patch:jest.fn()},formatError:e=>e.message}));
@@ -44,4 +45,27 @@ test('client profile owns SOC scope without program dates; saving preserves lega
  expect(scope.querySelector('[aria-label="Availability"]').checked).toBe(true);
  await act(async()=>save().click());
  expect(api.patch).toHaveBeenLastCalledWith('/frameworks/soc-2/configuration',{client_id:'a',...configuration,categories:['security','availability']});
+});
+
+test('unfinished program setup keeps the current client on its existing onboarding continuation',async()=>{
+ const snapshot={completed:false,client:{client_id:'a'},records:{requirements:[],framework_assessments:[]}};
+ const before=JSON.stringify(snapshot);
+ api.get.mockResolvedValue({data:snapshot});
+ await act(async()=>root.render(<ProgramConfiguration clientId="a"/>));
+ const link=container.querySelector('a[href="/onboarding?client_id=a"]');
+ expect(link).not.toBeNull();expect(link.textContent).toBe('Continue onboarding');
+ expect(container.querySelector('select[aria-label^="Applicability"]')).toBeNull();
+ expect(api.get).toHaveBeenCalledWith('/onboarding/handoff',expect.objectContaining({params:{client_id:'a'}}));
+ expect(api.patch).not.toHaveBeenCalled();expect(JSON.stringify(snapshot)).toBe(before);
+});
+
+test('the empty native requirements fallback carries the supplied client without initializing onboarding',async()=>{
+ api.get.mockResolvedValue({data:[]});
+ await act(async()=>root.render(<ComplianceProfile clientId="a"/>));
+ const empty=container.querySelector('[data-testid="compliance-empty"]');
+ expect(empty).not.toBeNull();
+ const link=empty.querySelector('a[href="/onboarding?client_id=a"]');
+ expect(link).not.toBeNull();expect(link.textContent).toBe('Complete Compliance & Requirements onboarding');
+ expect(api.get).toHaveBeenCalledWith('/requirements',{params:{client_id:'a'}});
+ expect(api.patch).not.toHaveBeenCalled();
 });

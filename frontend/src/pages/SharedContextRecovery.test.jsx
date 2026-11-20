@@ -10,6 +10,7 @@ let mockAuth, mockLocation, org;
 jest.mock('@/context/AuthContext', () => ({useAuth: () => mockAuth}));
 jest.mock('react-router-dom', () => ({
   useLocation: () => mockLocation,
+  useNavigate:()=>jest.fn(),
   useSearchParams: () => [new URLSearchParams(mockLocation.search), jest.fn()],
   Link: ({children, to, ...props}) => <a href={to} {...props}>{children}</a>,
   Navigate: () => null,

@@ -1,5 +1,5 @@
 import {Fragment,useEffect,useMemo,useRef,useState} from 'react';
-import {Download,File as FileIcon,Folder,Plus,Search,ArrowDown,Sun} from 'lucide-react';
+import {Download,File as FileIcon,Folder,Plus,Search,ArrowDown} from 'lucide-react';
 import api,{formatError} from '@/lib/api';
 import {displayDay} from '@/lib/managementDates';
 import {useBrawndoTheme} from '@/lib/brawndoTheme';
@@ -84,7 +84,7 @@ export default function AdditionalEvidence({clientId,clientName='Client',cisProg
     {key:'coverage',label:'Review periods with evidence',value:overview?.periods,detail:overview?`of ${overview.periodTotal}`:null,selected:false,onClick:showCoverage},
   ];
   return <div className="brawndo-additional bae-page">
-    <header className="bae-page-head"><div><h1>{clientName} Evidence Library</h1><p>Evidence repository</p></div><div className="bae-head-actions"><button type="button" className="bae-btn bae-ghost" aria-label={`Switch to ${theme==='dark'?'light':'dark'} theme`} onClick={()=>setTheme(theme==='dark'?'light':'dark')}><Sun size={15} aria-hidden="true"/>{theme==='dark'?'Light':'Dark'}</button>{canUpload&&<button type="button" className="bae-btn bae-primary" data-testid="add-evidence" onClick={()=>onUpload(area)}><Plus size={15} aria-hidden="true"/>Add evidence</button>}</div></header>
+    <header className="bae-page-head"><div><h1>{clientName} Evidence Library</h1><p>Evidence repository</p></div><div className="bae-head-actions">{canUpload&&<button type="button" className="bae-btn bae-primary" data-testid="add-evidence" onClick={()=>onUpload(area)}><Plus size={15} aria-hidden="true"/>Add evidence</button>}<div className="bae-theme seg" role="group" aria-label="Theme">{['light','dark'].map(value=><button key={value} type="button" aria-pressed={theme===value} onClick={()=>setTheme(value)}>{value==='light'?'Light':'Dark'}</button>)}</div></div></header>
     <section className="bae-card" aria-label="Evidence overview"><div className="bae-overview">
       {summary.loading&&<p role="status" className="bae-note">Loading the authorized evidence overview…</p>}{summary.error&&<p role="alert" className="bae-note">Overview unavailable: {summary.error} <button type="button" className="bae-retry" onClick={summary.reload}>Retry overview</button></p>}
       <div className="bae-section-head"><h2>Browse</h2><span className="bae-note">Files appear from existing relationships. A file can sit in more than one folder.</span>{archive&&<button type="button" className="bae-btn bae-ghost" disabled={archive.busy||!data} onClick={()=>archive.run({state:JSON.stringify({include_archived:archived})})}>Download all</button>}</div>

@@ -29,8 +29,8 @@ test('renewal read view formats a literal date and preserves native unknown, zer
   }
 });
 test('overview links use native destinations and section navigation; people retain unavailable relationships',async()=>{
-  const onTab=jest.fn();await act(async()=>root.render(<><AdditionalProfileOverview profile={{}} requirements={[]} programs={[{key:'cis-ig1',name:'CIS IG1'}]} onTab={onTab}/><AdditionalProfilePeople client={{primary_contact_id:'retained',assigned_owner_id:'missing'}}/></>));
-  expect(container.querySelector('a[href="/compliance/cis-ig1"]')).toBeTruthy();expect(container.querySelector('a[href="/contacts?open=retained"]')).toBeTruthy();expect(container.textContent).toContain('relationship retained');
+  const onTab=jest.fn();await act(async()=>root.render(<><AdditionalProfileOverview clientId="profile-client" profile={{}} requirements={[]} programs={[{key:'cis-ig1',name:'CIS IG1'}]} onTab={onTab}/><AdditionalProfilePeople client={{client_id:'profile-client',primary_contact_id:'retained',assigned_owner_id:'missing'}}/></>));
+  expect(container.querySelector('a[href="/compliance/cis-ig1?client_id=profile-client"]')).toBeTruthy();expect(container.querySelector('a[href="/contacts?open=retained&client_id=profile-client"]')).toBeTruthy();expect(container.textContent).toContain('relationship retained');
   await act(async()=>container.querySelector('.baprof-link').click());expect(onTab).toHaveBeenCalledWith('organization');
 });
 test('optional read presentation retains the native edit validation, Save profile and Cancel boundaries',async()=>{

@@ -10,6 +10,17 @@ from framework_report_pdf import (
 )
 
 
+class _ReportTable(Table):
+    """Keep ordinary rows intact while allowing genuinely oversized rows."""
+
+    def _splitRows(self, availHeight, doInRowSplit=0):
+        # ReportLab 4.4.9 supplies this frame; recheck the hook on upgrade.
+        frame = getattr(self, '_frame', None)
+        if doInRowSplit and frame is not None and not frame._atTop:
+            return []
+        return super()._splitRows(availHeight, doInRowSplit=doInRowSplit)
+
+
 def _identity(value):
     return value.get('name') or value.get('id') or 'Not recorded'
 
@@ -73,7 +84,7 @@ def _render_report(report):
         remaining = width - minimum * len(columns)
         widths = [minimum + remaining * weight / sum(weights) for weight in weights]
         # Keep ordinary rows intact; split oversized rows only when needed.
-        table = Table(data, colWidths=widths, hAlign='LEFT',
+        table = _ReportTable(data, colWidths=widths, hAlign='LEFT',
                       repeatRows=1, splitByRow=1, splitInRow=1)
         table.setStyle(TableStyle([
             ('VALIGN', (0, 0), (-1, -1), 'TOP'),

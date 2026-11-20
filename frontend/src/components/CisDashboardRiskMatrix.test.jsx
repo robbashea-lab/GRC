@@ -122,8 +122,8 @@ test.each([false,true])('concept=%s Escape returns focus to the connected cell; 
   await act(async()=>document.dispatchEvent(new KeyboardEvent('keydown',{key:'Escape',bubbles:true})));
   await act(async()=>{await new Promise(resolve=>setTimeout(resolve,0));});
   expect(dialog()).toBeNull();expect(document.activeElement).toBe(trigger);
-  const link=host.querySelector('a');expect(link.getAttribute('href')).toBe('/risks');await click(link);
-  expect(route()).toBe('/risks');expect(api.get).toHaveBeenCalledTimes(1);
+  const link=host.querySelector('a');expect(link.getAttribute('href')).toBe('/risks?client_id=client-a');await click(link);
+  expect(route()).toBe('/risks?client_id=client-a');expect(api.get).toHaveBeenCalledTimes(1);
 });
 
 test('opening and closing selection retains one controlled tooltip lifetime without state warnings',async()=>{

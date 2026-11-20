@@ -452,6 +452,7 @@ test('clearing and reselecting a software requirement removes only that matrix r
 const boundedContextNegatives=[
   ['untrusted preview',()=>{mockTrustedDemo=false;}],
   ['auth mode mismatch',()=>{mockAuth.workspaceMode='standard';}],
+  ['standard workspace in a Demo build',()=>{mockAuth={...mockAuth,workspaceMode:'standard',user:{...mockAuth.user,workspace_mode:'standard'}};}],
   ['other client',()=>{
     const current={...props.current,client_id:'demo_dunder'};
     props={...props,clientId:'demo_dunder',record:current,current,form:copy(current)};
@@ -462,7 +463,6 @@ const boundedContextNegatives=[
   ['invalid IG',()=>{props.configuration={implementation_group:4};}],
   ['other route',()=>{window.history.replaceState({},'', '/dashboard?client_id=demo_brawndo');}],
   ['route client mismatch',()=>{window.history.replaceState({},'', '/compliance/cis-ig1?client_id=demo_dunder');}],
-  ['selection mismatch',()=>{sessionStorage.setItem('grc_client_id','demo_dunder');}],
   ['archived client',()=>{mockOrg.currentClient.archived=true;}],
   ['incomplete native context',()=>{props.contextComplete=false;}],
   ['other framework version',()=>{props.record={...props.record,framework_version:'8.0'};}],
@@ -523,7 +523,7 @@ test.each([
 
 test.each([['standard',1],['demo',2],['demo',3]])('configured %s IG%s can save bounded progress without bypassing final validation',async(mode,group)=>{
  enableBoundedDemoContext();
- mockAuth={...mockAuth,workspaceMode:mode,user:{...mockAuth.user,workspace_mode:mode}};
+ mockTrustedDemo=mode==='demo';mockAuth={...mockAuth,workspaceMode:mode,user:{...mockAuth.user,workspace_mode:mode}};
  const client=cisClient('demo_brawndo',group);mockOrg={...mockOrg,currentClient:client,clients:[client]};
  props.configuration={implementation_group:group};
  const answers={...completeAnswers('1.1'),additional_confirmation:'Yes',unknowns:''};answers.coverage.Servers='Not sure';
@@ -542,9 +542,44 @@ test.each([['standard',1],['demo',2],['demo',3]])('configured %s IG%s can save b
 
 
 test.each([['standard',1],['demo',2],['demo',3]])('configured %s IG%s reveals a fresh interview without a native write',async(mode,group)=>{
- enableBoundedDemoContext();mockAuth={...mockAuth,workspaceMode:mode,user:{...mockAuth.user,workspace_mode:mode}};
+ enableBoundedDemoContext();mockTrustedDemo=mode==='demo';mockAuth={...mockAuth,workspaceMode:mode,user:{...mockAuth.user,workspace_mode:mode}};
  const client=cisClient('demo_brawndo',group);mockOrg={...mockOrg,currentClient:client,clients:[client]};props.configuration={implementation_group:group};
  const reveal=jest.fn(),before=copy(props.current);
  await render({inline:true,visualReference:true,onFreshInterviewReady:reveal});
  expect(reveal).toHaveBeenCalledTimes(1);expect(api.put).not.toHaveBeenCalled();expectNativeUnchanged(before);
+});
+
+test('a different remembered client keeps authorized progress bounded and preserves final validation',async()=>{
+  enableBoundedDemoContext();
+  mockOrg.clients.push(cisClient('demo_dunder',1));
+  sessionStorage.setItem('grc_client_id','demo_dunder');
+  const answers={...completeAnswers('1.1'),additional_confirmation:'Yes',unknowns:''};answers.coverage.Servers='Not sure';
+  stored={...interview('1.1'),revision:2,answers};props.visualReference=true;
+  const nativeBefore=copy(props.current),version=stored.version;
+  await render();await open();
+  expect(mockOrg.currentClientId).toBe('demo_brawndo');
+  expect(new URLSearchParams(window.location.search).get('client_id')).toBe('demo_brawndo');
+  expect(sessionStorage.getItem('grc_client_id')).toBe('demo_dunder');
+  expect(document.querySelector('[aria-label="Question group 2 of 5"]')).toBeTruthy();
+  await click('Save & next');
+  expect(document.querySelector('[aria-label="Question group 3 of 5"]')).toBeTruthy();
+  expect(api.put).toHaveBeenLastCalledWith('/framework_assessments/focused-1.1/guided-assessment',
+    expect.objectContaining({version,expected_revision:2,completed:false,answers}));
+  expect(stored.answers).toEqual(answers);expect(stored.version).toBe(version);
+  await click('Save & next');await click('Save & next');
+  const writes=api.put.mock.calls.length;await click('Save & next');
+  expect(document.body.textContent).toContain('Describe the additional reported work before reviewing the summary.');
+  expect(api.put).toHaveBeenCalledTimes(writes);expect(stored.completed).toBe(false);expectNativeUnchanged(nativeBefore);
+});
+
+test('a different remembered client cannot hide a fresh interview for the current authorized assessment',async()=>{
+  enableBoundedDemoContext();
+  mockOrg.clients.push(cisClient('demo_dunder',1));
+  sessionStorage.setItem('grc_client_id','demo_dunder');
+  const reveal=jest.fn(),nativeBefore=copy(props.current),interviewBefore=copy(stored);
+  await render({inline:true,visualReference:true,onFreshInterviewReady:reveal});
+  expect(mockOrg.currentClientId).toBe('demo_brawndo');
+  expect(new URLSearchParams(window.location.search).get('client_id')).toBe('demo_brawndo');
+  expect(reveal).toHaveBeenCalledTimes(1);expect(stored).toEqual(interviewBefore);
+  expect(api.put).not.toHaveBeenCalled();expectNativeUnchanged(nativeBefore);
 });

@@ -47,13 +47,14 @@ export function cisActorMode(user, workspaceMode) {
 
 // Appearance only. The authorized native controllers retain all read/write permissions.
 export function cisIdentityEligible(context) {
-  const {user, workspaceMode, currentClientId, currentClient, clients, selectedClientId, routeClientId,
+  const {user, workspaceMode, currentClientId, currentClient, clients, routeClientId,
     authLoading, authError, orgLoading, orgError} = context;
   return cisActorMode(user, workspaceMode) && !authLoading && !authError && !orgLoading && !orgError
     && !!currentClientId && currentClient?.client_id === currentClientId
     && ['active', 'onboarding'].includes(currentClient.status) && !currentClient.archived && !currentClient.archived_at
     && Array.isArray(clients) && clients.some(client => client.client_id === currentClientId)
-    && selectedClientId === currentClientId && (!routeClientId || routeClientId === currentClientId)
+    // Remembered selection is a cross-tab preference; the resolved authorized client owns this tab.
+    && (!routeClientId || routeClientId === currentClientId)
     && (!Object.hasOwn(context, 'loadedClientId') || context.loadedClientId === currentClientId);
 }
 

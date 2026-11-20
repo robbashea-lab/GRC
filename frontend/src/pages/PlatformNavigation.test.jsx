@@ -4,6 +4,7 @@ import ClientDirectory from "./ClientDirectory";
 import ClientManagement from "./ClientManagement";
 import Layout from "@/components/Layout";
 import api from "@/lib/api";
+import {toast} from "sonner";
 import mockFixtures from "@/preview/fixtures.json";
 
 const mockNavigate = jest.fn(), mockSwitch = jest.fn(), mockRefresh = jest.fn();
@@ -285,4 +286,25 @@ test.each(['client_grc_manager', 'client_contributor', 'client_readonly'])("%s r
   expect(api.get).not.toHaveBeenCalled();
   expect(api.post).not.toHaveBeenCalled();
   expect(api.patch).not.toHaveBeenCalled();
+});
+
+test('native create success opens the returned client Profile with an explicit client identity',async()=>{
+ const success=jest.spyOn(toast,'success'),previous=localStorage.getItem('grc_client_id');
+ try{
+  await render(<ClientManagement/>);
+  await click(container.querySelector('[data-testid="add-client-button"]'));
+  await change(document.querySelector('[data-testid="new-client-name"]'),'SYNTHETIC client navigation');
+  await change(document.querySelector('[data-testid="new-client-industry"]'),'Services');
+  await click(document.querySelector('[data-testid="new-client-save"]'));
+  expect(api.post).toHaveBeenCalledTimes(1);
+  const created=(await api.post.mock.results[0].value).data;
+  const notice=success.mock.calls.find(([,options])=>options?.action?.label==='Open Client Profile');
+  expect(notice).toBeDefined();
+  const requests=api.post.mock.calls.map(call=>[...call]);
+  localStorage.setItem('grc_client_id','another-authorized-client');mockNavigate.mockClear();mockSwitch.mockClear();
+  await act(async()=>notice[1].action.onClick());
+  expect(mockSwitch).toHaveBeenCalledWith(created.client_id);
+  expect(mockNavigate).toHaveBeenCalledWith('/client-profile?client_id='+encodeURIComponent(created.client_id));
+  expect(api.post.mock.calls).toEqual(requests);expect(api.patch).not.toHaveBeenCalled();
+ }finally{success.mockRestore();previous===null?localStorage.removeItem('grc_client_id'):localStorage.setItem('grc_client_id',previous);}
 });

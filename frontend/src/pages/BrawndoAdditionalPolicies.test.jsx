@@ -295,3 +295,17 @@ test('common Policies appearance never validates or invents an invalid CIS group
   expect(container.textContent).not.toContain('Mapped to CIS IG4');
   expect(api.post).not.toHaveBeenCalled();expect(api.patch).not.toHaveBeenCalled();
 });
+
+test('the native carried Policy scope clear retains its client without changing existing clear behavior',async()=>{
+ mockLocationSearch='?client_id=demo_brawndo&owner=__me__&q=Missing&sortBy=title';
+ const before=JSON.stringify(rows);
+ await act(async()=>root.render(<RecordListPage kind="policies"/>));
+ sessionStorage.setItem('grc_client_id','another-authorized-client');mockNavigate.mockClear();
+ const clear=container.querySelector('[data-testid="clear-carried-scope"]');
+ expect(clear).not.toBeNull();await click(clear);
+ expect(mockNavigate).toHaveBeenCalledTimes(1);
+ expect(mockNavigate).toHaveBeenCalledWith('/policies?client_id=demo_brawndo',{replace:true});
+ expect(JSON.stringify(rows)).toBe(before);expect(mockDrawerProps.open).toBe(false);
+ for(const method of ['post','patch','delete'])expect(api[method]).not.toHaveBeenCalled();
+ expect(sessionStorage.getItem('grc_client_id')).toBe('another-authorized-client');
+});
