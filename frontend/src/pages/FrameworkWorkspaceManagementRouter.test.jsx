@@ -10,7 +10,7 @@ import {ComplianceProvider} from '@/context/ComplianceContext';
 import ComplianceWorkspace from './ComplianceWorkspace';
 import Layout from '@/components/Layout';
 import {cisClient, cisWorkspace} from '@/testUtils/cisExperience';
-import {generateResult, validateGuidedCompletion, versionForSafeguard} from '@/lib/guidedAssessment';
+import {generateResult, validateGuidedCompletion, versionForSafeguard, visibleQuestions} from '@/lib/guidedAssessment';
 import {clearPendingCommands, syncPendingCommandIdentity} from '@/lib/createIntent';
 import api from '@/lib/api';
 
@@ -504,4 +504,175 @@ test('a committed role withdrawal and return cannot resurrect the former owner I
   expect(api.get.mock.calls.filter(([path]) => path.endsWith('/guided-assessment/history'))
     .every(([path]) => path === request.path)).toBe(true);
   assertNoBusinessWrites();
+});
+// Explicit retained, uncompleted personal DTO; this is controller/transport evidence, not backend storage proof.
+function sequential21Fixture() {
+  const record = sources[CLIENT].assessments.find(row => row.definition_id === '2.1');
+  const version = versionForSafeguard('2.1', true);
+  expect(version).toBe('cis-v8.1-program-5');
+  const answers = {practice: 'Not sure', practice_detail: 'SYNTHETIC software inventory needs confirmation.',
+    existing: 'SYNTHETIC current practice is unknown.', evidence: 'SYNTHETIC records are not yet confirmed.',
+    additional_gap: 'No', additional_confirmation: 'Yes', unknowns: 'SYNTHETIC retained confirmation work.'};
+  const preliminary = visibleQuestions('2.1', answers, version);
+  const matrices = preliminary.filter(question => question.type === 'matrix');
+  expect(matrices.map(question => [question.id, question.rows.length])).toEqual([
+    ['requirements_0', 5], ['requirements_5', 1], ['conditional_0', 5], ['conditional_5', 1],
+  ]);
+  for (const question of matrices) answers[question.id] = Object.fromEntries(question.rows.map(row => [row, 'Not sure']));
+  validateGuidedCompletion('2.1', answers, version);
+  const questions = visibleQuestions('2.1', answers, version);expect(questions).toHaveLength(10);
+  sources[CLIENT].work[record.framework_assessment_id] = {context_complete: true, evidence_count: 0,
+    finding_ids: [], review_ids: [], task_ids: [], open_findings: 0, open_actions: 0,
+    overdue_reviews: 0, overdue_actions: 0, priority_records: []};
+  before = JSON.stringify(sources);
+  return {questions, draft: {client_id: CLIENT, assessment_id: record.framework_assessment_id,
+    user_id: ACTOR, version, revision: 2, answers, step: 0, completed: false, narrative: '', result: null,
+    base_assessment_token: record.last_saved, current_assessment_token: record.last_saved,
+    base_scope_fingerprint: 'a'.repeat(64), current_scope_fingerprint: 'a'.repeat(64),
+    lineage_known: true, lineage_stale: false}};
+}
+
+function sequential21Transport(initial) {
+  const nativeRead = api.get.getMockImplementation(), path = '/framework_assessments/' + initial.assessment_id + '/guided-assessment';
+  let draft = copy(initial), holdClients = false, refreshReads = 0, publishClients, markDispatched;
+  const clientResponse = new Promise(resolve => { publishClients = resolve; });
+  const clientDispatched = new Promise(resolve => { markDispatched = resolve; });
+  api.get.mockImplementation((url, options = {}) => {
+    if (url === path) return Promise.resolve({data: copy(draft)});
+    if (url === '/clients' && holdClients) {
+      refreshReads++;expect(options).toEqual({params: {include_archived: true}});
+      markDispatched();return clientResponse;
+    }
+    if (url === '/notifications') return Promise.resolve({data: {items: [], unread: 0}});
+    if ([CLIENT, OTHER].includes(options.params?.client_id)) {
+      if (url === '/dashboard') return Promise.resolve({data: {client_id: options.params.client_id, kpis: {}, posture: {}}});
+      if (url === '/findings' || url === '/tasks') return Promise.resolve({data: []});
+    }
+    const setupClient = clients.find(client => url === '/clients/' + client.client_id + '/iv-setup');
+    if (setupClient) return Promise.resolve({data: {client_id: setupClient.client_id, activities: [], outstanding_count: 0}});
+    return nativeRead(url, options);
+  });
+  api.put.mockImplementation(async (url, body) => {
+    expect(url).toBe(path);expect(body.version).toBe(draft.version);
+    expect(body.expected_revision).toBe(draft.revision);expect(body.completed).toBe(false);
+    validateGuidedCompletion('2.1', body.answers, body.version);
+    draft = {...draft, answers: copy(body.answers), step: body.step, narrative: body.narrative,
+      completed: false, result: null, revision: draft.revision + 1};
+    return {data: copy(draft)};
+  });
+  return {path, clientResponse, clientDispatched, arm: () => { holdClients = true; },
+    publishClients, refreshReads: () => refreshReads, checkpoint: () => copy(draft)};
+}
+const sequentialGuide = () => assessment()?.querySelector('[aria-label="CIS assessment interview"]');
+const sequentialField = () => sequentialGuide()?.querySelector('fieldset[data-question-id]');
+async function openSequential21() {
+  await action(() => root.render(<RefreshApp/>));
+  await action(() => navigate(baseUrl(CLIENT) + '&assessment=' + encodeURIComponent(CLIENT + ':2.1')));
+  expect(new URLSearchParams(currentLocation.search).get('assessment')).toBe(CLIENT + ':2.1');
+  await click(button(assessment(), 'Resume guided assessment'));
+  expect(sequentialGuide().hidden).toBe(false);expect(sequentialField().dataset.questionId).toBe('practice');
+}
+async function advanceSequential21(questions, target) {
+  for (const question of questions) {
+    expect(sequentialField().dataset.questionId).toBe(question.id);
+    if (question.id === target) return;
+    if (question.type === 'matrix') {
+      for (const row of question.rows) {
+        expect(sequentialField().querySelector('select').getAttribute('aria-label')).toBe(row);
+        expect(sequentialField().querySelector('select').value).toBe('Not sure');
+        await click(button(sequentialGuide(), 'Continue'));
+      }
+    } else await click(button(sequentialGuide(), 'Continue'));
+  }
+  throw new Error('Exact native sequential target not reached: ' + target);
+}
+function assertSequentialNativeUnchanged() {
+  expect(unexpectedReads).toEqual([]);
+  for (const method of ['patch', 'post', 'delete']) expect(api[method]).not.toHaveBeenCalled();
+  expect(JSON.stringify(sources)).toBe(before);
+}
+function assertSequentialView(view, questions, detail) {
+  expect(sequentialGuide().hidden).toBe(false);
+  if (view === 'matrix row') {
+    const matrix = questions.find(question => question.type === 'matrix');
+    expect(sequentialField().dataset.questionId).toBe(matrix.id);
+    expect(sequentialField().querySelector('.cis-row-progress').textContent).toBe('Row 2 of 5');
+    expect(sequentialField().querySelector('select').getAttribute('aria-label')).toBe(matrix.rows[1]);
+    expect(sequentialField().querySelector('select').value).toBe('Not sure');
+  } else {
+    const review = sequentialGuide().querySelector('.cis-answer-review');expect(review).not.toBeNull();
+    expect(review.querySelectorAll('li')).toHaveLength(questions.length);
+    expect(review.textContent).toContain(detail);
+    expect(button(sequentialGuide(), 'Review implementation').disabled).toBe(false);
+    expect(button(assessment(), 'Save & next').disabled).toBe(true);
+  }
+}
+
+test.each(['matrix row', 'response review'])('CIS 2.1 preserves its %s through actual same-client focus refresh without saving the draft', async view => {
+  installNativeTabStyles();
+  const fixture = sequential21Fixture(), transport = sequential21Transport(fixture.draft);
+  await openSequential21();
+  const detail = 'SYNTHETIC newer unknowns — München Ω remain an unsaved interview draft.';
+  await advanceSequential21(fixture.questions, view === 'matrix row' ? 'requirements_0' : 'unknowns');
+  if (view === 'matrix row') await click(button(sequentialGuide(), 'Continue'));
+  else {
+    const input = sequentialField().querySelector('textarea');
+    await action(() => {
+      Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, 'value').set.call(input, detail);
+      input.dispatchEvent(new Event('input', {bubbles: true}));
+    });
+    const writesBeforeClick = api.put.mock.calls.length;
+    await click(button(sequentialGuide(), 'Review responses'));
+    expect(api.put.mock.calls).toHaveLength(writesBeforeClick);
+  }
+  assertSequentialView(view, fixture.questions, detail);
+  const parent = assessment(), locationBefore = currentLocation.pathname + currentLocation.search;
+  const writesBefore = copy(api.put.mock.calls), checkpointBefore = transport.checkpoint();
+  const clientsBefore = JSON.stringify(clients), body = document.querySelector('[data-client-workspace-body]');
+  transport.arm();
+  await act(async () => { window.dispatchEvent(new Event('focus')); await transport.clientDispatched; });
+  expect(org.loading).toBe(true);expect(org.currentClientId).toBe(CLIENT);
+  expect(body.hidden).toBe(true);expect(body.hasAttribute('inert')).toBe(true);
+  expect(parent.isConnected).toBe(true);expect(parent.hidden).toBe(true);
+  for (const surface of document.querySelectorAll('.ui-dialog,.ui-overlay')) {
+    expect(surface.hidden).toBe(true);expect(surface.hasAttribute('inert')).toBe(true);
+  }
+  assertSequentialNativeUnchanged();
+  await action(() => transport.publishClients({data: copy(clients)}));await settleNativeFocusLifecycle();
+  expect(transport.refreshReads()).toBe(1);expect(org.loading).toBe(false);
+  expect(org.currentClientId).toBe(CLIENT);expect(org.currentClient.client_id).toBe(CLIENT);
+  expect(JSON.stringify(clients)).toBe(clientsBefore);
+  expect(assessment()).toBe(parent);expect(body.hidden).toBe(false);expect(parent.hidden).toBe(false);
+  expect(currentLocation.pathname + currentLocation.search).toBe(locationBefore);
+  expect(api.put.mock.calls).toEqual(writesBefore);expect(transport.checkpoint()).toEqual(checkpointBefore);
+  assertSequentialView(view, fixture.questions, detail);assertSequentialNativeUnchanged();
+});
+
+test('CIS 2.1 sequential view resets on committed role and client withdrawal rather than resurrecting former scope state', async () => {
+  installNativeTabStyles();
+  const fixture = sequential21Fixture(), transport = sequential21Transport(fixture.draft);
+  await openSequential21();await advanceSequential21(fixture.questions, 'unknowns');
+  await click(button(sequentialGuide(), 'Review responses'));
+  expect(sequentialGuide().querySelector('.cis-answer-review')).not.toBeNull();
+  const writesBefore = copy(api.put.mock.calls), checkpointBefore = transport.checkpoint();
+  mockAuth = {...mockAuth, user: {...mockAuth.user, role: 'client_readonly'}};
+  await action(() => root.render(<RefreshApp/>));await settleNativeFocusLifecycle();
+  expect(org.currentClientId).toBe(CLIENT);
+  expect(sequentialGuide().querySelector('.cis-answer-review')).toBeNull();
+  expect(sequentialField().closest('fieldset').disabled).toBe(true);
+  mockAuth = {...mockAuth, user: {...mockAuth.user, role: 'platform_admin'}};
+  await action(() => root.render(<RefreshApp/>));await settleNativeFocusLifecycle();
+  expect(sequentialGuide().querySelector('.cis-answer-review')).toBeNull();
+  expect(sequentialField().disabled).toBe(false);assertSequentialNativeUnchanged();
+  await action(() => navigate(baseUrl(OTHER) + '&assessment=' + encodeURIComponent(CLIENT + ':2.1')));
+  expect(org.currentClientId).toBe(OTHER);expect(assessment()).toBeNull();expect(sequentialGuide()).toBeUndefined();
+  expect(document.body.textContent).not.toContain(fixture.draft.answers.existing);
+  await action(() => navigate(baseUrl(CLIENT) + '&assessment=' + encodeURIComponent(CLIENT + ':2.1')));
+  expect(org.currentClientId).toBe(CLIENT);expect(assessment()).not.toBeNull();
+  await click(button(assessment(), 'Resume guided assessment'));
+  expect(sequentialGuide().querySelector('.cis-answer-review')).toBeNull();
+  expect(sequentialField().dataset.questionId).toBe('practice');
+  expect(sequentialField().querySelector('select').value).toBe('Not sure');
+  expect(api.put.mock.calls).toEqual(writesBefore);expect(transport.checkpoint()).toEqual(checkpointBefore);
+  assertSequentialNativeUnchanged();
 });
