@@ -39,9 +39,25 @@ async function fixture(framework='iso-27001',business_owner_id='business'){
   // Native schedule/Review configuration may refresh Vendor metadata; capture after setup writes.
   return {vendor:(await api.get('/vendors/'+vendor.vendor_id)).data,review:saved};
 }
-async function related({review}){
-  await act(async()=>root.render(<ReviewDrawer open record={review} clientId={cid} onOpenChange={()=>{}}/>));
-  const tab=[...document.querySelectorAll('button')].find(value=>value.textContent==='Related');expect(tab).toBeTruthy();await act(async()=>tab.click());
+async function related({review,vendor}){
+  const issued=[],get=api.get.bind(api);
+  const observe=jest.spyOn(api,'get').mockImplementation((path,options)=>{
+    const response=get(path,options);issued.push({path,options,response});return response;
+  });
+  try{
+    await act(async()=>root.render(<ReviewDrawer open record={review} clientId={cid} onOpenChange={()=>{}}/>));
+    // Related is published only after the real current-owner basis read completes.
+    const mountReads=[...issued],basisPaths=[`/reviews/${review.review_id}/history`,'/related','/comments',`/reviews/${review.review_id}/activity`];
+    const basis=mountReads.filter(read=>basisPaths.includes(read.path));
+    expect(basis.map(read=>read.path)).toEqual(basisPaths);
+    expect(mountReads.some(read=>read.path===`/clients/${cid}/members`)).toBe(true);
+    const relatedRead=basis.find(read=>read.path==='/related');
+    expect(relatedRead.options.params).toEqual({entity_type:'reviews',entity_id:review.review_id});
+    let receipts;await act(async()=>{receipts=await Promise.all(mountReads.map(read=>read.response));});
+    const relationships=receipts[mountReads.indexOf(relatedRead)].data;
+    expect(relationships.vendors.some(item=>item.vendor_id===vendor.vendor_id&&item.client_id===cid)).toBe(true);
+    const tab=[...document.querySelectorAll('button')].find(value=>value.textContent==='Related');expect(tab).toBeTruthy();await act(async()=>tab.click());
+  }finally{observe.mockRestore();}
 }
 const row=id=>[...document.querySelectorAll('tbody tr')].find(value=>[...value.querySelectorAll('button')].some(button=>button.textContent===id));
 const owner=id=>{expect(row(id)).toBeTruthy();return row(id).querySelectorAll('td')[2].textContent;};
@@ -67,4 +83,46 @@ test('other Related record kinds retain native assignee and owner bindings',asyn
   const post=jest.spyOn(api,'post'),patch=jest.spyOn(api,'patch');await related(target);
   expect(owner(target.vendor.vendor_id)).toBe('Vendor business owner');expect(owner(task.task_id)).toBe('Task assignee');expect(owner(risk.risk_id)).toBe('Risk owner');
   expect(post).not.toHaveBeenCalled();expect(patch).not.toHaveBeenCalled();
+});
+
+test('Related waits for the actual current relationship receipt before publishing its Vendor link and owner',async()=>{
+  const target=await fixture(),before=JSON.stringify(target);
+  const writes=['post','patch','put','delete'].map(method=>jest.spyOn(api,method));
+  const nativeReads=[],get=api.get.bind(api);
+  let held,release,relatedCalls=0;
+  const deliveryGate=new Promise(resolve=>{release=resolve;});
+  const observe=jest.spyOn(api,'get').mockImplementation((path,options)=>{
+    const response=get(path,options);nativeReads.push(response);
+    if(path==='/related'&&options?.params?.entity_type==='reviews'&&options.params.entity_id===target.review.review_id){
+      relatedCalls++;
+      const delivery=response.then(receipt=>deliveryGate.then(()=>receipt));
+      held={response,delivery};return delivery;
+    }
+    return response;
+  });
+  const relatedTab=()=>[...document.querySelectorAll('button')].find(button=>button.textContent==='Related');
+  try{
+    await act(async()=>root.render(<ReviewDrawer open record={target.review} clientId={cid} onOpenChange={()=>{}}/>));
+    expect(held).toBeDefined();expect(relatedCalls).toBe(1);
+    let nativeRelationships;
+    await act(async()=>{
+      nativeRelationships=(await held.response).data;
+      await Promise.all(nativeReads);
+    });
+    expect(nativeRelationships.vendors).toContainEqual(expect.objectContaining({
+      vendor_id:target.vendor.vendor_id,client_id:cid,business_owner_id:target.vendor.business_owner_id,
+    }));
+    expect(relatedTab()).toBeUndefined();
+    await act(async()=>{release();await held.delivery;});
+    const tab=relatedTab();expect(tab).toBeTruthy();await act(async()=>tab.click());
+    const vendorRow=row(target.vendor.vendor_id);expect(vendorRow).toBeTruthy();
+    expect([...vendorRow.querySelectorAll('button')].map(button=>button.textContent)).toEqual([target.vendor.vendor_id,target.vendor.name]);
+    expect(owner(target.vendor.vendor_id)).toBe('Vendor business owner');
+    expect(owner(target.vendor.vendor_id)).not.toBe('Different Review owner');
+    expect(JSON.stringify(target)).toBe(before);
+    for(const write of writes)expect(write).not.toHaveBeenCalled();
+  }finally{
+    await act(async()=>{release();await Promise.allSettled([...nativeReads,...(held?[held.delivery]:[])]);});
+    observe.mockRestore();
+  }
 });

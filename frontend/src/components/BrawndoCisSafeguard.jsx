@@ -49,7 +49,9 @@ export default function BrawndoCisSafeguard({state,actions}){
   const {user,workspaceMode}=useAuth();
   const {currentClient}=useOrg()||{};
   const [implementationReviewContainer,setImplementationReviewContainer]=useState(null);
-  const [detailsView,setDetailsView]=useState(null);
+  const [detailsIntent,setDetailsIntent]=useState(null);
+  const detailsView=detailsIntent&&detailsIntent.owner===state.detailsOwner?detailsIntent.view:null;
+  const setDetailsView=view=>setDetailsIntent(view?{owner:state.detailsOwner,view}:null);
   const detailsTrigger=useRef(null),detailsDestination=useRef(false),recordedNotesField=useRef(null),recordedNotesHeading=useRef(null);
   const {open,record,definition,form,current,ctx,error,busy,dirty,feedback,writable,position,breadcrumb,related,finding,otherDraft}=state;
   const guideConfiguration=ctx?ctx.configuration:state.guidedConfiguration;
@@ -66,7 +68,9 @@ export default function BrawndoCisSafeguard({state,actions}){
   const referencePilot=brawndoAssessmentPilotEligible({demoMode:PREVIEW_MODE,workspaceMode,user,safeguard11,directProgramOpener:state.directProgramOpener,record,current,ctx,pathname:window.location.pathname});
   const assessmentConcept=referencePilot||state.assessmentRollout===true;
   const rolloutEntry=assessmentRolloutEntry('cis-ig1',id,{module:'safeguard'});
-  useEffect(()=>setDetailsView(null),[assessmentConcept,record.framework_assessment_id,user?.user_id]);
+  // Only this owner's History choice survives a temporary loss of live assessment context.
+  useEffect(()=>setDetailsIntent(previous=>previous?.view==='history'?previous:null),[assessmentConcept]);
+  useEffect(()=>setDetailsIntent(null),[state.detailsOwner,clientId,record.framework_assessment_id,user?.user_id]);
   const nativeBreadcrumb=(safeguard11||state.assessmentRollout)&&definition.control_name?breadcrumb?.map(entry=>entry.label===`Control ${definition.control}`?{...entry,label:`${entry.label} · ${definition.control_name}`}:entry):breadcrumb;
   const displayBreadcrumb=assessmentConcept&&currentClient?.client_id===clientId&&currentClient.name
     ?[{label:currentClient.name},...(nativeBreadcrumb||[])]:nativeBreadcrumb;
