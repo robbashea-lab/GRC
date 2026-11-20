@@ -85,16 +85,24 @@ test('create lock prevents duplicate submission and cancel keeps an unfinished d
   await act(async()=>resolve({data:{risk_id:'server-risk'}}));
 });
 
-test.each(['unsupported-mode','other-client','mismatch','wrong-route'])('creation presentation stays off for %s',async condition=>{
+test.each(['unsupported-mode','other-client','wrong-route'])('creation presentation stays off for %s',async condition=>{
   if(condition==='wrong-route'){mockPath='/dashboard';window.history.replaceState({},'','/dashboard');}
   if(condition==='unsupported-mode'){mockAuth.workspaceMode='authenticated';mockAuth.user.workspace_mode='authenticated';}
   if(condition==='other-client'){mockOrg.currentClientId='demo_dunder';mockOrg.currentClient={client_id:'demo_dunder',name:'Brawndo',status:'active'};rememberClient('demo_dunder');}
-  if(condition==='mismatch')rememberClient('different-client');
   const dialog=await open();
   expect(dialog.className).not.toContain('brawndo-risk-workflow');
   expect(dialog.querySelector('.rw-scale')).toBeNull();
 });
 
+test('a different saved preference preserves the current Risk draft and creates no record',async()=>{
+  const before=JSON.stringify({auth:mockAuth,org:mockOrg}),dialog=await open();
+  const title=dialog.querySelector('[aria-label="Risk title"]');await change(title,'Unsaved current-client Risk');
+  rememberClient('different-client');await act(async()=>root.render(<RiskRegister/>));
+  expect(document.querySelector('[data-testid="new-risk-dialog"]')).toBe(dialog);
+  expect(dialog.className).toContain('brawndo-risk-workflow');expect(dialog.querySelectorAll('.rw-scale')).toHaveLength(2);
+  expect(dialog.querySelector('[aria-label="Risk title"]')).toBe(title);expect(title.value).toBe('Unsaved current-client Risk');
+  expect(JSON.stringify({auth:mockAuth,org:mockOrg})).toBe(before);expect(api.post).not.toHaveBeenCalled();
+});
 test('organization loading withholds creation until the matching client context resolves',async()=>{
   mockOrg={...mockOrg,loading:true};
   await act(async()=>root.render(<RiskRegister/>));

@@ -164,8 +164,20 @@ test('unresolved saved Q3 occurrence opens its exact native Review from the conc
   }finally{jest.useRealTimers();}
 });
 
- test.each(['selection','route'])('shared appearance boundary excludes mismatched %s identity',async mismatch=>{
- if(mismatch==='selection')sessionStorage.setItem('grc_client_id','another-client');else mockReviewSearch='?client_id=another-client';
+ test.each(['route'])('shared appearance boundary excludes mismatched %s identity',async mismatch=>{
+ mockReviewSearch='?client_id=another-client';
  await act(async()=>root.render(<RecordListPage kind="reviews"/>));
  expect(container.querySelector('[data-visual-surface="reviews"]')).toBeNull();expect(container.querySelector('.register-surface')).not.toBeNull();
  });
+
+
+test('a different saved preference keeps the current Review register and exact native opening',async()=>{
+  const before=JSON.stringify(mockRows);sessionStorage.setItem('grc_client_id','another-client');
+  await act(async()=>root.render(<RecordListPage kind="reviews"/>));
+  expect(container.querySelector('[data-visual-surface="reviews"]')).not.toBeNull();
+  const title=one('.register tbody .bdr-name');expect(title.textContent).toBe('Actual Review');
+  await act(async()=>title.click());expect(mockNativeProps.record).toBe(mockRows[0]);
+  expect(mockNativeProps.record.client_id).toBe('demo_brawndo');expect(JSON.stringify(mockRows)).toBe(before);
+  expect(sessionStorage.getItem('grc_client_id')).toBe('another-client');
+  for(const verb of ['post','patch','delete'])expect(api[verb]).not.toHaveBeenCalled();
+});

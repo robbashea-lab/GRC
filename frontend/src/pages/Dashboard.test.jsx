@@ -132,14 +132,25 @@ test('pilot refresh replaces queue fields and dismisses work removed by native c
  expect(document.querySelector('[role=dialog]')).toBeNull();expect(container.textContent).toContain('No open work items.');
 });
 
- test.each(['selection','route'])('shared appearance boundary excludes a mismatched %s identity',async mismatch=>{
+ test.each(['route'])('shared appearance boundary excludes a mismatched %s identity',async mismatch=>{
  mockWorkspaceMode='demo';mockDashboardUser={...mockDashboardUser,workspace_mode:'demo'};
  useOrg.mockReturnValue({...cisContext(),currentClient:{...cisClient(),name:'Brawndo'}});
- if(mismatch==='selection')localStorage.setItem('grc_client_id','another-client');else mockDashboardSearch='?client_id=another-client';
+ mockDashboardSearch='?client_id=another-client';
  loadClientDashboard.mockResolvedValue(snapshot([]));
  await act(async()=>root.render(<Dashboard/>));
  expect(container.querySelector('.brawndo-demo-dashboard')).toBeNull();
  expect(container.textContent).toContain('Priority overview');
+ });
+ test('a different saved preference keeps the authorized current Dashboard projection',async()=>{
+ mockWorkspaceMode='demo';mockDashboardUser={...mockDashboardUser,workspace_mode:'demo'};
+ const context={...cisContext(),currentClient:{...cisClient(),name:'Brawndo'}},before=JSON.stringify(context);
+ useOrg.mockReturnValue(context);localStorage.setItem('grc_client_id','another-client');
+ loadClientDashboard.mockResolvedValue(snapshot([]));await act(async()=>root.render(<Dashboard/>));
+ expect(container.querySelector('.brawndo-demo-dashboard')).not.toBeNull();
+ expect(loadClientDashboard.mock.calls.length).toBeGreaterThan(0);
+ expect(loadClientDashboard.mock.calls.every(([clientApi,options])=>clientApi===api&&options.clientId==='demo_brawndo')).toBe(true);
+ expect(JSON.stringify(context)).toBe(before);expect(localStorage.getItem('grc_client_id')).toBe('another-client');
+ for(const verb of ['post','patch','delete'])expect(api[verb]).not.toHaveBeenCalled();
  });
  test('same-client appearance suspension keeps the open native record mounted',async()=>{
  mockWorkspaceMode='demo';mockDashboardUser={...mockDashboardUser,workspace_mode:'demo'};

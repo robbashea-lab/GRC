@@ -151,7 +151,7 @@ test.each(['client_grc_manager','client_contributor','client_readonly','client_v
   mockAuth.user.role=role;await render();expect(button('Raise as risk')).toBeUndefined();expect(calls()).toHaveLength(0);
 });
 
-test.each(['standard','user-mode','auth-loading','org-loading','auth-error','org-error','unauthorized','selected-client','route-client','loaded-client','record-client','other-client'])('%s fails closed',async boundary=>{
+test.each(['standard','user-mode','auth-loading','org-loading','auth-error','org-error','unauthorized','route-client','loaded-client','record-client','other-client'])('%s fails closed',async boundary=>{
   if(boundary==='standard'){mockAuth.workspaceMode='standard';mockAuth.user.workspace_mode='standard';}
   if(boundary==='user-mode')mockAuth.user.workspace_mode='standard';
   if(boundary==='auth-loading')mockAuth.loading=true;
@@ -159,7 +159,6 @@ test.each(['standard','user-mode','auth-loading','org-loading','auth-error','org
   if(boundary==='auth-error')mockAuth.error='Failed';
   if(boundary==='org-error')mockOrg.error='Failed';
   if(boundary==='unauthorized')mockOrg.clients=[];
-  if(boundary==='selected-client')rememberClient('other');
   if(boundary==='route-client')window.history.replaceState({},'','/action-items?client_id=other');
   if(boundary==='loaded-client')mockOrg.currentClient={...mockOrg.currentClient,client_id:'other'};
   if(boundary==='record-client')props.record={...finding,client_id:'other'};
@@ -170,6 +169,14 @@ test.each(['standard','user-mode','auth-loading','org-loading','auth-error','org
   await render();expect(button('Raise as risk')).toBeUndefined();expect(calls()).toHaveLength(0);
 });
 
+test('a different saved preference does not revoke the current authorized Finding command',async()=>{
+  const before=JSON.stringify({finding,task,risk,auth:mockAuth,org:mockOrg});
+  rememberClient('other');await render();
+  expect(button('Raise as risk')).toBeDefined();expect(calls()).toHaveLength(0);
+  expect(new URLSearchParams(window.location.search).get('client_id')).toBe('demo_brawndo');
+  expect(JSON.stringify({finding,task,risk,auth:mockAuth,org:mockOrg})).toBe(before);
+  expect(api.patch).not.toHaveBeenCalled();
+});
 test.each(['Planned action','Ticket comment','Acceptance rationale'])('unfinished %s blocks the command and preserves text',async label=>{
   await render();const field=drawer().querySelector('[aria-label="'+label+'"]');await input(field,'Keep this unfinished draft');
   await click(button('Raise as risk'));

@@ -8,11 +8,11 @@ import {omniCisSummary} from '@/lib/omniCisSummary';
 import {nativeCisQuestionTitle} from './RefinedOmniInterview';
 import {buildLegacyDemoStore, saveStore} from '../preview/store';
 
-let mockAuth, mockOrg;
+let mockAuth, mockOrg, mockPreviewMode;
 beforeAll(() => Object.defineProperty(global, 'crypto', {configurable: true, value: require('crypto').webcrypto}));
 jest.mock('@/context/AuthContext', () => ({useAuth: () => mockAuth}));
 jest.mock('@/context/OrgContext', () => ({useOrg: () => mockOrg}));
-jest.mock('@/lib/api', () => ({__esModule: true, PREVIEW_MODE: true, API: '/api',
+jest.mock('@/lib/api', () => ({__esModule: true, get PREVIEW_MODE() { return mockPreviewMode; }, API: '/api',
   default: require('axios').default.create({adapter: require('../preview/adapter').previewAdapter}),
   formatError: error => error.response?.data?.detail || error.message}));
 jest.mock('react-router-dom', () => ({Link: ({children, to}) => <a href={to}>{children}</a>,
@@ -73,6 +73,7 @@ async function edit(node, value) {
 }
 async function loadSafeguard(id, selectedClient = 'demo_brawndo', mode = 'demo') {
   clientId = selectedClient;
+  mockPreviewMode = mode === 'demo';
   if (mode === 'standard') mockAuth = {...mockAuth, workspaceMode: 'standard',
     user: {...mockAuth.user, workspace_mode: 'standard'}};
   const clients = (await api.get('/clients')).data;
@@ -222,6 +223,7 @@ async function checkpoint(answers, {completed = false, narrative = '', result = 
 
 beforeEach(async () => {
   global.IS_REACT_ACT_ENVIRONMENT = true;
+  mockPreviewMode = true;
   localStorage.clear();
   sessionStorage.clear();
   // Established isolated native fixture, also used by the remediation-source suite.

@@ -231,13 +231,25 @@ test('reference row uses structured source, Finding title, neutral priority and 
   await click(row);expect(mockDrawer.record.description).toBe('Long detail remains inside the full native record');
 });
 
- test.each(['selection','route'])('shared appearance boundary excludes mismatched %s identity',async mismatch=>{
- if(mismatch==='selection')sessionStorage.setItem('grc_client_id','another-client');
+ test.each(['route'])('shared appearance boundary excludes mismatched %s identity',async mismatch=>{
  await render(mismatch==='route'?'/action-items?client_id=another-client':'/action-items');
  expect(container.querySelector('[data-testid="native-register"]')).not.toBeNull();
  expect(container.querySelector('.brawndo-demo-actions')).toBeNull();
  });
 
+
+
+test('a different saved client preference preserves the current authorized Action register',async()=>{
+  const before=JSON.stringify(records),identity=JSON.stringify({auth:mockAuth,org:mockOrg});
+  sessionStorage.setItem('grc_client_id','another-client');await render('/action-items?client_id='+cid);
+  expect(container.querySelector('[data-testid="native-register"]')).toBeNull();
+  expect(container.querySelector('.brawndo-demo-actions')).not.toBeNull();
+  expect(summary('active')).toBe('12');expect(tickets()).toHaveLength(10);
+  expect(new URLSearchParams(location.search).get('client_id')).toBe(cid);
+  expect(JSON.stringify(records)).toBe(before);expect(JSON.stringify({auth:mockAuth,org:mockOrg})).toBe(identity);
+  expect(sessionStorage.getItem('grc_client_id')).toBe('another-client');
+  expect(api.post).not.toHaveBeenCalled();expect(api.patch).not.toHaveBeenCalled();
+});
 
 test('quarter browsing preserves native overdue filters, cards and register while exact saved Actions remain independently reachable',async()=>{
   jest.useFakeTimers();jest.setSystemTime(new Date('2026-10-18T12:00:00'));

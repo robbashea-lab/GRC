@@ -214,11 +214,22 @@ test('presentation-only treatment filter preserves native column controls and cl
   expect(api.post).not.toHaveBeenCalled();expect(api.patch).not.toHaveBeenCalled();
 });
 
- test.each(['selection','route'])('shared appearance boundary excludes mismatched %s identity',async mismatch=>{
- if(mismatch==='selection')rememberClient('another-client');else mockSearch='?client_id=another-client';
- await render();expect(container.querySelector('[data-testid="cis-risks-concept"]')).toBeNull();
- expect(container.querySelector('.approved-risk-register')).not.toBeNull();
- });
+test('a different remembered preference retains the verified pinned Risk client without writes',async()=>{
+  rememberClient('another-client');mockSearch='?client_id=demo_brawndo';
+  const original=JSON.stringify(rows);
+  await render();expect(container.querySelector('[data-testid="cis-risks-concept"]')).not.toBeNull();
+  expect(container.querySelector('tbody').textContent).toContain('Native high risk');
+  expect(api.get).toHaveBeenCalledWith('/risks',expect.objectContaining({params:expect.objectContaining({client_id:'demo_brawndo'})}));
+  expect(JSON.stringify(rows)).toBe(original);
+  expect(api.post).not.toHaveBeenCalled();expect(api.patch).not.toHaveBeenCalled();
+});
+
+test('shared appearance boundary excludes a mismatched explicit route identity',async()=>{
+  mockSearch='?client_id=another-client';
+  await render();expect(container.querySelector('[data-testid="cis-risks-concept"]')).toBeNull();
+  expect(container.querySelector('.approved-risk-register')).not.toBeNull();
+  expect(api.post).not.toHaveBeenCalled();expect(api.patch).not.toHaveBeenCalled();
+});
 
 test('accepted refresh stamps once; render, search, matrix, theme and immediate Filters preserve that instant',async()=>{
   await render();const initial=subtitle();expect(initial).toBe('Risk register · current assessed likelihood × impact · As of Oct 18, 2026, 2:00 PM ET');

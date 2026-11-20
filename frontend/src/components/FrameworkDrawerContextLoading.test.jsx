@@ -257,7 +257,7 @@ test('the generic framework fallback retains native owner, contacts, comments, h
 
 test.each([
   'safeguard 1.2', 'indirect source opener', 'other client', 'standard mode',
-  'IG2', 'IG3', 'old framework version', 'other route', 'selected-client mismatch', 'Org identity mismatch',
+  'IG2', 'IG3', 'old framework version', 'other route', 'Org identity mismatch',
 ])('legacy appearance compatibility: %s retains the original ordered six context reads outside the exact pilot', async scenario => {
   // The rollout supersedes appearance exclusions, not this original read boundary.
   if (scenario !== 'old framework version') jest.spyOn(rolloutPresentation, 'assessmentRolloutEligible').mockReturnValue(false);
@@ -288,8 +288,6 @@ test.each([
     record = copy(native);
   } else if (scenario === 'other route') {
     window.history.replaceState({}, '', '/tasks?client_id=' + clientId);
-  } else if (scenario === 'selected-client mismatch') {
-    sessionStorage.setItem('grc_client_id', 'demo_initech');
   } else if (scenario === 'Org identity mismatch') {
     mockOrg = {...mockOrg, currentClientId: 'demo_initech'};
   }
@@ -299,6 +297,21 @@ test.each([
   expect(surface().querySelector('[aria-label="Current implementation"]').value).toBe(record.implementation);
   if (scenario === 'indirect source opener') expect(surface().classList.contains('brawndo-cis-visual-safeguard')).toBe(true);
   expectNoWrites();
+});
+
+test('a different remembered preference retains the verified pinned client and exact-pilot context reads without writes', async () => {
+  jest.spyOn(rolloutPresentation, 'assessmentRolloutEligible').mockReturnValue(false);
+  sessionStorage.setItem('grc_client_id', 'demo_initech');
+  const original = copy(native);
+  await render();
+  expect(new URLSearchParams(window.location.search).get('client_id')).toBe(clientId);
+  expect(readPaths()).toEqual(requiredPaths());
+  expect(serviceReads()).toEqual([[servicePath()]]);
+  expect(surface().classList.contains('brawndo-assessment-pilot')).toBe(true);
+  expect(surface().querySelector('[aria-label="Current implementation"]').value).toBe(record.implementation);
+  expect(mockGuideProps.current.client_id).toBe(clientId);
+  expect(mockGuideProps.people).toEqual(users);expect(mockGuideProps.related).toEqual(related);
+  expect(native).toEqual(original);expectNoWrites();
 });
 
 test.each(['IG2', 'unselected', 'unconfigured', 'current identity mismatch'])(

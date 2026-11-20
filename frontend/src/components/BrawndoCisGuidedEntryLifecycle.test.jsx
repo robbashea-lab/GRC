@@ -10,7 +10,7 @@ let mockAuth,mockOrg;
 beforeAll(()=>Object.defineProperty(global,'crypto',{configurable:true,value:require('crypto').webcrypto}));
 jest.mock('@/context/AuthContext',()=>({useAuth:()=>mockAuth}));
 jest.mock('@/context/OrgContext',()=>({useOrg:()=>mockOrg}));
-jest.mock('@/lib/api',()=>({__esModule:true,PREVIEW_MODE:true,API:'/api',
+jest.mock('@/lib/api',()=>({__esModule:true,PREVIEW_MODE:false,API:'/api',
   default:require('axios').default.create({adapter:require('../preview/adapter').previewAdapter}),
   formatError:error=>error.response?.data?.detail||error.message}));
 jest.mock('react-router-dom',()=>({Link:({children,to})=><a href={to}>{children}</a>,useNavigate:()=>jest.fn()}),{virtual:true});
@@ -126,7 +126,8 @@ beforeEach(async()=>{
   global.IS_REACT_ACT_ENVIRONMENT=true;sessionStorage.clear();localStorage.clear();
   const user=(await api.post('/demo/enter')).data.user;
   // Preserve legacy direct status/Items controller coverage in the forced fallback.
-  // Preview is isolated native transport, not authenticated-backend proof.
+  // The declared standard build matches this forced-standard fixture; the Preview
+  // adapter remains isolated native transport, not authenticated-backend proof.
   // CisAssessmentRolloutNative separately covers the real default-on presentation.
   mockAuth={user:{...user,workspace_mode:'standard'},workspaceMode:'standard',loading:false,error:null};
   const clients=(await api.get('/clients')).data,currentClient=clients.find(client=>client.client_id===clientId);

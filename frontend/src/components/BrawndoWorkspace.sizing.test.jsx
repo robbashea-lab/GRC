@@ -130,13 +130,17 @@ test.each(['demo','standard'])('%s native navigation destinations retain the exi
   expect(shell().hasAttribute('data-shared-shell')).toBe(false);
 });
 
-test.each(['/reports','/systems','/account'])('%s does not retain native shell chrome for a mismatched or denied client',async pathname=>{
+test.each(['/reports','/systems','/account'])('%s rejects a denied context while retaining native chrome for a preference-only change',async pathname=>{
   mockLocation={...mockLocation,pathname};
   mockOrg={...mockOrg,error:'Client unavailable'};await render();
   expect(shell().hasAttribute('data-shared-shell')).toBe(false);
+  const input=host.querySelector('label input'),mounts=mockMounts;
   mockOrg={...mockOrg,error:null};
+  const identity=JSON.stringify({auth:mockAuth,org:mockOrg});
   sessionStorage.setItem('grc_client_id','another-client');await render();
-  expect(shell().hasAttribute('data-shared-shell')).toBe(false);
+  expect(shell().getAttribute('data-shared-shell')).toBe('true');expectSizing(pathname!=='/account');
+  expect(host.querySelector('label input')).toBe(input);expect(mockMounts).toBe(mounts);
+  expect(JSON.stringify({auth:mockAuth,org:mockOrg})).toBe(identity);expect(api.get).not.toHaveBeenCalled();
 });
 
 test.each(['demo','standard'].flatMap(mode=>[1,2,3].flatMap(group=>['super_admin','client_readonly'].map(role=>[mode,group,role]))))(
@@ -206,7 +210,6 @@ test.each(['demo','standard'])('%s unresolved, mismatched and denied identities 
     ()=>{mockOrg={...mockOrg,clients:[]};},
     ()=>{mockOrg={...mockOrg,currentClientId:'other-client'};},
     ()=>{mockLocation={...mockLocation,search:'?client_id=other-client'};},
-    ()=>{(mode==='demo'?sessionStorage:localStorage).setItem('grc_client_id','other-client');},
     ()=>{mockOrg={...mockOrg,currentClient:{...mockOrg.currentClient,status:'archived'}};},
   ];
   for(const invalidate of cases) {
@@ -224,6 +227,15 @@ test.each(['demo','standard'])('%s unresolved, mismatched and denied identities 
   expect(api.get).not.toHaveBeenCalled();
 });
 
+test.each(['demo','standard'])('%s keeps sizing and the same native draft when only the saved preference changes',async mode=>{
+  setContext(`preference-${mode}`,1,mode);await render();expectSizing(true);
+  const input=host.querySelector('label input'),mounts=mockMounts,before=JSON.stringify({auth:mockAuth,org:mockOrg});
+  await act(async()=>{Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,'value').set.call(input,'Unsaved current-client draft');input.dispatchEvent(new Event('input',{bubbles:true}));});
+  (mode==='demo'?sessionStorage:localStorage).setItem('grc_client_id','other-client');await render();
+  expectSizing(true);expect(host.querySelector('label input')).toBe(input);expect(input.value).toBe('Unsaved current-client draft');
+  expect(mockMounts).toBe(mounts);expect(mockUnmounts).toBe(0);
+  expect(JSON.stringify({auth:mockAuth,org:mockOrg})).toBe(before);expect(api.get).not.toHaveBeenCalled();
+});
 test.each(['demo','standard'])('%s authorized client switching preserves common sizing without inferring CIS from a name',async mode=>{
   setContext(`first-${mode}`,1,mode);await render();expectSizing(true);
   const nextId=`second-${mode}`,next={client_id:nextId,name:'Synthetic CIS client',status:'active',

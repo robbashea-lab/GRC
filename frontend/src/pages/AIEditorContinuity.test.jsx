@@ -9,7 +9,7 @@ import {AdditionalSectionsProvider,useAdditionalSectionsAppearance} from '@/lib/
 let mockAuth,mockOrg,container,root;
 jest.mock('@/context/AuthContext',()=>({useAuth:()=>mockAuth}));
 jest.mock('@/context/OrgContext',()=>({useOrg:()=>mockOrg}));
-jest.mock('@/lib/clientSelection',()=>({selectedClient:()=>mockOrg.currentClientId}));
+jest.mock('@/lib/clientSelection',()=>({...jest.requireActual('@/lib/clientSelection'),selectedClient:()=>mockOrg.currentClientId}));
 jest.mock('@/lib/api',()=>({__esModule:true,default:{get:jest.fn(),post:jest.fn(),patch:jest.fn()},formatError:error=>error.message,API:'/api',PREVIEW_MODE:true}));
 jest.mock('react-router-dom',()=>({Link:({children})=><span>{children}</span>,useLocation:()=>({pathname:'/ai-governance',search:''}),useNavigate:()=>jest.fn(),useSearchParams:()=>require('react').useState(new URLSearchParams())}),{virtual:true});
 jest.mock('@/lib/recordUuid',()=>({recordUuid:()=> 'ai-continuity-intent'}));

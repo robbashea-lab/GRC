@@ -145,14 +145,13 @@ test('a failed deferred CIS read retains qualified chrome and native retry witho
   expect(host.querySelector('[data-testid="assessment-boundary"]')).toBeNull();
 });
 
-test.each(['unresolved organization','organization error','authentication loading','authentication error','unauthorized client','mismatched selected client','mismatched route client','mismatched mode','mismatched transport','wrong route','unenrolled program'])('pending read does not name a CIS shell for %s',async boundary=>{
+test.each(['unresolved organization','organization error','authentication loading','authentication error','unauthorized client','mismatched route client','mismatched mode','mismatched transport','wrong route','unenrolled program'])('pending read does not name a CIS shell for %s',async boundary=>{
   api.get.mockImplementationOnce(()=>deferred().promise);
   if(boundary==='unresolved organization')mockOrg.loading=true;
   if(boundary==='organization error')mockOrg.error='Organization unavailable';
   if(boundary==='authentication loading')mockAuth.loading=true;
   if(boundary==='authentication error')mockAuth.error='Authentication unavailable';
   if(boundary==='unauthorized client')mockOrg.clients=[];
-  if(boundary==='mismatched selected client')sessionStorage.setItem('grc_client_id','other-client');
   if(boundary==='mismatched route client')mockLocation.search='?client_id=other-client';
   if(boundary==='mismatched mode')mockAuth.workspaceMode='standard';
   if(boundary==='mismatched transport')mockPreviewMode=false;
@@ -164,6 +163,20 @@ test.each(['unresolved organization','organization error','authentication loadin
   expect(document.body.dataset.brawndoCisVisual).toBeUndefined();
 });
 
+test('a different saved client preference keeps the current CIS pending and loaded identity',async()=>{
+  const pending=deferred(),before=JSON.stringify({auth:mockAuth,org:mockOrg,data});
+  api.get.mockImplementationOnce(()=>pending.promise);await render();
+  const shell=host.querySelector('[data-testid="cis-workspace-loading"]'),reads=api.get.mock.calls.length;
+  sessionStorage.setItem('grc_client_id','other-client');await render();
+  expect(host.querySelector('[data-testid="cis-workspace-loading"]')).toBe(shell);
+  expect(shell.querySelector('h1').textContent).toBe('CIS IG1');expect(api.get.mock.calls).toHaveLength(reads);
+  expect(host.querySelector('[data-testid="assessment-boundary"]')).toBeNull();
+  expect(document.body.dataset.brawndoCisVisual).toBeUndefined();
+  await act(async()=>pending.resolve({data:fixture()}));expectVisual();
+  expect(host.querySelector('[data-testid="assessment-boundary"]').dataset.assessmentId).toBe('native-1.1');
+  expect(JSON.stringify({auth:mockAuth,org:mockOrg,data})).toBe(before);
+  expect(sessionStorage.getItem('grc_client_id')).toBe('other-client');
+});
 test.each(['iso-27001','soc-2'])('pending %s workspace cannot publish CIS loading chrome',async frameworkKey=>{
   mockLocation={...mockLocation,pathname:'/compliance/'+frameworkKey};
   api.get.mockImplementationOnce(()=>deferred().promise);

@@ -6,12 +6,12 @@ import RecordListPage from './RecordListPage';
 import api from '@/lib/api';
 import {cisClient} from '@/testUtils/cisExperience';
 
-let mockAuth, mockOrg, mockPath, mockDrawerProps;
+let mockAuth, mockOrg, mockPath, mockSearch, mockDrawerProps;
 jest.mock('@/context/AuthContext', () => ({useAuth: () => mockAuth}));
 jest.mock('@/context/OrgContext', () => ({useOrg: () => mockOrg}));
 jest.mock('react-router-dom', () => ({
   Link: ({children}) => <span>{children}</span>,
-  useLocation: () => ({pathname: mockPath, search: ''}),
+  useLocation: () => ({pathname: mockPath, search: mockSearch}),
   useNavigate: () => jest.fn(),
   useSearchParams: () => require('react').useState(new URLSearchParams()),
 }), {virtual: true});
@@ -34,7 +34,7 @@ beforeEach(() => {
   mockAuth = {workspaceMode: 'demo', user: {user_id: 'navigation-actor', role: 'super_admin', workspace_mode: 'demo'}};
   const client = {...cisClient('demo_brawndo'), name: 'Brawndo'};
   mockOrg = {currentClientId: client.client_id, currentClient: client, clients: [client]};
-  pending = [];mockDrawerProps=null;
+  pending = [];mockDrawerProps=null;mockSearch='';
   api.get.mockImplementation(path => new Promise((resolve, reject) => pending.push({path, resolve, reject})));
   container = document.createElement('div'); document.body.appendChild(container); root = createRoot(container);
 });
@@ -64,13 +64,22 @@ test.each(pages)('%s keeps the approved heading while native reads are pending, 
   expect(api.post).not.toHaveBeenCalled(); expect(api.patch).not.toHaveBeenCalled();
 });
 
-test.each(pages)('%s does not show the qualified loading frame after mode or selected-client mismatch', async (route, Page) => {
+test.each(pages)('%s retains verified client loading despite another preference and still rejects mode or route mismatch', async (route, Page, heading, loadedMarker) => {
   mockPath = `/${route}`; mockAuth.workspaceMode = 'standard';
   await render(Page);
   expect(container.querySelector(`[data-testid="${route}-navigation-loading"]`)).toBeNull();
   mockAuth.workspaceMode = 'demo'; sessionStorage.setItem('grc_client_id', 'another-client');
+  mockSearch = '?client_id=demo_brawndo';
   await render(Page);
+  expect(container.querySelector(`[data-testid="${route}-navigation-loading"] [role="status"]`)?.textContent).toMatch(/Loading/);
+  expect(container.querySelector('table,[role="table"]')).toBeNull();
+  expect(container.querySelector('[data-testid^="new-"],[data-testid="create-policies-button"],[data-testid$="-export"]')).toBeNull();
+  await finishReads();
+  expect(container.querySelector('h1')?.textContent).toBe(heading);
+  expect(container.querySelector(`[data-testid="${loadedMarker}"]`)).not.toBeNull();
+  mockSearch = '?client_id=another-client';await render(Page);
   expect(container.querySelector(`[data-testid="${route}-navigation-loading"]`)).toBeNull();
+  expect(api.post).not.toHaveBeenCalled();expect(api.patch).not.toHaveBeenCalled();
 });
 
 test.each(pages)('%s retains a useful failure and Retry without switching to an empty register', async (route, Page, heading, loadedMarker) => {

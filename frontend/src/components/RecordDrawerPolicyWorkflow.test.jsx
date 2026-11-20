@@ -61,16 +61,27 @@ test('canonical active Explore Policy on the exact route uses the new interior w
   expect(api.patch).not.toHaveBeenCalled();expect(api.post).not.toHaveBeenCalled();
 });
 
-test.each(['unsupported-mode','other-client','wrong-route','loading','mismatch','archived'])('Policy presentation stays off for %s without replacing native controls',async condition=>{
+test.each(['unsupported-mode','other-client','wrong-route','loading','foreign-route','archived'])('Policy presentation stays off for %s without replacing native controls',async condition=>{
   if(condition==='unsupported-mode'){mockAuth.workspaceMode='authenticated';mockAuth.user.workspace_mode='authenticated';}
   if(condition==='other-client'){policy.client_id='demo_dunder';props.clientId='demo_dunder';mockOrg.currentClientId='demo_dunder';mockOrg.currentClient={client_id:'demo_dunder',name:'Brawndo',status:'active'};rememberClient('demo_dunder');}
   if(condition==='wrong-route')window.history.replaceState({},'','/dashboard');
   if(condition==='loading')mockOrg.loading=true;
-  if(condition==='mismatch')rememberClient('different-client');
+  if(condition==='foreign-route')window.history.replaceState({},'','/policies?client_id=different-client');
   if(condition==='archived')mockOrg.currentClient.archived=true;
   await render();
   expect(dialog().className).not.toContain('brawndo-policy-workflow');
   expect(dialog().querySelector('[data-testid="field-title"]')).not.toBeNull();
+  expect(api.patch).not.toHaveBeenCalled();expect(api.post).not.toHaveBeenCalled();
+});
+
+test('a different remembered preference retains the verified pinned Policy and native controls without writes',async()=>{
+  rememberClient('different-client');window.history.replaceState({},'','/policies?client_id='+policy.client_id);
+  const original=JSON.stringify(policy);
+  await render();
+  expect(dialog().className).toContain('brawndo-policy-workflow');
+  expect(dialog().querySelector('.pw-heading').textContent).toContain(policy.title);
+  expect(dialog().querySelector('[aria-label="Purpose"]').value).toBe(policy.governance_context.rationale);
+  expect(JSON.stringify(policy)).toBe(original);
   expect(api.patch).not.toHaveBeenCalled();expect(api.post).not.toHaveBeenCalled();
 });
 
