@@ -44,3 +44,21 @@ test('existing named 1.2 note labels and exact operator content remain unchanged
   expect(result.narrative).toContain('- Reported response actions context: '+answers.actions_detail);
   expect(result.status).toBe('addressed');
 });
+
+test.each([
+  ['sectioned',null],
+  ['inline','2026-11-21']
+])('%s 2.1 summary labels practice context once and preserves operator wording',(_,inlineDate)=>{
+  const id='2.1',version=versionForSafeguard(id),answers={...complete(id),practice:'Not sure'};
+  for(const q of visibleQuestions(id,answers,version))if(q.type==='matrix')answers[q.id]=Object.fromEntries(q.rows.map(row=>[row,'Not sure']));
+  const note='SYNTHETIC QA: preserve reported reported wording.\nSecond line: Reported reported practice context: operator note & punctuation!';
+  const before=omniCisSummary(id,answers,version,'Synthetic client',inlineDate),withNote={...answers,practice_detail:note},original=JSON.stringify(withNote);
+  const after=omniCisSummary(id,withNote,version,'Synthetic client',inlineDate);
+  expect(before.result.narrative).not.toContain('Reported practice context:');
+  expect(after.result.narrative).toContain('Reported practice context: '+note);
+  expect(after.result.narrative).not.toContain('Reported reported practice context: '+note);
+  expect(visibleQuestions(id,answers,version)[0].id).toBe('practice');
+  const expectedAnswers=before.result.answers.map((answer,index)=>index===0?{...answer,answer:answer.answer+'; Client-reported supporting explanation: '+note}:answer);
+  expect({...after,result:{...after.result,narrative:''}}).toEqual({...before,result:{...before.result,narrative:'',answers:expectedAnswers}});
+  expect(JSON.stringify(withNote)).toBe(original);
+});

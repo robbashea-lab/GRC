@@ -49,7 +49,8 @@ export function omniCisSummary(id,answers,version,clientName='The organization',
     if(!q.critical&&!['gaps','unknowns',...(current?['additional_gap','additional_confirmation','operation']:[])].includes(q.id)&&active[q.id]){const value=Array.isArray(active[q.id])?active[q.id].join(', '):active[q.id];context.push(`${contextLabels[q.id]||labels[q.id]||q.id.replaceAll('_',' ')}: ${value}`);}
     if(active[q.id+'_detail']?.trim()){
       const groupName=q.type==='matrix'&&!labels[q.id]?noteGroups.get(q.id):null;
-      context.push(groupName?`Reported context for ${groupName}: ${active[q.id+'_detail'].trim()}`:`Reported ${labels[q.id]?.toLowerCase()||q.id.replaceAll('_',' ')} context: ${active[q.id+'_detail'].trim()}`);
+      const detailLabel=q.id==='practice'?'practice':labels[q.id]?.toLowerCase()||q.id.replaceAll('_',' ');
+      context.push(groupName?`Reported context for ${groupName}: ${active[q.id+'_detail'].trim()}`:`Reported ${detailLabel} context: ${active[q.id+'_detail'].trim()}`);
     }
   }
   const grouped=Object.entries(sections).filter(([name,items])=>items.length||name==='Incomplete or missing').map(([name,items])=>name+'\n'+bullets(items.length?items:['No confirmed deficiencies were identified from the reported answers. Any confirmation items remain unresolved.']));
