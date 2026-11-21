@@ -218,6 +218,7 @@
 .native-standard .client-ind{font-size:12.5px;color:var(--faint);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .native-standard .client-ind.unset{color:var(--label);font-style:italic}
 .native-standard .tile{flex:none;display:flex;align-items:center;justify-content:center;border-radius:12px;box-shadow:var(--tile-ring);color:#FFFFFF}
+.native-standard[data-theme="light"] .side .tile{color:var(--text)}
 .native-standard .prog{display:flex;flex-direction:column;gap:7px;padding:10px 12px;margin:-10px -12px;border-radius:12px;text-align:left;border:1px solid transparent;transition:background .15s,border-color .15s}
 .native-standard .prog:hover{background:var(--accent-soft);border-color:var(--chip-bd)}
 .native-standard .prog-top{display:flex;align-items:center;gap:8px}
@@ -1175,6 +1176,8 @@
 .native-standard.native-standard :is(.ui-control,input.input,select.select,textarea){font-family:var(--font);border:1px solid var(--input-bd);border-radius:12px;background:var(--input);color:var(--text);box-shadow:none;min-height:40px}
 .native-standard.native-standard .ui-button{font:500 14px/1.45 var(--font);border-radius:12px;min-height:40px;height:auto;padding:0 14px;box-shadow:none}
 .native-standard.native-standard .ui-button.bg-primary{background:var(--cta);border:0;color:var(--cta-fg);font-weight:600}
+.native-standard .brawndo-cis-visual .btn.primary{color:var(--cta-fg)}
+.native-standard .brawndo-cis-visual-omni .cis-omni-invitation-actions .ui-button.bg-primary{color:var(--cta-fg)}
 .native-standard.native-standard .ui-button.border{border:1px solid var(--input-bd);background:var(--input);color:var(--text)}
 .native-standard.native-standard :is(.admin-row-actions,.admin-pagination) .ui-button{min-height:32px;border-radius:9px;font-size:12.5px;padding:0 12px}
 .native-standard.native-standard :is(.admin-table,.admin-matrix){border-collapse:collapse;color:var(--text)}
