@@ -8,7 +8,8 @@ import AssigneeSelect from './AssigneeSelect';
 export function AddAssessmentItemDialog({open,onOpenChange,draft,onChange,onSubmit,busy,disabled,error,unconfirmed,portalContainer}){
   const blocked=disabled||busy||unconfirmed;
   return <Dialog open={open} onOpenChange={value=>{if(!busy&&!unconfirmed)onOpenChange(value);}}>
-    <DialogContent className="brawndo-assessment-pilot gn-dialog-box" portalContainer={portalContainer}>
+    <DialogContent className="brawndo-assessment-pilot gn-dialog-box" portalContainer={portalContainer}
+      overlayClassName="brawndo-assessment-pilot gn-dialog-layer">
       <DialogTitle>Add item to address</DialogTitle>
       <DialogDescription>Track a gap or an open question for this assessment.</DialogDescription>
       <label className="sg11-field">Type<select className="gn-field" aria-label="Item type" disabled={blocked} value={draft.item_type} onChange={event=>onChange('item_type',event.target.value)}>
@@ -26,7 +27,8 @@ export function AddAssessmentItemDialog({open,onOpenChange,draft,onChange,onSubm
 export function AssessmentItemTaskDialog({open,onOpenChange,item,draft,onChange,onSubmit,clientId,users,busy,disabled,error,unconfirmed,portalContainer}){
   const blocked=disabled||busy||unconfirmed;
   return <Dialog open={open} onOpenChange={value=>{if(!busy&&!unconfirmed)onOpenChange(value);}}>
-    <DialogContent className="brawndo-assessment-pilot gn-dialog-box" portalContainer={portalContainer}>
+    <DialogContent className="brawndo-assessment-pilot gn-dialog-box" portalContainer={portalContainer}
+      overlayClassName="brawndo-assessment-pilot gn-dialog-layer">
       <DialogTitle>Create Action Item</DialogTitle>
       <DialogDescription>{item?.text}</DialogDescription>
       <label className="sg11-field">Title<Input className="gn-field" aria-label="Action title" required maxLength={500} disabled={blocked} value={draft.title} onChange={event=>onChange('title',event.target.value)}/></label>

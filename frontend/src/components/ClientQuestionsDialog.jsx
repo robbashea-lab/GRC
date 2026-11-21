@@ -28,7 +28,8 @@ export default function ClientQuestionsDialog({open,onOpenChange,scopeKey,client
     }finally{if(current.current===scope)setCopying(false);}
   }
   return <Dialog open={open} onOpenChange={onOpenChange}>
-    <DialogContent className="brawndo-assessment-pilot gn-dialog-box" portalContainer={portalContainer}>
+    <DialogContent className="brawndo-assessment-pilot gn-dialog-box" portalContainer={portalContainer}
+      overlayClassName="brawndo-assessment-pilot gn-dialog-layer">
       <DialogTitle>Questions for {clientLabel||'this client'}</DialogTitle>
       <DialogDescription>{loading||error?'Saved Client questions for the current program.':`${questions.length} open Client ${questions.length===1?'item':'items'} across ${programLabel||'the current program'}.`}</DialogDescription>
       {loading?<p role="status">Loading client questions…</p>:error?<p role="alert">{error}</p>:<>
