@@ -8,7 +8,7 @@ import {operatorStatuses} from '@/lib/frameworkOperator';
 import {genericGuidedVersion} from '@/lib/genericGuidedAssessment';
 
 let mockAuth,mockOrg,mockDefinition,mockFrame,mockGuide,mockProfile,mockReview,mockSource,mockNested;
-let mockGuideMounts,mockUnconfirmed,mockContextCommand;
+let mockGuideMounts,mockUnconfirmed,mockContextCommand,mockUseRealServices;
 jest.mock('@/context/AuthContext',()=>({useAuth:()=>mockAuth}));
 jest.mock('@/context/OrgContext',()=>({useOrg:()=>mockOrg}));
 jest.mock('@/lib/api',()=>({__esModule:true,PREVIEW_MODE:true,API:'/api',
@@ -30,7 +30,7 @@ jest.mock('./GenericGuidedAssessor',()=>function Guide(props){
 });
 jest.mock('./FrameworkContext',()=>props=><section data-testid="native-framework-context">{props.definition.id}</section>);
 jest.mock('./R4FrameworkSource',()=>props=>{mockSource=props;return null;});
-jest.mock('./R4AssessmentContext',()=>()=>null);
+jest.mock('./R4AssessmentContext',()=>props=>mockUseRealServices?require('react').createElement(jest.requireActual('./R4AssessmentContext').default,props):null);
 jest.mock('./FrameworkReviewSetup',()=>props=>{mockReview=props;return null;});
 jest.mock('./CsfProfile',()=>props=>{mockProfile=props;return null;});
 jest.mock('./AssigneeSelect',()=>props=><select aria-label={props.label} value={props.value||''} disabled={props.disabled} onChange={event=>props.onChange(event.target.value)}><option value="">Unassigned</option><option value="synthetic-owner">Synthetic owner</option></select>);
@@ -43,7 +43,7 @@ jest.mock('./RecordDrawer',()=>props=>{mockNested=props;return <section data-tes
 const copy=value=>JSON.parse(JSON.stringify(value));
 let root,host,record,nativeRecord,onNext,onOpenChange;
 const related={reviews:[],findings:[],tasks:[],risks:[{risk_id:'synthetic-risk',client_id:'synthetic-client',title:'SYNTHETIC linked risk',status:'open'}],
-  policies:[],vendors:[],requirements:[],evidence:[{evidence_id:'synthetic-evidence',filename:'SYNTHETIC file.txt',created_at:'2026-11-20',linked_type:'framework_assessment'}]};
+  policies:[],vendors:[],requirements:[],ai_systems:[{client_id:'synthetic-client',ai_system_id:'synthetic-ai',name:'SYNTHETIC AI context',status:'draft'}],evidence:[{evidence_id:'synthetic-evidence',filename:'SYNTHETIC file.txt',created_at:'2026-11-20',linked_type:'framework_assessment'}]};
 const button=name=>[...document.querySelectorAll('button')].find(node=>node.textContent.trim()===name);
 async function click(name){expect(button(name)).toBeTruthy();await act(async()=>button(name).click());}
 async function render(extra={}){
@@ -70,7 +70,7 @@ async function fixture(frameworkKey){
   await render();expect(mockFrame.state.ctx.current.framework_assessment_id).toBe(record.framework_assessment_id);
 }
 beforeEach(()=>{
-  global.IS_REACT_ACT_ENVIRONMENT=true;sessionStorage.clear();mockFrame=mockGuide=mockProfile=mockReview=mockSource=mockNested=null;mockGuideMounts=0;mockUnconfirmed=false;
+  global.IS_REACT_ACT_ENVIRONMENT=true;sessionStorage.clear();mockFrame=mockGuide=mockProfile=mockReview=mockSource=mockNested=null;mockGuideMounts=0;mockUnconfirmed=false;mockUseRealServices=false;
   cmmcRequirementPresentation.mockImplementation(definition=>({...definition,id:'SYNTHETIC qualified L1 id',title:'SYNTHETIC qualified source title'}));
   mockContextCommand=Object.assign(jest.fn(),{unconfirmed:()=>mockUnconfirmed,pendingRequest:()=>null,retry:jest.fn()});
   mockAuth={user:{user_id:'synthetic-operator',role:'super_admin',status:'active',workspace_mode:'demo'},workspaceMode:'demo',loading:false};
@@ -97,7 +97,7 @@ test.each(['hipaa','nist-csf-2','cmmc'])('generic %s keeps native domain fields,
     expect(mockFrame.state.definition).toMatchObject({id:'SYNTHETIC qualified L1 id',title:'SYNTHETIC qualified source title'});
   }
   await act(async()=>{expect(await mockFrame.actions.save()).toBe(true);});
-  const body=api.patch.mock.calls.at(-1)[1];expect(body).not.toHaveProperty('verification');expect(body.status).toBe(record.status);
+  const body=api.patch.mock.calls.at(-1)[1];expect(body).not.toHaveProperty('verification');expect(body).not.toHaveProperty('policy_link_ids');expect(body.status).toBe(record.status);
   expect(body.owner_id).toBe(record.owner_id);expect(body.process_owner_id).toBeNull();
   if(frameworkKey==='hipaa')expect(body.addressable_rationale).toBe('SYNTHETIC reviewed native rationale');
   if(frameworkKey==='nist-csf-2')expect(body.csf_profile.target_outcome).toBe('SYNTHETIC revised target');
@@ -218,4 +218,54 @@ test('two acknowledged pending Item edits in one input turn are both retained wi
   mockAuth={...mockAuth,user:{...mockAuth.user,role:'client_readonly'}};await render();
   expect(commands.onOperation({...first,request_id:'synthetic_retired_owner_edit'})).toBe(false);
   expect(mockFrame.itemsToAddress.props.controls.operations).toEqual([]);
+});
+
+test('unsupported subject context never creates a broken generic Related opener',async()=>{
+  await fixture('hipaa');await click('Risks 1');
+  expect(button('SYNTHETIC AI context')).toBeUndefined();expect(mockNested).toBeNull();
+  await click('SYNTHETIC linked risk');expect(mockNested.kind).toBe('risks');
+});
+test('canonical policy-only Save preserves the native assessment payload and omitted lists remain untouched',async()=>{
+  await fixture('hipaa');const before=copy(nativeRecord);
+  await act(async()=>mockFrame.actions.put('policy_link_ids',[]));
+  await act(async()=>{expect(await mockFrame.actions.save()).toBe(true);});
+  expect(api.patch.mock.calls.at(-1)[1]).toEqual({policy_link_ids:[],expected_last_assessed:null});
+  expect(nativeRecord.assessment_history).toEqual(before.assessment_history);expect(nativeRecord.last_assessed).toBe(before.last_assessed);
+});
+test('an authority refresh retains the unsaved native assessment while current context is rechecked',async()=>{
+  await fixture('hipaa');
+  await act(async()=>mockFrame.actions.put('implementation','SYNTHETIC unsaved assessment retained'));
+  const reads=api.get.mock.calls.filter(([path])=>path.endsWith('/related')).length;
+  mockAuth={...mockAuth,user:{...mockAuth.user,updated_at:'SYNTHETIC refreshed authority token'}};
+  await render();
+  expect(host.querySelector('[aria-label="Current implementation"]').value).toBe('SYNTHETIC unsaved assessment retained');
+  expect(mockFrame.state.form.implementation).toBe('SYNTHETIC unsaved assessment retained');
+  expect(api.get.mock.calls.filter(([path])=>path.endsWith('/related')).length).toBe(reads+1);
+  expect(api.patch).not.toHaveBeenCalled();
+});
+
+test('generic main-context refresh keeps the real dirty Services editor mounted and protects its draft',async()=>{
+  await fixture('hipaa');
+  const savedGet=api.get.getMockImplementation();
+  const data={client_id:record.client_id,expected_client_updated_at:'client-v1',catalog:[],services:{areas:{endpoint:{tool_ids:[]}}},selected_activity_id:'current-activity',
+    candidates:[{activity_id:'current-activity',review_id:'current-review',title:'Native activity',area_id:'endpoint',expected_updated_at:'activity-v1',setup:{notes:'Saved service notes'}}]};
+  let serviceReads=0,refresh=false,resolveMain,resolveServices;
+  const pendingMain=new Promise(done=>{resolveMain=done;}),pendingServices=new Promise(done=>{resolveServices=done;});
+  api.get.mockImplementation((path,...args)=>{
+    if(path.endsWith('/service-context')){serviceReads++;return serviceReads===1?Promise.resolve({data:copy(data)}):pendingServices;}
+    if(refresh&&path==='/frameworks/hipaa')return pendingMain;
+    return savedGet(path,...args);
+  });
+  mockUseRealServices=true;await render();
+  const notes=host.querySelector('[aria-label="Assessment setup notes"]');expect(notes).toBeTruthy();
+  await act(async()=>{Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype,'value').set.call(notes,'SYNTHETIC unapplied Services draft');notes.dispatchEvent(new Event('input',{bubbles:true}));});
+  expect(mockFrame.state.dirty).toBe(true);
+  refresh=true;mockAuth={...mockAuth,user:{...mockAuth.user,updated_at:'SYNTHETIC refreshed membership'}};
+  await render();
+  expect(mockFrame.state.ctx).toBeNull();expect(mockFrame.state.dirty).toBe(true);expect(serviceReads).toBe(2);
+  const workspace=await savedGet('/frameworks/hipaa');
+  await act(async()=>{resolveMain(workspace);resolveServices({data:copy(data)});});
+  expect(serviceReads).toBe(2);
+  expect(host.querySelector('[aria-label="Assessment setup notes"]').value).toBe('SYNTHETIC unapplied Services draft');
+  expect(mockFrame.state.dirty).toBe(true);expect(api.patch).not.toHaveBeenCalled();
 });

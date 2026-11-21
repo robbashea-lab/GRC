@@ -8,7 +8,6 @@ import {downloadEvidence} from '@/lib/evidenceContext';
 
 jest.mock('@/context/AuthContext',()=>({useAuth:()=>({user:{user_id:'admin',role:'super_admin',workspace_mode:'demo'}})}));
 jest.mock('@/lib/brawndoFullRecord',()=>({useBrawndoFullRecord:()=>true}));
-jest.mock('@/lib/createIntent',()=>({useCreateIntent:()=>jest.fn()}));
 jest.mock('@/lib/api',()=>({__esModule:true,default:{get:jest.fn(),post:jest.fn(),patch:jest.fn()},formatError:error=>error.message}));
 jest.mock('@/lib/evidenceContext',()=>{const downloadEvidence=jest.fn();return {downloadEvidence,useEvidenceDownload:()=>downloadEvidence};});
 jest.mock('./AssigneeSelect',()=>()=> <span>Native owner picker</span>);

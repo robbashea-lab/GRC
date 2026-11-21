@@ -76,10 +76,11 @@ test("standard enhanced Portfolio preserves native All/Mine scope and its shared
   expect(container.querySelector('h1').textContent).toBe('Client portfolio');
   expect([...container.querySelectorAll('[aria-label="Scope"] button')].map(node=>node.textContent)).toEqual(['All clients','Assigned to me']);
   const headings=[...container.querySelectorAll('[role="columnheader"]')];
-  expect(headings.slice(0,3).map(node=>node.textContent)).toEqual(['Client','Programs','GRC lead']);
-  expect(headings).toHaveLength(4);expect(headings[3].getAttribute('aria-label')).toBe('Client overview');
+  expect(headings.map(node=>node.textContent)).toEqual(['Client / framework','Implemented / addressed','Partial implementation','With gaps','Not assessed','Assessed','Open client']);
+  expect(headings).toHaveLength(7);
   expect(container.querySelector('h1').parentElement.textContent).toContain('2 clients · 3 programs');
-  expect(container.querySelectorAll('.ep-program')).toHaveLength(3);
+  expect(container.querySelectorAll('.ep-program')).toHaveLength(2);
+  expect([...container.querySelectorAll('.ss-framework-button')].map(node=>node.textContent)).toEqual(['CIS IG3','SOC 2']);
   await click(scopeButton('Assigned to me'));
   expect(visibleClients()).toEqual([mockClients[0].client_id]);
   expect(container.querySelector('[aria-label="Client list scope"]')).toBeNull();
@@ -100,7 +101,8 @@ test.each(['attention','name','next'])('%s Portfolio sort preserves cohort, prog
   expect([...container.querySelector('select[aria-label="Sort clients"]').options].map(option=>option.value)).toEqual(['attention','name','next']);
   await select('Sort clients',key);
   expect(visibleClients()).toEqual([...mockPortfolio.clients].sort((a,b)=>a.name.localeCompare(b.name)).map(client=>client.client_id));
-  expect(container.querySelectorAll('[data-client-id="'+mockPortfolio.clients[0].client_id+'"] .ep-program')).toHaveLength(2);
+  expect(container.querySelectorAll('[data-client-id="'+mockPortfolio.clients[0].client_id+'"] .ep-program')).toHaveLength(1);
+  expect(container.querySelectorAll('[data-client-id="'+mockPortfolio.clients[0].client_id+'"] .ss-framework-button')).toHaveLength(2);
   await click(scopeButton('Assigned to me'));await select('Framework','soc-2');
   await change(container.querySelector('[aria-label="Search clients"]'),'missing-client');
   expect(visibleClients()).toEqual([]);
@@ -109,7 +111,8 @@ test.each(['attention','name','next'])('%s Portfolio sort preserves cohort, prog
   expect(container.querySelector('select[aria-label="Sort clients"]').value).toBe(key);
   expect(scopeButton('Assigned to me').getAttribute('aria-pressed')).toBe('true');
   expect(visibleClients()).toEqual([mockPortfolio.clients[0].client_id]);
-  expect(container.querySelectorAll('.ep-program')).toHaveLength(2);
+  expect(container.querySelectorAll('.ep-program')).toHaveLength(1);
+  expect(container.querySelectorAll('.ss-framework-button')).toHaveLength(2);
 });
 
 test('client names open overview and its explicit portal control while an exact program retains its workspace path',async()=>{
@@ -126,6 +129,7 @@ test('client names open overview and its explicit portal control while an exact 
   const clientFocusReturned=new Promise(resolve=>clientName.addEventListener('focus',resolve,{once:true}));
   await click(overview.querySelector('[aria-label="Close implementation preview"]'));await clientFocusReturned;
   expect(document.activeElement).toBe(clientName);
+  await click([...container.querySelectorAll('[data-client-id="'+first.client_id+'"] .ss-framework-button')].find(node=>node.textContent==='SOC 2'));
   const progress=container.querySelector('[aria-label^="'+first.name+' SOC 2 implementation history;"]');
   progress.focus();await click(progress.querySelector('.ep-framework'));
   expect(mockNavigate).toHaveBeenCalledTimes(1);

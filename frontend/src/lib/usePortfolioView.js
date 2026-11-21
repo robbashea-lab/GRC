@@ -4,7 +4,7 @@ import {PREVIEW_MODE} from './api';
 // Preferences survive refresh; actor, workspace mode and authorized scope isolate them.
 const views = new WeakMap();
 const empty = () => ({search: '', mine: false, framework: 'all', sort: 'name', chartView: 'line',
-  enhancedSort: 'attention', includeArchived: false, table: {filters: {}}, scroll: 0});
+  enhancedSort: 'attention', enhancedPrograms: {}, includeArchived: false, table: {filters: {}}, scroll: 0});
 
 function readPreferences(key) {
   if (!key) return empty();
@@ -16,19 +16,21 @@ function readPreferences(key) {
       sort: ['name','name-desc','change-desc','progress','progress-desc','activity-desc'].includes(saved.sort) ? saved.sort
         : ({change:'change-desc',activity:'activity-desc'})[saved.sort] || 'name',
       enhancedSort: ['attention','name','next'].includes(saved.enhancedSort) ? saved.enhancedSort : 'attention',
+      enhancedPrograms: saved.enhancedPrograms && typeof saved.enhancedPrograms === 'object' && !Array.isArray(saved.enhancedPrograms)
+        ? Object.fromEntries(Object.entries(saved.enhancedPrograms).filter(([clientId, programId]) => clientId && typeof programId === 'string' && programId)) : {},
       chartView: ['line','mix'].includes(saved.chartView) ? saved.chartView : 'line'};
   } catch { return empty(); }
 }
 
 function rememberPreferences(entry) {
   if (!entry.key) return;
-  const {search,mine,framework,sort,chartView,enhancedSort} = entry.view;
-  try { sessionStorage.setItem(entry.key,JSON.stringify({search,mine,framework,sort,chartView,enhancedSort})); }
+  const {search,mine,framework,sort,chartView,enhancedSort,enhancedPrograms} = entry.view;
+  try { sessionStorage.setItem(entry.key,JSON.stringify({search,mine,framework,sort,chartView,enhancedSort,enhancedPrograms})); }
   catch { /* Preferences are optional; assessment persistence uses its own error handling. */ }
 }
 
 export function usePortfolioView(user) {
-  const scope = JSON.stringify([!!PREVIEW_MODE,user.role, !!user.all_clients, [...(user.client_ids || [])].sort()]);
+  const scope = JSON.stringify([!!PREVIEW_MODE,user.workspace_mode,user.role, !!user.all_clients, [...(user.client_ids || [])].sort()]);
   let entry = views.get(user);
   if (!entry || entry.scope !== scope) {
     const key = user.user_id ? 'grc:portfolio-view:' + JSON.stringify([user.user_id,scope]) : null;

@@ -184,7 +184,7 @@ test('unproven native onboarding remains unavailable in the real KPI control',as
   expect(kpi.textContent).toContain('Onboarding state unavailable');expect(api.post).not.toHaveBeenCalled();expect(api.patch).not.toHaveBeenCalled();
 });
 
-test.each(['demo', 'standard'])('Portfolio keeps Client, Programs and GRC lead columns plus an overview action for every framework in %s mode', async mode => {
+test.each(['demo', 'standard'])('Nordic Portfolio exposes seven status columns and one selected actual framework in %s mode', async mode => {
   mockAuth = {user: {user_id: 'operator', role: 'platform_admin', workspace_mode: mode}, workspaceMode: mode};
   const futureClient = {...client, client_id: 'future_client', name: 'Future client', assigned_owner_id: null, grc_lead_id: null, grc_lead: null};
   const clients = [client, futureClient];
@@ -195,34 +195,35 @@ test.each(['demo', 'standard'])('Portfolio keeps Client, Programs and GRC lead c
     : {clients: clients.map(row => ({...row, metric_items: row.client_id === CID ? currentWork : {past_due: [], due_30d: [], due_31_90d: []}}))}}));
   await act(async () => root.render(<EnhancedPortfolioBoundary><p>Legacy Portfolio</p></EnhancedPortfolioBoundary>));
   const table = host.querySelector('[role="table"][aria-label="Client portfolio"]');
-  expect([...table.querySelectorAll('[role="columnheader"]')].map(node => node.textContent || node.getAttribute('aria-label'))).toEqual(['Client', 'Programs', 'GRC lead', 'Client overview']);
+  expect([...table.querySelectorAll('[role="columnheader"]')].map(node => node.textContent || node.getAttribute('aria-label'))).toEqual(['Client / framework', 'Implemented / addressed', 'Partial implementation', 'With gaps', 'Not assessed', 'Assessed', 'Open client']);
   const rows = [...table.querySelectorAll('[data-client-id]')];
   expect(rows).toHaveLength(2);
-  rows.forEach(row => expect(row.querySelectorAll(':scope > [role="cell"]')).toHaveLength(4));
+  rows.forEach(row => expect(row.querySelectorAll(':scope > [role="cell"]')).toHaveLength(7));
   const row = table.querySelector(`[data-client-id="${CID}"]`);
-  expect(row.querySelector('.ep-client').textContent).toContain('BrawndoBeverage');
+  expect(row.querySelector('.ep-client').textContent).toContain('Brawndo');
   expect(row.querySelector('.ep-avatar')).toBeTruthy();
-  expect([...row.querySelectorAll('.ep-framework')].map(node => node.textContent)).toEqual(frameworks);
-  row.querySelectorAll('.ep-program').forEach(tile => {
-    expect(tile.textContent).toContain('20.0%');
-    expect(tile.textContent).toContain('2/10');
-    expect(tile.querySelector('.gp-statusbar')).toBeTruthy();
-    expect(tile.querySelector('.ep-assessed').textContent).toBe('Assessed 4 of 10');
-    expect(tile.getAttribute('aria-label')).toContain('2 Implemented, 1 Partially implemented, 1 Not implemented, 6 Not assessed');
-  });
-  expect(row.querySelector('.ep-lead').textContent).toContain('Morgan Ellis');
-  expect(row.querySelector('.ep-lead > span').textContent).toBe('ME');
-  expect(row.querySelector(':scope > [role="cell"]:nth-child(4) .ep-preview').getAttribute('aria-label')).toBe('Preview Brawndo implementation');
-  expect(table.querySelector('[data-client-id="future_client"] .ep-lead').textContent).toContain('Unassigned');
-  expect(table.querySelector('[data-client-id="future_client"] .ep-programs').textContent).toContain('No program yet');
-  expect(table.textContent).not.toMatch(/Needs attention|Needs a lead|Insufficient history|Real native action|Nothing scheduled/);
+  const choices = [...row.querySelectorAll('.ss-framework-button')];
+  expect(choices.map(node => node.textContent)).toEqual(frameworks);
+  expect(choices.map(node => node.getAttribute('aria-pressed'))).toEqual(['true','false','false','false','false']);
+  expect(row.querySelectorAll('.ep-program')).toHaveLength(1);
+  expect(row.querySelector('.ep-progress').textContent).toBe('20.0%');
+  expect(row.querySelector('.ss-primary small').textContent).toBe('2 of 10 safeguards');
+  expect([...row.querySelectorAll('.ss-stat strong')].map(node => node.textContent)).toEqual(['1','1','6']);
+  expect([...row.querySelectorAll('.ss-stat > span')].map(node => node.textContent)).toEqual(['10.0%','10.0%','60.0%']);
+  expect(row.querySelector('.ep-assessed').textContent).toBe('40.0%4 of 10');
+  const description = row.querySelector('.ep-client .sr-only').textContent;
+  expect(description).toContain('Beverage; GRC lead: Morgan Ellis');
+  expect(description).toContain('1 overdue; oldest 3 days; Real native action');
+  expect(row.querySelector(':scope > [role="cell"]:nth-child(7) .ep-preview').getAttribute('aria-label')).toBe('Preview Brawndo implementation');
+  expect(table.querySelector('[data-client-id="future_client"] .ep-client .sr-only').textContent).toContain('GRC lead: Unassigned');
+  expect(table.querySelector('[data-client-id="future_client"] .no-prog').textContent).toContain('No program yet');
+  expect(table.querySelector('[data-client-id="future_client"] .ss-primary').textContent).toContain('Applicable scope unavailable');
   expect(table.querySelector('.ep-attention,.ep-trends,.ep-key-date')).toBeNull();
   expect(host.querySelectorAll('.pf-kstrip .kchip')).toHaveLength(4);
   expect([...host.querySelectorAll('.pf-kstrip .kl')].map(node => node.textContent)).toEqual(['Needs attention', 'Overdue items', 'Due in 30 days', 'Not started']);
   expect(host.querySelectorAll('.pf-kstrip b')[1].textContent).toBe('1');
   expect(host.querySelectorAll('.pf-kstrip b')[3].textContent).toBe('0');
   expect(host.querySelector('.toolbar').nextElementSibling.classList.contains('pf-kstrip')).toBe(true);
-  expect(row.querySelector('.cov-pchip.od').textContent).toBe('1 overdue · oldest 3 days');
   expect([...host.querySelector('select[aria-label="Sort clients"]').options].map(option=>option.value)).toEqual(['attention','name','next']);
   expect(api.post).not.toHaveBeenCalled(); expect(api.patch).not.toHaveBeenCalled();
 });
@@ -461,7 +462,7 @@ test.each(['demo','standard'])('standard Portfolio boundary renders an empty and
   expect(api.post).not.toHaveBeenCalled();expect(api.patch).not.toHaveBeenCalled();
 });
 
-test('every program tile region opens only its exact client/program preview and restores the native button',async()=>{
+test('each selected program metric opens only its exact client/program preview and restores the native button',async()=>{
   const otherClient={...client,client_id:'other_client',name:'Another client'};
   const soc={...program,program_id:CID+':soc-2',program_key:'soc-2',framework_key:'soc-2',program_label:'SOC 2',to:'/compliance/soc-2'};
   const otherProgram={...soc,client_id:otherClient.client_id,program_id:otherClient.client_id+':soc-2'};
@@ -469,10 +470,13 @@ test('every program tile region opens only its exact client/program preview and 
   api.get.mockImplementation(async (path,options={})=>({data:path.endsWith('/overview')?{as_of:AT,clients,programs}:path==='/clients/directory'?{clients:clients.map(row=>({...row,metric_items:{past_due:[],due_30d:[],due_31_90d:[]}}))}:{as_of:AT,current:position(),snapshots:[],forecast_snapshots:[],scope_changes:[],comparison:{comparable:false},client_id:options.params.client_id,program_key:options.params.program_key}}));
   await act(async()=>root.render(<EnhancedPortfolio user={{user_id:'u'}}/>));
   for(const selected of programs){
+    const row=host.querySelector('[data-client-id="'+selected.client_id+'"]');
+    const choice=[...row.querySelectorAll('.ss-framework-button')].find(node=>node.textContent===selected.program_label);
+    if(choice)await act(async()=>choice.click());
     const tile=host.querySelector('[data-client-id="'+selected.client_id+'"] button[aria-label^="'+clients.find(row=>row.client_id===selected.client_id).name+' '+selected.program_label+' implementation history;"]');
     expect(tile.tagName).toBe('BUTTON');expect(tile.type).toBe('button');expect(tile.getAttribute('aria-haspopup')).toBe('dialog');
     expect(tile.querySelector('button,a,input,select,textarea,div')).toBeNull();
-    for(const selector of ['.ep-framework','.ep-progress','.gp-statusbar','.ep-assessed',null]){
+    for(const selector of ['.ep-framework','.ep-progress','small',null]){
       tile.focus();
       await act(async()=> (selector?tile.querySelector(selector):tile).click());
       expect(document.querySelectorAll('[data-testid="enhanced-portfolio-history"]')).toHaveLength(1);
@@ -500,23 +504,35 @@ test('standard enhanced route preserves assessed zero, missing source and indepe
   const programs=cases.map(([key,current])=>({...program,program_id:CID+':'+key,program_key:key,program_label:key,current}));
   api.get.mockImplementation(async path=>({data:path.endsWith('/overview')?{as_of:AT,clients:[client],programs}:{clients:[{...client,metric_items:{past_due:[],due_30d:[],due_31_90d:[]}}]}}));
   await act(async()=>root.render(<EnhancedPortfolioBoundary><p>Legacy Portfolio</p></EnhancedPortfolioBoundary>));
-  const tile=key=>[...host.querySelectorAll('.ep-program')].find(node=>node.querySelector('.ep-framework').textContent===key);
+  const selectProgram=async key=>{
+    await act(async()=>[...host.querySelectorAll('.ss-framework-button')].find(node=>node.textContent===key).click());
+    return host.querySelector('.ep-program');
+  };
   expect(host.textContent).not.toContain('Legacy Portfolio');
-  expect(tile('assessed-zero').textContent).toContain('0.0%');
-  expect(tile('assessed-zero').textContent).toContain('Assessed 5 of 10');
+  let tile=await selectProgram('assessed-zero');
+  expect(tile.textContent).toContain('0.0%');
+  expect(tile.getAttribute('aria-label')).toContain('Assessed 5 of 10');
   for(const key of ['new','reset']){
-    expect(tile(key).textContent).toContain('0.0%');
-    expect(tile(key).textContent).toContain('Assessed 0 of 10');
+    tile=await selectProgram(key);
+    expect(tile.textContent).toContain('0.0%');
+    expect(tile.getAttribute('aria-label')).toContain('Assessed 0 of 10');
   }
-  expect(tile('empty-scope').querySelector('.ep-progress').textContent).not.toContain('%');
+  tile=await selectProgram('empty-scope');
+  expect(tile.querySelector('.ep-progress').textContent).not.toContain('%');
+  expect(tile.textContent).toContain('No applicable items');
+  expect(host.querySelector('.ep-assessed').textContent).toContain('No applicable items');
   for(const key of ['invalid','missing-native-source']){
-    expect(tile(key).textContent).toContain('Implementation unavailable');
-    expect(tile(key).textContent).not.toContain('0.0%');
-    expect(tile(key).textContent).not.toContain('Assessed 0 of 0');
-    expect(tile(key).getAttribute('aria-label')).toContain('Assessment unavailable');
+    tile=await selectProgram(key);
+    expect(tile.textContent).toContain('Applicable scope unavailable');
+    expect(tile.textContent).not.toContain('0.0%');
+    expect(tile.textContent).not.toContain('Assessed 0 of 0');
+    expect(tile.getAttribute('aria-label')).toContain('Assessment unavailable');
+    expect(host.querySelector('.ep-assessed').textContent).toContain('Scope unavailable');
   }
-  expect(tile('unverified-implemented').textContent).toContain('100.0%');
-  expect(host.querySelectorAll('.ep-program')).toHaveLength(7);
+  tile=await selectProgram('unverified-implemented');
+  expect(tile.textContent).toContain('100.0%');
+  expect(host.querySelectorAll('.ep-program')).toHaveLength(1);
+  expect(host.querySelectorAll('.ss-framework-button')).toHaveLength(7);
   expect(api.post).not.toHaveBeenCalled();expect(api.patch).not.toHaveBeenCalled();
 });
 
@@ -582,7 +598,8 @@ test.each(['selected program removed','client removed','client archived'])('refr
   let clients=[client],programs=[program,soc];
   api.get.mockImplementation(async(path,options={})=>({data:path.endsWith('/overview')?{as_of:AT,clients,programs}:path==='/clients/directory'?{clients:clients.map(row=>({...row,metric_items:{past_due:[],due_30d:[],due_31_90d:[]}}))}:{as_of:AT,current:position(),snapshots:[],forecast_snapshots:[],scope_changes:[],comparison:{comparable:false},client_id:CID,program_key:options.params.program_key}}));
   await act(async()=>root.render(<EnhancedPortfolio user={{user_id:'u'}}/>));
-  const tile=[...host.querySelectorAll('.ep-program')].find(node=>node.querySelector('.ep-framework').textContent==='SOC 2');
+  await act(async()=>[...host.querySelectorAll('.ss-framework-button')].find(node=>node.textContent==='SOC 2').click());
+  const tile=host.querySelector('.ep-program');
   tile.focus();await act(async()=>tile.click());
   expect(document.querySelector('[data-testid="enhanced-portfolio-history"]')).toBeTruthy();
   api.get.mockClear();
@@ -592,7 +609,7 @@ test.each(['selected program removed','client removed','client archived'])('refr
   await act(async()=>{window.dispatchEvent(new Event(PORTFOLIO_CHANGED));await new Promise(resolve=>setTimeout(resolve,5));});
   await act(async()=>new Promise(resolve=>setTimeout(resolve,0)));
   expect(document.querySelector('[data-testid="enhanced-portfolio-history"]')).toBeNull();
-  expect(document.activeElement).toBe(change==='client archived'?tile:host.querySelector('[aria-label="Search clients"]'));
+  expect(document.activeElement).toBe(change==='client removed'?host.querySelector('[aria-label="Search clients"]'):tile);
   expect(api.get.mock.calls.filter(([path])=>path.endsWith('/history'))).toHaveLength(0);
   clients=[client];programs=[program,soc];
   await act(async()=>{window.dispatchEvent(new Event(PORTFOLIO_CHANGED));await new Promise(resolve=>setTimeout(resolve,5));});
@@ -833,4 +850,45 @@ test('pending native work coverage stays loading rather than showing compact fal
   expect(workDisclosure('Overdue').textContent).toContain('1');
   expect(workDisclosure('Overdue').getAttribute('aria-expanded')).toBe('true');
   expect(workDetails(workDisclosure('Overdue')).hidden).toBe(false);
+});
+
+
+test('switching each client framework reconciles actual counts, history, filters and By lead without writes', async()=>{
+  const other={...client,client_id:'other-native',name:'Other native',metric_items:{past_due:[],due_30d:[],due_31_90d:[]}};
+  const socCurrent={...position(3),denominator:20,included_counts:[
+    {key:'addressed',label:'Addressed',count:3},{key:'in_progress',label:'In progress',count:4},
+    {key:'needs_attention',label:'With gaps',count:5},{key:'not_assessed',label:'Not assessed',count:8}
+  ],scope:{framework_key:'soc-2',catalog_version:'2017',configuration:{}}};
+  const soc={...program,program_id:CID+':soc-2',program_key:'soc-2',framework_key:'soc-2',program_label:'SOC 2',to:'/compliance/soc-2',current:socCurrent};
+  const otherProgram={...program,client_id:other.client_id,program_id:other.client_id+':cis-ig1'};
+  const programs=[program,soc,otherProgram],clients=[client,other];
+  api.get.mockImplementation(async(path,options={})=>{
+    const selected=programs.find(value=>value.client_id===options.params?.client_id&&value.program_key===options.params?.program_key);
+    return {data:path.endsWith('/overview')?{as_of:AT,clients,programs}:path==='/clients/directory'?{clients:clients.map(row=>({...row,metric_items:{past_due:[],due_30d:[],due_31_90d:[]}}))}:{as_of:AT,current:selected.current,snapshots:[],forecast_snapshots:[],scope_changes:[],comparison:{comparable:false},client_id:selected.client_id,program_key:selected.program_key}};
+  });
+  await act(async()=>root.render(<EnhancedPortfolio user={mockAuth.user}/>));
+  const row=()=>host.querySelector('[data-client-id="'+CID+'"]');
+  await act(async()=>[...row().querySelectorAll('.ss-framework-button')].find(node=>node.textContent==='SOC 2').click());
+  expect(row().querySelector('.ep-progress').textContent).toBe('15.0%');
+  expect(row().querySelector('.ss-primary small').textContent).toBe('3 of 20 criteria');
+  expect([...row().querySelectorAll('.ss-stat strong')].map(node=>node.textContent)).toEqual(['4','5','8']);
+  expect([...row().querySelectorAll('.ss-stat > span')].map(node=>node.textContent)).toEqual(['20.0%','25.0%','40.0%']);
+  expect(row().querySelector('.ep-assessed').textContent).toBe('60.0%12 of 20');
+  expect(host.querySelector('[data-client-id="other-native"] .ep-progress').textContent).toBe('20.0%');
+  await act(async()=>row().querySelector('.ep-preview').click());
+  expect(api.get.mock.calls.filter(([path])=>path.endsWith('/history')).slice(-4).every(([,options])=>options.params.client_id===CID&&options.params.program_key==='soc-2')).toBe(true);
+  await closedPreview();
+  await click('By lead');
+  await act(async()=>[...host.querySelectorAll('.ep-tags button')].find(node=>node.textContent.endsWith('Brawndo')).click());
+  expect(document.querySelector('[aria-label="Select program"] [aria-pressed="true"]').textContent).toBe('SOC 2');
+  await closedPreview();await click('Clients');
+  const filter=host.querySelector('select[aria-label="Framework"]');
+  await act(async()=>{filter.value='cis-ig1';filter.dispatchEvent(new Event('change',{bubbles:true}));});
+  expect(row().querySelector('.ep-progress').textContent).toBe('20.0%');
+  expect(row().querySelector('.ss-framework-button')).toBeNull();
+  await act(async()=>{filter.value='';filter.dispatchEvent(new Event('change',{bubbles:true}));});
+  expect(row().querySelector('.ep-progress').textContent).toBe('15.0%');
+  await act(async()=>root.render(<EnhancedPortfolio user={{...mockAuth.user}}/>));
+  expect(row().querySelector('.ep-progress').textContent).toBe('15.0%');
+  expect(api.post).not.toHaveBeenCalled();expect(api.patch).not.toHaveBeenCalled();
 });

@@ -173,7 +173,7 @@ async def ensure_native_reviews(db,kind,doc,user,now):
         await db[kind].update_one({field:identity,'_governance_lock.token':token},{'$unset':{'_governance_lock':''}})
 
 
-def register(router, s, *, ai_model, create_ai, validate_ai, client_scope, metadata_scope, project_ai):
+def register(router, s, *, ai_model, create_ai, validate_ai, client_scope, metadata_scope, project_ai, lease_ai):
     async def authorize(cid,user):
         await client_scope(cid,user,True,True)
         await metadata_scope(cid,{'environment'})
@@ -296,20 +296,29 @@ def register(router, s, *, ai_model, create_ai, validate_ai, client_scope, metad
             risk = await child('risk','risks',risk_payload,lambda cid:s._create_entity('risks',risk_payload,user,cid,creation_metadata={**metadata,'date_identified':anchor}))
 
             async def initial_review(cid):
-                existing = await s.db.reviews.find_one({'_id':'create:'+cid},{'_id':0})
-                if existing is None:
-                    unrelated = await s.db.reviews.find_one({'ai_system_id':created['ai_system_id'],'ai_review_purpose':'periodic','status':{'$nin':['completed','cancelled']}})
-                    if unrelated: raise HTTPException(409,'A different periodic AI Review already exists')
-                    review = {'review_id':s._uid('rev'),'client_id':body.client_id,'ai_system_id':created['ai_system_id'],
-                        'ai_review_purpose':'periodic','title':f"AI Governance Review — {created['display_id']} — {created['name']}",
-                        'review_type':'ai_governance','owner_id':ai.owner_id,'due_date':annual,'recurrence':'annual',
-                        'status':'upcoming','created_at':anchor,'updated_at':anchor,'created_by':user['user_id'],
-                        **metadata,'_ai_onboarding_initial_version':anchor}
-                    review.update(review_occurrences.schedule(review))
-                    review['current_occurrence_id'] = review_occurrences.occurrence_id(review)
-                    existing = await create_requests.insert_primary(s.db,'reviews',review,cid)
-                await s.audit(user,'AI Governance Review scheduled','ai_system',created['ai_system_id'],body.client_id,meta={'review_id':existing['review_id']})
-                return review_occurrences.view(existing)
+                async with lease_ai(s.db,created['ai_system_id']):
+                    await authorize(body.client_id,user)
+                    current=await s._authorized_parent('ai_systems',created['ai_system_id'],user,True)
+                    if current['client_id']!=body.client_id:
+                        raise HTTPException(403,'Forbidden')
+                    if current.get('status') in ('retired','suspended'):
+                        raise HTTPException(409,'Inactive AI cannot start periodic reviews')
+                    if current.get('_ai_onboarding_command')!=identity or current.get('updated_at')!=(current.get('_ai_onboarding_linked_version') or current.get('_ai_onboarding_initial_version')):
+                        raise HTTPException(409,'AI record changed before its onboarding Review; no edit was overwritten')
+                    existing = await s.db.reviews.find_one({'_id':'create:'+cid},{'_id':0})
+                    if existing is None:
+                        unrelated = await s.db.reviews.find_one({'client_id':body.client_id,'ai_system_id':created['ai_system_id'],'ai_review_purpose':'periodic','status':{'$nin':['completed','cancelled']}})
+                        if unrelated: raise HTTPException(409,'A different periodic AI Review already exists')
+                        review = {'review_id':s._uid('rev'),'client_id':body.client_id,'ai_system_id':created['ai_system_id'],
+                            'ai_review_purpose':'periodic','title':f"AI Governance Review — {created['display_id']} — {created['name']}",
+                            'review_type':'ai_governance','owner_id':ai.owner_id,'due_date':annual,'recurrence':'annual',
+                            'status':'upcoming','created_at':anchor,'updated_at':anchor,'created_by':user['user_id'],
+                            **metadata,'_ai_onboarding_initial_version':anchor}
+                        review.update(review_occurrences.schedule(review))
+                        review['current_occurrence_id'] = review_occurrences.occurrence_id(review)
+                        existing = await create_requests.insert_primary(s.db,'reviews',review,cid)
+                    await s.audit(user,'AI Governance Review scheduled','ai_system',created['ai_system_id'],body.client_id,meta={'review_id':existing['review_id']})
+                    return review_occurrences.view(existing)
 
             review = await child('review','reviews',{'ai_system_id':created['ai_system_id'],'due_date':annual},initial_review)
             await authorize(body.client_id,user)

@@ -8,7 +8,7 @@ function Field({label,children}){return <label className="aic-field"><span>{labe
 function Chips({label,values,selected=[],onChange}){return <div className="aic-field"><span>{label}</span><div className="aic-chips" role="group" aria-label={label}>{values.map(value=><button key={value} type="button" className="baai-toggle" aria-pressed={selected.includes(value)} onClick={()=>onChange(selected.includes(value)?selected.filter(item=>item!==value):[...selected,value])}>{value}</button>)}</div></div>;}
 
 // The surrounding native drawer owns saves, permissions, concurrency and nested record forms.
-export default function BrawndoAIConceptFields({form,put,current,id,template,screen,editable,busy,admin,dirty,person,decision,setDecision,onDecision,risks=[],vendors=[],relatedRisks=[],onOpenRisk,onCreateRisk,link,setLink,onLinkRisk,onSave,governanceRecords}){
+export default function BrawndoAIConceptFields({form,put,current,id,template,screen,editable,busy,admin,dirty,person,decision,setDecision,onDecision,risks=[],vendors=[],relatedRisks=[],onOpenRisk,onCreateRisk,link,setLink,onLinkRisk,onSave,governanceRecords,nextReview}){
   const [touched,setTouched]=useState({});
   const openSuggestions=Object.keys(template?.sug||{}).filter(key=>!touched[key]);
   const unanswered=catalog.questions.filter(question=>typeof form.screening?.[question.key]!=='boolean').length;
@@ -41,6 +41,7 @@ export default function BrawndoAIConceptFields({form,put,current,id,template,scr
       <div className="aic-result" role="status"><span className={`baai-tier baai-tier-${screen.risk_tier||'none'}`}><i aria-hidden="true"/><b>{titleCase(screen.risk_tier)}</b></span><span>{screen.risk_tier?`Screening tier ${titleCase(screen.risk_tier)}`:'Screening incomplete'}<small>{screen.risk_tier?(reasons.slice(0,3).join(' · ')||'No screening answer raises attention'):`${unanswered} screening questions unanswered`}</small></span></div>
     </>}
     </fieldset></form>
+    {id&&<dl className="aic-fields"><div className="aic-field"><dt>Last Review</dt><dd>{current?.last_review?.slice(0,10)||'Never reviewed'}</dd></div><div className="aic-field"><dt>Next Review</dt><dd>{nextReview||current?.next_review?.slice(0,10)||'Not scheduled'}</dd></div></dl>}
     {!!current?.alerts?.length&&<section className="aic-block"><h3>Attention · {current.alerts.length}</h3><ul className="aic-alerts">{current.alerts.map(alert=><li key={alert.key}>{alert.label}</li>)}</ul><p className="aic-note">Recommended governance practice.</p></section>}
     <section className="aic-block"><h3>Risk register</h3><p>AI use always carries some risk, such as data exposure, inaccurate output or vendor dependency. Tie this system to the risk register so the risk is assessed and reviewed with the others.</p>
       {relatedRisks.map(risk=><div key={risk.risk_id}><button className="aic-link" type="button" onClick={()=>onOpenRisk(risk)}>{[risk.display_id,risk.title||risk.name].filter(Boolean).join(" · ")}</button>{[...new Set((current?.related_links||[]).filter(relation=>relation.kind==='risks'&&relation.id===risk.risk_id&&relation.rationale).map(relation=>relation.rationale))].map(note=><p key={note} className="aic-note">{note}</p>)}</div>)}

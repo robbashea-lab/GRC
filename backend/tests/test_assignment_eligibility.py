@@ -56,6 +56,20 @@ class AssignmentEligibilityTests(unittest.IsolatedAsyncioTestCase):
         for params in ({'limit': 101}, {'offset': -1}, {'search': 'x'*101}):
             self.assertEqual((await self.client.get('/api/clients/a/assignees', params=params)).status_code, 422)
 
+    async def test_global_provider_candidates_and_assignment_use_the_same_authoritative_scope(self):
+        await server.db.users.update_one({'user_id': 'global'}, {'$set': {'all_clients': True}})
+        candidates = await self.client.get('/api/clients/a/assignees')
+        self.assertEqual(candidates.status_code, 200, candidates.text)
+        self.assertIn('global', {row['user_id'] for row in candidates.json()['items']})
+        for kind, fields in FIELDS.items():
+            for field in fields:
+                with self.subTest(kind=kind, field=field):
+                    await validate(server.db, kind, {'client_id': 'a', field: 'global'}, server._can_access_client)
+        await server.db.users.update_one({'user_id': 'global'}, {'$set': {'all_clients': False}})
+        with self.assertRaises(HTTPException) as denied:
+            await validate(server.db, 'reviews', {'client_id': 'a', 'owner_id': 'global'}, server._can_access_client)
+        self.assertEqual(denied.exception.status_code, 422)
+
     async def test_all_operational_fields_share_contract(self):
         for kind, fields in FIELDS.items():
             for field in fields:

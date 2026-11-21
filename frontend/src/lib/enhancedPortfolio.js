@@ -1,4 +1,4 @@
-import { assignedToUser, periodChange } from './portfolioProgress';
+import { assignedToUser, periodChange, programIdentity } from './portfolioProgress';
 import {orderNamedDemoClients} from './demoClientOrder';
 import { calendarDay, managementDay } from './managementDates';
 import {recordedOnboardingState} from './clientProfile';
@@ -16,6 +16,11 @@ export function onboardingState(client) {
 export function enhancedPortfolioEligible({user, pathname, authLoading, authError}) {
   return ENHANCED_PORTFOLIO_ENABLED && pathname === '/clients' && !!user?.user_id
     && ['platform_admin', 'super_admin'].includes(user.role) && !authLoading && !authError;
+}
+// Resolve only within the current authorized client and optional framework filter.
+export function selectedPortfolioProgram(programs, clientId, selectedId, framework = '') {
+  const available = programs.filter(program => program.client_id === clientId && (!framework || program.program_key === framework));
+  return available.find(program => programIdentity(program) === selectedId) || available[0] || null;
 }
 export function operationalItems(client, asOf) {
   const today = managementDay(asOf);

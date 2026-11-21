@@ -3,8 +3,8 @@ import {previewAdapter} from './commandTestAdapter';
 import {catalog,aiScreening} from '../lib/aiGovernance';
 import {currentReviewCompletion} from '../testUtils/r4ReviewFixture';
 const api=axios.create({adapter:previewAdapter});
-let cid;
-beforeEach(async()=>{sessionStorage.clear();localStorage.clear();await api.post('/demo/enter');cid=(await api.post('/clients',{name:'AI governance QA'})).data.client_id;});
+let cid,actor;
+beforeEach(async()=>{sessionStorage.clear();localStorage.clear();actor=(await api.post('/demo/enter')).data.user;cid=(await api.post('/clients',{name:'AI governance QA'})).data.client_id;});
 const create=async extra=>(await api.post('/ai_systems',{client_id:cid,name:'Microsoft Copilot',status:'active',provider:'Microsoft',...extra})).data;
 const rows=async()=>(await api.get('/ai_systems',{params:{client_id:cid}})).data;
 const saved=async id=>{
@@ -28,8 +28,8 @@ test('tenant sequential immutable identifiers and explicit screening',async()=>{
 
 test('same Review, occurrence history, Finding, Action and evidence; retirement preserves history',async()=>{
   const ai=await create(),base='/ai_systems/'+ai.ai_system_id;
-  const review=(await api.post(base+'/reviews',{due_date:'2026-09-30',recurrence:'annual'})).data;
-  expect((await api.post(base+'/reviews',{due_date:'2026-09-30',recurrence:'annual'})).data.review_id).toBe(review.review_id);
+  const review=(await api.post(base+'/reviews',{due_date:'2026-09-30',recurrence:'annual',owner_id:actor.user_id,expected_updated_at:ai.updated_at??null})).data;
+  expect((await api.post(base+'/reviews',{due_date:'2026-09-30',recurrence:'annual',owner_id:actor.user_id,expected_updated_at:ai.updated_at??null})).data.review_id).toBe(review.review_id);
   const action={occurrence_id:review.current_occurrence_id};
   await api.post('/reviews/'+review.review_id+'/start',action);
   const finding=(await api.post('/reviews/'+review.review_id+'/create-finding',{...action,title:'Human review is not consistently documented',remediation_title:'Implement human approval'})).data;
@@ -79,4 +79,21 @@ test('intake creates no requirements, records or reviews and clears stale Yes in
   expect((await api.get('/requirements',{params:{client_id:cid}})).data).toHaveLength(0);
   await api.post('/ai-intake',{client_id:cid,usage:'no',indicators:['HR / Employment']});
   expect((await api.get('/ai-intake',{params:{client_id:cid}})).data).toMatchObject({usage:'no',indicators:[]});
+});
+
+
+test('Nordic AI scheduling requires explicit owner, date, cadence and loaded revision before one canonical save',async()=>{
+  const ai=await create({status:'draft'}),path='/ai_systems/'+ai.ai_system_id+'/reviews';
+  const body={due_date:'2028-02-29',recurrence:'quarterly',owner_id:actor.user_id,expected_updated_at:ai.updated_at};
+  const before=(await rows()).find(row=>row.ai_system_id===ai.ai_system_id);
+  for(const invalid of [{...body,expected_updated_at:undefined},{...body,expected_updated_at:'stale'},{...body,owner_id:null},{...body,owner_id:'foreign-user'},{...body,recurrence:''},{...body,due_date:'2027-02-29'}]){
+    await expect(api.post(path,invalid)).rejects.toThrow();
+    expect((await api.get('/reviews',{params:{client_id:cid}})).data).toHaveLength(0);
+    expect((await rows()).find(row=>row.ai_system_id===ai.ai_system_id)).toEqual(before);
+  }
+  const review=(await api.post(path,body)).data;
+  expect(review.owner_id).toBe(actor.user_id);
+  expect((await api.post(path,body)).data.review_id).toBe(review.review_id);
+  expect((await api.get('/reviews',{params:{client_id:cid}})).data).toHaveLength(1);
+  expect((await rows()).find(row=>row.ai_system_id===ai.ai_system_id)).toMatchObject({status:'draft',approval_status:'pending_assessment',next_review:expect.stringContaining('2028-02-29')});
 });

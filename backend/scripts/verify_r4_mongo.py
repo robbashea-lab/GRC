@@ -1,4 +1,4 @@
-"""Run every R4 native regression class with disposable, real loopback MongoDB.
+"""Run every R4 and Nordic native regression class with disposable, real loopback MongoDB.
 
 No default/environment connection, hosted database, test filter or shortened gate.
 Every storage test gets a new guarded database and removes only that database.
@@ -30,9 +30,9 @@ def main():
     from suite_registry import classified_suites
     classified = classified_suites(backend / 'tests')
     audited = sorted({path for paths in classified.values() for path in paths
-                      if path.name.startswith('test_r4_') and path.suffix == '.py'})
+                      if path.name.startswith(('test_r4_', 'test_nordic_')) and path.suffix == '.py'})
     if not audited:
-        raise ValueError('No classified R4 test modules; refusing an empty qualification')
+        raise ValueError('No classified native R4/Nordic test modules; refusing an empty qualification')
     import test_client_dashboard_sources as harness
     import routes.onboarding as onboarding
     import routes.portfolio as portfolio
@@ -77,7 +77,7 @@ def main():
         module_name = '.'.join(path.relative_to(backend / 'tests').with_suffix('').parts)
         module = importlib.import_module(module_name)
         if Path(module.__file__).resolve() != path.resolve():
-            raise ValueError('R4 test import does not match its classified source: ' + module_name)
+            raise ValueError('Native test import does not match its classified source: ' + module_name)
         module_cases = 0
         classes = []
         seen = set()
@@ -97,9 +97,9 @@ def main():
             module_cases += count
             classes.append(f'{name}: {count} ({"Mongo storage" if storage else "pure rules/format"})')
         if not module_cases:
-            raise ValueError('Classified R4 module has no module-local unittest cases: ' + path.name)
+            raise ValueError('Classified native module has no module-local unittest cases: ' + path.name)
         inventory.append((path.name, module_cases, classes))
-    print(f'R4 audited inventory: {len(inventory)} modules, {suite.countTestCases()} cases', flush=True)
+    print(f'Native R4/Nordic audited inventory: {len(inventory)} modules, {suite.countTestCases()} cases', flush=True)
     for name, count, classes in inventory:
         print(f'  {name}: {count}; ' + '; '.join(classes), flush=True)
     result = unittest.TextTestRunner(verbosity=2).run(suite)

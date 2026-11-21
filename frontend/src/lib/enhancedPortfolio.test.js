@@ -1,4 +1,4 @@
-import { enhancedPortfolioEligible, operationalItems, clientAttention, portfolioKpiValue, filterPortfolio, onboardingState } from './enhancedPortfolio';
+import { enhancedPortfolioEligible, operationalItems, clientAttention, portfolioKpiValue, filterPortfolio, onboardingState, selectedPortfolioProgram } from './enhancedPortfolio';
 const asOf = '2026-10-20T12:00:00Z';
 const gate = () => ({
   preview: true,
@@ -208,4 +208,21 @@ test.each(['name', 'next'])('named Demo Portfolio keeps the existing normal-mode
   const standard = {trustedDemo: false, workspaceMode: 'standard', user: {user_id: 'lead1', workspace_mode: 'standard'}};
   expect(filterPortfolio(namedDemoClients(), [], state({sort}), 'lead1', asOf, true, standard)
     .map(row => row.client_id)).toEqual(explicitDemoOrder[sort]);
+});
+
+
+test('Nordic selection uses stable program identity only inside authorized client and filter scope', () => {
+  const programs=[
+    {client_id:'one',program_id:'one:cis',program_key:'cis',program_label:'Same title'},
+    {client_id:'one',program_id:'one:soc',program_key:'soc',program_label:'Same title'},
+    {client_id:'two',program_id:'two:soc',program_key:'soc',program_label:'Same title'}
+  ];
+  const before=JSON.stringify(programs);
+  expect(selectedPortfolioProgram(programs,'one','one:soc')).toBe(programs[1]);
+  expect(selectedPortfolioProgram(programs,'one','two:soc')).toBe(programs[0]);
+  expect(selectedPortfolioProgram(programs,'one','one:soc','cis')).toBe(programs[0]);
+  expect(selectedPortfolioProgram(programs,'two','one:cis','soc')).toBe(programs[2]);
+  expect(selectedPortfolioProgram(programs,'new','one:cis')).toBeNull();
+  expect(selectedPortfolioProgram(programs,'one','one:cis','not-enabled')).toBeNull();
+  expect(JSON.stringify(programs)).toBe(before);
 });

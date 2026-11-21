@@ -1,11 +1,17 @@
 import {useId, useState} from 'react';
 import {Textarea} from './ui/textarea';
+import {useAssessmentClientContext} from './AssessmentClientContext';
+import {configuredAssessmentTools} from '@/lib/assessmentClientContext';
 
 const OTHER = '__other__';
 
 export default function AssessmentToolField({value = '', onChange, disabled = false,
   label = 'Tool or location', descriptionId, options = [], manualOnly = false}) {
   const fieldId = useId();
+  const context=useAssessmentClientContext();
+  const configured=manualOnly?[]:configuredAssessmentTools(context?.services?.data).filter(tool=>!tool.retired)
+    .map(tool=>({id:tool.tool_id,label:tool.name,scopeLimit:'Configured for this client. Confirm actual use and coverage.'}));
+  options=[...new Map([...options,...configured].map(option=>[option.label,option])).values()];
   const answer = typeof value === 'string' ? value : '';
   const selected = options.find(option => option.label === answer);
   const unlisted = answer !== '' && !selected && answer !== 'Not sure';

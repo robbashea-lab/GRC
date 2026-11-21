@@ -22,6 +22,7 @@ from starlette.concurrency import run_in_threadpool
 import authorization
 import create_requests
 import framework_reports
+import framework_policy_links
 from framework_catalog import CATALOGS
 from grc_rules import assessed_risk, is_open
 import review_occurrences
@@ -45,7 +46,7 @@ FIELDS = {
                 'criticality_provisional', 'criticality_confirmed_at', 'criticality_confirmed_by', 'source_services',
                 'assurance_status', 'assurance_records', 'assurance_required', 'assurance_window_days', 'next_review', 'last_review',
                 'contract_renewal', 'contract_expiration', 'contract_end', 'review_frequency'),
-    'policies': ('policy_id', 'title', 'status', 'version', 'owner_id', 'baseline_key',
+    'policies': ('policy_id', 'title', 'status', 'version', 'owner_id', 'baseline_key', 'framework_assessment_id',
                  'approver_id', 'approved_at', 'approval_history', 'last_reviewed_at', 'next_review_date'),
     'reviews': ('review_id', 'title', 'status', 'due_date', 'owner_id', 'reviewer_id',
                 'recurrence', 'custom_recurrence_days', 'schedule_anchor', 'recurrence_due_date',
@@ -122,7 +123,7 @@ async def read_operational(s, cid, key, actor, session=None):
             assert_settled(row)
         result[kind] = sorted(rows, key=lambda row: str(row.get(kind[:-1] + '_id') or row.get('policy_id') or row))
     owners = await s.db.framework_assessments.find({'client_id': cid, 'framework_key': key},
-        framework_reports.projection(('framework_assessment_id', 'definition_id', 'owner_id', 'related_links', 'last_saved', 'updated_at', '_r4_context_pending')),
+        framework_reports.projection(('framework_assessment_id', 'definition_id', 'framework_key', 'client_id', 'owner_id', 'related_links', 'policy_link_ids', 'last_saved', 'updated_at', '_r4_context_pending')),
         **kwargs).to_list(10001)
     if len(owners) > 10000:
         raise HTTPException(413, 'Assessment ownership exceeds the supported report size')
@@ -155,9 +156,16 @@ def section(title, columns, rows):
     return {'title': title, 'columns': columns, 'rows': [[scalar(cell) for cell in row] for row in rows]}
 
 
-def policy_alignment(policy, key):
-    return [ident for mapping in CATALOGS[key].get('policy_mappings', [])
-            if mapping['policy_key'] == policy.get('baseline_key') for ident in mapping['safeguards']]
+def policy_alignment(policy, key, assessments=()):
+    identifiers=list(dict.fromkeys(ident for mapping in CATALOGS[key].get('policy_mappings', [])
+                                   if mapping['policy_key']==policy.get('baseline_key') for ident in mapping['safeguards']))
+    for row in assessments:
+        if row.get('framework_key')!=key:continue
+        if framework_policy_links.supports(row,policy):
+            if row['definition_id'] not in identifiers:identifiers.append(row['definition_id'])
+        elif row['definition_id'] in identifiers:identifiers.remove(row['definition_id'])
+    return identifiers
+
 
 
 def linked_work(row, data, key):
@@ -269,7 +277,7 @@ def build_preview(snapshot, operational, report_type, actor):
         if key == 'iso-27001':
             sections = [section(title, ['Control', 'Title', 'Applicability', 'Justification', 'Status', 'Linked policy'],
                 [[row['id'], row['title'], row['soa_applicability'], row['soa_justification'], row['status_label'],
-                  '; '.join(policy['title'] for policy in policies if row['id'] in policy_alignment(policy, key)) or None]
+                  '; '.join(policy['title'] for policy in policies if row['id'] in policy_alignment(policy, key, data['assessment_owners'])) or None]
                  for row in assessments if row['specification'] == 'annex_control'])]
         elif key == 'soc-2':
             owners = {row['framework_assessment_id']: row.get('owner_id') for row in data['assessment_owners']}
@@ -301,7 +309,7 @@ def build_preview(snapshot, operational, report_type, actor):
     else:
         sections = [section(title, ['Policy', 'Status', 'Version', 'Owner', program['name'] + ' alignment'],
             [[row['title'], row.get('status'), row.get('version'), person(row.get('owner_id')),
-              ', '.join(policy_alignment(row, key)) or None] for row in policies])]
+              ', '.join(policy_alignment(row, key, data['assessment_owners'])) or None] for row in policies])]
     return {'header': header, 'stats': stats, 'sections': sections, 'allowed_formats': list(formats(key, report_type)), 'provenance': {
         'source_hash': digest([snapshot['source_hash'], operational['source_hash']]),
         'implementation_position': position,

@@ -180,10 +180,12 @@ test('all exact-pilot required context reads share the native abort boundary and
   const pending = [];
   api.get.mockImplementation((path, config) => new Promise(resolve => pending.push({path, config, resolve})));
   await render();
-  expect(pending.map(item => item.path).sort()).toEqual(requiredPaths().sort());
-  const signal = pending[0].config.signal;
+  expect(pending.map(item => item.path).sort()).toEqual([...requiredPaths(), servicePath()].sort());
+  const parentPending = pending.filter(item => item.path !== servicePath());
+  expect(parentPending.map(item => item.path).sort()).toEqual(requiredPaths().sort());
+  const signal = parentPending[0].config.signal;
   expect(signal.aborted).toBe(false);
-  expect(pending.every(item => item.config.signal === signal)).toBe(true);
+  expect(parentPending.every(item => item.config.signal === signal)).toBe(true);
   expect(surface().querySelector('[aria-label="Current implementation"]').disabled).toBe(true);
   await act(async () => pending.forEach(item => item.resolve({data: copy(response(item.path))})));
   expect(surface().querySelector('[aria-label="Current implementation"]').disabled).toBe(false);
@@ -329,7 +331,7 @@ test.each(['IG2', 'unselected', 'unconfigured', 'current identity mismatch'])(
     await render();
     expect(readPaths()).toEqual(fallbackPaths());
     expect(pending.map(item => item.path)).toEqual(detailPaths());
-    const signal = api.get.mock.calls[0][1].signal;
+    const signal = parentReads()[0][1].signal;
     expect(parentReads().every(([, config]) => config.signal === signal)).toBe(true);
     expect(signal.aborted).toBe(false);
     expect(mockGuideProps).toBeNull();
@@ -360,7 +362,7 @@ test.each(['contacts', 'comments', 'activity'])('a restored %s detail read failu
     : Promise.resolve({data: copy(response(path))}));
   await render();
   expect(readPaths()).toEqual(fallbackPaths());
-  const signal = api.get.mock.calls[0][1].signal;
+  const signal = parentReads()[0][1].signal;
   expect(parentReads().every(([, config]) => config.signal === signal)).toBe(true);
   expect(surface().querySelector('[role="alert"]').textContent).toContain('Restored ' + kind + ' unavailable.');
   expect(surface().querySelector('[aria-label="Current implementation"]').disabled).toBe(true);
@@ -375,7 +377,7 @@ test('current rollout indirect entry keeps the original six reads and dirty form
   await render(props);
   expect(readPaths()).toEqual(orderedAllPaths());
   expect(surface().classList.contains('brawndo-assessment-pilot')).toBe(true);
-  const signal = api.get.mock.calls[0][1].signal;
+  const signal = parentReads()[0][1].signal;
   const draft = 'Current rollout indirect entry retains this unsaved native draft.';
   await edit(surface().querySelector('[aria-label="Current implementation"]'), draft);
   await render({...props, record: {...record}});
@@ -395,7 +397,7 @@ test('current rollout restores detail reads for a fresh IG2 scope before enablin
     : Promise.resolve({data: copy(response(path))}));
   await render();
   expect(readPaths()).toEqual(fallbackPaths());
-  const signal = api.get.mock.calls[0][1].signal;
+  const signal = parentReads()[0][1].signal;
   expect(parentReads().every(([, config]) => config.signal === signal)).toBe(true);
   expect(surface().querySelector('[aria-label="Current implementation"]').disabled).toBe(true);
   expect(mockGuideProps).toBeNull();
@@ -416,7 +418,7 @@ test('aborting while restored detail reads are pending prevents late context pub
     : Promise.resolve({data: copy(response(path))}));
   await render();
   expect(readPaths()).toEqual(fallbackPaths());
-  const signal = api.get.mock.calls[0][1].signal;
+  const signal = parentReads()[0][1].signal;
   expect(pending).toHaveLength(3);
   expect(parentReads().every(([, config]) => config.signal === signal)).toBe(true);
   expect(surface().querySelector('[aria-label="Current implementation"]').disabled).toBe(true);
@@ -439,7 +441,7 @@ test.each([
   expect(readPaths()).toEqual(expectedReads);
   expect(parentReads()).toHaveLength(visualReference ? 3 : 6);
   expect(serviceReads()).toEqual([[servicePath()]]);
-  const signal = api.get.mock.calls[0][1].signal;
+  const signal = parentReads()[0][1].signal;
   const implementation = surface().querySelector('[aria-label="Current implementation"]');
   const originalSaved = copy(native);
   const draft = 'Retain this unsaved native implementation across equivalent DTO copies.';
@@ -467,13 +469,13 @@ test.each([
 ])('a real actor %s change still refreshes nonpilot context with a new abort boundary', async (field, value) => {
   await render({visualReference: false});
   expect(readPaths()).toEqual(orderedAllPaths());
-  const oldSignal = api.get.mock.calls[0][1].signal;
+  const oldSignal = parentReads()[0][1].signal;
   api.get.mockClear();
   mockAuth = {...mockAuth, user: {...mockAuth.user, [field]: value}};
   await render({visualReference: false});
   expect(oldSignal.aborted).toBe(true);
   expect(readPaths()).toEqual(orderedAllPaths());
-  const newSignal = api.get.mock.calls[0][1].signal;
+  const newSignal = parentReads()[0][1].signal;
   expect(newSignal).not.toBe(oldSignal);
   expect(newSignal.aborted).toBe(false);
   expect(parentReads().every(([, config]) => config.signal === newSignal)).toBe(true);

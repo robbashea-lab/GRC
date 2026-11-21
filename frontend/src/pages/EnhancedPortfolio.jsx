@@ -1,4 +1,4 @@
-import { Search, ChevronRight, ArrowUpRight } from 'lucide-react';
+import { Search, ChevronRight } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import api, { formatError, PREVIEW_MODE } from '@/lib/api';
@@ -11,12 +11,12 @@ import { useBrawndoTheme, useBrawndoPortalTheme } from '@/lib/brawndoTheme';
 import { grcLead } from '@/lib/clientRelationships';
 import { applicableCounts, currentPercentage, programIdentity, validImplementationPosition } from '@/lib/portfolioProgress';
 import { ClientMark } from '@/components/EnhancedPortfolioShared';
-import { enhancedPortfolioEligible, filterPortfolio, operationalItems, PORTFOLIO_KPIS, portfolioKpiValue } from '@/lib/enhancedPortfolio';
+import { enhancedPortfolioEligible, filterPortfolio, operationalItems, PORTFOLIO_KPIS, portfolioKpiValue, selectedPortfolioProgram } from '@/lib/enhancedPortfolio';
 import {calendarDay, managementDay} from '@/lib/managementDates';
-import { PortfolioStatusBar, formatPortfolioDate } from '@/components/PortfolioReports';
+import { formatPortfolioDate, programLanguage } from '@/components/PortfolioReports';
 import EnhancedPortfolioHistory from '@/components/EnhancedPortfolioHistory';
-import './EnhancedPortfolio.css';
 import './PortfolioReference.css';
+import './EnhancedPortfolio.css';
 
 // Portfolio appearance is independent of the currently selected operational client.
 export default function EnhancedPortfolioBoundary({
@@ -143,6 +143,8 @@ export function EnhancedPortfolio({
     if (switchClient(client.client_id) === false) return;
     navigate(clientDestination(client.client_id, path));
   };
+  const programFor = client => selectedPortfolioProgram(programs, client.client_id, preferences.enhancedPrograms?.[client.client_id], state.framework);
+  const chooseProgram = (clientId, programId) => updatePreferences({enhancedPrograms:{...preferences.enhancedPrograms, [clientId]:programId}});
   const preview = (client, program, event) => {
     opener.current = event.currentTarget;
     setSelection({
@@ -173,7 +175,7 @@ export function EnhancedPortfolio({
       <div style={{flex:'1 1 360px'}}><h1 className="page-title">Client portfolio</h1><p className="page-sub grad">{report.loading ? 'Loading client portfolio.' : report.error ? 'Portfolio unavailable' : <>{clients.length} clients · {programs.length} programs · as of {formatPortfolioDate(asOf)}</>}</p></div>
       <div className="ep-segment seg" role="group" aria-label="Theme">{['light', 'dark'].map(value => <button key={value} type="button" aria-pressed={theme === value} aria-checked={theme === value} onClick={() => setTheme(value)}>{value === 'light' ? 'Light' : 'Dark'}</button>)}</div>
     </header>
-    <div className="ep-box panel">
+    <div className="ep-box">
       <div className="ep-toolbar toolbar">
         <label className="field ep-search"><Search size={15} aria-hidden="true" /><input ref={search} type="search" placeholder="Search client, lead or framework…" aria-label="Search clients" value={state.search} onChange={event => update({search:event.target.value})} /></label>
         <div className="ep-segment seg" role="group" aria-label="Scope">{[[false, 'All clients'], [true, 'Assigned to me']].map(([value, label]) => <button key={label} type="button" aria-pressed={state.mine === value} aria-checked={state.mine === value} onClick={() => update({mine:value})}>{label}</button>)}</div>
@@ -190,46 +192,56 @@ export function EnhancedPortfolio({
       </button>;
     })}</div>
       </div>
-      {report.loading ? <p className="ep-empty empty" role="status">Loading client portfolio.</p> : report.error ? <div className="ep-empty empty" role="alert"><p>{report.error}</p><button type="button" className="ep-button ghost" onClick={load}>Retry</button></div> : state.view === 'clients' ? <div className="scroll-x"><div className="ep-table" role="table" aria-label="Client portfolio">
-        <div className="ep-columns thead" role="row">{['Client', 'Programs', 'GRC lead'].map(label => <span role="columnheader" key={label}>{label}</span>)}<span role="columnheader" aria-label="Client overview" /></div>
+      {report.loading ? <p className="ep-empty empty" role="status">Loading client portfolio.</p> : report.error ? <div className="ep-empty empty" role="alert"><p>{report.error}</p><button type="button" className="ep-button ghost" onClick={load}>Retry</button></div> : state.view === 'clients' ? <section className="ep-register ss-panel"><div className="ss-intro"><h2 id="portfolio-ledger-title">Program status ledger</h2><p>Implementation status and assessment coverage for the selected framework.</p></div><div className="ss-table-wrap" tabIndex="0" role="region" aria-label="Program status ledger"><div className="ep-table ss-ledger" role="table" aria-label="Client portfolio" aria-colcount="7">
+        <div className="ep-columns ss-head" role="row">{['Client / framework', 'Implemented / addressed', 'Partial implementation', 'With gaps', 'Not assessed', 'Assessed'].map(label => <span role="columnheader" key={label}>{label}</span>)}<span className="sr-only" role="columnheader">Open client</span></div>
         <div role="rowgroup">{visible.map(client => {
           const visiblePrograms = programs.filter(program => program.client_id === client.client_id && (!state.framework || program.program_key === state.framework));
-          const lead = grcLead(client), first = visiblePrograms[0];
+          const lead = grcLead(client), first = programFor(client);
           const overdue = operationalItems(client, asOf).overdue;
           const oldest = Math.max(0, ...overdue.map(item => managementDay(asOf) - calendarDay(item.due_date)));
           const overdueDetail = [...overdue].sort((a,b) => a.due_date.localeCompare(b.due_date)).slice(0,5).map(item => `${item.title} (${managementDay(asOf) - calendarDay(item.due_date)} days)`).join('; ');
-          return <div className="ep-row trow" role="row" key={client.client_id} data-client-id={client.client_id} onClick={event=>{if(!event.target.closest('button,a,input,select'))preview(client,first,{currentTarget:event.currentTarget.querySelector('.ep-client-link')});}}>
-            <div className="ep-client" role="cell"><button type="button" className="client ep-client-link" aria-label={`Open ${client.name} overview`} onClick={event => preview(client, first, event)}><ClientMark client={client} /><span className="ep-client-copy"><span className="client-name">{client.name}</span><span className={`client-ind${client.industry ? '' : ' unset'}`}>{client.industry || 'Industry not set'}</span>{overdue.length > 0 && <span className="cov-pchip od" title={`Overdue reviews and action items: ${overdueDetail}${overdue.length > 5 ? '; and more' : ''}`}>{overdue.length} overdue{oldest > 0 ? ` · oldest ${oldest} day${oldest === 1 ? '' : 's'}` : ''}</span>}</span></button></div>
-            <div className="ep-programs" role="cell">{visiblePrograms.map(program => <ProgramCell key={programIdentity(program)} client={client} program={program} onPreview={event => preview(client, program, event)} />)}{!visiblePrograms.length && <button type="button" className="no-prog" onClick={() => enter(client,'/onboarding')}><span style={{fontWeight:600}}>No program yet</span><span className="prog-cap" style={{color:'var(--accent)'}}>Start GRC Program Onboarding →</span></button>}</div>
-            <div className="ep-lead lead" role="cell"><span className={`av${!client.grc_lead_id && !client.assigned_owner_id ? ' none' : ''}`} aria-hidden="true">{lead.name === 'Unassigned' ? '?' : lead.name.split(' ').map(part => part[0]).slice(0, 2).join('')}</span><span className={`ellip${lead.name === 'Unassigned' ? ' lead-name none' : ''}`}>{lead.name}</span></div>
-            <div role="cell"><button type="button" className="ep-preview chev" aria-label={`Preview ${client.name} implementation`} onClick={event => preview(client, first, event)}><ChevronRight size={16} aria-hidden="true" /></button></div>
+          return <div className="ep-row trow ss-row" role="row" key={client.client_id} data-client-id={client.client_id} onClick={event=>{if(!event.target.closest('button,a,input,select'))preview(client,first,{currentTarget:event.currentTarget.querySelector('.ep-client-link')});}}>
+            <div className="ep-client ss-ident" role="cell"><ClientMark client={client} /><div className="ss-identity-text"><button type="button" className="ss-client ep-client-link" aria-label={`Open ${client.name} overview`} aria-describedby={`ep-details-${client.client_id}`} onClick={event => preview(client, first, event)}><strong className="client-name">{client.name}</strong></button>
+              {visiblePrograms.length > 1 ? <div className="ss-frameworks" role="group" aria-label={`Framework for ${client.name}`}>{visiblePrograms.map(program => <button key={programIdentity(program)} type="button" className="ss-framework-button" aria-pressed={programIdentity(program) === programIdentity(first)} onClick={() => chooseProgram(client.client_id, programIdentity(program))}>{program.program_label}</button>)}</div> : first ? <small>{first.program_label}</small> : <button type="button" className="no-prog" onClick={() => enter(client,'/onboarding')}>No program yet · Start GRC Program Onboarding →</button>}
+              <span className="sr-only" id={`ep-details-${client.client_id}`}>{client.industry || 'Industry not set'}; GRC lead: {lead.name}{overdue.length ? `; ${overdue.length} overdue; oldest ${oldest} days; ${overdueDetail}` : ''}</span>
+            </div></div>
+            <ProgramCells client={client} program={first} onPreview={event => preview(client, first, event)} />
+            <div role="cell"><button type="button" className="ep-preview ss-open" aria-label={`Preview ${client.name} implementation`} onClick={event => preview(client, first, event)}><ChevronRight size={16} aria-hidden="true" /></button></div>
           </div>;
         })}</div>
-      </div></div> : <div className="ep-leads leads">{groups.map(([id, group]) => <div className={`ep-lead-card lead-card${id === 'unassigned' ? ' unassigned' : ''}`} key={id}>
+      </div></div></section> : <div className="ep-leads leads">{groups.map(([id, group]) => <div className={`ep-lead-card lead-card${id === 'unassigned' ? ' unassigned' : ''}`} key={id}>
         <header className="ep-group-heading"><span className={`av${id === 'unassigned' ? ' none' : ''}`} aria-hidden="true">{id === 'unassigned' ? '?' : group.lead.split(' ').map(part => part[0]).slice(0,2).join('')}</span><span><b>{group.lead}</b><small className="sub">{group.clients.length} clients</small></span></header>
         <dl className="ep-lead-numbers lead-stats">{[['overdue', 'Overdue'], ['attention', 'Need attention'], ['due30', 'Due in 30 days']].map(([key, label]) => <div key={key}><dt>{label}</dt><dd className="num">{portfolioKpiValue(key, group.clients, asOf)}</dd></div>)}</dl>
-        <div className="ep-tags">{group.clients.map(client => <button className="pill-btn" key={client.client_id} type="button" onClick={event => preview(client, programs.find(program => program.client_id === client.client_id), event)}><ClientMark client={client}/>{client.name}</button>)}</div>
+        <div className="ep-tags">{group.clients.map(client => <button className="pill-btn" key={client.client_id} type="button" onClick={event => preview(client, programFor(client), event)}><ClientMark client={client}/>{client.name}</button>)}</div>
       </div>)}</div>}
       {!report.loading && !report.error && !visible.length && <div className="ep-empty empty">{state.mine && !state.search.trim() && !state.framework && !state.kpi
         ? <>No clients are currently assigned to you. <button type="button" className="ep-button ghost" onClick={() => update({mine:false})}>Show all clients</button></>
         : <>No clients match the selected filters. <button type="button" className="ep-button ghost" onClick={clear}>Clear filters</button></>}</div>}
       <footer className="gt-foot"><span>Showing {visible.length} of {base.length} matching clients</span><span style={{marginLeft:'auto'}}>Assessment progress, not a compliance determination. Percentages aren't comparable across frameworks, so there's no portfolio-wide ranking by %.</span></footer>
     </div>
-    {selectionAvailable && <EnhancedPortfolioHistory client={selected} programs={selectedPrograms} selected={selection.programId} onSelect={programId => setSelection(previous => ({...previous, programId}))} asOf={asOf} refreshToken={report.revision} onClose={() => setSelection(null)} onCloseAutoFocus={restoreFocus} onNavigate={path => enter(selected, path)} theme={theme} />}
+    {selectionAvailable && <EnhancedPortfolioHistory client={selected} programs={selectedPrograms} selected={selection.programId} onSelect={programId => {chooseProgram(selected.client_id, programId); setSelection(previous => ({...previous, programId}));}} asOf={asOf} refreshToken={report.revision} onClose={() => setSelection(null)} onCloseAutoFocus={restoreFocus} onNavigate={path => enter(selected, path)} theme={theme} />}
   </section>;
 }
 
-function ProgramCell({
-  client,
-  program,
-  onPreview
-}) {
-  const current = program.current,
-    percentage = currentPercentage(current),
-    valid = validImplementationPosition(current);
-  const assessed = valid ? current.denominator - (applicableCounts(current).find(value => value.key === 'not_assessed')?.count || 0) : null;
+function ProgramCells({client, program, onPreview}) {
+  const current = program?.current, valid = validImplementationPosition(current), scoped = valid && current.denominator > 0;
+  const counts = valid ? applicableCounts(current) : [], percentage = currentPercentage(current);
+  const assessed = valid ? current.denominator - counts.find(value => value.key === 'not_assessed').count : null;
+  const statusLabel = valid ? counts.map(value => `${value.count} ${value.label}`).join(', ') : 'Status counts unavailable';
   const progressLabel = percentage == null ? 'Implementation unavailable' : `${percentage.toFixed(1)}%, ${current.implemented} of ${current.denominator} implemented`;
   const assessedLabel = assessed == null ? 'Assessment unavailable' : `Assessed ${assessed} of ${current.denominator}`;
-  const statusLabel = valid ? applicableCounts(current).map(value => `${value.count} ${value.label}`).join(', ') : 'Status counts unavailable';
-  return <button type="button" className="ep-program prog" onClick={onPreview} aria-haspopup="dialog" aria-label={`${client.name} ${program.program_label} implementation history; ${progressLabel}; ${assessedLabel}; ${statusLabel}`}><span className="prog-top"><span className="ep-framework chip">{program.program_label}</span><span className="prog-open">View history <ArrowUpRight size={12} aria-hidden="true" /></span><span className="ep-progress prog-pct num">{percentage == null ? '-' : `${percentage.toFixed(1)}%`} <small className="prog-frac num">{valid ? `${current.implemented}/${current.denominator}` : ''}</small></span></span><PortfolioStatusBar snapshot={current} /><span className="ep-assessed prog-cap">{assessed == null ? 'Implementation unavailable' : `Assessed ${assessed} of ${current.denominator}`}</span></button>;
+  const reason = valid && current.denominator === 0 ? 'No applicable items' : 'Applicable scope unavailable';
+  const share = count => `${(count / current.denominator * 100).toFixed(1)}%`;
+  const unit = program ? programLanguage(program).unit : 'items';
+  return <>
+    <div role="cell"><button type="button" className={`ep-program ss-primary${scoped ? '' : ' ss-unavailable'}`} onClick={onPreview} aria-haspopup="dialog" aria-label={`${client.name} ${program?.program_label || 'client'} implementation history; ${progressLabel}; ${assessedLabel}; ${statusLabel}`}>
+      <span className="ep-framework sr-only">{program?.program_label || 'No program yet'}</span><strong className="ep-progress">{percentage == null ? '-' : `${percentage.toFixed(1)}%`}</strong><small>{scoped ? `${current.implemented} of ${current.denominator} ${unit}` : reason}</small>
+      <span className="sr-only">{assessedLabel}; {statusLabel}</span>
+    </button></div>
+    {['in_progress', 'needs_attention', 'not_assessed'].map((key, index) => {
+      const count = counts.find(value => value.key === key);
+      return <div key={key} className="ss-status" role="cell"><div className={`ss-stat ${['ss-partial','ss-gap','ss-unassessed'][index]}${!scoped || count.count === 0 ? ' ss-zero' : ''}`} aria-label={scoped ? `${count.label}: ${count.count} of ${current.denominator} (${share(count.count)})` : reason}><strong>{scoped ? count.count : '-'}</strong><span>{scoped ? share(count.count) : <span className="sr-only">{reason}</span>}</span></div></div>;
+    })}
+    <div className={`ep-assessed ss-assessed${scoped ? '' : ' ss-unavailable'}`} role="cell"><strong>{scoped ? share(assessed) : '-'}</strong><small>{scoped ? `${assessed} of ${current.denominator}` : valid && current.denominator === 0 ? 'No applicable items' : 'Scope unavailable'}</small></div>
+  </>;
 }

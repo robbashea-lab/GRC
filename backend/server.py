@@ -4252,6 +4252,7 @@ async def related_items(entity_type: str, entity_id: str, user: Dict = Depends(g
     if entity_type == 'ai_systems' and ai_reviews:
         linked['evidence'] += await _bounded(db.evidence.find({'client_id':cid,'linked_type':{'$in':['review','reviews']},'linked_id':{'$in':[r['review_id'] for r in ai_reviews]}},{'_id':0,'content_base64':0}), 1000, "linked evidence records")
     assessment_clauses=[{'related_links':{'$elemMatch':{'kind':entity_type,'id':entity_id}}}]
+    if entity_type=='policies':assessment_clauses.append({'policy_link_ids':entity_id})
     if entity_type=='policies' and source.get('baseline_key'):
         for framework_key,catalog in framework_governance.CATALOGS.items():
             definitions=[did for mapping in catalog['policy_mappings'] if mapping['policy_key']==source['baseline_key'] for did in mapping['safeguards']]
@@ -4279,6 +4280,8 @@ async def related_items(entity_type: str, entity_id: str, user: Dict = Depends(g
     if entity_type=='reviews' and source.get('framework_key'):
         assessment_clauses.append({'framework_key':source['framework_key'],'definition_id':{'$in':source.get('framework_safeguards',[])}})
     linked['framework_assessments']=await db.framework_assessments.find({'client_id':cid,'$or':assessment_clauses},{'_id':0}).to_list(None)
+    if entity_type=='policies':
+        linked['framework_assessments']=[row for row in linked['framework_assessments'] if framework_governance.framework_policy_links.supports(row,source)]
     await _require_settled_population({'client_id': cid}, [row for rows in linked.values() for row in rows])
     if entity_type=='evidence':
         linked['framework_assessments']=[a for a in linked['framework_assessments'] if entity_id not in a.get('unlinked_evidence_ids',[])]

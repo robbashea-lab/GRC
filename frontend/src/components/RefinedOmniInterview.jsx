@@ -1,3 +1,4 @@
+import AssessmentQuestionGuidance from './AssessmentQuestionGuidance';
 import {useCallback,useLayoutEffect,useRef} from 'react';
 import {Button} from './ui/button';
 import {Textarea} from './ui/textarea';
@@ -110,7 +111,7 @@ export default function RefinedOmniInterview({id,answers,version,step,setStep,pu
     </fieldset>
     <div className="omni-action-bar"><Button variant="outline" disabled={busy||enabled.indexOf(index)<=0} onClick={()=>moveGroup(enabled[enabled.indexOf(index)-1])}>Back</Button><Button disabled={blocked} onClick={()=>onNext(index,groups)}>Save &amp; next</Button><Button variant="outline" disabled={blocked} onClick={onSaveClose}>Save &amp; close</Button></div>
   </>;
-  const content=<>
+  const content=<><AssessmentQuestionGuidance/>
     {safeguard11?<ol className="omni-group-progress sg11-group-strip" aria-label={`Question group ${index+1} of ${groups.length}`}>{groups.map((g,i)=><li key={g.name} className={i<index&&g.questions.length?'sg11-earlier-group':undefined} aria-label={`${g.name}, group ${i+1} of ${groups.length}${i<index&&g.questions.length?', earlier saved group':''}`} aria-current={i===index?'step':undefined}><strong><span className="sg11-group-name">{g.name}</span>{i<index&&g.questions.length>0&&<span className="sg11-group-check" aria-hidden="true">✓</span>}<span className="sg11-group-number">{i+1}</span></strong><small>Group {i+1} of {groups.length}</small></li>)}</ol>:<div className="omni-group-progress" aria-label={`Question group ${index+1} of ${groups.length}`}><p><strong>Question group {index+1} of {groups.length}</strong><span>{group.name}</span></p><div>{groups.map((g,i)=><span key={g.name} className={i===index?'current':i<index?'done':''}/>)}</div></div>}
     {safeguard11?<div className="sg11-question-card">{questions}</div>:questions}
   </>;

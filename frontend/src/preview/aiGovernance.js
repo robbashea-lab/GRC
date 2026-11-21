@@ -1,10 +1,17 @@
 import {AI_DEFAULTS,AI_KEYS,aiProjection,aiClientAvailable,validateAI,catalog} from '../lib/aiGovernance';
 import {validateCatalogKey} from '../lib/registerCatalogIdentity';
 import {record,write,audit,uid,now,ids} from './store';
-import {reviewView} from '../lib/reviewOccurrences';
+import {reviewView,scheduledDate} from '../lib/reviewOccurrences';
 import { validateAssignment, clientAccess } from './assignmentEligibility';
 import {AI_PILOT_DEFAULTS,AI_PILOT_KEYS,aiScope} from '../lib/brawndoAI';
 import {reviewedScreening,screeningReviewSnapshot} from '../lib/aiOnboarding';
+
+// Shared native Demo writer; callers own their external or onboarding authorization contract.
+export function scheduleAIReview(db,old,body){
+  const existing=db.reviews.find(r=>r.client_id===old.client_id&&r.ai_system_id===old.ai_system_id&&r.ai_review_purpose==='periodic'&&!['completed','cancelled'].includes(r.status));if(existing)return reviewView(existing);
+  const review=write(db,'reviews',{client_id:old.client_id,ai_system_id:old.ai_system_id,ai_review_purpose:'periodic',title:`AI Governance Review - ${old.display_id} - ${old.name}`,review_type:'ai_governance',owner_id:body.owner_id,due_date:body.due_date,recurrence:body.recurrence,custom_recurrence_days:body.custom_recurrence_days||null});
+  audit(db,'AI Governance Review scheduled','ai_systems',old,{review_id:review.review_id});return review;
+}
 
 export function aiRequest(db,path,method,params,body){
   db.ai_systems||=[];db.ai_intake||={};db.ai_counters||={};
@@ -24,6 +31,8 @@ export function aiRequest(db,path,method,params,body){
   if(!id&&method==='get'){checkClient(params.client_id);return db.ai_systems.filter(r=>r.client_id===params.client_id).map(view);}
   const old=id?record(db,'ai_systems',id):null;checkClient(old?.client_id||body.client_id);
   const aiWorkflow=aiClientAvailable(record(db,'clients',old?.client_id||body.client_id));
+  if(method==='get'&&action==='reviews'&&path.endsWith('/pending')){admin();return {pending:null};}
+  if(method==='post'&&action==='reviews'&&path.endsWith('/recover')){admin();throw new Error('No interrupted Review schedule exists in this Demo session');}
   if(method==='get'&&action==='activity'){
     const reviewIds=db.reviews.filter(r=>r.client_id===old.client_id&&r.ai_system_id===id).map(r=>r.review_id);
     return db.logs.filter(l=>l.client_id===old.client_id&&[id,...reviewIds].includes(l.entity_id));
@@ -43,11 +52,14 @@ export function aiRequest(db,path,method,params,body){
   }
   if(action==='reviews'&&method==='post'){
     admin();if(old.status==='suspended')throw new Error('Inactive AI cannot start periodic reviews');
-    if(!['quarterly','semiannual','annual','custom'].includes(body.recurrence)||!body.due_date||!Number.isFinite(Date.parse(body.due_date)))throw new Error('Choose a valid date and cadence');
-    if(body.recurrence==='custom'&&(!Number.isInteger(body.custom_recurrence_days)||body.custom_recurrence_days<1||body.custom_recurrence_days>3660))throw new Error('Custom recurrence must be 1–3660 days');
-    const existing=db.reviews.find(r=>r.ai_system_id===id&&r.ai_review_purpose==='periodic'&&!['completed','cancelled'].includes(r.status));if(existing)return reviewView(existing);
-    const r=write(db,'reviews',{client_id:old.client_id,ai_system_id:id,ai_review_purpose:'periodic',title:`AI Governance Review — ${old.display_id} — ${old.name}`,review_type:'ai_governance',owner_id:old.owner_id,due_date:body.due_date,recurrence:body.recurrence,custom_recurrence_days:body.custom_recurrence_days||null});
-    audit(db,'AI Governance Review scheduled','ai_systems',old,{review_id:r.review_id});return r;
+    if(!Object.hasOwn(body,'expected_updated_at'))throw Object.assign(new Error('Reopen this AI record before scheduling a Review'),{status:428});
+    if(body.expected_updated_at!==(old.updated_at??null))throw Object.assign(new Error('Record changed since it was opened; reload before scheduling a Review'),{status:409});
+    if(Object.keys(body).some(key=>!['due_date','recurrence','custom_recurrence_days','owner_id','expected_updated_at'].includes(key)))throw new Error('Unknown AI Review scheduling fields');
+    if(typeof body.owner_id!=='string'||!body.owner_id)throw new Error('Choose an eligible Review owner');
+    validateAssignment(db,'reviews',{client_id:old.client_id,owner_id:body.owner_id});
+    if(!['quarterly','semiannual','annual','custom'].includes(body.recurrence)||!scheduledDate(body.due_date))throw new Error('Choose a valid date and cadence');
+    if(body.recurrence==='custom'&&(!Number.isInteger(body.custom_recurrence_days)||body.custom_recurrence_days<1||body.custom_recurrence_days>3660))throw new Error('Custom recurrence must be 1â€“3660 days');
+    return scheduleAIReview(db,old,body);
   }
   if(action==='material-change'&&method==='post'){
     admin();

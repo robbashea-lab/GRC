@@ -160,6 +160,7 @@ def projection(row, reviews, risks, today=None):
     result.update(screening(row), last_review=max(filter(None,done),default=None), next_review=min(dates,default=None))
     periodic = next((r for r in linked if r.get('ai_review_purpose') == 'periodic' and r.get('status') not in ('completed','cancelled')), None)
     result['review_cadence'] = periodic.get('recurrence') if periodic else None
+    result['review_schedule_pending'] = bool(row.get('_ai_review_schedule_pending'))
     result['alerts'] = []
     if row.get('status') != 'active':
         return result
@@ -182,7 +183,7 @@ def projection(row, reviews, risks, today=None):
     return result
 
 @asynccontextmanager
-async def lease(db, ai_id):
+async def lease(db, ai_id, *, recovery_schedule=None):
     if not ai_id:
         yield
         return
@@ -190,10 +191,13 @@ async def lease(db, ai_id):
     result = await db.ai_systems.update_one({'ai_system_id':ai_id,'$or':[{'_governance_lock':None},{'_governance_lock.until':{'$lt':now.isoformat()}}]}, {'$set':{'_governance_lock':{'token':token,'until':(now+timedelta(seconds=120)).isoformat()}}})
     if not result.modified_count: raise HTTPException(409,'Another AI governance action is being saved; retry')
     try:
-        pending=await db.ai_systems.find_one({'ai_system_id':ai_id},{'_ai_retirement_pending':1})
+        pending=await db.ai_systems.find_one({'ai_system_id':ai_id},{'client_id':1,'_ai_retirement_pending':1,'_ai_review_schedule_pending':1})
         retirement=(pending or {}).get('_ai_retirement_pending')
         if retirement and retirement!=create_requests.current.get():
             raise HTTPException(409,'Retry the pending AI retirement before changing its linked work')
+        schedule=(pending or {}).get('_ai_review_schedule_pending')
+        if schedule and schedule!=create_requests.current.get() and schedule!=recovery_schedule:
+            raise HTTPException(409,'Retry the pending AI Review schedule before changing this system')
         yield
     finally:
         await db.ai_systems.update_one({'ai_system_id':ai_id,'_governance_lock.token':token},{'$unset':{'_governance_lock':''}})
@@ -451,20 +455,179 @@ def router_for(s):
         return await view(await parent(aid,user,True,True))
     @router.post('/ai_systems/{aid}/reviews')
     async def schedule_ai(aid:str,body:dict,user=Depends(s.get_current_user)):
-        row=await parent(aid,user,True,True)
-        async with lease(s.db,aid):
-            row=await parent(aid,user,True,True)
-            if row['status'] in ('retired','suspended'): raise HTTPException(409,'Inactive AI cannot start periodic reviews')
-            if body.get('recurrence') not in ('quarterly','semiannual','annual','custom') or not review_occurrences.scheduled_date(body.get('due_date')): raise HTTPException(422,'Choose a valid date and cadence')
-            if body['recurrence']=='custom' and (type(body.get('custom_recurrence_days')) is not int or not 1<=body['custom_recurrence_days']<=3660): raise HTTPException(422,'Custom recurrence must be 1–3660 days')
-            existing=await s.db.reviews.find_one({'ai_system_id':aid,'ai_review_purpose':'periodic','status':{'$nin':['completed','cancelled']}},{'_id':0})
-            if existing: return review_occurrences.view(existing)
-            review={'review_id':s._uid('rev'),'client_id':row['client_id'],'ai_system_id':aid,'ai_review_purpose':'periodic','title':f"AI Governance Review — {row['display_id']} — {row['name']}",'review_type':'ai_governance','owner_id':row.get('owner_id'),'due_date':body['due_date'],'recurrence':body['recurrence'],'custom_recurrence_days':body.get('custom_recurrence_days'),'status':'upcoming','created_at':s._now(),'updated_at':s._now(),'created_by':user['user_id']}
-            review.update(review_occurrences.schedule(review));review['current_occurrence_id']=review_occurrences.occurrence_id(review)
-            await s.db.reviews.insert_one(review)
-            review.pop('_id',None)
-            await s.audit(user,'AI Governance Review scheduled','ai_system',aid,row['client_id'],meta={'review_id':review['review_id']})
-            return review_occurrences.view(review)
+        selected=await parent(aid,user,True,True)
+        rejected={'X-Create-Rejected':'true'}
+        if selected['status'] in ('retired','suspended'):
+            raise HTTPException(409,'Inactive AI cannot start periodic reviews',headers={} if selected.get('_ai_review_schedule_pending') else rejected)
+        if 'expected_updated_at' not in body:
+            raise HTTPException(428,'Reload the record before saving; an edit version is required',headers=rejected)
+        if set(body)-{'due_date','recurrence','custom_recurrence_days','owner_id','expected_updated_at'}:
+            raise HTTPException(422,'Unknown AI Review scheduling fields',headers=rejected)
+        if not isinstance(body.get('owner_id'),str) or not body['owner_id']:
+            raise HTTPException(422,'Choose an eligible Review owner',headers=rejected)
+        if body.get('recurrence') not in ('quarterly','semiannual','annual','custom') or not review_occurrences.scheduled_date(body.get('due_date')):
+            raise HTTPException(422,'Choose a valid date and cadence',headers=rejected)
+        if body['recurrence']=='custom' and (type(body.get('custom_recurrence_days')) is not int or not 1<=body['custom_recurrence_days']<=3660):
+            raise HTTPException(422,'Custom recurrence must be 1-3660 days',headers=rejected)
+
+        async def execute(identity):
+            async with lease(s.db,aid):
+                row=await parent(aid,user,True,True)
+                query={'client_id':row['client_id'],'ai_system_id':aid}
+                review=await s.db.reviews.find_one({'_id':'create:'+identity,**query},{'_id':0})
+                if review is None:
+                    if row['status'] in ('retired','suspended'):
+                        raise HTTPException(409,'Inactive AI cannot start periodic reviews')
+                    s._require_snapshot(body,row)
+                    if not await assignment_eligibility.eligible(s.db,body['owner_id'],row['client_id'],s._can_access_client):
+                        raise HTTPException(422,'Choose an active platform user with access to this client')
+                    existing=await s.db.reviews.find_one({**query,'ai_review_purpose':'periodic','status':{'$nin':['completed','cancelled']}},{'_id':0})
+                    if existing: return review_occurrences.view(existing)
+                    receipt=await s.db.create_requests.find_one({'_id':identity})
+                    review=receipt.get('ai_review_plan')
+                    if review is None:
+                        at=s._now()
+                        review={'review_id':s._uid('rev'),**query,'ai_review_purpose':'periodic',
+                            'title':f"AI Governance Review - {row['display_id']} - {row['name']}",
+                            'review_type':'ai_governance','owner_id':body['owner_id'],'due_date':body['due_date'],
+                            'recurrence':body['recurrence'],'custom_recurrence_days':body.get('custom_recurrence_days'),
+                            'status':'upcoming','created_at':at,'updated_at':at,'created_by':user['user_id']}
+                        review.update(review_occurrences.schedule(review))
+                        review['current_occurrence_id']=review_occurrences.occurrence_id(review)
+                        await s.db.create_requests.update_one({'_id':identity},{'$set':{'ai_review_plan':review,'ai_review_request':body}})
+                    if row.get('_ai_review_schedule_pending')!=identity:
+                        claimed=await s.db.ai_systems.update_one({**query,'updated_at':row.get('updated_at'),'_ai_review_schedule_pending':None},
+                            {'$set':{'_ai_review_schedule_pending':identity}})
+                        if not claimed.matched_count:
+                            raise HTTPException(409,'AI record changed before its Review schedule was accepted')
+                    review=await create_requests.insert_primary(s.db,'reviews',review,identity)
+                await s.audit(user,'AI Governance Review scheduled','ai_system',aid,row['client_id'],meta={'review_id':review['review_id']})
+                await s.db.ai_systems.update_one({**query,'_ai_review_schedule_pending':identity},{'$unset':{'_ai_review_schedule_pending':''}})
+                return review_occurrences.view(review)
+
+        result=await create_requests.run(s.db,create_requests.digest(body),user['user_id'],selected['client_id'],
+            'ai_systems/'+aid+'/reviews/update',body,execute)
+        await parent(aid,user,True,True)
+        current=await s.db.reviews.find_one({'review_id':result['review_id'],'client_id':selected['client_id'],'ai_system_id':aid},{'_id':0})
+        if current is None: raise HTTPException(409,'The accepted AI Review is missing; preserve the original request for review')
+        return review_occurrences.view(current)
+    async def pending_schedule(row,identity):
+        receipt=await s.db.create_requests.find_one({'_id':identity})
+        plan=(receipt or {}).get('ai_review_plan')
+        request=(receipt or {}).get('ai_review_request')
+        if (not isinstance(plan,dict) or not isinstance(request,dict)
+                or plan.get('client_id')!=row['client_id'] or plan.get('ai_system_id')!=row['ai_system_id']
+                or not isinstance(plan.get('created_by'),str) or not plan.get('review_id') or not plan.get('current_occurrence_id')
+                or create_requests.digest(request)!=(receipt or {}).get('fingerprint')
+                or create_requests.digest([plan['created_by'],row['client_id'],
+                    'ai_systems/'+row['ai_system_id']+'/reviews/update',create_requests.digest(request)])!=identity):
+            raise HTTPException(409,'The retained Review schedule needs authoritative reconciliation')
+        schedule=review_occurrences.schedule({key:request.get(key) for key in ('due_date','recurrence','custom_recurrence_days')})
+        if (not isinstance(plan['review_id'],str) or not isinstance(plan['current_occurrence_id'],str)
+                or plan['current_occurrence_id']!='occ_'+plan['review_id']
+                or plan.get('status')!='upcoming' or plan.get('review_type')!='ai_governance'
+                or plan.get('ai_review_purpose')!='periodic'
+                or any(plan.get(key)!=request.get(key) for key in ('due_date','recurrence','custom_recurrence_days','owner_id'))
+                or any(plan.get(key)!=value for key,value in schedule.items())):
+            raise HTTPException(409,'The retained Review schedule plan needs authoritative reconciliation')
+        return receipt,plan
+
+    @router.get('/ai_systems/{aid}/reviews/pending')
+    async def pending_ai_review(aid:str,user=Depends(s.get_current_user)):
+        row=await parent(aid,user,False,True)
+        identity=row.get('_ai_review_schedule_pending')
+        if not identity:return {'pending':None}
+        _,plan=await pending_schedule(row,identity)
+        review=await s.db.reviews.find_one({'_id':'create:'+identity},{'_id':0})
+        return {'pending':{'schedule_id':identity,'review_id':plan['review_id'],
+            'occurrence_id':plan['current_occurrence_id'],'due_date':plan['due_date'],
+            'recurrence':plan['recurrence'],'owner_id':(review or plan).get('owner_id'),
+            'expected_updated_at':row.get('updated_at'),
+            'expected_review_updated_at':review.get('updated_at') if review else None}}
+
+    @router.post('/ai_systems/{aid}/reviews/recover')
+    async def recover_ai_review(aid:str,body:dict,user=Depends(s.get_current_user)):
+        selected=await parent(aid,user,True,True)
+        if set(body)!={'schedule_id','owner_id','expected_updated_at','expected_review_updated_at'}:
+            raise HTTPException(422,'Choose the retained schedule, current versions and an eligible owner',headers={'X-Create-Rejected':'true'})
+        schedule_id=body.get('schedule_id')
+        if not isinstance(schedule_id,str) or not re.fullmatch('[0-9a-f]{64}',schedule_id):
+            raise HTTPException(422,'Choose the retained schedule',headers={'X-Create-Rejected':'true'})
+        async def recover(identity):
+            async with lease(s.db,aid,recovery_schedule=schedule_id):
+                row=await parent(aid,user,True,True)
+                receipt=await s.db.create_requests.find_one({'_id':identity})
+                saved=receipt.get('ai_review_recovery')
+                if not saved and row.get('_ai_review_schedule_pending')!=schedule_id:
+                    raise HTTPException(409,'The pending schedule changed; reload before recovery')
+                original,plan=await pending_schedule(row,schedule_id)
+                now=datetime.now(timezone.utc)
+                token=uuid.uuid4().hex
+                claimed=await s.db.create_requests.update_one({'_id':schedule_id,'$or':[
+                    {'lease':None},{'lease.until':{'$lt':now.isoformat()}}]},
+                    {'$set':{'lease':{'token':token,'until':(now+timedelta(seconds=120)).isoformat()}}})
+                if not claimed.modified_count:raise HTTPException(409,'The original schedule is still processing; retry recovery')
+                try:
+                    primary={'_id':'create:'+schedule_id,'client_id':row['client_id'],'ai_system_id':aid}
+                    review=await s.db.reviews.find_one(primary,{'_id':0})
+                    applied=review and identity in review.get('_ai_review_recovery_commands',[])
+                    if not applied:
+                        s._require_snapshot(body,row)
+                        if row['status'] in ('retired','suspended'):
+                            raise HTTPException(409,'Inactive AI cannot start periodic reviews')
+                        if not isinstance(body.get('owner_id'),str) or not await assignment_eligibility.eligible(s.db,body['owner_id'],row['client_id'],s._can_access_client):
+                            raise HTTPException(422,'Choose an active platform user with access to this client')
+                        base=saved or {'primary_identity':schedule_id,'review_id':plan['review_id'],
+                            'occurrence_id':plan['current_occurrence_id'],'previous_owner_id':(review or plan).get('owner_id'),
+                            'expected_review_updated_at':body['expected_review_updated_at'],
+                            'materialized_updated_at':plan.get('updated_at'),'owner_id':body['owner_id'],
+                            'updated_at':s._next_write_time((review or plan).get('updated_at'))}
+                        if review and review.get('updated_at')!=base['expected_review_updated_at'] and not (
+                                base['expected_review_updated_at'] is None and review.get('updated_at')==base['materialized_updated_at']):
+                            raise HTTPException(409,'The Review changed; reload before recovery')
+                        if review and (review.get('status')!='upcoming' or review.get('occurrences') or
+                                any(review.get(key)!=plan.get(key) for key in ('review_id','current_occurrence_id',
+                                    'due_date','recurrence','custom_recurrence_days','schedule_anchor','recurrence_due_date','review_type','ai_review_purpose'))):
+                            raise HTTPException(409,'Started or historical Review work cannot be changed by schedule recovery')
+                        if not saved:
+                            await s.db.create_requests.update_one({'_id':identity},{'$set':{'ai_review_recovery':base,'primary_started':True}})
+                        # Always use the ORIGINAL primary key. A delayed original
+                        # upsert cannot create a second Review or replace this edit.
+                        await s.db.reviews.update_one({'_id':primary['_id']},{'$setOnInsert':plan},upsert=True)
+                        review=await s.db.reviews.find_one(primary,{'_id':0})
+                        if review.get('review_id')!=base['review_id'] or review.get('current_occurrence_id')!=base['occurrence_id']:
+                            raise HTTPException(409,'The retained Review identity requires reconciliation')
+                        expected=base['expected_review_updated_at'] or base['materialized_updated_at']
+                        changed=await s.db.reviews.update_one({**primary,'updated_at':expected,'status':'upcoming',
+                            'current_occurrence_id':base['occurrence_id'],'$or':[{'occurrences':None},{'occurrences':[]}]},
+                            {'$set':{'owner_id':base['owner_id'],'updated_at':base['updated_at']},
+                             '$addToSet':{'_ai_review_recovery_commands':identity}})
+                        if not changed.matched_count:raise HTTPException(409,'The Review changed before recovery; no edit was overwritten')
+                        review=await s.db.reviews.find_one(primary,{'_id':0})
+                    for audit_id,document in original.get('pending_audits',{}).items():
+                        await s.db.audit_logs.update_one({'_id':'create:'+audit_id},{'$setOnInsert':document},upsert=True)
+                    if not await s.db.audit_logs.find_one({'action':'AI Governance Review scheduled','entity_id':aid,'meta.review_id':plan['review_id']}):
+                        await s.audit(user,'AI Governance Review scheduled','ai_system',aid,row['client_id'],meta={'review_id':plan['review_id'],'recovered_from_actor':plan['created_by']})
+                    base=saved or (await s.db.create_requests.find_one({'_id':identity}))['ai_review_recovery']
+                    await s.audit(user,'AI Review schedule recovered','ai_system',aid,row['client_id'],meta={
+                        'review_id':plan['review_id'],'occurrence_id':plan['current_occurrence_id'],
+                        'previous_owner_id':base['previous_owner_id'],'owner_id':base['owner_id']})
+                    result=review_occurrences.view(review)
+                    settled=await s.db.create_requests.update_one({'_id':schedule_id,'lease.token':token},
+                        {'$set':{'state':'complete','result':result,'recovered_by':identity}})
+                    if not settled.matched_count:raise HTTPException(409,'Original schedule recovery ownership changed; retry this recovery')
+                    await s.db.ai_systems.update_one({'ai_system_id':aid,'_ai_review_schedule_pending':schedule_id},
+                        {'$unset':{'_ai_review_schedule_pending':''}})
+                    return result
+                finally:
+                    await s.db.create_requests.update_one({'_id':schedule_id,'lease.token':token},{'$unset':{'lease':''}})
+        result=await create_requests.run(s.db,create_requests.digest(body),user['user_id'],selected['client_id'],
+            'ai_systems/'+aid+'/reviews/recover/update',body,recover)
+        await parent(aid,user,True,True)
+        current=await s.db.reviews.find_one({'review_id':result['review_id'],'client_id':selected['client_id'],'ai_system_id':aid},{'_id':0})
+        if current is None:raise HTTPException(409,'The recovered Review is missing; preserve the request')
+        return review_occurrences.view(current)
+
     @router.post('/ai_systems/{aid}/material-change')
     async def change_ai(aid:str,body:AIMaterialChangeInput,user=Depends(s.get_current_user)):
         selected=await parent(aid,user,True,True)
@@ -525,5 +688,5 @@ def router_for(s):
         reviews=await s.db.reviews.find({'client_id':row['client_id'],'ai_system_id':aid},{'review_id':1}).to_list(None)
         return await s.db.audit_logs.find({'client_id':row['client_id'],'entity_id':{'$in':[aid]+[r['review_id'] for r in reviews]}},{'_id':0}).sort('at',-1).to_list(500)
     ai_onboarding.register(router,s,ai_model=AIInput,create_ai=create_ai_record,validate_ai=validate,
-        client_scope=client_scope,metadata_scope=metadata_scope,project_ai=view)
+        client_scope=client_scope,metadata_scope=metadata_scope,project_ai=view,lease_ai=lease)
     return router

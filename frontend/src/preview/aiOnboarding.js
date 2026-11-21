@@ -1,4 +1,4 @@
-import {aiRequest} from './aiGovernance';
+import {aiRequest,scheduleAIReview} from './aiGovernance';
 import {commandRequest} from './commandRequests';
 import {clientAccess} from './assignmentEligibility';
 import {record,write,audit,now} from './store';
@@ -48,7 +48,7 @@ export function aiOnboardingRequest(db,body,key) {
     const linked=write(db,'risks',{client_id:cid,title:risk.title,description:risk.description,owner_id:ai.owner_id,likelihood_score:risk.likelihood,impact_score:risk.impact,assessment_rationale:risk.rationale,next_review:annual,review_cadence:'annual',status:'identified'});
     Object.assign(linked,{created_at:anchor,date_identified:anchor});
     if(vendor.mode==='create')record(db,'vendors',vendorId).created_at=anchor;
-    const review=aiRequest(db,`/ai_systems/${saved.ai_system_id}/reviews`,'post',{}, {due_date:annual,recurrence:'annual'});
+    const review=scheduleAIReview(db,saved,{due_date:annual,recurrence:'annual',owner_id:ai.owner_id});
     const relationship={kind:'risks',id:linked.risk_id,classification:'Context',source:'',rationale:risk.rationale};
     saved.related_links.push(relationship);audit(db,'AI record linked','ai_systems',saved,relationship);
     return {ai_system_id:saved.ai_system_id,risk_id:linked.risk_id,review_id:review.review_id,vendor_id:vendorId};

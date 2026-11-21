@@ -88,7 +88,7 @@ class AIGovernanceTests(ClientDashboardSourcesTests):
     async def test_review_occurrence_findings_actions_evidence_and_retirement(self):
         self.r4_valid_completion_fixture=True
         row=await self.create();aid=row['ai_system_id'];base='/api/ai_systems/'+aid
-        schedule={'due_date':'2026-09-30','recurrence':'annual'}
+        schedule={'due_date':'2026-09-30','recurrence':'annual','owner_id':'member','expected_updated_at':row['updated_at']}
         response=await self.client.post(base+'/reviews',json=schedule)
         self.assertEqual(response.status_code,200,response.text)
         review=response.json();rid=review['review_id'];occ={'occurrence_id':review['current_occurrence_id']}
@@ -146,7 +146,7 @@ class AIGovernanceTests(ClientDashboardSourcesTests):
     async def test_retirement_preserves_started_closure_and_ids(self):
         self.r4_valid_completion_fixture=True
         row=await self.create();base='/api/ai_systems/'+row['ai_system_id']
-        review=(await self.client.post(base+'/reviews',json={'due_date':'2026-09-30','recurrence':'annual'})).json()
+        review=(await self.client.post(base+'/reviews',json={'due_date':'2026-09-30','recurrence':'annual','owner_id':'member','expected_updated_at':row['updated_at']})).json()
         url='/api/reviews/'+review['review_id'];occ={'occurrence_id':review['current_occurrence_id']}
         self.assertEqual((await self.client.post(url+'/start',json=occ)).status_code,200)
         self.assertEqual((await self.client.patch(base,json={'status':'retired'})).status_code,200)

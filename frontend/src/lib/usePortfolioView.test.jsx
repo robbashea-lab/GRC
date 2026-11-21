@@ -58,3 +58,17 @@ test('two mounted native consumers synchronize scope while keeping text and fram
   act(()=>consumers[1][1]({mine:false}));
   expect(consumers[0][0]).toMatchObject({mine:false,search:'ISO',framework:'soc-2',sort:'activity'});
 });
+
+
+test('selected Nordic programs survive actor refresh and remain isolated by workspace mode',()=>{
+  const user={user_id:'framework-owner',role:'platform_admin',workspace_mode:'standard',client_ids:['one','two']};
+  act(()=>root.render(<Harness user={user}/>));
+  act(()=>current[1]({enhancedPrograms:{one:'one:soc',two:'two:iso'}}));
+  act(()=>root.render(<Harness user={{...user}}/>));
+  expect(current[0].enhancedPrograms).toEqual({one:'one:soc',two:'two:iso'});
+  act(()=>root.render(<Harness user={{...user,workspace_mode:'demo'}}/>));
+  expect(current[0].enhancedPrograms).toEqual({});
+  act(()=>current[1]({enhancedPrograms:{one:'one:cis'}}));
+  act(()=>root.render(<Harness user={{...user}}/>));
+  expect(current[0].enhancedPrograms).toEqual({one:'one:soc',two:'two:iso'});
+});

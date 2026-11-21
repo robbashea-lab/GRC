@@ -1,5 +1,6 @@
 // Browser-local saved Demo records only; authenticated report delivery stays native.
 import {zipSync, strToU8} from 'fflate';
+import {policySupportIds} from '../lib/frameworkPolicyLinks';
 import {FRAMEWORKS, activeDefinitions, frameworkCatalog} from '../lib/frameworks';
 import {cisConfiguration} from '../lib/cisScope';
 import {socConfiguration, SOC_CATEGORIES} from '../lib/socReadiness';
@@ -128,9 +129,8 @@ function statusLabels(key) {
     not_applicable: 'Not Applicable'};
 }
 
-function policyAlignment(policy, key) {
-  return (frameworkCatalog(key).policy_mappings || [])
-    .filter(mapping => mapping.policy_key === policy.baseline_key).flatMap(mapping => mapping.safeguards);
+function policyAlignment(policy, key, assessments) {
+  return policySupportIds(policy,key,assessments);
 }
 
 function linkedWork(row, source, key) {
@@ -237,7 +237,7 @@ async function preview(db, params) {
   } else if (type === 'scope') {
     if (key === 'iso-27001') sections = [section(header.title, ['Control', 'Title', 'Applicability', 'Justification', 'Status', 'Linked policy'],
       rows.filter(row => row.specification === 'annex_control').map(row => [row.definition_id, row.title, row.soa_applicability || 'undetermined', row.soa_justification || '', labels[row.status],
-        source.policies.filter(policy => policyAlignment(policy, key).includes(row.definition_id)).map(policy => policy.title).join('; ')]))];
+        source.policies.filter(policy => policyAlignment(policy, key, rows).includes(row.definition_id)).map(policy => policy.title).join('; ')]))];
     else if (key === 'soc-2') sections = [section(header.title, ['Criterion', 'Title', 'Category', 'Owner', 'Readiness'],
       rows.map(row => [row.definition_id, row.title, SOC_CATEGORIES[row.category] ?? null, person(row.owner_id), labels[row.status]]))];
     else sections = [section(header.title, ['ID', 'Title', 'Status', 'Verification', 'Linked work'],
@@ -256,7 +256,7 @@ async function preview(db, params) {
         row.next_review, row.contract_renewal || row.contract_expiration]))];
   }
   else sections = [section(header.title, ['Policy', 'Status', 'Version', 'Owner', selected.name + ' alignment'],
-    source.policies.map(row => [row.title, row.status, row.version, person(row.owner_id), policyAlignment(row, key).join(', ')]))];
+    source.policies.map(row => [row.title, row.status, row.version, person(row.owner_id), policyAlignment(row, key, rows).join(', ')]))];
   const sourceHash = await hash(strToU8(guard));
   if (db.user.user_id !== actorId) fail('The authenticated account changed during report generation', 401);
   authority(db, clientId, key);

@@ -5,7 +5,8 @@ import {aiMatches,aiApproval,aiUseLabel,aiThirdParty} from '../lib/brawndoAI';
 import {readStore,saveStore} from './store';
 const api=axios.create({adapter:previewAdapter});
 const cid='demo_brawndo';
-beforeEach(async()=>{sessionStorage.clear();localStorage.clear();await api.post('/demo/enter');});
+let actor;
+beforeEach(async()=>{sessionStorage.clear();localStorage.clear();actor=(await api.post('/demo/enter')).data.user;});
 const create=async(extra={})=>(await api.post('/ai_systems',{client_id:cid,name:'Synthetic AI',description:'Draft public material',environment:'Managed QA workspace',permitted_data_types:['Public'],...extra})).data;
 const decide=async(row,status='approved')=>(await api.post(`/ai_systems/${row.ai_system_id}/approval`,{status,note:'Synthetic decision for QA only',expected_updated_at:row.updated_at})).data;
 
@@ -70,7 +71,7 @@ test('legacy missing version requires an explicit snapshot and produces a valid 
 });
 test('review and evidence operations do not approve; owner-neutral edits preserve decision, material change retires its scope',async()=>{
   let row=await create();const path=`/ai_systems/${row.ai_system_id}`;
-  await api.post(path+'/reviews',{due_date:'2026-09-30',recurrence:'annual'});
+  await api.post(path+'/reviews',{due_date:'2026-09-30',recurrence:'annual',owner_id:actor.user_id,expected_updated_at:row.updated_at??null});
   await api.post('/evidence',{client_id:cid,linked_type:'ai_system',linked_id:row.ai_system_id,filename:'DEMO-SYNTHETIC.txt',content_base64:'REVNTw=='});
   let loaded=(await api.get('/ai_systems',{params:{client_id:cid}})).data.find(r=>r.ai_system_id===row.ai_system_id);
   expect(loaded.approval_status).toBe('pending_assessment');expect(loaded.last_review).toBeNull();

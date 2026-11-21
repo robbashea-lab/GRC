@@ -70,7 +70,7 @@ class R4AIApprovalTests(unittest.IsolatedAsyncioTestCase):
         row = await self.create_ai()
         created_at = row['created_at']
         scheduled = await self.client.post('/api/ai_systems/' + row['ai_system_id'] + '/reviews',
-            json={'due_date': '2027-01-31', 'recurrence': 'annual'})
+            json={'due_date': '2027-01-31', 'recurrence': 'annual', 'owner_id': 'member', 'expected_updated_at': row['updated_at']})
         self.assertEqual(scheduled.status_code, 200, scheduled.text)
         review_before = await server.db.reviews.find_one({'review_id': scheduled.json()['review_id']})
         for index, status in enumerate(('approved', 'approved_with_conditions', 'not_approved'), 1):
@@ -107,7 +107,7 @@ class R4AIApprovalTests(unittest.IsolatedAsyncioTestCase):
     async def test_completed_native_ai_review_does_not_authorize_use(self):
         row = await self.create_ai()
         scheduled = await self.client.post('/api/ai_systems/' + row['ai_system_id'] + '/reviews',
-            json={'due_date': '2027-01-31', 'recurrence': 'annual'})
+            json={'due_date': '2027-01-31', 'recurrence': 'annual', 'owner_id': 'member', 'expected_updated_at': row['updated_at']})
         self.assertEqual(scheduled.status_code, 200, scheduled.text)
         review = scheduled.json()
         path = '/api/reviews/' + review['review_id']
@@ -439,7 +439,7 @@ class R4AIApprovalTests(unittest.IsolatedAsyncioTestCase):
             with self.subTest(conflict=conflict):
                 row = await self.create_ai()
                 scheduled = await self.client.post('/api/ai_systems/' + row['ai_system_id'] + '/reviews',
-                    json={'due_date': '2027-01-31', 'recurrence': 'annual'})
+                    json={'due_date': '2027-01-31', 'recurrence': 'annual', 'owner_id': 'member', 'expected_updated_at': row['updated_at']})
                 self.assertEqual(scheduled.status_code, 200, scheduled.text)
                 review_id = scheduled.json()['review_id']
                 before = await server.db.reviews.find_one({'review_id': review_id})
@@ -503,7 +503,7 @@ class R4AIApprovalTests(unittest.IsolatedAsyncioTestCase):
             with self.subTest(days=days):
                 row = await self.create_ai()
                 response = await self.client.post('/api/ai_systems/' + row['ai_system_id'] + '/reviews', json={
-                    'due_date': '2027-01-31', 'recurrence': 'custom', 'custom_recurrence_days': days})
+                    'due_date': '2027-01-31', 'recurrence': 'custom', 'custom_recurrence_days': days, 'owner_id': 'member', 'expected_updated_at': row['updated_at']})
                 self.assertEqual(response.status_code, status, response.text)
                 count = await server.db.reviews.count_documents({'ai_system_id': row['ai_system_id']})
                 self.assertEqual(count, 1 if status == 200 else 0)
@@ -545,7 +545,7 @@ class R4AIApprovalTests(unittest.IsolatedAsyncioTestCase):
             with self.subTest(phase=phase):
                 row = await self.create_ai()
                 scheduled = await self.client.post('/api/ai_systems/' + row['ai_system_id'] + '/reviews',
-                    json={'due_date': '2027-01-31', 'recurrence': 'annual'})
+                    json={'due_date': '2027-01-31', 'recurrence': 'annual', 'owner_id': 'member', 'expected_updated_at': row['updated_at']})
                 self.assertEqual(scheduled.status_code, 200, scheduled.text)
                 review = scheduled.json()
                 path = '/api/reviews/' + review['review_id']
@@ -615,7 +615,7 @@ class R4AIApprovalTests(unittest.IsolatedAsyncioTestCase):
     async def test_retirement_review_conflict_retains_unrelated_saved_values(self):
         row = await self.create_ai()
         scheduled = await self.client.post('/api/ai_systems/' + row['ai_system_id'] + '/reviews',
-            json={'due_date': '2027-01-31', 'recurrence': 'annual'})
+            json={'due_date': '2027-01-31', 'recurrence': 'annual', 'owner_id': 'member', 'expected_updated_at': row['updated_at']})
         self.assertEqual(scheduled.status_code, 200, scheduled.text)
         review_id = scheduled.json()['review_id']
         collection_type = type(server.db.ai_systems)

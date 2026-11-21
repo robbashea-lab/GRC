@@ -10,6 +10,7 @@ import socGuidance from '@catalogs/operatorGuidance/socAssessmentGuidance.json';
 import isoCriteria from '@catalogs/operatorGuidance/isoAssessmentCriteria.json';
 import {calendarDay} from '../lib/managementDates';
 import { validateAssignment, eligible, clientAccess } from './assignmentEligibility';
+import {policySupportsAssessment} from '../lib/frameworkPolicyLinks';
 import {CATALOGS,frameworkCatalog,frameworkDefinition,frameworkCapabilities,activeDefinitions,FRAMEWORKS,ASSESSMENT_STATUSES,CADENCES,reviewConfig} from '../lib/frameworks';
 import {cisConfiguration,validateCisSettings,validateCisConfiguration} from '../lib/cisScope';
 import {activePlans} from '../lib/frameworks';
@@ -211,10 +212,15 @@ export function frameworkRelated(db,row){
   const cid=row.client_id,aid=row.framework_assessment_id,did=row.definition_id,result={};
   for(const kind of ['reviews','findings','tasks','risks','policies','requirements','evidence','vendors']){
     const direct=(row.related_links||[]).filter(l=>l.kind===kind).map(l=>l.id);
-    result[kind]=(db[kind]||[]).filter(r=>r.client_id===cid&&(direct.includes(r[ids[kind]])||r.framework_assessment_id===aid||
+    result[kind]=(db[kind]||[]).filter(r=>r.client_id===cid&&(kind==='policies'?policySupportsAssessment(row,r):(direct.includes(r[ids[kind]])||r.framework_assessment_id===aid||
       (kind==='reviews'&&r.framework_key===row.framework_key&&r.framework_safeguards?.includes(did))||
       (kind==='policies'&&frameworkCatalog(row.framework_key)?.policy_mappings.some(p=>p.policy_key===r.baseline_key&&p.safeguards.includes(did)))||
-      (kind==='evidence'&&['framework_assessment','framework_assessments'].includes(r.linked_type)&&r.linked_id===aid)));
+      (kind==='evidence'&&['framework_assessment','framework_assessments'].includes(r.linked_type)&&r.linked_id===aid))));
+  }
+  for(const [kind,field] of [['risks','risk_id'],['vendors','vendor_id'],['ai_systems','ai_system_id']]){
+    const subjectIds=new Set(result.reviews.map(review=>review[field]).filter(Boolean));
+    const subjects=(db[kind]||[]).filter(subject=>subject.client_id===cid&&subjectIds.has(subject[field]));
+    result[kind]=[...new Map([...(result[kind]||[]),...subjects].map(subject=>[subject[field],subject])).values()];
   }
   const rids=result.reviews.map(r=>r.review_id);
   result.findings=[...new Map([...result.findings,...db.findings.filter(f=>f.client_id===cid&&findingApplies(row,f,new Set(rids),db.framework_assessments))].map(r=>[r.finding_id,r])).values()];
@@ -228,7 +234,7 @@ export function frameworkRelated(db,row){
 export function frameworkReverse(db,kind,source,result){
   if(kind==='framework_assessments')return frameworkRelated(db,source);
   const fid=source.finding_id,aid=source.framework_assessment_id||(kind==='evidence'&&['framework_assessment','framework_assessments'].includes(source.linked_type)?source.linked_id:null)||db.findings.find(f=>f.client_id===source.client_id&&f.finding_id===fid)?.framework_assessment_id;
-  result.framework_assessments=(db.framework_assessments||[]).filter(a=>a.client_id===source.client_id&&(a.framework_assessment_id===aid||a.related_links?.some(l=>l.kind===kind&&l.id===source[ids[kind]])||(kind==='reviews'&&a.framework_key===source.framework_key&&source.framework_safeguards?.includes(a.definition_id))||(kind==='policies'&&frameworkCatalog(a.framework_key)?.policy_mappings.some(m=>m.policy_key===source.baseline_key&&m.safeguards.includes(a.definition_id)))))
+  result.framework_assessments=(db.framework_assessments||[]).filter(a=>a.client_id===source.client_id&&(kind==='policies'?policySupportsAssessment(a,source):(a.framework_assessment_id===aid||a.related_links?.some(l=>l.kind===kind&&l.id===source[ids[kind]])||(kind==='reviews'&&a.framework_key===source.framework_key&&source.framework_safeguards?.includes(a.definition_id))||(kind==='policies'&&frameworkCatalog(a.framework_key)?.policy_mappings.some(m=>m.policy_key===source.baseline_key&&m.safeguards.includes(a.definition_id))))))
     .filter(a=>kind!=='evidence'||!a.unlinked_evidence_ids?.includes(source.evidence_id)).map(a=>({...a,title:assessmentTitle(a)}));
   const finding=kind==='tasks'?db.findings.find(f=>f.client_id===source.client_id&&f.finding_id===source.finding_id):source;
   const explicitFinding=(db.framework_assessments||[]).filter(a=>a.client_id===source.client_id&&(a.framework_assessment_id===finding?.framework_assessment_id||a.related_links?.some(l=>l.kind==='findings'&&l.id===finding?.finding_id)));
@@ -318,7 +324,7 @@ export function frameworkRequest(db,path,method,params,body,context=null){
     const upgraded=genericGuidedFramework(id)||['soc-2','iso-27001'].includes(id)||focusedOmniEnabled(params.client_id,db.user,id,configuration);
     if(upgraded&&['reviews','findings','tasks','evidence'].some(kind=>(db[kind]||[]).filter(item=>item.client_id===params.client_id).length>10000))fail('Authorized workspace context exceeds the supported limit',413);
     if(id==='cis-ig1'&&operation==='export'){
-      const active=new Set(activeDefinitions(id,configuration).map(d=>d.id)),fields=['framework_assessment_id','definition_id','title','scope_group','in_active_scope','client_implementation_group','status','verification','implementation','owner_id','process_owner_id','last_assessed','notes','related_links'];
+      const active=new Set(activeDefinitions(id,configuration).map(d=>d.id)),fields=['framework_assessment_id','definition_id','title','scope_group','in_active_scope','client_implementation_group','status','verification','implementation','owner_id','process_owner_id','last_assessed','notes','related_links','policy_link_ids'];
       const cell=value=>{let text=String(value??'');if(/^[\s]*[=+\-@]/.test(text)||/^[\t\r\n]/.test(text))text="'"+text;return '"'+text.replace(/"/g,'""')+'"';};
       const includeRetained=params.include_retained===true||params.include_retained==='true';
       const selected=assessments.filter(r=>includeRetained||active.has(r.definition_id)).sort((a,b)=>a.definition_id.localeCompare(b.definition_id,undefined,{numeric:true}));
@@ -479,6 +485,15 @@ export function frameworkRequest(db,path,method,params,body,context=null){
   if(method==='patch'&&!operation){
     if(body.guided_assessment_source&&!Object.hasOwn(body,'status')&&!Object.hasOwn(body,'expected_last_assessed'))fail('Reload the record before saving; an edit version is required',428);
     if(Object.prototype.hasOwnProperty.call(body,'expected_last_assessed')&&body.expected_last_assessed!==(row.last_saved??row.last_assessed??null))fail('Assessment changed since it was opened; reload before saving',409);
+    if(Object.hasOwn(body,'policy_link_ids')){
+      if(!Object.hasOwn(body,'expected_last_assessed'))fail('Reload the record before saving; an edit version is required',428);
+      if(!['super_admin','platform_admin'].includes(db.user.role))fail('Program configuration requires a service-provider administrator',403);
+      if(!Array.isArray(body.policy_link_ids)||body.policy_link_ids.length>500||body.policy_link_ids.some(id=>typeof id!=='string'||!/^[A-Za-z0-9_-]{1,160}$/.test(id)))fail('Choose current Policy record identities');
+      if(body.policy_link_ids.some(id=>!db.policies.some(policy=>policy.client_id===row.client_id&&policy.policy_id===id)))fail('Every Policy relationship must belong to this client');
+      const client=record(db,'clients',row.client_id);
+      if(!db.requirements.some(item=>item.client_id===row.client_id&&item.baseline_key===row.framework_key&&item.baseline_response==='applies')||!activeDefinitions(row.framework_key,clientConfiguration(row.framework_key,client)).some(definition=>definition.id===row.definition_id))fail('This assessment is retained outside the active program scope',409);
+      body={...body,policy_link_ids:[...new Set(body.policy_link_ids)]};
+    }
     body={...body};delete body.expected_last_assessed;
     const itemDraft=body.item_draft;
     if(Object.hasOwn(body,'item_draft')&&(!itemDraft||!body.guided_assessment_source||Object.hasOwn(body,'status')))fail('Pending Item edits require the reviewed implementation-only Save');
@@ -524,9 +539,10 @@ export function frameworkRequest(db,path,method,params,body,context=null){
     const recordAssessment=body.record_assessment===true&&!sameApplication;
     if('record_assessment' in body&&(row.framework_key!=='soc-2'||typeof body.record_assessment!=='boolean'))fail('Explicit assessment recording applies only to SOC 2');
     delete body.record_assessment;
-    const ownershipOnly=Object.keys(body).length>0&&Object.keys(body).every(k=>['owner_id','process_owner_id'].includes(k))&&!recordAssessment;
+    const actualChanges=Object.keys(body).filter(key=>canonicalSnapshot(body[key])!==canonicalSnapshot(row[key]??null));
+    const ownershipOnly=actualChanges.length>0&&actualChanges.every(k=>['owner_id','process_owner_id','policy_link_ids'].includes(k))&&!recordAssessment;
     const supported=frameworkCapabilities(row.framework_key);
-    const fields=['status','implementation','technology','notes','na_rationale','owner_id','process_owner_id','addressable_decision','addressable_rationale','soa_applicability','soa_justification','management_controls','csf_profile',...['cis_assessment_criteria','soc_assessment_checks','cis_operation'].filter(k=>supported.includes(k)),...(row.framework_key==='iso-27001'?['iso_assessment_checks']:[]),...('guided_assessment_source' in body||'guided_assessment_source' in row?['guided_assessment_source']:[])];
+    const fields=['status','implementation','technology','notes','na_rationale','owner_id','process_owner_id','policy_link_ids','addressable_decision','addressable_rationale','soa_applicability','soa_justification','management_controls','csf_profile',...['cis_assessment_criteria','soc_assessment_checks','cis_operation'].filter(k=>supported.includes(k)),...(row.framework_key==='iso-27001'?['iso_assessment_checks']:[]),...('guided_assessment_source' in body||'guided_assessment_source' in row?['guided_assessment_source']:[])];
     if('cis_operation' in body){
       if(!supported.includes('cis_operation'))fail('Operating arrangements apply only to CIS IG1');
       const op=body.cis_operation;
@@ -607,7 +623,7 @@ export function frameworkRequest(db,path,method,params,body,context=null){
     body={...body};
     for(const key of Object.keys(NATIVE_EMPTY_DEFAULTS))if(Object.hasOwn(body,key)&&sameNativeField(key,body[key],row[key]))delete body[key];
     data={...row,...body};
-    const changed=Object.keys(body).filter(k=>['guided_assessment_source','verification_checklist','cis_assessment_criteria','soc_assessment_checks','iso_assessment_checks','cis_operation'].includes(k)?canonicalSnapshot(body[k])!==canonicalSnapshot(row[k]??null):body[k]!==row[k]);
+    const changed=Object.keys(body).filter(k=>['guided_assessment_source','verification_checklist','cis_assessment_criteria','soc_assessment_checks','iso_assessment_checks','cis_operation','policy_link_ids'].includes(k)?canonicalSnapshot(body[k])!==canonicalSnapshot(row[k]??null):body[k]!==row[k]);
     if(changed.length||recordAssessment){
       const at=new Date(Math.max(Date.now(),(Date.parse(row.last_saved??row.last_assessed)||0)+1)).toISOString();
       if(row.framework_key==='soc-2'&&!ownershipOnly){
@@ -627,6 +643,7 @@ export function frameworkRequest(db,path,method,params,body,context=null){
   if(method==='post'&&operation==='links'){
     if(!['reviews','findings','tasks','risks','policies','evidence','requirements','vendors'].includes(body.kind))throw new Error('Unsupported relationship');
     const target=record(db,body.kind,body.id);if(target.client_id!==row.client_id)throw new Error('Relationship must belong to this client');
+    if(body.kind==='policies'&&Object.hasOwn(row,'policy_link_ids')&&!row.policy_link_ids.includes(body.id)){row.policy_link_ids=[...row.policy_link_ids,body.id];row.last_saved=new Date(Math.max(Date.now(),(Date.parse(row.last_saved??row.last_assessed)||0)+1)).toISOString();}
     if(body.kind==='evidence')row.unlinked_evidence_ids=(row.unlinked_evidence_ids||[]).filter(id=>id!==body.id);
     if(!row.related_links.some(l=>l.kind===body.kind&&l.id===body.id))row.related_links.push({kind:body.kind,id:body.id});audit(db,'Framework record linked','framework_assessments',row,body);return {ok:true};
   }

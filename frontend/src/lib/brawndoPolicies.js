@@ -1,3 +1,4 @@
+import {policySupportIds} from './frameworkPolicyLinks';
 import {CATALOGS, FRAMEWORKS} from './frameworks';
 import {reviewSchedule} from './reviewOccurrences';
 
@@ -21,8 +22,7 @@ export function policyAlignment(row, programs=[], assessments=[], cisGroup) {
     const catalog=CATALOGS[key];
     if(!catalog)return [];
     const mapped=(catalog.policy_mappings||[]).filter(m=>m.policy_key===row.baseline_key);
-    const ids=new Set(mapped.flatMap(m=>m.safeguards));
-    assessments.filter(a=>a.client_id===row.client_id&&a.framework_key===key&&a.related_links?.some(l=>l.kind==='policies'&&l.id===row.policy_id)).forEach(a=>ids.add(a.definition_id));
+    const ids=new Set(policySupportIds(row,key,assessments));
     return [...ids].flatMap(id=>{
       const definition=catalog.requirements.find(d=>d.id===id);
       if(!definition||key==='cis-ig1'&&(definition.implementation_group>group||definition.implementation_group>1&&!assessments.some(a=>a.client_id===row.client_id&&a.framework_key===key&&a.definition_id===id)))return [];

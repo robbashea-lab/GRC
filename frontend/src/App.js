@@ -29,6 +29,7 @@ import AIGovernance from '@/pages/AIGovernance';
 import IVentureSetup from '@/components/IVentureSetup';
 import ToolCatalog from '@/components/ToolCatalog';
 import "@/App.css";
+import "@/NativeNordic.css";
 
 function Protected({ children }) {
   const location = useLocation();

@@ -33,6 +33,7 @@ from framework_catalog import client_configuration, active_plans
 from cmmc_scope import CmmcConfiguration
 import generic_guided_assessment
 import r4_services
+import framework_policy_links
 import create_requests
 
 ROOT=Path(__file__).parents[1]/'frontend/src/lib'
@@ -192,6 +193,7 @@ class AssessmentPatch(BaseModel):
     na_rationale: Optional[str]=Field(default=None,max_length=4000)
     owner_id: Optional[str]=None
     process_owner_id: Optional[str]=None
+    policy_link_ids: Optional[list[str]]=Field(default=None,max_length=500)
     cis_operation: CisOperation = Field(default_factory=CisOperation)
     addressable_decision: Optional[Literal['','as_written','equivalent_alternative','not_reasonable_appropriate']]=None
     addressable_rationale: Optional[str]=Field(default=None,max_length=4000)
@@ -337,10 +339,18 @@ async def related(s,row):
         links=[l['id'] for l in row.get('related_links',[]) if l['kind']==kind]
         clauses=[{key:{'$in':links}},{'framework_assessment_id':aid}]
         if kind=='reviews':clauses.append({'framework_key':row['framework_key'],'framework_safeguards':did})
-        if kind=='policies':clauses.append({'baseline_key':{'$in':[p['policy_key'] for p in CATALOGS.get(row['framework_key'],{}).get('policy_mappings',[]) if did in p['safeguards']]}})
+        if kind=='policies':
+            clauses.append({'baseline_key':{'$in':[p['policy_key'] for p in CATALOGS.get(row['framework_key'],{}).get('policy_mappings',[]) if did in p['safeguards']]}})
+            if 'policy_link_ids' in row:
+                clauses=[{'policy_id':{'$in':row['policy_link_ids'] if isinstance(row['policy_link_ids'],list) else []}}]
         if kind=='evidence':clauses.append({'linked_type':{'$in':['framework_assessment','framework_assessments']},'linked_id':aid})
         out[kind]=await s.db[kind].find({'client_id':cid,'$or':clauses},{'_id':0,'content_base64':0}).to_list(None)
         for record in out[kind]:r4_services.assert_settled(record)
+    for kind,field in (('risks','risk_id'),('vendors','vendor_id'),('ai_systems','ai_system_id')):
+        subject_ids={review[field] for review in out['reviews'] if review.get(field)}
+        subjects=await s.db[kind].find({'client_id':cid,field:{'$in':list(subject_ids)}},{'_id':0}).to_list(None) if subject_ids else []
+        for subject in subjects:r4_services.assert_settled(subject)
+        out[kind]=list({record[field]:record for record in out.get(kind,[])+subjects}.values())
     rids=[r['review_id'] for r in out['reviews']]
     findings=await s.db.findings.find({'client_id':cid,'review_id':{'$in':rids}},{'_id':0}).to_list(None)
     scopes=await explicit_finding_scopes(s,cid)
@@ -556,7 +566,7 @@ def router_for(s):
         configuration=client_configuration('cis-ig1',client)
         active={d['id'] for d in active_definitions('cis-ig1',configuration)}
         rows=await s._bounded(s.db.framework_assessments.find({'client_id':client_id,'framework_key':'cis-ig1'},{'_id':0}),10000,'assessments')
-        fields=['framework_assessment_id','definition_id','title','scope_group','in_active_scope','client_implementation_group','status','verification','implementation','owner_id','process_owner_id','last_assessed','notes','related_links']
+        fields=['framework_assessment_id','definition_id','title','scope_group','in_active_scope','client_implementation_group','status','verification','implementation','owner_id','process_owner_id','last_assessed','notes','related_links','policy_link_ids']
         output=io.StringIO();writer=csv.DictWriter(output,fieldnames=fields);writer.writeheader()
         for row in sorted(rows,key=lambda r:tuple(map(int,r['definition_id'].split('.')))):
             if not include_retained and row['definition_id'] not in active:continue
@@ -776,7 +786,23 @@ def router_for(s):
         changes.pop('expected_last_assessed')
         record_assessment=changes.pop('record_assessment',False)
         if changes.get('guided_assessment_source') and same_application:record_assessment=False
-        ownership_only=bool(changes) and set(changes)<= {'owner_id','process_owner_id'} and not record_assessment
+        if 'policy_link_ids' in changes:
+            authorization.require_program_admin(user)
+            identifiers=changes['policy_link_ids']
+            if identifiers is None or any(not re.fullmatch(r'[A-Za-z0-9_-]{1,160}', ident) for ident in identifiers):
+                raise HTTPException(422,'Choose current Policy record identities')
+            client=await scoped(old['client_id'],user)
+            if not await s.db.requirements.find_one({'client_id':old['client_id'],'baseline_key':old['framework_key'],'baseline_response':'applies'}) or not any(
+                    definition['id']==old['definition_id'] for definition in active_definitions(old['framework_key'],client_configuration(old['framework_key'],client))):
+                raise HTTPException(409,'This assessment is retained outside the active program scope')
+            identifiers=list(dict.fromkeys(identifiers))
+            policies=await s.db.policies.find({'client_id':old['client_id'],'policy_id':{'$in':identifiers}},{'_id':0}).to_list(None)
+            if len(policies)!=len(identifiers):
+                raise HTTPException(422,'Every Policy relationship must belong to this client')
+            for policy in policies:r4_services.assert_settled(policy)
+            changes['policy_link_ids']=identifiers
+        actual_changes={key for key,value in changes.items() if not same_native_field(key,value,old.get(key))}
+        ownership_only=bool(actual_changes) and actual_changes<= {'owner_id','process_owner_id','policy_link_ids'} and not record_assessment
         if 'record_assessment' in body.model_fields_set and old['framework_key']!='soc-2':
             raise HTTPException(422,'Explicit assessment recording applies only to SOC 2')
         data={**old,**changes}
@@ -944,11 +970,14 @@ def router_for(s):
         if body.kind=='evidence':update['$pull']={'unlinked_evidence_ids':body.id}
         after={**row,'related_links':[*row.get('related_links',[]),body.model_dump()]}
         if body.model_dump() in row.get('related_links',[]):after['related_links']=row['related_links']
+        if body.kind=='policies' and 'policy_link_ids' in row and body.id not in row['policy_link_ids']:
+            after['policy_link_ids']=[*row['policy_link_ids'],body.id]
+            update['$set']={'policy_link_ids':after['policy_link_ids'],'last_saved':s._next_write_time(row.get('last_saved') or row.get('last_assessed'))}
         # Evidence's own operation records its business event. Assessment links
         # mirror support and must not inflate the portfolio assessment feed.
         portfolio_patch, portfolio_event=({},None) if body.kind=='evidence' else s._portfolio_event_patch(
             'framework_assessment',aid,row['client_id'],user,row,after,s._now())
-        if portfolio_patch:update['$set']=portfolio_patch
+        if portfolio_patch:update.setdefault('$set',{}).update(portfolio_patch)
         linked=await s.db.framework_assessments.update_one({
             'framework_assessment_id':aid,'client_id':row['client_id'],'related_links':row.get('related_links'),
             'last_saved':row.get('last_saved'),'last_assessed':row.get('last_assessed'),'_r4_context_pending':None},update)

@@ -42,9 +42,12 @@ const fill = (selector, value) => act(async () => {
 });
 const fillCredentials = async () => { await fill("#email", email); await fill("#password", password); };
 
-test("the pinned public composition retains labelled native credentials and recovery navigation", async () => {
+test("the approved Nordic composition retains labelled native credentials and recovery navigation", async () => {
   await render();
-  expect(container.querySelector("h1").textContent).toBe("Govern confidently.Turn complexity into clarity.");
+  expect(container.querySelector("h1").textContent).toBe("Govern confidently.");
+  expect(container.querySelector(".hero p").textContent).toBe("Turn complexity into clarity.");
+  expect(container.querySelector("img.scene").getAttribute("alt")).toBe("");
+  expect(container.querySelector(".scene + .scrim").getAttribute("aria-hidden")).toBe("true");
   expect(container.querySelector(".card > .sub").textContent).toBe("Sign in to continue to GoverNara.");
   expect(container.querySelector(".logo").textContent.trim()).toBe("GoverNara");
   expect(container.querySelector("[data-testid='env-identifier']").textContent).toBe("Welcome back");

@@ -1,5 +1,7 @@
 {
   "offline": [
+    "test_nordic_policy_links.py",
+    "test_nordic_ai_reviews.py",
     "test_portfolio_onboarding_state.py",
     "test_r4_tool_usage.py",
     "test_r4_pending_evidence_context.py",

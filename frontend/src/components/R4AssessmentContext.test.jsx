@@ -1,6 +1,7 @@
 import React,{act} from 'react';
 import {createRoot} from 'react-dom/client';
 import R4AssessmentContext from './R4AssessmentContext';
+import {AssessmentClientContextProvider} from './AssessmentClientContext';
 import api from '@/lib/api';
 jest.mock('@/lib/api',()=>({__esModule:true,default:{get:jest.fn(),put:jest.fn(),post:jest.fn(),patch:jest.fn()},formatError:error=>error.message}));
 let root,host;
@@ -82,5 +83,36 @@ test('a replacement client and a context reload expose no stale editable interva
   expect(host.querySelector('[aria-label="Assessment setup notes"]').value).toBe('Explicit staged assessment context');
   await act(async()=>[...host.querySelectorAll('button')].find(node=>node.textContent==='Apply context to draft').click());
   expect(onApply).toHaveBeenCalledWith(expect.objectContaining({expected_client_updated_at:'confirmed-client-v2',expected_updated_at:'confirmed-client-v2'}));
+  for(const method of ['post','put','patch'])expect(api[method]).not.toHaveBeenCalled();
+});
+
+
+test.each(['client-v1','client-v2'])('authority-only reread retains unapplied context and its original revision (%s)',async nextToken=>{
+  let resolve;
+  const refreshed=new Promise(done=>{resolve=done;});
+  api.get.mockResolvedValueOnce({data:contextFor('new-client','client-v1')}).mockReturnValueOnce(refreshed);
+  const onApply=jest.fn(),onDraftChange=jest.fn();
+  const record={client_id:'new-client',framework_assessment_id:'assessment-id',framework_key:'hipaa',definition_id:'synthetic-native-item'};
+  const render=async scopeKey=>{await act(async()=>root.render(<AssessmentClientContextProvider {...{record,scopeKey}}><R4AssessmentContext {...{record,onApply,onDraftChange}}/></AssessmentClientContextProvider>));};
+  await render('original-authority');
+  const notes=host.querySelector('[aria-label="Assessment setup notes"]');
+  await act(async()=>{Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype,'value').set.call(notes,'Unapplied native context draft');notes.dispatchEvent(new Event('input',{bubbles:true}));});
+  expect(onDraftChange.mock.calls.at(-1)[0]).toBe(true);
+  await render('refreshed-authority');
+  expect(host.querySelector('fieldset')).toBeNull();expect(onDraftChange.mock.calls.at(-1)[0]).toBe(true);
+  await act(async()=>resolve({data:contextFor('new-client',nextToken)}));
+  expect(host.querySelector('[aria-label="Assessment setup notes"]').value).toBe('Unapplied native context draft');
+  const button=title=>[...host.querySelectorAll('button')].find(node=>node.textContent===title);
+  expect(button('Apply context to draft').disabled).toBe(nextToken!=='client-v1');
+  await act(async()=>button('Apply context to draft').click());
+  if(nextToken==='client-v1')expect(onApply).toHaveBeenCalledWith(expect.objectContaining({notes:'Unapplied native context draft',expected_client_updated_at:'client-v1',expected_updated_at:'client-v1'}));
+  else{
+    expect(onApply).not.toHaveBeenCalled();expect(host.textContent).toContain('Your draft is retained');
+    await act(async()=>button('Discard context edits').click());
+    expect(host.querySelector('[aria-label="Assessment setup notes"]').value).toBe('Current scoped notes');
+    expect(button('Apply context to draft').disabled).toBe(false);
+    await act(async()=>button('Apply context to draft').click());
+    expect(onApply).toHaveBeenCalledWith(expect.objectContaining({expected_client_updated_at:'client-v2',expected_updated_at:'client-v2'}));
+  }
   for(const method of ['post','put','patch'])expect(api[method]).not.toHaveBeenCalled();
 });

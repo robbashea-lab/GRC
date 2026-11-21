@@ -1,0 +1,269 @@
+/* Approved Nordic native login appearance; authentication stays in AuthContext. */
+
+    #login-governara {
+      --pine: #0d2529;
+      --card: #102d30;
+      --field: #112c2f;
+      --line: #416466;
+      --divider: #3a5759;
+      --ivory: #eef5f4;
+      --muted: #bed2d0;
+      --mint: #99dbc5;
+      --on-mint: #0c342b;
+      --gutter: clamp(20px, 2.6vw, 50px);
+      font-family: "GoverNara Native Inter",Inter,"Segoe UI",Arial,sans-serif;
+      font-size: 16px;
+      color: var(--ivory);
+      background: var(--pine);
+    }
+    #login-governara *, #login-governara *::before, #login-governara *::after { box-sizing: border-box; }
+    #login-governara { margin: 0; }
+    #login-governara button, #login-governara input { font: inherit; }
+    #login-governara button, #login-governara a { -webkit-tap-highlight-color: transparent; }
+    #login-governara button { cursor: pointer; }
+    #login-governara a { color: inherit; }
+    #login-governara :focus-visible { outline: 2px solid var(--mint); outline-offset: 3px; }
+    #login-governara h1, #login-governara h2, #login-governara p { margin: 0; }
+    #login-governara .page {
+      isolation: isolate;
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+      min-height: 100svh;
+    }
+    #login-governara .scene, #login-governara .scrim { position: absolute; inset: 0; z-index: -1; }
+    #login-governara .scene {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: 50% 53%;
+    }
+    #login-governara .scrim {
+      background: linear-gradient(90deg, #091e22a6, #0d252926 38%, transparent 62%, #081e22a6 100%),
+        linear-gradient(0deg, #0a2024b8, transparent 20%, transparent 86%, #0c2326a0);
+    }
+    #login-governara .site-header, #login-governara .site-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      margin-inline: calc(var(--gutter) * .65);
+    }
+    #login-governara .site-header { padding-block: 18px; }
+    #login-governara .logo {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 1.45rem;
+      font-weight: 720;
+      letter-spacing: -.05em;
+    }
+    #login-governara .logo svg { width: 33px; height: 33px; color: var(--mint); flex: none; }
+    #login-governara .demo-link {
+      display: inline-flex;
+      align-items: center;
+      min-height: 39px;
+      padding: 8px 13px;
+      border: 1px solid #8daba861;
+      border-radius: 8px;
+      background: #0c272b7d;
+      font-size: .875rem;
+      font-weight: 600;
+      text-decoration: none;
+    }
+    #login-governara .demo-link:hover { background: #26484b; border-color: var(--line); }
+    #login-governara main {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(350px, 445px);
+      align-items: center;
+      gap: clamp(16px, 3vw, 40px);
+      flex: 1;
+      padding: 26px var(--gutter) 38px;
+    }
+    #login-governara .hero { align-self: center; padding-block: 14px; }
+    #login-governara .hero h1 {
+      width: fit-content;
+      font-size: clamp(2.65rem, 4.05vw, 4.7rem);
+      font-weight: 480;
+      line-height: 1.01;
+      letter-spacing: -.065em;
+      text-wrap: balance;
+      text-shadow: 0 2px 19px #10262899;
+    }
+    #login-governara .hero p {
+      margin-top: 13px;
+      color: #a2dcca;
+      font-size: clamp(1.35rem, 2.24vw, 2.65rem);
+      line-height: 1.15;
+      letter-spacing: -.045em;
+      text-shadow: 0 2px 15px #112a2c;
+    }
+    #login-governara .card {
+      min-width: 0;
+      padding: clamp(23px, 2.3vw, 37px);
+      border: 1px solid #608587;
+      border-radius: 20px;
+      background: linear-gradient(165deg, #163b3df5, #102e30f8);
+      box-shadow: 0 20px 62px #071b2050;
+    }
+    #login-governara .card h2 { font-size: clamp(1.6rem, 2vw, 1.85rem); letter-spacing: -.05em; }
+    #login-governara .card-intro { margin-top: 9px; color: var(--muted); font-size: .9375rem; line-height: 1.45; }
+    #login-governara .microsoft, #login-governara .primary {
+      display: flex;
+      width: 100%;
+      min-height: 49px;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      padding: 9px 14px;
+      border: 1px solid transparent;
+      border-radius: 9px;
+      font-size: .9375rem;
+      font-weight: 650;
+    }
+    #login-governara .microsoft { margin-top: 24px; color: #152226; background: #fff; }
+    #login-governara .microsoft:hover { background: #eaf3f2; }
+    #login-governara .ms-mark {
+      display: grid;
+      grid-template: repeat(2, 8px) / repeat(2, 8px);
+      gap: 1px;
+    }
+    #login-governara .ms-mark i:nth-child(1) { background: #f25022; }
+    #login-governara .ms-mark i:nth-child(2) { background: #7fba00; }
+    #login-governara .ms-mark i:nth-child(3) { background: #00a4ef; }
+    #login-governara .ms-mark i:nth-child(4) { background: #ffb900; }
+    #login-governara .divider {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-block: 22px 19px;
+      color: var(--muted);
+      font-size: .8125rem;
+    }
+    #login-governara .divider::before, #login-governara .divider::after { content: ""; flex: 1; height: 1px; background: var(--divider); }
+    #login-governara .form { display: grid; gap: 17px; }
+    #login-governara .field { display: grid; gap: 7px; }
+    #login-governara .field > label { font-size: .875rem; color: var(--ivory); }
+    #login-governara .input-wrap {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      min-height: 47px;
+      padding-inline: 11px;
+      border: 1px solid var(--line);
+      border-radius: 9px;
+      color: var(--muted);
+      background: var(--field);
+    }
+    #login-governara .input-wrap:focus-within { border-color: var(--mint); }
+    #login-governara .input-wrap > svg, #login-governara .icon-button svg { flex: none; width: 18px; height: 18px; }
+    #login-governara .input-wrap input {
+      flex: 1;
+      width: 100%;
+      min-width: 0;
+      min-height: 43px;
+      padding: 0;
+      border: 0;
+      outline: none;
+      background: transparent;
+      color: var(--ivory);
+      font-size: .9375rem;
+    }
+    #login-governara input::placeholder { color: #b1c9c6; opacity: 1; }
+    #login-governara .icon-button {
+      display: inline-grid;
+      place-items: center;
+      flex: none;
+      width: 35px;
+      height: 35px;
+      padding: 0;
+      border: 0;
+      border-radius: 5px;
+      color: var(--muted);
+      background: transparent;
+    }
+    #login-governara .icon-button:hover { background: #284a4d; color: var(--ivory); }
+    #login-governara .options {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 9px;
+      flex-wrap: wrap;
+      color: var(--muted);
+      font-size: .8125rem;
+    }
+    #login-governara .remember { display: inline-flex; align-items: center; gap: 8px; min-height: 30px; }
+    #login-governara .remember input { width: 16px; height: 16px; margin: 0; accent-color: var(--mint); }
+    #login-governara .text-button {
+      padding: 4px 0;
+      border: 0;
+      color: inherit;
+      background: transparent;
+    }
+    #login-governara .text-button:hover, #login-governara .card-footer a:hover { text-decoration: underline; text-underline-offset: 3px; }
+    #login-governara .reset-button, #login-governara .card-footer a { color: var(--mint); font-weight: 600; }
+    #login-governara .primary { color: var(--on-mint); background: var(--mint); }
+    #login-governara .primary:hover { background: #b6ebd7; }
+    #login-governara .card-footer {
+      margin-top: 22px;
+      padding-top: 16px;
+      border-top: 1px solid var(--divider);
+      color: var(--muted);
+      text-align: center;
+      font-size: .875rem;
+    }
+    #login-governara .card-footer a { text-decoration: none; }
+    #login-governara .site-footer {
+      flex-wrap: wrap;
+      padding-block: 10px 13px;
+      border-top: 1px solid #a8c3be39;
+      color: var(--muted);
+      font-size: .8125rem;
+    }
+    #login-governara .site-footer nav { display: flex; flex-wrap: wrap; gap: 7px 16px; }
+    #login-governara [hidden] { display: none !important; }
+    @media (max-width: 1000px) {
+      #login-governara main { grid-template-columns: minmax(0, 1fr) minmax(325px, 389px); }
+      #login-governara .hero h1 { max-width: 11ch; }
+      #login-governara .scene { object-position: 45% 54%; }
+    }
+    @media (max-width: 730px) {
+      #login-governara .page { --gutter: clamp(15px, 4vw, 24px); background: var(--pine); }
+      #login-governara .scene, #login-governara .scrim { height: 450px; }
+      #login-governara .scene { object-position: 44% 47%; }
+      #login-governara .scrim { background: linear-gradient(0deg, var(--pine) 4%, #0d252970 38%, #0b22262e 61%, #0b2226b5); }
+      #login-governara .site-header, #login-governara .site-footer { margin-inline: var(--gutter); }
+      #login-governara .site-header { padding-block: 14px; }
+      #login-governara .logo { font-size: 1.25rem; }
+      #login-governara .logo svg { width: 28px; height: 28px; }
+      #login-governara main { display: flex; flex-direction: column; gap: 22px; align-items: stretch; padding-top: 0; padding-bottom: 24px; }
+      #login-governara .hero { align-self: stretch; margin-top: 155px; padding-block: 9px 0; }
+      #login-governara .hero h1 { max-width: none; font-size: clamp(2rem, 8vw, 3.4rem); text-wrap: initial; }
+      #login-governara .hero p { margin-top: 7px; }
+      #login-governara .card { width: 100%; max-width: 460px; margin-inline: auto; padding: 23px clamp(15px, 5vw, 26px); }
+    }
+
+#login-governara { color-scheme:dark; font-size:16px; font-weight:400; line-height:1.5; }
+#login-governara a { text-decoration:none; }
+#login-governara h1, #login-governara h2 { font-family:inherit; }
+#login-governara button, #login-governara input { line-height:inherit; letter-spacing:normal; }
+#login-governara .skip { position:absolute; z-index:2; left:20px; top:12px; padding:8px 14px; background:var(--pine); color:var(--ivory); transform:translateY(-200%); }
+#login-governara .skip:focus { transform:none; }
+#login-governara .logo { color:var(--ivory); }
+#login-governara .scene { max-width:none; }
+#login-governara .microsoft svg { width:18px; height:18px; }
+#login-governara .err { font-size:.8125rem; color:#ffc7c1; }
+#login-governara .input-wrap:has([aria-invalid="true"]) { border-color:#ffc7c1; }
+#login-governara .caps { display:none; color:#edcd91; font-size:.8125rem; }
+#login-governara .caps.on { display:block; }
+#login-governara .status:empty { display:none; }
+#login-governara .status, #login-governara .auth-notice { margin-top:12px; font-size:.8125rem; color:var(--muted); overflow-wrap:anywhere; }
+#login-governara .card-footer .link { color:var(--mint); font-weight:600; }
+#login-governara .link { padding:0; background:transparent; border:0; }
+#login-governara button:disabled { opacity:.6; cursor:not-allowed; }
+#login-governara .spin { width:18px; height:18px; border-radius:50%; border:2px solid #0c342b55; border-top-color:var(--on-mint); animation:login-nordic-spin .7s linear infinite; }
+@keyframes login-nordic-spin { to { transform:rotate(360deg); } }
+@media(prefers-reduced-motion:reduce) { #login-governara *, #login-governara { animation:none!important; transition:none!important; } }
+
+#login-governara .err:empty { display:none; }

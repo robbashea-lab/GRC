@@ -9,6 +9,7 @@ import {Textarea} from './ui/textarea';
 import OmniDock from './OmniDock';
 import OmniWindow from './OmniWindow';
 import OmniGuideCharacter from './OmniGuideCharacter';
+import AssessmentQuestionGuidance from './AssessmentQuestionGuidance';
 
 export default function GenericGuidedAssessor({record,form=record,assessmentDirty=false,disabled,onUpdateImplementation,onDraftChange,inline=false,onInlineOpenChange,historyScope,interviewHistoryOpen=false,onInterviewHistoryOpenChange,onInterviewHistoryCloseAutoFocus,pilotPortalContainer}){
   const {user,workspaceMode}=useAuth();
@@ -166,7 +167,7 @@ export default function GenericGuidedAssessor({record,form=record,assessmentDirt
       </div>
     </section>:<section className={inline?'cis-sequential-interview gn-question-area':undefined} aria-label="Guided assessment questions">
       <p className={inline?'gn-question-meta':'r4-guide-step'}>Question {Math.min(step+1,questions.length)} of {questions.length}</p>
-      <fieldset disabled={disabled||busy}><legend ref={questionHeading} tabIndex={-1} className={inline?'gn-question':undefined}>{question.prompt}</legend>
+      <fieldset disabled={disabled||busy}><legend ref={questionHeading} tabIndex={-1} className={inline?'gn-question':undefined}>{question.prompt}</legend><AssessmentQuestionGuidance/>
         {question.type==='select'?<div className={inline?'gn-choices':'r4-guide-options'}>{question.choices.map(choice=><label key={choice}><input type="radio" name={'r4-guide-'+question.id} checked={answers[question.id]===choice} onChange={()=>change(choice)}/>{choice}</label>)}</div>:<Textarea aria-label={question.prompt} value={answers[question.id]||''} maxLength={2000} onChange={event=>change(event.target.value)}/>}</fieldset>
       <div className={inline?'guided-actions gn-question-actions':'r4-guided-actions'}>
         <Button className={buttonClass} variant={inline?'outline':'ghost'} disabled={busy||step===0} onClick={()=>setStep(value=>value-1)}>{inline?'Back':'Previous'}</Button>
