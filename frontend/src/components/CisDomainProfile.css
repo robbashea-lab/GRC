@@ -70,6 +70,8 @@
 .cdp-concept .cdp-table-wrap table { table-layout:fixed;font-size:11px; }
 .cdp-concept .cdp-table-wrap th,.cdp-concept .cdp-table-wrap td { border-color:var(--cc-border,#dfe6f1);padding:5px;text-align:right; }
 .cdp-concept .cdp-table-wrap thead th { background:var(--cc-surface,#f7f9fc);color:var(--cc-muted,#627594);font-size:10px;font-weight:500;white-space:nowrap;padding:7px 5px; }
+/* Keep compact profile headings inside their columns when shared page typography applies. */
+:root .cdp-card.cdp-concept .cdp-table-wrap thead th { letter-spacing:0;text-transform:none;white-space:normal;overflow-wrap:anywhere; }
 .cdp-concept .cdp-table-wrap th:first-child { width:43%;text-align:left;padding-left:8px; }
 .cdp-concept .cdp-table-wrap thead th:nth-child(2) { width:22%; }
 .cdp-concept .cdp-table-wrap thead th:nth-child(3) { width:21%; }
