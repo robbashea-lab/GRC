@@ -6,7 +6,7 @@ import {catalogForVersion,visibleQuestions} from '@/lib/guidedAssessment';
 import {omniCisSummary} from '@/lib/omniCisSummary';
 import {buildLegacyDemoStore,saveStore,STORE_KEY} from '../preview/store';
 
-let mockAuth,mockOrg,mockState,mockActions;
+let mockAuth,mockOrg,mockState,mockActions,mockItemCountView;
 jest.mock('@/context/AuthContext',()=>({useAuth:()=>mockAuth}));
 jest.mock('@/context/OrgContext',()=>({useOrg:()=>mockOrg}));
 jest.mock('@/lib/api',()=>({__esModule:true,PREVIEW_MODE:true,API:'/api',
@@ -19,7 +19,9 @@ jest.mock('./BrawndoCisSafeguard',()=>props=>{
   mockState=props.state;mockActions=props.actions;
   const Items=jest.requireActual('./AssessmentItems').default;
   const Findings=jest.requireActual('./BrawndoCisFindings').default;
+  const CountLayout=jest.requireActual('./AssessmentLayout').default;
   return <section data-testid="guided-items-controller">
+    {mockItemCountView&&<CountLayout inlineWorkflow sectionCounts={props.state.itemControls?.sectionCounts}/> }
     <Items controls={props.state.itemControls} record={props.state.current} ctx={props.state.ctx}
       disabled={!props.state.writable||props.state.busy}
       workDisabled={props.state.itemWorkDisabled} proposedItems={props.state.guidedItemsDraft}
@@ -95,7 +97,7 @@ async function stage(proposal){
 }
 beforeAll(()=>Object.defineProperty(global,'crypto',{configurable:true,value:require('crypto').webcrypto}));
 beforeEach(async()=>{
-  global.IS_REACT_ACT_ENVIRONMENT=true;localStorage.clear();sessionStorage.clear();
+  global.IS_REACT_ACT_ENVIRONMENT=true;localStorage.clear();sessionStorage.clear();mockItemCountView=false;
   saveStore(buildLegacyDemoStore(),{resetFiles:true});
   const user=(await api.post('/demo/enter')).data.user;
   mockAuth={user,workspaceMode:'demo',loading:false,error:null};
@@ -231,4 +233,119 @@ test('an already opened Item-origin Finding cannot submit dirty assessment work 
   expect(button('Create Finding & Action').disabled).toBe(false);
   expect((await api.get(base)).data).toEqual(baseline);
   expect(postSpy).not.toHaveBeenCalled();expect(deleteSpy).not.toHaveBeenCalled();
+});
+
+// New count-boundary cases reuse the real parent/adapter; only deliberate bad reads are substituted.
+async function settleCountReads(start=0){
+  while(start<getSpy.mock.results.length){
+    const reads=getSpy.mock.results.slice(start).map(result=>result.value);
+    start=getSpy.mock.results.length;
+    await act(async()=>{await Promise.allSettled(reads);});
+  }
+}
+async function mountCountBoundary(){
+  const start=getSpy.mock.results.length;
+  await act(async()=>root.render(<FrameworkDrawer open visualReference record={record}
+    clientId={CID} onOpenChange={()=>{}} onSaved={onSaved}/>));
+  await settleCountReads(start);
+}
+
+test('omitted saved Items still count staged guide, Add, Resolve and Remove without a native write',async()=>{
+  expect(Object.hasOwn(baseline,'items_to_address')).toBe(false);
+  await render();expect(mockState.itemControls.sectionCounts.items).toBe(0);
+  const proposal=await completedProposal();
+  const before=sessionStorage.getItem(STORE_KEY),putSpy=jest.spyOn(api,'put');
+  await stage(proposal);
+  const guideCount=mockState.itemControls.sectionCounts.items;
+  expect(guideCount).toBeGreaterThan(0);
+  const requestId='synthetic_count_confirmation_0001';
+  let accepted;
+  await act(async()=>{accepted=mockState.itemControls.onOperation({operation:'add',request_id:requestId,
+    item_type:'confirmation',text:'SYNTHETIC count-only draft confirmation.'});});
+  expect(accepted).toBe(true);expect(mockState.itemControls.sectionCounts.items).toBe(guideCount+1);
+  await act(async()=>{accepted=mockState.itemControls.onOperation({operation:'resolve',
+    target:{manual_request_id:requestId},state:'resolved',resolution:''});});
+  expect(accepted).toBe(true);expect(mockState.itemControls.sectionCounts.items).toBe(guideCount);
+  await act(async()=>{accepted=mockState.itemControls.onOperation({operation:'remove',target:{manual_request_id:requestId}});});
+  expect(accepted).toBe(true);expect(mockState.itemControls.sectionCounts.items).toBe(guideCount);
+  expect((await api.get(base)).data).toEqual(baseline);
+  expect(sessionStorage.getItem(STORE_KEY)).toBe(before);
+  for(const spy of [putSpy,patchSpy,postSpy,deleteSpy])expect(spy).not.toHaveBeenCalled();
+});
+
+test.each([
+  ['explicit null',null],['own undefined',undefined],['string','malformed Items'],
+  ['object',{}],['array projection failure',[null]],
+])('a loaded %s Items value remains unavailable instead of becoming zero',async(_name,value)=>{
+  expect(Object.hasOwn(baseline,'items_to_address')).toBe(false);
+  const before=sessionStorage.getItem(STORE_KEY),actualGet=getSpy.getMockImplementation();
+  getSpy.mockImplementation(async(path,...args)=>{
+    const response=await actualGet(path,...args);
+    if(path!=='/frameworks/cis-ig1')return response;
+    return {...response,data:{...response.data,assessments:response.data.assessments.map(row=>
+      row.framework_assessment_id===record.framework_assessment_id?{...row,items_to_address:value}:row)}};
+  });
+  await render();
+  expect(Object.hasOwn(mockState.current,'items_to_address')).toBe(true);
+  expect(mockState.current.items_to_address).toEqual(value);
+  expect(mockState.itemControls.sectionCounts.items).toBeNull();
+  if(Array.isArray(value))expect(host.querySelector('[role="alert"]')).not.toBeNull();
+  expect((await api.get(base)).data).toEqual(baseline);
+  expect(sessionStorage.getItem(STORE_KEY)).toBe(before);
+  for(const spy of [patchSpy,postSpy,deleteSpy])expect(spy).not.toHaveBeenCalled();
+});
+
+test.each([
+  ['client_id','synthetic-foreign-client'],['framework_key','iso-27001'],
+  ['framework_assessment_id','synthetic-foreign-assessment'],
+])('omitted Items do not count a response with mismatched %s',async(field,value)=>{
+  expect(Object.hasOwn(baseline,'items_to_address')).toBe(false);
+  const before=sessionStorage.getItem(STORE_KEY),actualGet=getSpy.getMockImplementation();
+  getSpy.mockImplementation(async(path,...args)=>{
+    const response=await actualGet(path,...args);
+    if(path!=='/frameworks/cis-ig1')return response;
+    return {...response,data:{...response.data,assessments:response.data.assessments.map(row=>
+      row.framework_assessment_id===record.framework_assessment_id?{...row,[field]:value}:row)}};
+  });
+  await mountCountBoundary();
+  expect(mockState.ctx).toBeNull();expect(mockState.itemControls.sectionCounts.items).toBeNull();
+  expect((await api.get(base)).data).toEqual(baseline);
+  expect(sessionStorage.getItem(STORE_KEY)).toBe(before);
+  for(const spy of [patchSpy,postSpy,deleteSpy])expect(spy).not.toHaveBeenCalled();
+});
+
+test.each([false,true])('retained-context refresh and denied reads preserve known arrays, not omitted counts: %s',async(savedItems)=>{
+  mockItemCountView=true;
+  if(savedItems)await savedGapFixture();
+  else expect(Object.hasOwn(baseline,'items_to_address')).toBe(false);
+  const expectBadge=value=>{
+    const tab=[...host.querySelectorAll('[role="tab"]')].find(node=>node.textContent.startsWith('Items to address'));
+    const badge=tab.querySelector('.assessment-tab-count');
+    expect(badge.textContent).toBe(value===null?'—':String(value));
+    expect(badge.getAttribute('aria-label')).toBe(value===null?'Item count unavailable':null);
+  };
+  const knownCount=savedItems?1:0;
+  await render();expect(mockState.itemControls.sectionCounts.items).toBe(knownCount);expectBadge(knownCount);
+  const before=sessionStorage.getItem(STORE_KEY),actualGet=getSpy.getMockImplementation(),delivery=deferred();
+  let denied=false;
+  getSpy.mockImplementation(async(path,...args)=>{
+    const response=await actualGet(path,...args);
+    if(path==='/frameworks/cis-ig1'){
+      await delivery.promise;
+      if(denied)throw Object.assign(new Error('SYNTHETIC count read denied'),
+        {response:{status:403,data:{detail:'SYNTHETIC count read denied'}}});
+    }
+    return response;
+  });
+  await act(async()=>{mockState.itemControls.onRefresh();});
+  expect(mockState.ctx?.current).toMatchObject({client_id:CID,framework_assessment_id:record.framework_assessment_id});
+  expect(mockState.itemControls.sectionCounts.items).toBe(savedItems?knownCount:null);expectBadge(savedItems?knownCount:null);
+  await act(async()=>{delivery.resolve();});await settleCountReads();
+  expect(mockState.itemControls.sectionCounts.items).toBe(knownCount);expectBadge(knownCount);
+  denied=true;await act(async()=>{mockState.itemControls.onRefresh();});await settleCountReads();
+  expect(mockState.ctx).toBeNull();expect(mockState.error).toContain('SYNTHETIC count read denied');
+  expect(mockState.itemControls.sectionCounts.items).toBe(savedItems?knownCount:null);expectBadge(savedItems?knownCount:null);
+  expect((await api.get(base)).data).toEqual(baseline);
+  expect(sessionStorage.getItem(STORE_KEY)).toBe(before);
+  for(const spy of [patchSpy,postSpy,deleteSpy])expect(spy).not.toHaveBeenCalled();
 });

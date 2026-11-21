@@ -163,12 +163,12 @@ export default function FrameworkDrawer({open,onOpenChange,record,clientId,onSav
     // Keep native linked rows mounted during same-origin refreshes. Clear a
     // changed visual origin so an away/back switch cannot reuse its old receipt.
     setCtx(old=>!acceptsRead()?old:prototype&&old?.current?.framework_assessment_id===aid&&old.current.client_id===clientId
-      &&(old.visualOrigin?.key??null)===visualOriginKey?old:null);
+      &&(old.visualOrigin?.key??null)===visualOriginKey?{...old,itemCountRead:null}:null);
     setError(previous=>acceptsRead()?'':previous);const opts={params:{client_id:clientId},signal:c.signal};
     // Only the exact pilot may omit unused detail reads. Other native openers retain their ordered reads.
     Promise.all([api.get(`/framework_assessments/${aid}/related`,{signal:c.signal}),api.get('/clients/'+clientId+'/members',{signal:c.signal}),pilotContextOnly?Promise.resolve({data:[]}):api.get('/contacts',opts),pilotContextOnly?Promise.resolve({data:[]}):api.get('/comments',{params:{entity_type:'framework_assessments',entity_id:aid},signal:c.signal}),pilotContextOnly?Promise.resolve({data:[]}):api.get(`/framework_assessments/${aid}/activity`,{signal:c.signal}),api.get('/frameworks/'+frameworkKey,opts)]).then(async ([related,users,contacts,comments,activity,workspace])=>{
       if(!acceptsRead())return;
-      const context={programSelected:workspace.data.selected===true,programConfigured:workspace.data.configured===true,framework:workspace.data.framework,visualOrigin:visualOriginKey?{key:visualOriginKey,selected:workspace.data.selected,configured:workspace.data.configured,framework:workspace.data.framework,programId:workspace.data.implementation_position?.program_id}:null,related:related.data,users:users.data,configuration:{...(workspace.data.configuration||{}),...(['soc-2','iso-27001'].includes(frameworkKey)?{__program_active:workspace.data.selected}: {})},retainedControls:(workspace.data.organizational_controls||[]).filter(control=>control.assessment_ids?.includes(aid)),inventoryContext:workspace.data.assessments.find(a=>a.client_id===clientId&&a.framework_key==='cis-ig1'&&a.definition_id==='1.1'),current:(found=>found&&{...found,work:workspace.data.work?.[aid]})(workspace.data.assessments.find(a=>a.framework_assessment_id===aid))};
+      const context={itemCountRead:{owner,generation:request},programSelected:workspace.data.selected===true,programConfigured:workspace.data.configured===true,framework:workspace.data.framework,visualOrigin:visualOriginKey?{key:visualOriginKey,selected:workspace.data.selected,configured:workspace.data.configured,framework:workspace.data.framework,programId:workspace.data.implementation_position?.program_id}:null,related:related.data,users:users.data,configuration:{...(workspace.data.configuration||{}),...(['soc-2','iso-27001'].includes(frameworkKey)?{__program_active:workspace.data.selected}: {})},retainedControls:(workspace.data.organizational_controls||[]).filter(control=>control.assessment_ids?.includes(aid)),inventoryContext:workspace.data.assessments.find(a=>a.client_id===clientId&&a.framework_key==='cis-ig1'&&a.definition_id==='1.1'),current:(found=>found&&{...found,work:workspace.data.work?.[aid]})(workspace.data.assessments.find(a=>a.framework_assessment_id===aid))};
       const freshPilot=pilotContextOnly&&cisVisualRecordMatches(openerRecord,context,visualOriginKey)
         &&brawndoAssessmentPilotEligible({demoMode,workspaceMode,user:{workspace_mode:userWorkspaceMode},
           safeguard11:true,directProgramOpener:visualReference===true,record:openerRecord,current:context.current,ctx:context,pathname:window.location.pathname});
@@ -413,8 +413,13 @@ export default function FrameworkDrawer({open,onOpenChange,record,clientId,onSav
     latest.guidedItemsDraft=next;setGuidedItemsDraft(next);
     return true;
   }
+  // Only a completed read can establish an omitted legacy Items list as empty.
+  const omittedItemsLoaded=!!liveGuideContext&&liveGuideContext.current===current&&!error
+    &&liveGuideContext.itemCountRead?.owner===contextOwner
+    &&liveGuideContext.itemCountRead?.generation===contextReadGeneration.current
+    &&!Object.hasOwn(current,'items_to_address');
   let openItemCount=null;
-  try{if(Array.isArray(current.items_to_address))openItemCount=projectItemDraft(current,proposedItems,guidedItemsDraft?.scope===guidedScope?guidedItemsDraft.operations:[],guidedItemsDraft?.scope===guidedScope?guidedItemsDraft.answers:{}).filter(item=>item.state==='open').length;}
+  try{if(Array.isArray(current.items_to_address)||omittedItemsLoaded)openItemCount=projectItemDraft(current,proposedItems,guidedItemsDraft?.scope===guidedScope?guidedItemsDraft.operations:[],guidedItemsDraft?.scope===guidedScope?guidedItemsDraft.answers:{}).filter(item=>item.state==='open').length;}
   catch{/* The Item view reports the projection error; unavailable is not zero. */}
   const itemControls={scope:guidedScope,commandScope:frameworkContextScope(contextIdentity),writable,pending:proposedItems!==null,
     sectionCounts:{items:openItemCount,findings:ctx&&current.work?.context_complete===true&&Array.isArray(related.findings)?directFindings(current,related).length:null},

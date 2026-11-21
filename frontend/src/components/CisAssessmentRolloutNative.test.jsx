@@ -707,3 +707,26 @@ test('manual pending Items and their resolution/removal commit only through the 
   expect((await api.get(base+'/related')).data).toEqual(relatedBefore);
   await remount();expect((await api.get(base)).data.items_to_address.find(item=>item.item_id===manual.item_id)).toEqual(manual);
 });
+
+test('a loaded real Demo Brawndo 1.1 omission shows zero recorded Items without a native write', async () => {
+  // Real parent/adapter over this suite's isolated legacy fixture, not bundled-fresh or the observed browser row.
+  await loadSafeguard('1.1');
+  expect(Object.hasOwn(baseline, 'items_to_address')).toBe(false);
+  await render();
+  const itemsTab = [...surface().querySelectorAll('[role="tab"]')]
+    .find(node => node.textContent.trim().startsWith('Items to address'));
+  expect(itemsTab).toBeTruthy();
+  expect(itemsTab.querySelector('.assessment-tab-count').textContent).toBe('0');
+  expect(itemsTab.querySelector('[aria-label="Item count unavailable"]')).toBeNull();
+  await nativeAction(() => itemsTab.dispatchEvent(new MouseEvent('mousedown', {bubbles: true, button: 0})));
+  expect(itemsTab.getAttribute('data-state')).toBe('active');
+  expect(surface().querySelector('[aria-label="Items to address"]').textContent)
+    .toContain('No current items to address are recorded.');
+  await assertNativeUnchanged();
+  await remount();
+  const reopened = [...surface().querySelectorAll('[role="tab"]')]
+    .find(node => node.textContent.trim().startsWith('Items to address'));
+  expect(reopened.querySelector('.assessment-tab-count').textContent).toBe('0');
+  await assertNativeUnchanged();
+  for (const spy of writes()) expect(spy).not.toHaveBeenCalled();
+});
