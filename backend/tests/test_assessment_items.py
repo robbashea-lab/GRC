@@ -278,8 +278,11 @@ class AssessmentItemsTests(unittest.IsolatedAsyncioTestCase):
 
     async def test_item_activity_preserves_judgment_and_recovers_projection_failure(self):
         base, row = await self.initial()
+        source_query = {'framework_assessment_id': row['framework_assessment_id'], 'client_id': row['client_id']}
         query = {'source_kind': 'framework_assessments', 'source_id': row['framework_assessment_id']}
+        audit_query = {'action': 'Assessment item updated', 'entity_id': row['framework_assessment_id']}
         original_events = await server.db.portfolio_events.count_documents(query)
+        original_audits = await server.db.audit_logs.count_documents(audit_query)
         protected = {key: deepcopy(row.get(key)) for key in ('status', 'implementation', 'verification',
             'last_assessed', 'last_saved', 'assessment_recorded_at', 'assessment_recorded_by', 'assessment_history')}
         item = row['items_to_address'][0]
@@ -290,55 +293,131 @@ class AssessmentItemsTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(await server.db.portfolio_events.count_documents(query), original_events + 1)
         resolved = response.json()
         self.assertEqual({key: resolved.get(key) for key in protected}, protected)
-        internal = await server.db.framework_assessments.find_one({'framework_assessment_id': row['framework_assessment_id']})
+        internal = await server.db.framework_assessments.find_one(source_query)
         resolved_id = internal['_portfolio_activity_last_event_id']
         self.assertFalse(internal.get('_portfolio_activity_pending'))
         event = await server.db.portfolio_events.find_one({'event_id': resolved_id})
         self.assertEqual(event['changed_fields'], ['items_to_address'])
         self.assertNotIn('PRIVATE ITEM RESOLUTION', json.dumps(event))
-        receipt = await server.db.audit_logs.find_one({'action': 'Assessment item updated',
-            'entity_id': row['framework_assessment_id'], 'meta._portfolio_activity_event_id': resolved_id})
+        receipt = await server.db.audit_logs.find_one({**audit_query, 'meta._portfolio_activity_event_id': resolved_id})
         self.assertIsNotNone(receipt)
+        self.assertEqual(await server.db.audit_logs.count_documents(audit_query), original_audits + 1)
 
         body = {'expected_revision': resolved['items_revision'], 'state': 'open', 'resolution': 'PRIVATE REOPEN NOTE'}
-        with patch.object(portfolio_activity, 'persist_event', side_effect=RuntimeError('isolated projection outage')):
-            with self.assertRaisesRegex(RuntimeError, 'isolated projection outage'):
-                await self.client.patch(path, json=body)
-        internal = await server.db.framework_assessments.find_one({'framework_assessment_id': row['framework_assessment_id']})
+        original_persist = portfolio_activity.persist_event
+        failed_events = []
+
+        async def fail_owned_projection(db, event):
+            if (event.get('source_kind') == query['source_kind'] and event.get('source_id') == query['source_id']
+                    and event.get('event_id') != resolved_id and event.get('changed_fields') == ['items_to_address']):
+                failed_events.append(deepcopy(event))
+                raise RuntimeError('isolated projection outage')
+            return await original_persist(db, event)
+
+        with patch.object(portfolio_activity, 'persist_event', side_effect=fail_owned_projection):
+            failed = await self.client.patch(path, json=body)
+        self.assertEqual(failed.status_code, 503, failed.text)
+        self.assertEqual(len(failed_events), 1)
+        internal = await server.db.framework_assessments.find_one(source_query)
         pending_id = internal['_portfolio_activity_last_event_id']
         self.assertNotEqual(pending_id, resolved_id)
-        self.assertIn(pending_id, internal['_portfolio_activity_pending'])
+        self.assertEqual(internal['_portfolio_activity_pending'], {pending_id: failed_events[0]})
         self.assertEqual({key: internal.get(key) for key in protected}, protected)
-        self.assertIsNotNone(await server.db.audit_logs.find_one({'action': 'Assessment item updated',
-            'entity_id': row['framework_assessment_id'], 'meta._portfolio_activity_event_id': pending_id}))
+        self.assertEqual(internal['items_revision'], resolved['items_revision'] + 1)
+        reopened_item = next(entry for entry in internal['items_to_address'] if entry['item_id'] == item['item_id'])
+        resolved_item = next(entry for entry in resolved['items_to_address'] if entry['item_id'] == item['item_id'])
+        self.assertEqual((reopened_item['state'], reopened_item['resolution']), ('open', body['resolution']))
+        self.assertEqual(reopened_item['history'][:-1], resolved_item['history'])
+        self.assertEqual(reopened_item['history'][-1]['event'], 'reopened')
+        command = internal['_r4_context_pending']
+        self.assertEqual(internal['_r4_context_applied'], command)
+        pending_receipt = await server.db.create_requests.find_one({'_id': command})
+        self.assertEqual(pending_receipt['state'], 'pending')
+        self.assertTrue(pending_receipt['primary_started'])
+        self.assertNotIn('lease', pending_receipt)
+        self.assertEqual(len(pending_receipt['r4_write_plan']), 1)
+        accepted_write = pending_receipt['r4_write_plan'][0]
+        self.assertEqual((accepted_write['collection'], accepted_write['id']), ('framework_assessments', row['framework_assessment_id']))
+        self.assertEqual(accepted_write['patch']['items_to_address'], internal['items_to_address'])
+        self.assertEqual(accepted_write['patch']['items_revision'], internal['items_revision'])
+        domain_audits = [(key, value) for key, value in pending_receipt['pending_audits'].items()
+            if value['action'] == audit_query['action'] and value['entity_id'] == audit_query['entity_id']]
+        self.assertEqual(len(domain_audits), 1)
+        audit_id, audit_document = domain_audits[0]
+        self.assertEqual(audit_document['meta']['_portfolio_activity_event_id'], pending_id)
+        self.assertEqual(await server.db.audit_logs.find_one({'_id': 'create:' + audit_id}),
+            {'_id': 'create:' + audit_id, **audit_document})
+        self.assertEqual(await server.db.audit_logs.count_documents(audit_query), original_audits + 2)
         self.assertEqual(await server.db.portfolio_events.count_documents(query), original_events + 1)
-        later = await self.client.patch(base + '/items/' + row['items_to_address'][1]['item_id'], json={
-            'expected_revision': internal['items_revision'], 'state': 'resolved', 'resolution': 'PRIVATE OTHER ITEM NOTE'})
-        self.assertEqual(later.status_code, 200, later.text)
-        current = await server.db.framework_assessments.find_one({'framework_assessment_id': row['framework_assessment_id']})
-        later_id = current['_portfolio_activity_last_event_id']
-        self.assertNotEqual(later_id, pending_id)
-        self.assertEqual(set(current['_portfolio_activity_pending']), {pending_id})
-        self.assertEqual(await server.db.portfolio_events.count_documents(query), original_events + 2)
-        await portfolio_activity.reconcile_pending(server.db)
-        await portfolio_activity.reconcile_pending(server.db)
-        self.assertEqual(await server.db.portfolio_events.count_documents(query), original_events + 3)
-        recovered = await server.db.framework_assessments.find_one({'framework_assessment_id': row['framework_assessment_id']})
-        self.assertFalse(recovered.get('_portfolio_activity_pending'))
-        self.assertEqual(recovered['_portfolio_activity_last_event_id'], later_id)
+
+        # A held accepted write can only be repaired by its exact original request.
+        self.assertEqual((await self.client.get(base)).status_code, 409)
+        later_path = base + '/items/' + row['items_to_address'][1]['item_id']
+        later_body = {'expected_revision': internal['items_revision'], 'state': 'resolved', 'resolution': 'PRIVATE OTHER ITEM NOTE'}
+        blocked = await self.client.patch(later_path, json=later_body)
+        self.assertEqual(blocked.status_code, 409, blocked.text)
+        self.assertEqual(await server.db.framework_assessments.find_one(source_query), internal)
+        for _ in range(2):
+            reconciliation = await portfolio_activity.reconcile_pending(server.db)
+            self.assertGreaterEqual(reconciliation.get('deferred', 0), 1)
+            self.assertEqual(await server.db.framework_assessments.find_one(source_query), internal)
+        self.assertEqual(await server.db.portfolio_events.count_documents(query), original_events + 1)
+        self.assertEqual(await server.db.audit_logs.count_documents(audit_query), original_audits + 2)
+
+        recovered_response = await self.client.patch(path, json=body)
+        self.assertEqual(recovered_response.status_code, 200, recovered_response.text)
+        recovered = await server.db.framework_assessments.find_one(source_query)
+        expected_recovered = deepcopy(internal)
+        expected_recovered.pop('_r4_context_pending')
+        expected_recovered.pop('_portfolio_activity_pending')
+        self.assertEqual(recovered, expected_recovered)
+        self.assertEqual(recovered_response.json()['items_to_address'], internal['items_to_address'])
+        self.assertEqual(recovered_response.json()['items_revision'], internal['items_revision'])
+        for field in portfolio_activity.SOURCE_INTERNAL_FIELDS:
+            self.assertNotIn('"' + field + '":', json.dumps(recovered_response.json()))
+        self.assertNotIn('_r4_context_pending', recovered_response.json())
         recovered_event = await server.db.portfolio_events.find_one({'event_id': pending_id})
         self.assertEqual(recovered_event, {'_id': pending_id, **internal['_portfolio_activity_pending'][pending_id]})
-        stale = await self.client.patch(path, json=body)
-        self.assertEqual(stale.status_code, 409, stale.text)
-        retry = await self.client.patch(path, json={**body, 'expected_revision': recovered['items_revision']})
-        self.assertEqual(retry.status_code, 200, retry.text)
-        self.assertEqual(retry.json()['items_revision'], recovered['items_revision'])
+        self.assertEqual(await server.db.portfolio_events.count_documents(query), original_events + 2)
+        self.assertEqual(await server.db.audit_logs.count_documents(audit_query), original_audits + 2)
+        recovered_receipt = await server.db.create_requests.find_one({'_id': command})
+        self.assertEqual(recovered_receipt['state'], 'complete')
+        self.assertEqual(recovered_receipt['r4_write_plan'], pending_receipt['r4_write_plan'])
+        self.assertEqual(recovered_receipt['pending_audits'], pending_receipt['pending_audits'])
+        repeated = await self.client.patch(path, json=body)
+        self.assertEqual(repeated.status_code, 200, repeated.text)
+        self.assertEqual(repeated.json(), recovered_response.json())
+        self.assertEqual(await server.db.framework_assessments.find_one(source_query), recovered)
+        self.assertEqual(await server.db.portfolio_events.count_documents(query), original_events + 2)
+        self.assertEqual(await server.db.audit_logs.count_documents(audit_query), original_audits + 2)
+
+        later = await self.client.patch(later_path, json=later_body)
+        self.assertEqual(later.status_code, 200, later.text)
+        current = await server.db.framework_assessments.find_one(source_query)
+        later_id = current['_portfolio_activity_last_event_id']
+        self.assertNotEqual(later_id, pending_id)
+        self.assertFalse(current.get('_portfolio_activity_pending'))
+        self.assertEqual({key: current.get(key) for key in protected}, protected)
         self.assertEqual(await server.db.portfolio_events.count_documents(query), original_events + 3)
+        self.assertEqual(await server.db.audit_logs.count_documents(audit_query), original_audits + 3)
+        old_retry = await self.client.patch(path, json=body)
+        self.assertEqual(old_retry.status_code, 200, old_retry.text)
+        self.assertEqual(old_retry.json(), later.json())
+        self.assertEqual(await server.db.framework_assessments.find_one(source_query), current)
+        stale = await self.client.patch(path, json={**body, 'resolution': 'PRIVATE NEW STALE NOTE'})
+        self.assertEqual(stale.status_code, 409, stale.text)
+        self.assertEqual(await server.db.framework_assessments.find_one(source_query), current)
+        retry = await self.client.patch(path, json={**body, 'expected_revision': current['items_revision']})
+        self.assertEqual(retry.status_code, 200, retry.text)
+        self.assertEqual(retry.json()['items_revision'], current['items_revision'])
+        self.assertEqual(await server.db.framework_assessments.find_one(source_query), current)
+        self.assertEqual(await server.db.portfolio_events.count_documents(query), original_events + 3)
+        self.assertEqual(await server.db.audit_logs.count_documents(audit_query), original_audits + 3)
         self.assertNotIn('PRIVATE', json.dumps(await server.db.portfolio_events.find(query).to_list(None)))
 
     async def test_losing_item_cas_does_not_capture_or_audit_uncommitted_change(self):
         base, row = await self.initial()
-        source_query = {'framework_assessment_id': row['framework_assessment_id']}
+        source_query = {'framework_assessment_id': row['framework_assessment_id'], 'client_id': row['client_id']}
         before = await server.db.framework_assessments.find_one(source_query)
         query = {'source_kind': 'framework_assessments', 'source_id': row['framework_assessment_id']}
         event_count = await server.db.portfolio_events.count_documents(query)
@@ -346,36 +425,63 @@ class AssessmentItemsTests(unittest.IsolatedAsyncioTestCase):
         audit_count = await server.db.audit_logs.count_documents(audit_query)
         collection = server.db.framework_assessments
         original = type(collection).update_one
+        claim_attempts = []
 
         async def interleave(current_collection, predicate, update, *args, **kwargs):
-            if current_collection.name == 'framework_assessments' and 'items_to_address' in update.get('$set', {}):
-                await original(current_collection, source_query, {'$set': {'items_revision': row['items_revision'] + 1}})
+            if (current_collection.full_name == collection.full_name and not claim_attempts
+                    and predicate.get('framework_assessment_id') == row['framework_assessment_id']
+                    and predicate.get('client_id') == row['client_id']
+                    and predicate.get('items_revision') == row['items_revision']
+                    and predicate.get('_r4_context_pending') is None
+                    and set(update.get('$set', {})) == {'_r4_context_pending'}):
+                claim_attempts.append(update['$set']['_r4_context_pending'])
+                concurrent = await original(current_collection, {**source_query,
+                    'items_revision': row['items_revision'], '_r4_context_pending': None},
+                    {'$set': {'items_revision': row['items_revision'] + 1}})
+                self.assertEqual(concurrent.matched_count, 1)
             return await original(current_collection, predicate, update, *args, **kwargs)
 
         with patch.object(type(collection), 'update_one', new=interleave):
             response = await self.client.patch(base + '/items/' + row['items_to_address'][0]['item_id'], json={
                 'expected_revision': row['items_revision'], 'state': 'resolved', 'resolution': 'Uncommitted change'})
         self.assertEqual(response.status_code, 409, response.text)
+        self.assertEqual(len(claim_attempts), 1)
         after = await server.db.framework_assessments.find_one(source_query)
         self.assertEqual(after, {**before, 'items_revision': row['items_revision'] + 1})
         self.assertEqual(await server.db.portfolio_events.count_documents(query), event_count)
         self.assertEqual(await server.db.audit_logs.count_documents(audit_query), audit_count)
+        rejected_receipt = await server.db.create_requests.find_one({'_id': claim_attempts[0]})
+        self.assertIsNotNone(rejected_receipt)
+        self.assertEqual(rejected_receipt['state'], 'pending')
+        self.assertFalse(rejected_receipt.get('primary_started'))
+        self.assertNotIn('lease', rejected_receipt)
 
     async def test_item_activity_does_not_claim_concurrent_native_judgment(self):
         base, row = await self.initial()
-        source_query = {'framework_assessment_id': row['framework_assessment_id']}
+        source_query = {'framework_assessment_id': row['framework_assessment_id'], 'client_id': row['client_id']}
         collection = server.db.framework_assessments
+        # Exercise explicit program metadata as well as the real predecessor/version.
+        program = {'_portfolio_program_key': row['framework_key'], '_portfolio_program_label': 'CIS Controls — synthetic fixture'}
+        await collection.update_one(source_query, {'$set': program})
+        before = await collection.find_one(source_query)
+        query = {'source_kind': 'framework_assessments', 'source_id': row['framework_assessment_id']}
+        event_count = await server.db.portfolio_events.count_documents(query)
         original = type(collection).update_one
+        interleaved = []
 
         async def interleave(current_collection, predicate, update, *args, **kwargs):
-            if current_collection.name == 'framework_assessments' and 'items_to_address' in update.get('$set', {}):
+            if (current_collection.full_name == collection.full_name
+                    and predicate.get('framework_assessment_id') == row['framework_assessment_id']
+                    and 'items_to_address' in update.get('$set', {})):
+                interleaved.append(True)
                 await original(current_collection, source_query, {'$set': {'status': 'addressed', 'verification': 'verified'}})
             return await original(current_collection, predicate, update, *args, **kwargs)
 
         with patch.object(type(collection), 'update_one', new=interleave):
             response = await self.client.patch(base + '/items/' + row['items_to_address'][0]['item_id'], json={
-                'expected_revision': row['items_revision'], 'state': 'resolved', 'resolution': 'Independent follow-up'})
+                'expected_revision': row['items_revision'], 'state': 'resolved', 'resolution': 'PRIVATE Independent follow-up'})
         self.assertEqual(response.status_code, 200, response.text)
+        self.assertEqual(interleaved, [True])
         saved = await server.db.framework_assessments.find_one(source_query)
         self.assertEqual((saved['status'], saved['verification']), ('addressed', 'verified'))
         for field in ('implementation', 'last_assessed', 'last_saved', 'assessment_recorded_at', 'assessment_history'):
@@ -384,6 +490,13 @@ class AssessmentItemsTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(event['changed_fields'], ['items_to_address'])
         self.assertNotIn('before', event)
         self.assertNotIn('after', event)
+        self.assertEqual(event['position_predecessor_event'], before['_portfolio_activity_last_event_id'])
+        self.assertEqual(event['position_before_version'], before.get('last_saved') or before.get('last_assessed') or before.get('created_at'))
+        self.assertEqual(event['program_key'], program['_portfolio_program_key'])
+        self.assertEqual(event['program_label'], program['_portfolio_program_label'])
+        self.assertEqual(event['program_keys'], [row['framework_key']])
+        self.assertEqual(await server.db.portfolio_events.count_documents(query), event_count + 1)
+        self.assertNotIn('PRIVATE', json.dumps(event))
 
     async def date_snapshot(self, date_metadata=True):
         workspace = await self.configure()

@@ -448,10 +448,10 @@ test('saved custom tools and actual annual cadence restore exactly through the n
   await assertAssessmentUnchanged();
 });
 
-test('full native response review saves only the interview, edited Apply draft stages only text, and separate Save persists one history entry', async () => {
+test('full native response review retains edited personal provenance and separate native Save persists one history entry', async () => {
   await loadSafeguard();
   expect(baseline.cis_assessment_criteria).toBeUndefined();
-  const expectedCriteria = baseline.cis_assessment_criteria ?? [];
+  const expectedCriteria = baseline.cis_assessment_criteria;
   const answers = completeNativeAnswers();
   await checkpoint(answers, 'unknowns');
   clearWrites();
@@ -495,7 +495,13 @@ test('full native response review saves only the interview, edited Apply draft s
   expect(guide().hidden).toBe(true);
   expect(surface().querySelector('[aria-label="Current implementation"]').value).toBe(reviewed);
   expect(surface().querySelector('input[name="bcsg-status"]:checked').value).toBe(baseline.status);
-  expect(putSpy).toHaveBeenCalledTimes(1);
+  // Edited wording has its own completed personal revision before native adoption.
+  expect(putSpy).toHaveBeenCalledTimes(2);
+  expect(putSpy.mock.calls[1]).toEqual([base + '/guided-assessment', expect.objectContaining({
+    version, answers, narrative: reviewed, completed: true, expected_revision: completed.revision})]);
+  const adopted = (await api.get(base + '/guided-assessment')).data;
+  expect(adopted).toMatchObject({version, answers, narrative: reviewed, completed: true, revision: completed.revision + 1});
+  expect(adopted.result.narrative).toBe(reviewed);
   await assertAssessmentUnchanged();
   await nativeAction(() => surface().querySelector('.brawndo-assessment-navigation-close').click());
   expect(document.querySelector('[role="alertdialog"]').textContent).toContain('Unsaved changes');
@@ -505,10 +511,10 @@ test('full native response review saves only the interview, edited Apply draft s
   await assertAssessmentUnchanged();
   await click(surface(), 'Save assessment');
   expect(patchSpy).toHaveBeenCalledTimes(1);
-  expect(patchSpy.mock.calls[0]).toEqual([base, expect.objectContaining({implementation: reviewed,
-    status: baseline.status, verification: baseline.verification,
-    cis_assessment_criteria: expectedCriteria,
-    expected_last_assessed: baseline.last_saved ?? baseline.last_assessed ?? null})]);
+  // Native Save changes only reviewed text/provenance; untouched judgment and absent criteria stay absent.
+  expect(patchSpy.mock.calls[0]).toEqual([base, {implementation: reviewed,
+    guided_assessment_source:{version:adopted.version,revision:adopted.revision,generated_at:adopted.generated_at},
+    expected_last_assessed: baseline.last_saved ?? baseline.last_assessed ?? null}]);
   const saved = (await api.get(base)).data;
   expect(saved.implementation).toBe(reviewed);
   expect(saved.cis_assessment_criteria).toEqual(expectedCriteria);

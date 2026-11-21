@@ -449,7 +449,10 @@ test('Demo native Items caller captures same-clock transitions, preserves judgme
 
 test('Demo native Finding caller captures a retained unlinked Item once without duplicate Finding or Action',()=>{
   const db=fixture(),row=db.framework_assessments[0],path='/framework_assessments/'+row.framework_assessment_id;
-  db.tasks=[];row.items_to_address=[assessmentItem()];row.items_revision=0;
+  const manualRequest='reporting_manual_gap_0001',item=assessmentItem({origin:'manual',request_id:manualRequest,item_type:'gap',
+    item_id:'item_'+encodeURIComponent(row.framework_assessment_id)+':manual:'+manualRequest});
+  item.history=[{event:'added',state:'open',text:item.text,by:'owner',at:item.created_at}];
+  db.tasks=[];row.items_to_address=[item];row.items_revision=0;
   const body={item_id:row.items_to_address[0].item_id,title:'Explicit native follow-up',remediation_title:'Address saved gap',request_id:'first'};
   const finding=frameworkRequest(db,path+'/findings','post',{},body);
   // Model an existing native Finding whose assessment-local link was not retained.

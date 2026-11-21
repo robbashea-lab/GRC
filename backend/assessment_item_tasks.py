@@ -119,7 +119,9 @@ async def create(s, aid, iid, body, user, key):
             target.setdefault('history', []).append({'at': at, 'by': user['user_id'], 'event': 'task_linked',
                 'state': target['state'], 'resolution': target.get('resolution', ''), 'task_id': tid})
             changes = {'items_to_address': items, 'items_revision': row.get('items_revision', 0) + 1}
-            capture, _ = s._portfolio_event_patch('framework_assessment', aid, row['client_id'], user, row, {**row, **changes}, at)
+            activity_before = assessment_items.item_activity_snapshot(row)
+            capture, _ = s._portfolio_event_patch('framework_assessment', aid, row['client_id'], user,
+                activity_before, {**activity_before, **changes}, at)
             before = {field: row.get(field) for field in ('client_id', 'framework_key', 'items_to_address', 'items_revision', 'last_saved', 'last_assessed')}
             writes = [r4_services.write_row('framework_assessments', 'framework_assessment_id', row,
                 {**changes, **capture}, preconditions=before),

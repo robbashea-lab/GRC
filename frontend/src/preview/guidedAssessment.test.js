@@ -353,7 +353,8 @@ test('storage reload after asynchronous hashing preserves unrelated writes and r
   };
   const projected=native=>{
     const metadata=createBrawndoScenarioDateSelector(readStore())(native);
-    return metadata?{...native,demo_date_metadata:metadata}:native;
+    expect(native.items_to_address??[]).toEqual([]);expect(native).not.toHaveProperty('item_controls');
+    return {...native,item_controls:{},...(metadata?{demo_date_metadata:metadata}:{})};
   };
   const other=readStore().framework_assessments.find(assessment=>assessment.client_id==='demo_initech');
   expect(other).toBeTruthy();

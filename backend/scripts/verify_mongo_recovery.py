@@ -92,16 +92,25 @@ def main():
         async def test_items_and_finding_receipt_survive_a_new_database_connection(self):
             base,row=await self.initial()
             item=row['items_to_address'][0]
-            resolved=await self.client.patch(base+'/items/'+item['item_id'],json={
-                'expected_revision':row['items_revision'],'state':'resolved',
-                'resolution':'Synthetic completed work retained across connection restart.'})
-            self.assertEqual(resolved.status_code,200,resolved.text)
+            self.assertEqual((item['kind'],item['state']),('gap','open'))
+            self.assertFalse(item.get('finding_id'))
+            self.assertFalse(item.get('task_id'))
             body={'item_id':item['item_id'],'title':'Explicit durable assessment follow-up',
                 'description':item['text'],'remediation_title':'Complete formal corrective work',
                 'request_id':'assessment-item-reconnect'}
             first=await self.client.post(base+'/findings',json=body)
             self.assertEqual(first.status_code,200,first.text)
+            linked=(await self.client.get(base)).json()
+            linked_item=next(entry for entry in linked['items_to_address'] if entry['item_id']==item['item_id'])
+            self.assertEqual(linked_item['finding_id'],first.json()['finding_id'])
+            resolved=await self.client.patch(base+'/items/'+item['item_id'],json={
+                'expected_revision':linked['items_revision'],'state':'resolved',
+                'resolution':'Synthetic completed work retained across connection restart.'})
+            self.assertEqual(resolved.status_code,200,resolved.text)
             saved=(await self.client.get(base)).json()
+            saved_item=next(entry for entry in saved['items_to_address'] if entry['item_id']==item['item_id'])
+            self.assertEqual((saved_item['state'],saved_item['finding_id'],saved_item['resolution']),
+                ('resolved',first.json()['finding_id'],'Synthetic completed work retained across connection restart.'))
             database_name=harness.server.db.name
             self.mongo.close()
             fresh=AsyncIOMotorClient(args.mongo_url,serverSelectionTimeoutMS=3000)

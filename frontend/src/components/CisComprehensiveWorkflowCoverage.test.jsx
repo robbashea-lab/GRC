@@ -143,7 +143,12 @@ afterEach(async()=>{await act(async()=>root.unmount());container.remove();jest.c
 test('item finding prefill preserves an emoji at the 200-code-point title boundary and the full description',async()=>{
   setup('2.1',1);
   const prefix='x'.repeat(199),text=prefix+'🙂 additional reported context',title=prefix+'🙂';
-  native.items_revision=1;native.items_to_address=[{item_id:'unicode-boundary-item',question_id:'practice',kind:'gap',state:'open',text,resolution:'',finding_id:null}];
+  const request='unicode_boundary_0001',itemId='item_'+encodeURIComponent(native.framework_assessment_id)+':manual:'+request;
+  native.items_revision=1;native.items_to_address=[{item_id:itemId,origin:'manual',request_id:request,item_type:'gap',
+    question_id:'practice',kind:'gap',state:'open',text,resolution:'',finding_id:null,created_at:token,
+    history:[{event:'added',state:'open',text,by:'qa-workflow-actor',at:token}]}];
+  // The server supplies capabilities for a proven saved Item, never for an unknown origin.
+  native.item_controls={[itemId]:{origin:'manual',can_remove:true,can_create_action:false,can_create_finding:true}};
   const before=copy(native);
   await render();
   const itemsTab=[...container.querySelectorAll('[role="tab"]')].find(tab=>tab.textContent.trim()==='Items to address');

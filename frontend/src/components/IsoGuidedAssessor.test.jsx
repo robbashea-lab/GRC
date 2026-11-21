@@ -6,7 +6,7 @@ import {isoGuidedCatalog,isoGroups,isoQuestions,isoGuidedResult,isoInlineNarrati
 import api from '@/lib/api';
 import axios from 'axios';
 import {previewAdapter} from '@/preview/commandTestAdapter';
-import {ids,saveStore} from '@/preview/store';
+import {ids,saveStore,readStore} from '@/preview/store';
 
 jest.mock('@/lib/api',()=>({__esModule:true,default:{get:jest.fn(),put:jest.fn()},formatError:e=>e.message}));
 jest.mock('@/context/AuthContext',()=>({useAuth:()=>({user:{user_id:'iso-actor',role:'super_admin'}})}));
@@ -456,7 +456,9 @@ test.each(['4.1','A.5.1','A.8.13'])('%s inline component binds reviewed text thr
   const summary=document.querySelector('[aria-label="Omnibot implementation summary"]'),reported=summary.value;
   expect(reported).toContain('\n\nControls in place\n• ');
   expect(stored.result.narrative).toBe(stored.narrative);expect(stored.narrative).toBe(reported);
-  expect((await previewApi.get(path)).data).toEqual(row);expect(props.onSaveAssessment).not.toHaveBeenCalled();
+  expect(row.items_to_address??[]).toEqual([]);expect(row).not.toHaveProperty('item_controls');
+  expect(readStore().framework_assessments.find(item=>item.framework_assessment_id===row.framework_assessment_id)).toEqual(row);
+  expect((await previewApi.get(path)).data).toEqual({...row,item_controls:{}});expect(props.onSaveAssessment).not.toHaveBeenCalled();
   const reviewed=reported+'\nExact separately reviewed wording.\n';await changeInput(summary,reviewed);await click('Save assessment');await settle();
   expect(props.onSaveAssessment).toHaveBeenCalledTimes(1);expect(onInlineClose).toHaveBeenCalledTimes(1);
   const saved=(await previewApi.get(path)).data,interview=(await previewApi.get(path+'/guided-assessment')).data;
@@ -690,7 +692,9 @@ test('sequential ISO questions use the actual preview checkpoint and exact revie
     props = {...props, current: saved, form: copy(saved)}; return true;
   });
   await openSequential({settle}); await completeSequential(settle);
-  expect((await previewApi.get(path)).data).toEqual(row); expect(props.onSaveAssessment).not.toHaveBeenCalled();
+  expect(row.items_to_address??[]).toEqual([]);expect(row).not.toHaveProperty('item_controls');
+  expect(readStore().framework_assessments.find(item=>item.framework_assessment_id===row.framework_assessment_id)).toEqual(row);
+  expect((await previewApi.get(path)).data).toEqual({...row,item_controls:{}}); expect(props.onSaveAssessment).not.toHaveBeenCalled();
   const reviewed = document.querySelector('[aria-label="Omnibot implementation summary"]').value + '\nExact separately reviewed sequential wording.\n';
   await changeInput('[aria-label="Omnibot implementation summary"]', reviewed); await click('Save assessment'); await settle();
   const saved = (await previewApi.get(path)).data, interview = (await previewApi.get(path + '/guided-assessment')).data;

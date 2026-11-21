@@ -479,6 +479,14 @@ async def save_items(s, row, items, user, at):
     return event
 
 
+def item_activity_snapshot(row):
+    """Capture owned Items plus lineage, without claiming native assessment judgment."""
+    fields = ('client_id', 'framework_key', 'items_to_address', 'items_revision',
+        'last_saved', 'last_assessed', 'created_at', '_portfolio_activity_last_event_id',
+        '_portfolio_program_key', '_portfolio_program_label')
+    return {field: row[field] for field in fields if field in row}
+
+
 async def command_item(s, aid, body, user, identity=None, *, action=None):
     """Use the existing journal so a post-CAS audit failure retains its exact accepted Item write."""
     import portfolio_activity
@@ -522,8 +530,9 @@ async def command_item(s, aid, body, user, identity=None, *, action=None):
             writes = []
             if changed:
                 changes = {'items_to_address': items, 'items_revision': current.get('items_revision', 0) + 1}
+                activity_before = item_activity_snapshot(current)
                 capture, _ = s._portfolio_event_patch('framework_assessment', aid, current['client_id'], user,
-                    current, {**current, **changes}, at)
+                    activity_before, {**activity_before, **changes}, at)
                 before = {field: current.get(field) for field in
                     ('client_id', 'framework_key', 'items_to_address', 'items_revision', 'last_saved', 'last_assessed')}
                 writes = [r4_services.write_row('framework_assessments', 'framework_assessment_id', current,

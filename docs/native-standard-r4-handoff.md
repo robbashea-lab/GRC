@@ -1,6 +1,23 @@
 # Native Standard R4 implementation handoff
 
-Snapshot: **2026-11-20 (local), final Item/shared-assessment working candidate after Build16.** Branch `codex/native-standard-r4-20261119`, last published parent `d2c8957adb00e0f63530829b11814421feb90dcc`, tree `7ffba95e4543084e491ba423063d98a3e6d4ab12`. CI356 passed all twelve jobs on that parent only. Current follow-up is **uncommitted, not pushed, not CI-verified, not deployed and not fully accepted**. Both current local builds passed. See the current follow-up below; earlier named revisions/checks remain historical evidence.
+Snapshot: **2026-11-21 UTC, after the CI357 failure corrections and Build18.** Branch `codex/native-standard-r4-20261119`. Published parent `a1475a8ccdd50a7dc1d066bd8f7b625f67a86083` failed CI357; local `234d07e675ef3e4f0a17a95ced349c970b1294e9` corrects the nested dialog overlays. The newer focused correction is being checked and independently reviewed. Its exact publication/CI status is recorded in [CURRENT_HANDOFF.json](../../CURRENT_HANDOFF.json). **No deployment, merge, hosted migration or full acceptance.** Earlier named revisions and green runs below are historical, not qualification for this newer candidate.
+
+## Latest bounded closeout
+
+The actual Add Item backdrop covered its controls on a147. All three affected dialogs now reuse the existing approved overlay/content pair; no new styles, layout, permissions or save rules were introduced. [Native Admin/CIS1.1 retest](../../verification/native-browser-item-layer-234d-01.json) verified pointer hit testing, Add/Task cancellation, Item save/reload, real linked Action opening and persistence, and Client questions focus/keyboard completion. One synthetic Item and Task remain; original assessment judgment and last-saved information remain visible. This is one authenticated record, not all-framework/role or matched-reference acceptance.
+
+CI357 also exposed an Item-only activity capture that included unrelated native judgment fields. The correction limits only the capture snapshot to owned Item fields plus genuine history/version/program lineage. The current assessment, whole-set claim/CAS, authorization, accepted-command recovery, audit and persistence machinery remain unchanged. [Read-only impact evidence](../../verification/native-item-projection-impact-01.json) identifies eight affected activity entries across four owned synthetic assessments. Existing records/events/history are preserved; no customer prevalence or downstream calculation impact is claimed.
+
+| Verification | Result and boundary |
+| --- | --- |
+| [CI357](../../verification/ci357-terminal-01.json) | Exact published a147: three jobs successful, eight failed, backend cancelled without a final suite result. Mongo recovery reported five failures; the later native R4 Mongo step was skipped. Not a pass. |
+| [Native regression modules](../../verification/ci357-native-contract-closeout-01-receipt.json) | Three whole modules: 63 passed, 8,897 passing subtests, original two workers/deadlines, zero drift. Mock/ASGI only; actual Mongo reconnect script remains separate. |
+| [ISO/Demo/reporting contracts](../../verification/ci357-dto-reporting-closeout-03-receipt.json) | Three whole modules: 193 passed, zero failures/drift. Stored records are compared exactly; full response expectations explicitly include derived Item controls. |
+| [Brawndo native controller](../../verification/ci357-brawndo-native-closeout-04-receipt.json) | Whole module: 22 passed. Exact edited personal revision, separate minimal native Save, original judgment and absent criteria, history and reload assertions retained. |
+| Unicode Finding prefill | Focused case passed in retained closeout01/02. Its fixture now represents a proven saved manual Gap; unknown origins are not granted capabilities. Whole-module timing qualification is separate. |
+| [Both Build18 outputs](../../verification/builds-integrated-18-receipt.json) | Standard and separate Demo passed, actual Node22.23.4, 1,436 input files, no source drift. Local output, not Linux/hosted or native acceptance. |
+
+Original CI and local failures remain available. The seventeen earlier Windows five-second failures involve different exact cases from the new whole-module passes and remain unqualified. ISO's 180,000 ms lifecycle failure, Prestige's five-second setup failure, CI357 backend cancellation, reference-pixel/real zoom checks and the complete 32-surface/mode matrix remain open. No rejected performance/persistence experiment, deadline increase, assertion weakening, reseed or data cleanup was introduced. The owned app is stopped; original Mongo/database/accounts remain retained.
 
 ## Scope and preservation
 
