@@ -8,6 +8,7 @@ from unittest.mock import patch
 
 from fastapi import HTTPException
 from pydantic import ValidationError
+from pymongo.errors import DuplicateKeyError
 import assessment_items
 from framework_catalog import CATALOGS, FRAMEWORKS, active_definitions, active_plans
 from framework_governance import stable
@@ -366,9 +367,63 @@ class R4NativeFrameworkTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(pending.status_code, 409, pending.text)
         await harness.server.db.framework_assessments.update_one({'framework_assessment_id': row['framework_assessment_id']},
             {'$unset': {'_r4_context_pending': ''}})
-        await harness.server.db.framework_assessments.insert_one({**row, 'framework_assessment_id': 'duplicate-native-definition'})
-        incomplete = await self.client.get('/api/frameworks/cis-ig1/client-questions', params={'client_id': 'a'})
-        self.assertEqual(incomplete.status_code, 409, incomplete.text)
+        collection = harness.server.db.framework_assessments
+        # Use the native declarations in both isolated and real-Mongo variants.
+        await collection.create_index('framework_assessment_id', unique=True)
+        definition_index = [('client_id', 1), ('framework_key', 1), ('framework_version', 1), ('definition_id', 1)]
+        await collection.create_index(definition_index, unique=True)
+        indexes = await collection.index_information()
+        self.assertTrue(any(index.get('key') == definition_index and index.get('unique') is True
+            for index in indexes.values()))
+        def canonical_records(records, expected_length):
+            self.assertEqual(len(records), expected_length)
+            identities = [record['framework_assessment_id'] for record in records]
+            self.assertEqual(len(set(identities)), len(identities))
+            return sorted(records, key=lambda record: record['framework_assessment_id'])
+
+        canonical = copy.deepcopy(await collection.find({}).to_list(None))
+        canonical = canonical_records(canonical, len(canonical))
+        duplicate = {**row, 'framework_assessment_id': 'duplicate-native-definition'}
+        self.assertNotIn('_id', duplicate)
+        self.assertNotIn(duplicate['framework_assessment_id'], [record['framework_assessment_id'] for record in canonical])
+        with self.assertRaises(DuplicateKeyError):
+            await collection.insert_one(duplicate)
+        self.assertEqual(canonical_records(await collection.find({}).to_list(None), len(canonical)), canonical)
+        query = {'client_id': 'a', 'framework_key': 'cis-ig1'}
+        projection = {'_id': 0}
+        expected_rows = [{key: value for key, value in record.items() if key != '_id'} for record in canonical
+            if record['client_id'] == query['client_id'] and record['framework_key'] == query['framework_key']]
+        original_find = type(collection).find
+        for malformed in ('duplicate', 'missing'):
+            with self.subTest(population=malformed):
+                observed_reads = []
+
+                def scoped_program_read(current_collection, *args, **kwargs):
+                    cursor = original_find(current_collection, *args, **kwargs)
+                    if current_collection.full_name != collection.full_name or args != (query, projection) or kwargs:
+                        return cursor
+
+                    class MalformedProgramCursor:
+                        async def to_list(cursor_self, length):
+                            self.assertEqual(length, 10001)
+                            records = await cursor.to_list(length)
+                            self.assertEqual(canonical_records(records, len(expected_rows)), expected_rows)
+                            observed_reads.append(malformed)
+                            if malformed == 'duplicate':
+                                return [*records, {**copy.deepcopy(records[0]),
+                                    'framework_assessment_id': 'duplicate-native-definition'}]
+                            return records[1:]
+
+                    return MalformedProgramCursor()
+
+                # Inject only a malformed read; the canonical unique records stay intact.
+                with patch.object(type(collection), 'find', new=scoped_program_read):
+                    incomplete = await self.client.get('/api/frameworks/cis-ig1/client-questions', params={'client_id': 'a'})
+                self.assertEqual(observed_reads, [malformed])
+                self.assertEqual(incomplete.status_code, 409, incomplete.text)
+                self.assertEqual(incomplete.json()['detail'], 'The complete current program assessment population could not be verified')
+                self.assertEqual(canonical_records(await collection.find({}).to_list(None), len(canonical)), canonical)
+                self.assertEqual(await collection.index_information(), indexes)
 
     async def test_manual_item_late_audit_failure_recovers_once_before_another_write_is_published(self):
         await self.configure()
