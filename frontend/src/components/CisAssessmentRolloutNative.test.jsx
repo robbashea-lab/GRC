@@ -34,7 +34,7 @@ let getSpy, putSpy, patchSpy, postSpy, deleteSpy;
 const surface = () => document.querySelector('[data-testid="brawndo-cis-assessment"]');
 const guide = () => surface().querySelector('[aria-label="CIS assessment interview"]');
 const currentQuestionId = () => guide().querySelector('fieldset[data-question-id]')?.dataset.questionId;
-const button = (scope, name) => [...scope.querySelectorAll('button')].find(node => node.textContent.trim() === name);
+const button = (scope, name) => [...scope.querySelectorAll('button')].find(node => (node.textContent.trim() === name||node.getAttribute('aria-label')===name));
 const draftDialog = () => document.querySelector('.brawndo-pilot-draft[role="dialog"]');
 const writes = () => [putSpy, patchSpy, postSpy, deleteSpy];
 const nativeWrites = () => patchSpy.mock.calls.filter(([url]) => url === base);
@@ -213,9 +213,9 @@ async function reviewAllResponses(answers) {
   }
   throw new Error('The complete native response review was not reached.');
 }
-async function checkpoint(answers, {completed = false, narrative = '', result = null} = {}) {
+async function checkpoint(answers, {completed = false, narrative = '', result = null, step = 0} = {}) {
   const initial = (await api.get(base + '/guided-assessment')).data;
-  return (await api.put(base + '/guided-assessment', {version, answers, step: 0, completed,
+  return (await api.put(base + '/guided-assessment', {version, answers, step, completed,
     narrative, result, expected_revision: initial.revision,
     base_assessment_token: initial.current_assessment_token,
     base_scope_fingerprint: initial.current_scope_fingerprint})).data;
@@ -380,16 +380,26 @@ test.each(['1.1', '2.1'])('%s native rollout checkpoints, reviews and stages tex
   await click(surface(), 'Save assessment');
   expect(nativeWrites()).toHaveLength(1);
   const payload = nativeWrites()[0][1];
-  expect(payload).toMatchObject({implementation: reviewed, status: baseline.status,
-    verification: baseline.verification, expected_last_assessed: baseline.last_saved ?? baseline.last_assessed ?? null});
-  expect(payload).not.toHaveProperty('guided_assessment_source');
+  expect(Object.keys(payload).sort()).toEqual(['expected_last_assessed','guided_assessment_source','implementation']);
+  expect(payload).toMatchObject({implementation: reviewed,
+    expected_last_assessed: baseline.last_saved ?? baseline.last_assessed ?? null,
+    guided_assessment_source: {version: interviewBeforeSave.version, revision: interviewBeforeSave.revision,
+      generated_at: interviewBeforeSave.generated_at}});
   const saved = (await api.get(base)).data;
   expect(saved.implementation).toBe(reviewed);
   for (const key of ['status', 'verification', 'owner_id', 'process_owner_id', 'technology', 'notes', 'na_rationale'])
     expect(saved[key]).toEqual(baseline[key]);
-  expect(saved.cis_assessment_criteria).toEqual(baseline.cis_assessment_criteria ?? []);
-  expect(saved.guided_assessment_source).toEqual(baseline.guided_assessment_source);
-  expect(saved.items_to_address).toEqual(baseline.items_to_address);
+  expect(saved.cis_assessment_criteria).toEqual(baseline.cis_assessment_criteria);
+  expect(saved.guided_assessment_source).toMatchObject({...payload.guided_assessment_source,
+    answers: interviewBeforeSave.answers, by: mockAuth.user.user_id});
+  expect(saved.items_to_address.some(item => item.state === 'open' && item.kind === 'verification'
+    && item.question_id === 'unknowns' && item.text.includes(updatedConfirmation))).toBe(true);
+  for (const prior of baseline.items_to_address || []) {
+    const retained = saved.items_to_address.find(item => item.item_id === prior.item_id);
+    expect(retained).toBeTruthy(); expect(retained.resolution).toBe(prior.resolution);
+    expect(retained.finding_id).toBe(prior.finding_id);
+    expect(retained.history.slice(0, (prior.history || []).length)).toEqual(prior.history || []);
+  }
   expect(saved.assessment_history.slice(0, baseline.assessment_history.length)).toEqual(baseline.assessment_history);
   expect(saved.assessment_history).toHaveLength(baseline.assessment_history.length + 1);
   expect(saved.assessment_history.at(-1)).toMatchObject({implementation: reviewed,
@@ -471,4 +481,229 @@ test('2.1 real default-on read-only presentation cannot change answers or save t
   expect(button(surface(), 'Review implementation').disabled).toBe(true);
   for (const spy of writes()) expect(spy).not.toHaveBeenCalled();
   await assertNativeUnchanged();
+});
+
+test('2.1 Apply stages real confirmation Items and preserves the manual judgment until one explicit native Save', async () => {
+  await loadSafeguard('2.1');
+  const reported = Object.fromEntries(catalogForVersion(version).safeguards['2.1'].map(question => {
+    if (question.type === 'matrix') return [question.id, Object.fromEntries(question.rows.map(row => [row, 'Not sure']))];
+    if (question.id === 'additional_gap') return [question.id, 'No'];
+    if (question.id === 'additional_confirmation') return [question.id, 'Yes'];
+    if (question.type === 'text') return [question.id, question.id === 'unknowns'
+      ? 'SYNTHETIC QA: the responsible team must confirm all reported software inventory criteria.'
+      : question.id === 'evidence' ? 'SYNTHETIC QA: no supporting software inventory record was verified.'
+        : 'SYNTHETIC QA: this practice and its reported details have not been confirmed.'];
+    return [question.id, 'Not sure'];
+  }));
+  const answers = Object.fromEntries(visibleQuestions('2.1', reported, version)
+    .map(question => [question.id, reported[question.id]]));
+  const sourceRows = visibleQuestions('2.1', answers, version)
+    .filter(question => question.type === 'matrix').flatMap(question => question.rows);
+  expect(sourceRows).toHaveLength(12);
+  expect(sourceRows).toContain('Each entry records business purpose.');
+  expect(baseline).toMatchObject({status: 'in_progress', verification: 'needs_validation'});
+  await render(); await openInterview(); await reviewAllResponses(answers);
+  await click(guide(), 'Review implementation');
+  let personal = (await api.get(base + '/guided-assessment')).data;
+  expect(personal).toMatchObject({completed: true, version, answers, result: {status: 'not_assessed'}});
+  const dialog = draftDialog(); expect(dialog).toBeTruthy();
+  const reviewed = dialog.querySelector('[aria-label="Implementation draft"]').value;
+  expect(reviewed.trim()).not.toBe('');
+  if (dialog.querySelector('.guided-replacement input'))
+    await nativeAction(() => dialog.querySelector('.guided-replacement input').click());
+  await assertNativeUnchanged();
+  await click(dialog, 'Apply draft');
+  expect(surface().querySelector('[aria-label="Current implementation"]').value).toBe(reviewed);
+  expect(surface().querySelector('input[name="bcsg-status"]:checked').value).toBe(baseline.status);
+  await assertNativeUnchanged();
+  const itemsTab = [...surface().querySelectorAll('[role="tab"]')]
+    .find(node => node.textContent.trim().startsWith('Items to address'));
+  expect(itemsTab).toBeTruthy(); await nativeAction(() => itemsTab.click());
+  const preview = surface().querySelector('[aria-label="Proposed Items to address"]');
+  expect(preview).not.toBeNull();
+  expect(preview.textContent).toContain('Save assessment');
+  for (const row of sourceRows) expect(preview.textContent).toContain(row);
+  expect(preview.textContent).toContain(answers.unknowns);
+  // Pending controls edit the assessment draft; no formal work or native Item save occurs here.
+  const workButtons=[...preview.querySelectorAll('button')].filter(button=>/^(Create [Aa]ction [Ii]tem|Create finding|Raise finding)$/.test(button.textContent));
+  expect(workButtons.length).toBeGreaterThan(0);expect(workButtons.every(button=>button.disabled)).toBe(true);
+  expect(preview.querySelectorAll('textarea').length).toBeGreaterThan(0);
+  expect(nativeWrites()).toHaveLength(0);
+  personal = (await api.get(base + '/guided-assessment')).data;
+  const priorPersonalHistory = copy((await api.get(base + '/guided-assessment/history')).data);
+  await click(surface(), 'Save assessment');
+  expect(nativeWrites()).toHaveLength(1);
+  const payload = nativeWrites()[0][1];
+  expect(Object.keys(payload).sort()).toEqual(['expected_last_assessed','guided_assessment_source','implementation']);
+  expect(payload).toMatchObject({implementation: reviewed,
+    expected_last_assessed: baseline.last_saved ?? baseline.last_assessed ?? null,
+    guided_assessment_source: {version: personal.version, revision: personal.revision, generated_at: personal.generated_at}});
+  const saved = (await api.get(base)).data;
+  expect(saved.implementation).toBe(reviewed);
+  expect(saved.status).toBe(baseline.status); expect(saved.verification).toBe(baseline.verification);
+  for (const key of ['owner_id','process_owner_id','technology','notes','na_rationale'])
+    expect(saved[key]).toEqual(baseline[key]);
+  expect(saved.guided_assessment_source).toMatchObject({...payload.guided_assessment_source, answers, by: mockAuth.user.user_id});
+  const current = saved.items_to_address.filter(item => item.state !== 'superseded');
+  expect(current.some(item => item.kind === 'verification')).toBe(true);
+  expect(current.some(item => item.kind === 'gap')).toBe(false);
+  for (const row of sourceRows) expect(current.map(item => item.text).join('\n')).toContain(row);
+  expect(current.map(item => item.text).join('\n')).toContain(answers.unknowns);
+  for (const prior of baseline.items_to_address || []) {
+    const retained = saved.items_to_address.find(item => item.item_id === prior.item_id);
+    expect(retained).toBeTruthy();
+    expect(retained.history.slice(0, (prior.history || []).length)).toEqual(prior.history || []);
+    expect(retained.finding_id).toBe(prior.finding_id);
+    expect(retained.resolution).toBe(prior.resolution);
+  }
+  expect(saved.assessment_history.slice(0, baseline.assessment_history.length)).toEqual(baseline.assessment_history);
+  expect(saved.assessment_history).toHaveLength(baseline.assessment_history.length + 1);
+  expect((await api.get(base + '/related')).data).toEqual(relatedBefore);
+  expect((await api.get(base + '/guided-assessment/history')).data).toEqual(priorPersonalHistory);
+  expect(postSpy).not.toHaveBeenCalled(); expect(deleteSpy).not.toHaveBeenCalled();
+  const putsBeforeReload = putSpy.mock.calls.length;
+  await remount();
+  expect(surface().querySelector('[aria-label="Current implementation"]').value).toBe(reviewed);
+  expect((await api.get(base)).data).toEqual(saved);
+  expect(putSpy).toHaveBeenCalledTimes(putsBeforeReload);
+  expect(nativeWrites()).toHaveLength(1);
+});
+
+// Explicitly reported unknowns, not evidence of implementation or fabricated artifacts.
+function unknownItemAnswers(evidence = 'SYNTHETIC QA: no supporting software inventory record was verified.') {
+  const reported = Object.fromEntries(catalogForVersion(version).safeguards['2.1'].map(question => {
+    if (question.type === 'matrix') return [question.id, Object.fromEntries(question.rows.map(row => [row, 'Not sure']))];
+    if (question.id === 'additional_gap') return [question.id, 'No'];
+    if (question.id === 'additional_confirmation') return [question.id, 'Yes'];
+    if (question.type === 'text') return [question.id, question.id === 'evidence' ? evidence
+      : 'SYNTHETIC QA: the responsible team must confirm this reported software inventory detail.'];
+    return [question.id, 'Not sure'];
+  }));
+  return Object.fromEntries(visibleQuestions('2.1', reported, version).map(question => [question.id, reported[question.id]]));
+}
+async function stageUnknownItems(evidence, {unlinkEvidence = false} = {}) {
+  await loadSafeguard('2.1');
+  if (unlinkEvidence) {
+    for (const item of relatedBefore.evidence)
+      await api.delete(base + '/links', {data: {kind: 'evidence', id: item.evidence_id}});
+    baseline = copy((await api.get(base)).data);
+    relatedBefore = copy((await api.get(base + '/related')).data);
+    expect(relatedBefore.evidence).toEqual([]);
+  }
+  const answers = unknownItemAnswers(evidence);
+  const result = omniCisSummary('2.1', answers, version, 'Brawndo', new Date()).result;
+  expect(result.status).toBe('not_assessed'); expect(result.gaps).toEqual([]);
+  await checkpoint(answers, {completed: true, result, narrative: result.narrative,
+    step: omniGroups('2.1', answers, version).flatMap(group => group.questions).length - 1});
+  clearWrites(); await render(); await openInterview();
+  // Unconfirmed completed interviews resume for an explicit response review.
+  expect(draftDialog()).toBeNull();
+  await reviewAllResponses(answers); await click(guide(), 'Review implementation');
+  const dialog = draftDialog(); expect(dialog).toBeTruthy();
+  const narrative = dialog.querySelector('[aria-label="Implementation draft"]').value;
+  if (dialog.querySelector('.guided-replacement input'))
+    await nativeAction(() => dialog.querySelector('.guided-replacement input').click());
+  await click(dialog, 'Apply draft'); await assertNativeUnchanged();
+  return {answers, narrative};
+}
+async function openProposedItems() {
+  const tab = [...surface().querySelectorAll('[role="tab"]')]
+    .find(node => node.textContent.trim().startsWith('Items to address'));
+  expect(tab).toBeTruthy(); await nativeAction(() => tab.click());
+  return surface().querySelector('[aria-label="Proposed Items to address"]');
+}
+
+test('mixed native status edits are retained and refused rather than omitted from a guided-only Save', async () => {
+  const {narrative} = await stageUnknownItems();
+  const choice = surface().querySelector('input[name="bcsg-status"][value="needs_attention"]');
+  expect(choice).toBeTruthy(); await nativeAction(() => choice.click());
+  await click(surface(), 'Save assessment');
+  expect(surface().textContent).toContain('no fields were omitted');
+  expect(surface().querySelector('input[name="bcsg-status"]:checked').value).toBe('needs_attention');
+  expect(surface().querySelector('[aria-label="Current implementation"]').value).toBe(narrative);
+  await assertNativeUnchanged();
+});
+
+test('Keep editing retains proposed Items and Discard leaves native Items/history unchanged', async () => {
+  await stageUnknownItems(); const preview = await openProposedItems(); expect(preview).not.toBeNull();
+  const textBefore = preview.textContent;
+  const personal = copy((await api.get(base + '/guided-assessment')).data);
+  await nativeAction(() => surface().querySelector('.brawndo-assessment-navigation-close').click());
+  await click(document.body, 'Keep editing');
+  expect(surface().querySelector('[aria-label="Proposed Items to address"]').textContent).toBe(textBefore);
+  await assertNativeUnchanged();
+  await nativeAction(() => surface().querySelector('.brawndo-assessment-navigation-close').click());
+  await click(document.body, 'Discard changes'); expect(onClose).toHaveBeenCalledWith(false);
+  await remount();
+  expect(surface().querySelector('[aria-label="Proposed Items to address"]')).toBeNull();
+  expect((await api.get(base + '/guided-assessment')).data).toEqual(personal);
+  await assertNativeUnchanged();
+});
+
+test('a committed role withdrawal and return cannot revive a former staged Items adoption', async () => {
+  await stageUnknownItems(); expect(await openProposedItems()).not.toBeNull();
+  const actor = mockAuth;
+  mockAuth = {...mockAuth, user: {...mockAuth.user, role: 'client_readonly'}};
+  await render();
+  expect(surface().querySelector('[aria-label="Proposed Items to address"]')).toBeNull();
+  expect(button(surface(), 'Save assessment')).toBeUndefined();
+  mockAuth = actor; await render();
+  expect(surface().querySelector('[aria-label="Proposed Items to address"]')).toBeNull();
+  await click(surface(), 'Save assessment');
+  expect(surface().textContent).toContain('no fields were omitted');
+  await assertNativeUnchanged();
+});
+
+test('a newer personal source revision refuses the old staged adoption without changing native Items/history', async () => {
+  const {answers,narrative} = await stageUnknownItems();
+  const prior = (await api.get(base + '/guided-assessment')).data;
+  const result = omniCisSummary('2.1', answers, version, 'Brawndo', new Date()).result;
+  await checkpoint(answers, {completed: true, result, narrative: narrative + '\nSYNTHETIC newer reviewed personal wording.'});
+  expect((await api.get(base + '/guided-assessment')).data.revision).toBeGreaterThan(prior.revision);
+  await click(surface(), 'Save assessment');
+  expect(nativeWrites()).toHaveLength(1);
+  expect((await api.get(base)).data).toEqual(baseline);
+  expect(surface().querySelector('[aria-label="Current implementation"]').value).toBe(narrative);
+  expect(surface().textContent).toMatch(/interview|guided|changed/i);
+  expect(postSpy).not.toHaveBeenCalled(); expect(deleteSpy).not.toHaveBeenCalled();
+});
+
+test('reported unlinked evidence stages an honest verification follow-up and creates no file', async () => {
+  const reported = 'SYNTHETIC QA reported inventory-export location; existence and contents need confirmation.';
+  await stageUnknownItems(reported, {unlinkEvidence: true}); expect(relatedBefore.evidence).toEqual([]);
+  const preview = await openProposedItems(); expect(preview).not.toBeNull();
+  expect(preview.textContent).toContain('Link the reported evidence: ' + reported);
+  const workButtons=[...preview.querySelectorAll('button')].filter(button=>/^(Create [Aa]ction [Ii]tem|Create finding|Raise finding)$/.test(button.textContent));
+  expect(workButtons.length).toBeGreaterThan(0);expect(workButtons.every(button=>button.disabled)).toBe(true);
+  expect(preview.querySelectorAll('textarea').length).toBeGreaterThan(0);
+  await assertNativeUnchanged(); await click(surface(), 'Save assessment');
+  const saved = (await api.get(base)).data;
+  expect(saved.items_to_address).toEqual(expect.arrayContaining([expect.objectContaining({
+    question_id: 'evidence', kind: 'verification', state: 'open', text: 'Link the reported evidence: ' + reported})]));
+  expect((await api.get(base + '/related')).data).toEqual(relatedBefore);
+  expect(postSpy).not.toHaveBeenCalled(); expect(deleteSpy).not.toHaveBeenCalled();
+});
+
+test('manual pending Items and their resolution/removal commit only through the real assessment Save', async () => {
+  await stageUnknownItems();const pending=await openProposedItems();expect(pending).not.toBeNull();
+  await click(surface(),'Add item');
+  const modal=[...document.querySelectorAll('[role="dialog"]')].find(node=>node.querySelector('h2')?.textContent==='Add item to address');
+  expect(modal).toBeTruthy();await edit(modal.querySelector('[aria-label="Item type"]'),'evidence');
+  const text='SYNTHETIC pending evidence confirmation — München Ω';
+  await edit(modal.querySelector('[aria-label="Item description"]'),text);await click(modal,'Add item');
+  const itemSection=()=>[...surface().querySelectorAll('.assessment-item')].find(node=>node.querySelector('.ita-txt,strong')?.textContent===text);
+  expect(itemSection()).toBeTruthy();await click(itemSection(),'Resolve');
+  expect(itemSection().textContent).toContain('Resolved');await click(itemSection(),'Remove item');
+  expect(itemSection().textContent).toContain('Removed');
+  expect(postSpy).not.toHaveBeenCalled();expect(deleteSpy).not.toHaveBeenCalled();await assertNativeUnchanged();
+  await click(surface(),'Save assessment');
+  expect(nativeWrites()).toHaveLength(1);
+  expect(nativeWrites()[0][1].item_draft).toMatchObject({expected_revision:baseline.items_revision||0,
+    operations:[{operation:'add',item_type:'evidence',text},{operation:'resolve',state:'resolved',resolution:''},{operation:'remove'}]});
+  const saved=(await api.get(base)).data,manual=saved.items_to_address.find(item=>item.origin==='manual'&&item.text===text);
+  expect(manual).toMatchObject({item_type:'evidence',state:'removed',resolution:''});
+  expect(manual.item_id).toBeTruthy();expect(manual.history.map(entry=>entry.event)).toEqual(['added','resolved','removed']);
+  expect(saved.status).toBe(baseline.status);expect(saved.verification).toBe(baseline.verification);
+  expect((await api.get(base+'/related')).data).toEqual(relatedBefore);
+  await remount();expect((await api.get(base)).data.items_to_address.find(item=>item.item_id===manual.item_id)).toEqual(manual);
 });

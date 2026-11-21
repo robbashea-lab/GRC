@@ -15,10 +15,10 @@ import './BrawndoAssessmentPilot.css';
 
 // Shared pilot presentation only: every action remains the caller's native controller.
 export default function AssessmentRolloutFrame({state,actions,status,frameworkLabel,requirement,
-  interview,findings,itemsToAddress,children,testId,sectionCounts}) {
+  interview,findings,itemsToAddress,children,testId,sectionCounts,interviewHistoryAvailable=true}) {
   const {open,record,definition,current,form,ctx,busy,error,dirty,writable,feedback,
     position,previous,next,breadcrumb,otherDraft,finding,pilotSurfaceRef}=state;
-  const {close,save,saveAndNext,retry,put}=actions;
+  const {close,save,saveAndNext,discardAssessment,retry,put}=actions;
   const disabled=!writable||busy||!ctx;
   const {currentClient}=useOrg()||{};
   const [detailsView,setDetailsView]=useState(null),[surface,setSurface]=useState(null);
@@ -39,7 +39,7 @@ export default function AssessmentRolloutFrame({state,actions,status,frameworkLa
       onCloseAutoFocus={event=>{if(destination.current)event.preventDefault();}}>
       <DropdownMenuItem disabled={!state.manageRecord||busy} onSelect={()=>{destination.current=true;state.manageRecord?.();}}>Ownership &amp; assessment history</DropdownMenuItem>
       <DropdownMenuItem disabled={!form.notes&&!current.notes||busy} onSelect={()=>{destination.current=true;setDetailsView('notes');}}>Recorded notes</DropdownMenuItem>
-      <DropdownMenuItem disabled={!interview||!ctx||busy} onSelect={()=>{destination.current=true;setDetailsView('history');}}>Interview history</DropdownMenuItem>
+      <DropdownMenuItem disabled={!interviewHistoryAvailable||!interview||!ctx||busy} onSelect={()=>{destination.current=true;setDetailsView('history');}}>Interview history</DropdownMenuItem>
     </DropdownMenuContent>
   </DropdownMenu>;
   return <AssessmentShell open={open} title={definition.title}
@@ -54,12 +54,13 @@ export default function AssessmentRolloutFrame({state,actions,status,frameworkLa
       {error&&<div role="alert" className="text-sm text-semantic-critical mb-1">{error}{!ctx&&<Button variant="outline" size="sm" onClick={retry}>Retry</Button>}</div>}
       <span role="status" className="text-sm text-ink-secondary">{footerStatus||<>{footerDate.dateTime?<>{footerDate.label} <time dateTime={footerDate.dateTime} title={footerDate.dateTime}>{footerDate.display}</time></>:footerDate.text}</>}</span>
       {otherDraft&&<p id="rollout-other-draft" className="text-xs text-ink-secondary">Finish or discard the open interview or related-record draft before using Save &amp; next.</p>}
-    </div><div className="flex flex-wrap gap-2 gn-footer-actions">{writable&&<>
+    </div><div className="flex flex-wrap gap-2 gn-footer-actions">{writable&&!state.interviewActive&&<>
+      {discardAssessment&&<Button className="gn-button" variant="outline" disabled={disabled||state.discardDisabled} onClick={discardAssessment}>Discard</Button>}
       <Button className="gn-button" variant={saveAndNext?'outline':'default'} disabled={disabled} onClick={save}>{busy?'Working…':'Save assessment'}</Button>
       {saveAndNext&&<Button className="gn-button gn-primary" disabled={disabled||!!otherDraft||!!finding} aria-describedby={otherDraft?'rollout-other-draft':undefined} onClick={saveAndNext}>Save &amp; next<ArrowRight className="gn-icon" aria-hidden="true"/></Button>}
     </>}</div></>}>
     {!ctx&&!error&&<p role="status">Loading assessment…</p>}
-    <AssessmentLayout inlineWorkflow guidedWorkflow safeguard11 sectionCounts={sectionCounts}
+    <AssessmentLayout inlineWorkflow guidedWorkflow safeguard11 sectionCounts={sectionCounts||state.itemControls?.sectionCounts}
       requirement={requirement} itemsToAddress={itemsToAddress} findings={findings} findingDraft={!!finding}
       interview={interview?view=>interview({...view,historyOpen:detailsView==='history',
         onHistoryOpenChange:value=>{if(!value)setDetailsView(null);},onHistoryCloseAutoFocus:returnToDetails,

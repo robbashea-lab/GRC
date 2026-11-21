@@ -5,6 +5,7 @@ import api from '@/lib/api';
 
 jest.mock('@/lib/api',()=>({__esModule:true,default:{patch:jest.fn()},formatError:error=>error.message}));
 let root,host,record,createFinding,draft;
+const recordOwner={identity:'synthetic-record-owner'};
 const item=(item_id,values={})=>({item_id,question_id:'coverage',kind:'gap',text:item_id,state:'open',resolution:'',history:[],finding_id:null,...values});
 const button=(scope,text)=>[...scope.querySelectorAll('button')].find(node=>node.textContent===text);
 const section=text=>[...host.querySelectorAll('.assessment-item')].find(node=>node.querySelector('strong')?.textContent===text);
@@ -15,12 +16,12 @@ async function editResolution(scope,value){
   const field=details.querySelector('textarea');expect(field.maxLength).toBe(4000);
   await act(async()=>{Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype,'value').set.call(field,value);field.dispatchEvent(new Event('input',{bubbles:true}));});
 }
-function Harness({disabled=false,safeguard11=true,recordOverride}){
+function Harness({disabled=false,safeguard11=true,standard=false,recordOverride}){
   const [saved,setSaved]=useState(record);
-  return <AssessmentItems record={recordOverride||saved} ctx={{related:{findings:[{finding_id:'linked-finding',title:'Actual linked Finding'}]}}} disabled={disabled} safeguard11={safeguard11} onSaved={setSaved} onCreateFinding={createFinding} onDraftChange={draft}/>;
+  return <AssessmentItems record={recordOverride||saved} ctx={{current:recordOverride||saved,related:{findings:[{finding_id:'linked-finding',title:'Actual linked Finding'}]}}} controls={{scope:recordOwner,commandScope:'synthetic-pilot-item-view-owner',writable:!disabled}} disabled={disabled} standard={standard} safeguard11={safeguard11} onSaved={setSaved} onCreateFinding={createFinding} onDraftChange={draft}/>;
 }
 async function render(disabled=false,options={}){await act(async()=>root.render(<Harness disabled={disabled} {...options}/>));}
-beforeEach(()=>{
+beforeEach(()=>{sessionStorage.clear();
   global.IS_REACT_ACT_ENVIRONMENT=true;host=document.createElement('div');document.body.appendChild(host);root=createRoot(host);createFinding=jest.fn();draft=jest.fn();
   record={client_id:'demo_brawndo',framework_assessment_id:'assessment-11',items_revision:7,status:'needs_attention',verification:'verified',implementation:'Manual saved narrative',items_to_address:[
     item('stable-coverage',{text:'Inventory title cannot determine its group'}),
@@ -30,6 +31,7 @@ beforeEach(()=>{
     item('stable-old',{state:'superseded',text:'Historical item',history:[{at:'2026-10-01',state:'superseded',resolution:'Old resolution'}]}),
     item('stable-linked',{text:'Linked source item',finding_id:'linked-finding'}),
   ]};
+  record.item_controls=Object.fromEntries(record.items_to_address.map(row=>[row.item_id,{origin:'guided',can_create_finding:row.kind==='gap'&&row.state==='open'&&!row.finding_id}]));
   api.patch.mockImplementation(async(path,body)=>{
     const identity=path.split('/').at(-1);
     record={...record,items_revision:record.items_revision+1,items_to_address:record.items_to_address.map(row=>row.item_id===identity?{...row,state:body.state,resolution:body.resolution}:row)};
@@ -53,16 +55,25 @@ test('pilot groups actual source metadata and keeps resolved/history/unknown rec
   expect(api.patch).not.toHaveBeenCalled();
 });
 
+test('contradictory retained type and kind stays a recorded Item without invented work classification',async()=>{
+  record={...record,items_to_address:[item('contradictory-type',{item_type:'evidence',kind:'gap',text:'Retained contradictory classification'})],
+    item_controls:{'contradictory-type':{origin:'unknown',can_create_action:false,can_create_finding:false,can_remove:false}}};
+  await render();const actual=section('Retained contradictory classification');
+  expect(actual.querySelector('.sg11-item-kind').textContent).toBe('Recorded item');
+  expect(button(actual,'Raise finding')).toBeUndefined();expect(button(actual,'Create Action Item')).toBeUndefined();
+  expect(api.patch).not.toHaveBeenCalled();expect(createFinding).not.toHaveBeenCalled();
+});
+
 test('Mark done and Reopen retain exact Item/revision/resolution and independent assessment judgment',async()=>{
   await render();const text='Inventory title cannot determine its group';
   await editResolution(section(text),'Confirmed the real source coverage.');
   expect(draft).toHaveBeenLastCalledWith(true);
   await click(section(text),'Mark done');
-  expect(api.patch).toHaveBeenLastCalledWith('/framework_assessments/assessment-11/items/stable-coverage',{expected_revision:7,state:'resolved',resolution:'Confirmed the real source coverage.'});
+  expect(api.patch).toHaveBeenLastCalledWith('/framework_assessments/assessment-11/items/stable-coverage',{expected_revision:7,state:'resolved',resolution:'Confirmed the real source coverage.'},expect.objectContaining({headers:{'Idempotency-Key':expect.any(String)},pendingCommandGeneration:expect.any(Number)}));
   expect(record).toMatchObject({status:'needs_attention',verification:'verified',implementation:'Manual saved narrative'});
   expect(draft).toHaveBeenLastCalledWith(false);
   await click(section(text),'Reopen');
-  expect(api.patch).toHaveBeenLastCalledWith('/framework_assessments/assessment-11/items/stable-coverage',{expected_revision:8,state:'open',resolution:'Confirmed the real source coverage.'});
+  expect(api.patch).toHaveBeenLastCalledWith('/framework_assessments/assessment-11/items/stable-coverage',{expected_revision:8,state:'open',resolution:'Confirmed the real source coverage.'},expect.objectContaining({headers:{'Idempotency-Key':expect.any(String)},pendingCommandGeneration:expect.any(Number)}));
   expect(createFinding).not.toHaveBeenCalled();
 });
 
@@ -138,5 +149,19 @@ test.each(['client','assessment','item','blocked'])('return does not transfer It
     ...(change==='item'?{items_to_address:record.items_to_address.map((row,index)=>index===0?{...row,item_id:'other-item'}:row)}:{})};
   await render(change==='blocked',{safeguard11:true,recordOverride:next});
   expect(document.activeElement).not.toBe(nativeResolution(text));
+  expect(api.patch).not.toHaveBeenCalled();expect(createFinding).not.toHaveBeenCalled();
+});
+
+
+test('same native resolution retains text and caret between the standard and legacy row presentation',async()=>{
+  await render();const text='Inventory title cannot determine its group';
+  await editResolution(section(text),'SYNTHETIC retained resolution draft');
+  await act(async()=>{nativeResolution(text).focus();nativeResolution(text).setSelectionRange(4,11,'forward');});
+  await render(false,{standard:true});
+  expect(document.activeElement).toBe(nativeResolution(text));
+  expect(nativeResolution(text).value).toBe('SYNTHETIC retained resolution draft');
+  expect([nativeResolution(text).selectionStart,nativeResolution(text).selectionEnd]).toEqual([4,11]);
+  await render(false,{standard:false});
+  expect(document.activeElement).toBe(nativeResolution(text));expect(nativeResolution(text).value).toBe('SYNTHETIC retained resolution draft');
   expect(api.patch).not.toHaveBeenCalled();expect(createFinding).not.toHaveBeenCalled();
 });

@@ -17,16 +17,34 @@ import {socConfiguration,validateSocConfiguration,validateManagementControls} fr
 import {record,write,audit,now,ids} from './store';
 import {stable as canonicalSnapshot} from './commandRequests';
 import {action} from './workflows';
-import {reconcileItems,currentItem,updateItem,linkItemFinding} from './assessmentItems';
+import {requireCreationAssignee} from './authorization';
+import {reconcileItems,currentItem,updateItem,linkItemFinding,reportedEvidence,changeManualItem,applyItemDraft,itemTaskEligible,withItemControls} from './assessmentItems';
 import {demoCurrentPositions} from './portfolioReporting';
 import {assessmentWork,findingApplies} from '../lib/frameworkWorkspace';
 import {assessedRisk,riskDue} from '../lib/grcWork';
 import {existingFrameworkReview,sharedFrameworkPlans,reviewDriver,reviewDrivers} from '../lib/frameworks';
+import {servicesOf,setupActivities} from './r4ServicesTools';
 const stable=(cid,kind,key,framework='cis-ig1')=>`fw_${cid}_${kind}_${framework==='cis-ig1'?'':framework+'_'}${key}`;
 const assessmentTitle=a=>`${frameworkCatalog(a.framework_key)?.label||(a.framework_key==='cis-ig1'?'CIS':a.framework_key.toUpperCase())} ${a.definition_id} · ${frameworkDefinition(a.framework_key,a.definition_id)?.title||a.definition_id}`;
 const VERIFICATION_FIELDS=['verification','verification_checklist'],VERIFICATION_STATES=['not_verified','needs_validation','gap_identified','verified'],VERIFICATION_TIERS={foundation:'f',operational:'o',mature:'m'};
 const fail=(message,status=422)=>{const error=new Error(message);error.status=status;throw error;};
 const copy=value=>JSON.parse(JSON.stringify(value));
+
+export function authorizeItemTask(db,path,body,key){
+  const parts=path.split('/'),row=record(db,'framework_assessments',parts[2]);
+  frameworkScope(db,row.client_id);writable(db);
+  if(typeof key!=='string'||!/^[A-Za-z0-9_-]{16,128}$/.test(key))fail('A valid Idempotency-Key is required');
+  if(!body||typeof body!=='object'||Array.isArray(body)||Object.keys(body).some(key=>!['expected_revision','title','description','priority','assignee_id','due_date'].includes(key))
+    ||!Number.isInteger(body.expected_revision)||body.expected_revision<0||typeof body.title!=='string'||!body.title.trim()||body.title.length>500
+    ||body.description!==undefined&&(typeof body.description!=='string'||body.description.length>20000)
+    ||body.priority!==undefined&&!['low','medium','high','critical'].includes(body.priority)
+    ||body.assignee_id!=null&&(typeof body.assignee_id!=='string'||body.assignee_id.length>200)
+    ||body.due_date!=null&&(typeof body.due_date!=='string'||calendarDay(body.due_date)===null))fail('Invalid assessment Item Action');
+  if(!db.requirements.some(requirement=>requirement.client_id===row.client_id&&requirement.baseline_key===row.framework_key&&requirement.baseline_response==='applies')
+    ||!activeDefinitions(row.framework_key,clientConfiguration(row.framework_key,record(db,'clients',row.client_id))).some(definition=>definition.id===row.definition_id))fail('Activate the current program scope before creating follow-up work',409);
+  requireCreationAssignee(db,row.client_id,body.assignee_id);
+  validateAssignment(db,'tasks',{client_id:row.client_id,assignee_id:body.assignee_id||null});
+}
 // Replay recognition and write pruning must agree about unset optional fields.
 const NATIVE_EMPTY_DEFAULTS={addressable_decision:'',addressable_rationale:'',iso_assessment_checks:[]};
 function sameNativeField(key,value,previous){
@@ -223,7 +241,32 @@ export function frameworkReverse(db,kind,source,result){
 }
 export function frameworkRequest(db,path,method,params,body,context=null){
   db.framework_assessments||=[];
-  const [,kind,id,operation,detail]=path.split('/');
+  const [,kind,id,operation,detail,itemAction]=path.split('/');
+  if(kind==='frameworks'&&method==='get'&&operation==='client-questions'&&!detail){
+    frameworkScope(db,params.client_id);
+    const client=record(db,'clients',params.client_id);
+    if(!CATALOGS[id]||!db.requirements.some(row=>row.client_id===client.client_id&&row.baseline_key===id&&row.baseline_response==='applies'))fail('This program is not active for the client',404);
+    if(client._r4_context_pending)fail('The current Client responsibility save needs recovery',409);
+    const eligible=new Set(activeDefinitions(id,clientConfiguration(id,client)).map(definition=>definition.id));
+    const rows=db.framework_assessments.filter(row=>row.client_id===client.client_id&&row.framework_key===id&&eligible.has(row.definition_id));
+    if(rows.length>10000)fail('The complete program Item population exceeds the supported limit',413);
+    if(rows.length!==eligible.size||new Set(rows.map(row=>row.definition_id)).size!==eligible.size)fail('The complete current program assessment population could not be verified',409);
+    const activities=setupActivities(db,client),bindings=servicesOf(client).assessment_activities||{},questions=[];
+    let unconfirmed_count=0;
+    for(const row of rows){
+      if(row._r4_context_pending)fail('An earlier assessment save needs recovery',409);
+      const binding=bindings[row.framework_assessment_id];
+      const selected=binding?activities.find(activity=>activity.activity_id===binding&&activity.drivers.some(driver=>driver.framework_key===id&&driver.framework_safeguards.includes(row.definition_id))):null;
+      for(const item of row.items_to_address||[]){
+        if(item.state!=='open')continue;
+        if(selected?.responsibility!=='cl'){if(selected?.responsibility!=='iv')unconfirmed_count++;continue;}
+        if(typeof item.text!=='string'||!item.text.trim()||!item.item_id)fail('A saved Client Item could not be verified',409);
+        questions.push({item_id:item.item_id,assessment_id:row.framework_assessment_id,definition_id:row.definition_id,text:item.text,
+          basis:{activity_id:selected.activity_id,area_id:selected.area_id,responsibility:'cl'}});
+      }
+    }
+    return {client_id:client.client_id,framework_key:id,questions,unconfirmed_count};
+  }
   if(kind==='frameworks'&&id==='cmmc'&&operation==='configuration'&&method==='patch'){
     frameworkScope(db,body.client_id);
     if(!['super_admin','platform_admin'].includes(db.user.role))fail('Program configuration requires a service-provider administrator',403);
@@ -410,14 +453,36 @@ export function frameworkRequest(db,path,method,params,body,context=null){
   if(method==='get'&&!operation)return row;
   if(method==='get'&&operation==='related')return frameworkRelated(db,row);
   if(method==='get'&&operation==='activity')return db.logs.filter(l=>l.client_id===row.client_id&&l.entity_id===id);
-  if(method==='patch'&&operation==='items'&&detail){
+  if(method==='post'&&operation==='items'&&detail&&itemAction==='task'&&path.split('/').length===6){
+    if(body.expected_revision!==(row.items_revision||0))fail('Items changed in another window; refresh before creating work',409);
+    const item=currentItem(row,decodeURIComponent(detail));
+    if(!itemTaskEligible(row,item))fail('Only an unlinked open confirmation or Evidence Item can create an Action',409);
+    const task=write(db,'tasks',{client_id:row.client_id,title:body.title.trim(),description:body.description||'',
+      priority:body.priority||'medium',assignee_id:body.assignee_id||null,due_date:body.due_date||null,status:'open',
+      source_type:'other',source_id:null,source:assessmentTitle(row)+' assessment Item',framework_assessment_id:id,
+      framework_key:row.framework_key,assessment_item_id:item.item_id});
+    const at=now();Object.assign(item,{task_id:task.task_id,updated_at:at});
+    (item.history||=[]).push({at,by:db.user.user_id,event:'task_linked',state:item.state,resolution:item.resolution||'',task_id:task.task_id});
+    row.items_revision=(row.items_revision||0)+1;
+    audit(db,'Assessment item updated','framework_assessments',row,{item_id:item.item_id,task_id:task.task_id});return task;
+  }
+  if(method==='post'&&operation==='items'&&(!detail||itemAction==='remove'&&path.split('/').length===6)){
+    pilot();
+    if(changeManualItem(row,body,db.user.user_id,now(),detail?decodeURIComponent(detail):null))audit(db,'Assessment item updated','framework_assessments',row,{event:detail?'removed':'added'});
+    return row;
+  }
+  if(method==='patch'&&operation==='items'&&detail&&!itemAction){
     if(!CATALOGS[row.framework_key])fail('Assessment items are not available for this framework',404);
     if(updateItem(row,decodeURIComponent(detail),body,db.user.user_id,now()))audit(db,'Assessment item updated','framework_assessments',row,{item_id:decodeURIComponent(detail),state:body.state});
     return row;
   }
   if(method==='patch'&&!operation){
+    if(body.guided_assessment_source&&!Object.hasOwn(body,'status')&&!Object.hasOwn(body,'expected_last_assessed'))fail('Reload the record before saving; an edit version is required',428);
     if(Object.prototype.hasOwnProperty.call(body,'expected_last_assessed')&&body.expected_last_assessed!==(row.last_saved??row.last_assessed??null))fail('Assessment changed since it was opened; reload before saving',409);
     body={...body};delete body.expected_last_assessed;
+    const itemDraft=body.item_draft;
+    if(Object.hasOwn(body,'item_draft')&&(!itemDraft||!body.guided_assessment_source||Object.hasOwn(body,'status')))fail('Pending Item edits require the reviewed implementation-only Save');
+    delete body.item_draft;
     let sameApplication=false;
     if('guided_assessment_source' in body){
       pilot();
@@ -428,10 +493,16 @@ export function frameworkRequest(db,path,method,params,body,context=null){
         if(!draft.completed||Object.keys(source).length!==3||['version','revision','generated_at'].some(k=>source[k]!==draft[k]))fail('Guided result changed; regenerate before applying',409);
         if(upgraded&&!sameApplication&&draft.version!==guidedVersion(row))fail('Current-source interview review is required before saving a new assessment',409);
         if(upgraded&&!sameApplication&&(!draft.lineage_known||draft.lineage_stale))fail('Assessment or scope changed after this review began; begin a new review before applying',409);
+        const narrativeOnly=!Object.hasOwn(body,'status');
+        if(Object.hasOwn(body,'status')&&body.status===null)fail('An explicit implementation status cannot be null');
+        if(narrativeOnly){
+          if(Object.keys(body).some(key=>!['implementation','guided_assessment_source'].includes(key)))fail('Save other assessment edits separately from the reviewed implementation and follow-up items');
+          if(typeof body.implementation!=='string'||body.implementation!==draft.narrative)fail('Save the exact reviewed implementation before adopting follow-up items');
+        }
         if(row.framework_key==='soc-2'){
           if(!draft.summary_review||draft.summary_review.version!==draft.version||JSON.stringify(Object.entries(draft.summary_review.answers).sort())!==JSON.stringify(Object.entries(draft.answers).sort()))fail('Review SOC wording against the current answers before saving',409);
           validateSocCompletion(row.definition_id,draft.answers,draft.version);
-          if(body.implementation!==draft.narrative||body.status!==socGuidedResult(row.definition_id,draft.answers,draft.version).status)fail('Save the exact reviewed SOC 2 text and proposed readiness status');
+          if(body.implementation!==draft.narrative||(!narrativeOnly&&body.status!==socGuidedResult(row.definition_id,draft.answers,draft.version).status))fail('Save the exact reviewed SOC 2 text and proposed readiness status');
           const allowed=['implementation','status','guided_assessment_source','record_assessment'];
           if(Object.entries(body).some(([key,value])=>!allowed.includes(key)&&JSON.stringify(value)!==JSON.stringify(row[key])))fail('A SOC 2 guided save cannot change other native fields');
         }
@@ -439,13 +510,13 @@ export function frameworkRequest(db,path,method,params,body,context=null){
           if(!draft.summary_review||draft.summary_review.version!==draft.version||JSON.stringify(Object.entries(draft.summary_review.answers).sort())!==JSON.stringify(Object.entries(draft.answers).sort()))fail('Review ISO wording against the current answers before saving',409);
           validateIsoCompletion(row.definition_id,draft.answers,draft.version);
           if(frameworkDefinition(row.framework_key,row.definition_id)?.specification==='annex_control'&&(row.soa_applicability!=='included'||!row.soa_justification?.trim()))fail('Record an included SoA decision and justification before saving implementation');
-          if(body.implementation!==draft.narrative||body.status!==isoGuidedResult(row.definition_id,draft.answers,draft.version).status)fail('Save the exact reviewed ISO text and proposed implementation status');
+          if(body.implementation!==draft.narrative||(!narrativeOnly&&body.status!==isoGuidedResult(row.definition_id,draft.answers,draft.version).status))fail('Save the exact reviewed ISO text and proposed implementation status');
           const allowed=['implementation','status','guided_assessment_source'];
           if(Object.entries(body).some(([key,value])=>!allowed.includes(key)&&JSON.stringify(value)!==JSON.stringify(row[key])))fail('An ISO guided save cannot change other native fields');
         }
         if(genericGuidedFramework(row.framework_key)){
           const result=genericGuidedResult(row.definition_id,draft.answers,draft.version);
-          if(body.implementation!==draft.narrative||body.status!==result.status)fail('Save the exact reviewed text and proposed implementation status');
+          if(body.implementation!==draft.narrative||(!narrativeOnly&&body.status!==result.status))fail('Save the exact reviewed text and proposed implementation status');
         }
         body.guided_assessment_source={...source,origin:'guided-assessment-pilot',answers:JSON.parse(JSON.stringify(draft.answers)),by:db.user.user_id,...(upgraded?Object.fromEntries(BASE_FIELDS.map(key=>[key,draft[key]])): {})};
       }
@@ -526,7 +597,9 @@ export function frameworkRequest(db,path,method,params,body,context=null){
     validateAssignment(db, 'framework_assessments', data, row);
     if(data.process_owner_id&&!db.contacts.some(c=>c.client_id===row.client_id&&c.contact_id===data.process_owner_id))throw new Error('Process owner must be a client Contact');
     if(body.guided_assessment_source){
-      const items=reconcileItems(row,readDraft(),db.user.user_id,now());
+      const draft=readDraft(),evidenceLinked=reportedEvidence(row,draft)?frameworkRelated(db,row).evidence.length>0:null;
+      let items=reconcileItems(row,draft,db.user.user_id,now(),{evidenceLinked});
+      if(itemDraft)items=applyItemDraft(row,items,itemDraft,db.user.user_id,now(),{allowReplay:sameApplication});
       if(JSON.stringify(items)!==JSON.stringify(row.items_to_address||[]))Object.assign(body,{items_to_address:items,items_revision:(row.items_revision||0)+1});
       historyFields.push('items_to_address','items_revision');
     }
@@ -574,6 +647,7 @@ export function frameworkRequest(db,path,method,params,body,context=null){
     if(Object.prototype.hasOwnProperty.call(body,'owner_id')){owner=body.owner_id||null;if(owner&&!eligible(db.users.find(u=>u.user_id===owner),row.client_id))throw new Error('Finding owner must be an active user with access to this client');}
     const due=body.due_date?calendarDay(body.due_date):null;
     if(body.due_date&&due===null)throw new Error('Enter a valid target date');
+    if(!f&&item&&!withItemControls(row).item_controls[item.item_id].can_create_finding)fail('Only an unlinked open Gap Item can create a Finding',409);
     if(!f){f={finding_id:fid,client_id:row.client_id,title:body.title.trim(),description:body.description||'',severity:body.severity||'medium',status:'open',framework_assessment_id:id,source:assessmentTitle(row),owner_id:owner,due_date:due===null?null:new Date(due*86400000).toISOString().slice(0,10),remediation_title:body.remediation_title.trim(),created_at:now(),updated_at:now()};validateAssignment(db, 'findings', f);db.findings.push(f);audit(db,'Finding raised','framework_assessments',row,{finding_id:fid});audit(db,'create','findings',f);}
     action(db,'findings',fid,'create-task',{title:f.remediation_title});
     if(item){

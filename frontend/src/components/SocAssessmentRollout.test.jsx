@@ -14,6 +14,9 @@ jest.mock('@/context/OrgContext',()=>({useOrg:()=>({clients:[{client_id:'rollout
 const copy=value=>JSON.parse(JSON.stringify(value));
 const fingerprint='a'.repeat(64);
 let root,container,reviewHost,record,stored,props,failWrite;
+function itemProposal(text){return expect.objectContaining({client_id:record.client_id,
+  assessment_id:record.framework_assessment_id,actor_id:'rollout-actor',completed:true,narrative:text,
+  version:stored.version,revision:stored.revision,generated_at:stored.generated_at,answers:stored.answers});}
 const button=(name,scope=document)=>[...scope.querySelectorAll('button')].find(item=>item.textContent.trim()===name);
 async function click(name,scope=document){const target=button(name,scope);expect(target).toBeTruthy();expect(target.disabled).toBe(false);await act(async()=>target.click());}
 async function render(extra={}){props={...props,...extra};await act(async()=>root.render(<SocGuidedAssessor {...props}/>));}
@@ -173,7 +176,7 @@ test('rollout keeps native group checkpoints, every shared question and explicit
   const wording=document.querySelector('[aria-label="Implementation draft"]').value;
   expect(props.onUpdateImplementation).not.toHaveBeenCalled();expect(props.onSaveAssessment).not.toHaveBeenCalled();
   await click('Apply draft');
-  expect(props.onUpdateImplementation).toHaveBeenCalledWith(wording,'');
+  expect(props.onUpdateImplementation).toHaveBeenCalledWith(wording,'',itemProposal(wording));
   expect(props.onSaveAssessment).not.toHaveBeenCalled();expect(api.patch).not.toHaveBeenCalled();
   expect(record).toEqual(before);expect(stored.completed).toBe(true);
   expect(document.activeElement).toBe(button('Resume guided assessment'));
@@ -238,8 +241,9 @@ test('editing retained manual wording after answers change still requires explic
   expect(api.put).toHaveBeenCalledTimes(writes);
   await click('Keep my wording after review');expect(button('Apply draft').disabled).toBe(false);
   await click('Apply draft');
-  expect(props.onUpdateImplementation).toHaveBeenCalledWith('Second manual edit while the changed answers still require review.','');
-  expect(props.onSaveAssessment).not.toHaveBeenCalled();expect(api.put).toHaveBeenCalledTimes(writes);
+  expect(props.onUpdateImplementation).toHaveBeenCalledWith('Second manual edit while the changed answers still require review.','',itemProposal('Second manual edit while the changed answers still require review.'));
+  expect(props.onSaveAssessment).not.toHaveBeenCalled();expect(api.put).toHaveBeenCalledTimes(writes+1);
+  expect(stored.narrative).toBe('Second manual edit while the changed answers still require review.');
 });
 
 test.each([
@@ -257,7 +261,7 @@ test.each([
   expect(document.body.textContent).toContain('Proposed SOC 2 status: '+(kind==='gap'?'Needs Remediation / Validation':'Not Assessed')+'.');
   expect(text).toContain((kind==='gap'?'Reported gap: ':'Requires confirmation: ')+reported);
   expect(text).not.toContain((kind==='gap'?'Requires confirmation: ':'Reported gap: ')+reported);
-  await click('Apply draft');expect(props.onUpdateImplementation).toHaveBeenCalledWith(text,'');
+  await click('Apply draft');expect(props.onUpdateImplementation).toHaveBeenCalledWith(text,'',itemProposal(text));
   expect(record).toEqual(before);expect(record.status).toBe('not_assessed');
   expect(props.onSaveAssessment).not.toHaveBeenCalled();expect(api.put).not.toHaveBeenCalled();expect(api.patch).not.toHaveBeenCalled();
 });
@@ -269,7 +273,7 @@ test('prospective combined concerns constrain the proposal without changing an e
   expect(document.body.textContent).toContain('Proposed SOC 2 status: Needs Remediation / Validation.');
   const text=document.querySelector('[aria-label="Implementation draft"]').value;
   expect(text).toContain('Reported gap: '+extra.gaps);expect(text).toContain('Requires confirmation: '+extra.unknowns);
-  await click('Apply draft');expect(props.onUpdateImplementation).toHaveBeenCalledWith(text,'');
+  await click('Apply draft');expect(props.onUpdateImplementation).toHaveBeenCalledWith(text,'',itemProposal(text));
   expect(record).toEqual(before);expect(record.status).toBe('addressed');expect(stored.answers).toEqual(answers);
   expect(props.onSaveAssessment).not.toHaveBeenCalled();
   for(const method of ['put','patch','post','delete'])expect(api[method]).not.toHaveBeenCalled();

@@ -1,12 +1,13 @@
 """Assessment-local reported follow-up; completion never changes assessment judgment."""
 from copy import deepcopy
 import calendar
+import re
 from datetime import date, datetime, timedelta, timezone
-from typing import Literal
+from typing import Annotated, Literal
 import uuid
 
 from fastapi import HTTPException
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 import create_requests
 import guided_assessment
 import iso_guided_assessment
@@ -19,6 +20,202 @@ class ItemPatch(BaseModel):
     expected_revision: int = Field(ge=0)
     state: Literal['open', 'resolved']
     resolution: str = Field(default='', max_length=4000)
+
+
+class ManualItem(BaseModel):
+    model_config = ConfigDict(extra='forbid', strict=True)
+    request_id: str = Field(pattern=r'^[A-Za-z0-9_-]{16,128}$')
+    item_type: Literal['gap', 'confirmation', 'evidence']
+    text: str = Field(min_length=1, max_length=4000)
+
+    @field_validator('text')
+    @classmethod
+    def nonblank_text(cls, value):
+        if not value.strip():
+            raise ValueError('Describe the item before adding it')
+        return value.strip()
+
+
+class ItemAdd(ManualItem):
+    expected_revision: int = Field(ge=0)
+
+
+class ItemRemove(BaseModel):
+    model_config = ConfigDict(extra='forbid', strict=True)
+    expected_revision: int = Field(ge=0)
+
+
+class ItemTarget(BaseModel):
+    model_config = ConfigDict(extra='forbid', strict=True)
+    item_id: str | None = Field(default=None, min_length=1, max_length=500)
+    question_id: str | None = Field(default=None, min_length=1, max_length=200)
+    kind: Literal['gap', 'verification'] | None = None
+    manual_request_id: str | None = Field(default=None, pattern=r'^[A-Za-z0-9_-]{16,128}$')
+
+    @model_validator(mode='after')
+    def one_identity(self):
+        modes = [self.item_id is not None, self.question_id is not None or self.kind is not None,
+                 self.manual_request_id is not None]
+        if sum(modes) != 1 or modes[1] and (self.question_id is None or self.kind is None):
+            raise ValueError('Use exactly one saved, guided or pending manual Item identity')
+        return self
+
+
+class AddOperation(ManualItem):
+    operation: Literal['add']
+
+
+class ResolveOperation(BaseModel):
+    model_config = ConfigDict(extra='forbid', strict=True)
+    operation: Literal['resolve']
+    target: ItemTarget
+    state: Literal['open', 'resolved']
+    resolution: str = Field(default='', max_length=4000)
+
+
+class RemoveOperation(BaseModel):
+    model_config = ConfigDict(extra='forbid', strict=True)
+    operation: Literal['remove']
+    target: ItemTarget
+
+
+class ItemDraft(BaseModel):
+    model_config = ConfigDict(extra='forbid', strict=True)
+    expected_revision: int = Field(ge=0)
+    operations: list[Annotated[AddOperation | ResolveOperation | RemoveOperation,
+                               Field(discriminator='operation')]] = Field(min_length=1, max_length=100)
+
+
+def manual_id(row, request_id):
+    return 'item_' + uuid.uuid5(uuid.NAMESPACE_URL,
+        row['framework_assessment_id'] + ':manual:' + request_id).hex
+
+
+def known_manual(row, item):
+    request, kind, item_type = item.get('request_id'), item.get('kind'), item.get('item_type')
+    history = item.get('history')
+    return (item.get('origin') == 'manual' and isinstance(request, str)
+        and re.fullmatch(r'[A-Za-z0-9_-]{16,128}', request) is not None
+        and item.get('item_id') == manual_id(row, request)
+        and item_type in ('gap', 'confirmation', 'evidence')
+        and kind == ('gap' if item_type == 'gap' else 'verification')
+        and isinstance(item.get('text'), str) and 0 < len(item['text'].strip()) <= 4000
+        and item.get('state') in ('open', 'resolved', 'removed')
+        and isinstance(item.get('resolution'), str) and len(item['resolution']) <= 4000
+        and isinstance(history, list) and bool(history) and isinstance(history[0], dict)
+        and history[0].get('event') == 'added' and history[0].get('state') == 'open'
+        and history[0].get('text') == item['text'] and isinstance(history[0].get('by'), str)
+        and bool(history[0]['by']) and history[0].get('at') == item.get('created_at')
+        and isinstance(item.get('created_at'), str) and bool(item['created_at']))
+
+
+def known_guided(row, item):
+    """Retained rows need a real catalog origin; unknown history grants no edit authority."""
+    if item.get('origin') not in (None, 'guided') or item.get('kind') not in ('gap', 'verification'):
+        return False
+    question, version, framework = item.get('question_id'), item.get('source_version'), row['framework_key']
+    if not isinstance(question, str) or not question or not isinstance(version, str) or not version or not isinstance(item.get('source_fingerprint'), str) or not re.fullmatch(r'[0-9a-f]{64}', item['source_fingerprint']):
+        return False
+    expected_type = 'gap' if item['kind'] == 'gap' else 'evidence' if question == 'evidence' else 'confirmation'
+    if item.get('item_type', expected_type) != expected_type:
+        return False
+    if item.get('item_id') != item_id(row, question, item['kind']):
+        return False
+    if framework in generic_guided_assessment.FRAMEWORKS:
+        if generic_guided_assessment.VERSIONS.get(version) != framework:
+            return False
+        questions = generic_guided_assessment.CATALOG['questions']
+    elif framework in ('iso-27001', 'soc-2'):
+        engine = iso_guided_assessment if framework == 'iso-27001' else soc_guided_assessment
+        if version not in engine.VERSIONS:
+            return False
+        questions = engine._questions(row['definition_id'], version)
+    else:
+        questions = guided_assessment.VERSIONS.get(version, {}).get('safeguards', {}).get(row['definition_id'])
+        if questions is None:
+            return False
+    return question in {q['id'] for q in questions} | {'summary_confirmation', 'scope_reason', 'evidence', 'gaps', 'unknowns'}
+
+
+def add_manual(row, items, body, actor, at):
+    identity = manual_id(row, body.request_id)
+    previous = next((item for item in items if item['item_id'] == identity), None)
+    if previous:
+        if not known_manual(row, previous) or any(previous.get(key) != value for key, value in {
+                'origin': 'manual', 'request_id': body.request_id, 'item_type': body.item_type, 'text': body.text}.items()):
+            raise HTTPException(409, 'This Item request already has different content')
+        return False  # Lost responses must not duplicate, reopen or rewrite an existing Item.
+    items.append({'item_id': identity, 'origin': 'manual', 'request_id': body.request_id,
+        'item_type': body.item_type, 'kind': 'gap' if body.item_type == 'gap' else 'verification',
+        'text': body.text, 'state': 'open', 'resolution': '', 'finding_id': None,
+        'created_at': at, 'updated_at': at,
+        'history': [{'at': at, 'by': actor, 'event': 'added', 'state': 'open', 'text': body.text}]})
+    return True
+
+
+def remove_item(row, item, actor, at):
+    manual = known_manual(row, item)
+    if not manual and not (known_guided(row, item) and item['state'] in ('resolved', 'removed')):
+        raise HTTPException(409, 'Only a manual Item or a resolved known interview Item can be removed')
+    if item['state'] == 'removed':
+        return False
+    item.update(previous_state=item['state'], state='removed', updated_at=at)
+    item.setdefault('history', []).append({'at': at, 'by': actor, 'event': 'removed',
+        'state': 'removed', 'resolution': item.get('resolution', '')})
+    return True
+
+
+def task_eligible(row, item):
+    return (item.get('kind') == 'verification' and item.get('state') == 'open'
+        and not item.get('finding_id') and not item.get('task_id')
+        and (known_manual(row, item) or known_guided(row, item)))
+
+
+def with_item_controls(row):
+    """Derived UI affordances only; leave the stored Item array and its history exact."""
+    controls = {}
+    for item in row.get('items_to_address') or []:
+        if not isinstance(item, dict) or not isinstance(item.get('item_id'), str) or not item['item_id']:
+            continue
+        manual, guided = known_manual(row, item), known_guided(row, item)
+        current = item.get('state') not in ('superseded', 'removed')
+        controls[item['item_id']] = {'origin': 'manual' if manual else 'guided' if guided else 'unknown',
+            'can_remove': bool(current and (manual or guided and item.get('state') == 'resolved')),
+            'can_create_action': task_eligible(row, item),
+            'can_create_finding': bool((manual or guided) and item.get('kind') == 'gap' and item.get('state') == 'open'
+                and not item.get('finding_id') and not item.get('task_id'))}
+    return {**row, 'item_controls': controls}
+
+
+def apply_draft(row, items, draft, actor, at, *, allow_replay=False):
+    """Apply typed local Item edits only inside the assessment's explicit atomic Save."""
+    stale = draft.expected_revision != row.get('items_revision', 0)
+    if stale and not allow_replay:
+        raise HTTPException(409, 'Items changed in another window; refresh before saving')
+    original, items = items, deepcopy(items)
+    for operation in draft.operations:
+        if operation.operation == 'add':
+            add_manual(row, items, operation, actor, at)
+            continue
+        target = operation.target
+        identity = target.item_id or (manual_id(row, target.manual_request_id) if target.manual_request_id else
+            item_id(row, target.question_id, target.kind))
+        item = next((item for item in items if item['item_id'] == identity), None)
+        if item is None or (target.question_id and not known_guided(row, item)):
+            raise HTTPException(409, 'The pending Item no longer belongs to this reviewed assessment')
+        if operation.operation == 'remove':
+            remove_item(row, item, actor, at)
+        else:
+            if item['state'] in ('superseded', 'removed'):
+                raise HTTPException(409, 'This Item is no longer current')
+            if item['state'] != operation.state or item.get('resolution', '') != operation.resolution:
+                item.update(state=operation.state, resolution=operation.resolution, updated_at=at)
+                item.setdefault('history', []).append({'at': at, 'by': actor,
+                    'event': 'resolved' if operation.state == 'resolved' else 'reopened',
+                    'state': operation.state, 'resolution': operation.resolution})
+    if stale and items != original:
+        raise HTTPException(409, 'Items changed in another window; refresh before saving')
+    return items
 
 
 def _text(answers, key):
@@ -164,7 +361,19 @@ def _origins(row, draft, questions):
     return origins
 
 
-def generated(row, draft):
+def reported_evidence(row, draft):
+    """Only actual current visible Evidence text can request a linking follow-up."""
+    value = draft['answers'].get('evidence')
+    if row['framework_key'] in ('iso-27001', 'soc-2'):
+        engine = iso_guided_assessment if row['framework_key'] == 'iso-27001' else soc_guided_assessment
+        question = next((question for question in engine.extra_questions(draft['version']) if question['id'] == 'evidence'), None)
+    else:
+        question = _questions(row, draft).get('evidence')
+    return value.strip(soc_guided_assessment.TEXT_WHITESPACE) if (
+        question and question.get('type') == 'text' and isinstance(value, str)) else ''
+
+
+def generated(row, draft, *, evidence_linked=None):
     """Use validated answer origins, never parse native prose or trust result signals."""
     answers = draft['answers']
     questions = _questions(row, draft)
@@ -196,20 +405,24 @@ def generated(row, draft):
             continue
         if isinstance(answers.get(question_id), str) and _text(answers,question_id):
             origins[(question_id, kind)] = _text(answers,question_id)
+    if evidence_linked is False and (reported := reported_evidence(row, draft)):
+        origins[('evidence', 'verification')] = 'Link the reported evidence: ' + reported
     return [{
         'item_id': item_id(row, question_id, kind), 'question_id': question_id,
-        'kind': kind, 'text': text, 'source_version': draft['version'],
+        'kind': kind, 'text': text, 'origin': 'guided',
+        'item_type': 'gap' if kind == 'gap' else 'evidence' if question_id == 'evidence' else 'confirmation',
+        'source_version': draft['version'],
         'source_fingerprint': create_requests.digest({
             'answer': answers if question_id == 'summary_confirmation' or question_id == 'scope_reason' else answers.get(question_id),
             'detail': answers.get(question_id + '_detail')})
     } for (question_id, kind), text in origins.items()]
 
 
-def reconcile(row, draft, actor, at):
+def reconcile(row, draft, actor, at, *, evidence_linked=None):
     items = deepcopy(row.get('items_to_address', []))
     by_id = {item['item_id']: item for item in items}
     active = set()
-    for source in generated(row, draft):
+    for source in generated(row, draft, evidence_linked=evidence_linked):
         identity = source['item_id']
         active.add(identity)
         if identity not in by_id:
@@ -220,7 +433,11 @@ def reconcile(row, draft, actor, at):
             by_id[identity] = item
         else:
             item = by_id[identity]
+            if not known_guided(row, item):
+                raise HTTPException(409, 'The retained Item origin needs confirmation before reconciliation')
             different = item['source_fingerprint'] != source['source_fingerprint']
+            if item['state'] == 'removed' and not different:
+                continue
             if not different and item['state'] != 'superseded' and all(item.get(k) == v for k, v in source.items()):
                 continue
             state = 'open' if different or item['state'] == 'superseded' else item['state']
@@ -231,7 +448,7 @@ def reconcile(row, draft, actor, at):
             'state': item['state'], 'resolution': item['resolution'], 'text': item['text'],
             'source_version': item['source_version'], 'source_fingerprint': item['source_fingerprint']})
     for item in items:
-        if item['item_id'] not in active and item['state'] != 'superseded':
+        if item['item_id'] not in active and item['state'] not in ('superseded', 'removed') and known_guided(row, item):
             item.update(previous_state=item['state'], state='superseded', updated_at=at)
             item['history'].append({'at': at, 'by': actor, 'event': 'superseded',
                 'state': 'superseded', 'resolution': item['resolution'], 'source_fingerprint': item['source_fingerprint']})
@@ -242,7 +459,7 @@ def current_item(row, identity):
     item = next((item for item in row.get('items_to_address', []) if item['item_id'] == identity), None)
     if item is None:
         raise HTTPException(404, 'Item not found for this assessment')
-    if item['state'] == 'superseded':
+    if item['state'] in ('superseded', 'removed'):
         raise HTTPException(409, 'This item is superseded; refresh the current assessment')
     return item
 
@@ -262,22 +479,114 @@ async def save_items(s, row, items, user, at):
     return event
 
 
-async def update(s, row, identity, body, user):
-    if body.expected_revision != row.get('items_revision', 0):
-        raise HTTPException(409, 'Items changed in another window; refresh before saving')
-    items = deepcopy(row.get('items_to_address', []))
-    item = current_item({**row, 'items_to_address': items}, identity)
-    if item['state'] == body.state and item['resolution'] == body.resolution:
-        return
-    at = s._now()
-    item.update(state=body.state, resolution=body.resolution, updated_at=at)
-    item['history'].append({'at': at, 'by': user['user_id'], 'event': 'resolved' if body.state == 'resolved' else 'reopened',
-        'state': body.state, 'resolution': body.resolution})
-    event = await save_items(s, row, items, user, at)
-    await s.audit(user, 'Assessment item updated', 'framework_assessment', row['framework_assessment_id'],
-        row['client_id'], meta={'item_id': identity, 'state': body.state,
-            '_portfolio_activity_event_id': event['event_id'] if event else None,
-            '_portfolio_activity_noop': event is None})
+async def command_item(s, aid, body, user, identity=None, *, action=None):
+    """Use the existing journal so a post-CAS audit failure retains its exact accepted Item write."""
+    import portfolio_activity
+    import r4_services
+    row = await s.db.framework_assessments.find_one({'framework_assessment_id': aid}, {'_id': 0})
+    if not row or not s._can_access_client(user, row['client_id']):
+        raise HTTPException(404, 'Assessment not found')
+    action = action or ('remove' if identity else 'add')
+    route = '/framework_assessments/' + aid + '/items' + ('/' + identity + ('/remove' if action == 'remove' else '') if identity else '')
+    payload = body.model_dump()
+    key = (create_requests.digest(['resolve', identity, payload]) if action == 'resolve' else
+        create_requests.digest(['remove', identity, body.expected_revision]) if identity else body.request_id)
+    retained = await r4_services.authorize_retained_command(s, key, user, row['client_id'], route, payload)
+    await r4_services.assessment_writer(s, row, user, retained, require_active=action != 'resolve')
+
+    async def execute(command):
+        receipt = await s.db.create_requests.find_one({'_id': command})
+        writes = receipt.get('r4_write_plan')
+        if writes is None:
+            current = await s._authorized_parent('framework_assessments', aid, user, True)
+            await r4_services.assessment_writer(s, current, user, require_active=action != 'resolve')
+            items, at = deepcopy(current.get('items_to_address', [])), s._now()
+            if action == 'resolve':
+                if body.expected_revision != current.get('items_revision', 0):
+                    raise HTTPException(409, 'Items changed in another window; refresh before saving')
+                item = current_item({**current, 'items_to_address': items}, identity)
+                changed = item['state'] != body.state or item.get('resolution', '') != body.resolution
+                if changed:
+                    item.update(state=body.state, resolution=body.resolution, updated_at=at)
+                    item.setdefault('history', []).append({'at': at, 'by': user['user_id'],
+                        'event': 'resolved' if body.state == 'resolved' else 'reopened', 'state': body.state, 'resolution': body.resolution})
+            elif identity is None:
+                changed = add_manual(current, items, body, user['user_id'], at)
+            else:
+                item = next((item for item in items if item['item_id'] == identity), None)
+                if item is None:
+                    raise HTTPException(404, 'Item not found for this assessment')
+                changed = remove_item(current, item, user['user_id'], at)
+            if changed and body.expected_revision != current.get('items_revision', 0):
+                raise HTTPException(409, 'Items changed in another window; refresh before saving')
+            writes = []
+            if changed:
+                changes = {'items_to_address': items, 'items_revision': current.get('items_revision', 0) + 1}
+                capture, _ = s._portfolio_event_patch('framework_assessment', aid, current['client_id'], user,
+                    current, {**current, **changes}, at)
+                before = {field: current.get(field) for field in
+                    ('client_id', 'framework_key', 'items_to_address', 'items_revision', 'last_saved', 'last_assessed')}
+                writes = [r4_services.write_row('framework_assessments', 'framework_assessment_id', current,
+                    {**changes, **capture}, preconditions=before)]
+            else:
+                await s.db.create_requests.update_one({'_id': command}, {'$set': {'r4_write_plan': []}})
+        if writes:
+            prefix = '_portfolio_activity_pending.'
+            event_id = next((field[len(prefix):] for field in writes[0]['patch'] if field.startswith(prefix)), None)
+            async def finish_audit():
+                await s.audit(user, 'Assessment item updated', 'framework_assessment', aid, row['client_id'],
+                    meta={'item_id': identity or manual_id(row, body.request_id),
+                        **({'state': body.state} if action == 'resolve' else {'event': 'removed' if identity else 'added'}),
+                        '_portfolio_activity_event_id': event_id, '_portfolio_activity_noop': event_id is None})
+            await r4_services.apply_plan(s, writes, command, user, 'Assessment Item saved', after_apply=finish_audit)
+        return {'ok': True}
+
+    await create_requests.run(s.db, key, user['user_id'], row['client_id'], route, payload, execute)
+    return portfolio_activity.public_source(with_item_controls(await s._authorized_parent('framework_assessments', aid, user)))
+
+
+async def client_questions(s, client, framework, user):
+    """Read saved open Items with proven Client responsibility across the complete active program."""
+    from framework_catalog import active_definitions, client_configuration
+    import r4_services
+    cid = client['client_id']
+    if not s._can_access_client(user, cid):
+        raise HTTPException(403, 'Forbidden for this client')
+    if not await s.db.requirements.find_one({'client_id': cid, 'baseline_key': framework, 'baseline_response': 'applies'}):
+        raise HTTPException(404, 'This program is not active for the client')
+    eligible = {definition['id'] for definition in active_definitions(framework, client_configuration(framework, client))}
+    rows = await s.db.framework_assessments.find({'client_id': cid, 'framework_key': framework}, {'_id': 0}).to_list(10001)
+    if len(rows) > 10000:
+        raise HTTPException(413, 'The complete program Item population exceeds the supported limit')
+    rows = [row for row in rows if row['definition_id'] in eligible]
+    if len(rows) != len(eligible) or {row['definition_id'] for row in rows} != eligible:
+        raise HTTPException(409, 'The complete current program assessment population could not be verified')
+    activities = await r4_services.activities(s, client)
+    bindings = r4_services.services_of(client).get('assessment_activities', {})
+    questions, unconfirmed = [], 0
+    for row in rows:
+        r4_services.assert_settled(row)
+        candidates = [activity for activity in activities if any(driver['framework_key'] == framework
+            and row['definition_id'] in driver['framework_safeguards'] for driver in activity['drivers'])]
+        binding = bindings.get(row['framework_assessment_id'])
+        # A unique candidate is available context, not a saved responsibility binding.
+        selected = next((activity for activity in candidates if activity['activity_id'] == binding), None) if binding else None
+        responsibility = (selected or {}).get('responsibility', 'un')
+        for item in row.get('items_to_address', []):
+            if item.get('state') != 'open':
+                continue
+            if responsibility != 'cl':
+                unconfirmed += responsibility != 'iv'
+                continue
+            if not isinstance(item.get('text'), str) or not item['text'].strip() or not item.get('item_id'):
+                raise HTTPException(409, 'A saved Client Item could not be verified')
+            questions.append({'item_id': item['item_id'], 'assessment_id': row['framework_assessment_id'],
+                'definition_id': row['definition_id'], 'text': item['text'],
+                'basis': {'activity_id': selected['activity_id'], 'area_id': selected['area_id'], 'responsibility': 'cl'}})
+    latest = await s.db.clients.find_one({'client_id': cid}, {'_id': 0})
+    if not latest or any(latest.get(field) != client.get(field) for field in ('updated_at', 'framework_settings', 'profile', '_r4_context_pending')):
+        raise HTTPException(409, 'Client program or service responsibility changed; reload the current questions')
+    return {'client_id': cid, 'framework_key': framework, 'questions': questions, 'unconfirmed_count': unconfirmed}
 
 
 async def link_finding(s, row, identity, finding_id, user):

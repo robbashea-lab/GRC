@@ -18,6 +18,7 @@ import authorization
 import shared_review_plans
 import guided_assessment
 import assessment_items
+import assessment_item_tasks
 import soc_guided_lease
 import soc_guided_assessment
 import iso_guided_assessment
@@ -184,6 +185,7 @@ class AssessmentPatch(BaseModel):
     status: Optional[Literal['not_assessed','in_progress','addressed','needs_attention','not_applicable']]=None
     implementation: Optional[str]=Field(default=None,max_length=20000)
     guided_assessment_source: Optional[guided_assessment.GuidedSource]=None
+    item_draft: Optional[assessment_items.ItemDraft]=None
     coordination: Optional[r4_services.CoordinationIn]=None
     technology: Optional[str]=Field(default=None,max_length=4000)
     notes: Optional[str]=Field(default=None,max_length=20000)
@@ -398,11 +400,17 @@ def router_for(s):
         return await guided_assessment.save_draft(s,row,user,body,client,upgraded=guided_assessment.upgraded_pilot(row,user))
     @router.patch('/framework_assessments/{aid}/items/{item_id}')
     async def update_item(aid:str,item_id:str,body:assessment_items.ItemPatch,user=Depends(s.get_current_user)):
-        row=await parent(aid,user,True)
-        if row['framework_key'] not in CATALOGS:
-            raise HTTPException(404,'Assessment items are not available for this framework')
-        await assessment_items.update(s,row,item_id,body,user)
-        return portfolio_activity.public_source(await parent(aid,user))
+        return await assessment_items.command_item(s,aid,body,user,item_id,action='resolve')
+    @router.post('/framework_assessments/{aid}/items')
+    async def add_item(aid:str,body:assessment_items.ItemAdd,user=Depends(s.get_current_user)):
+        return await assessment_items.command_item(s,aid,body,user)
+    @router.post('/framework_assessments/{aid}/items/{item_id}/remove')
+    async def remove_item(aid:str,item_id:str,body:assessment_items.ItemRemove,user=Depends(s.get_current_user)):
+        return await assessment_items.command_item(s,aid,body,user,item_id)
+    @router.post('/framework_assessments/{aid}/items/{item_id}/task')
+    async def item_task(aid:str,item_id:str,body:assessment_item_tasks.ItemTask,user=Depends(s.get_current_user),
+                        idempotency_key:Optional[str]=Header(default=None,alias='Idempotency-Key')):
+        return await assessment_item_tasks.create(s,aid,item_id,body,user,idempotency_key)
     async def target_record(kind,record_id,user):
         if kind!='evidence':return await s._authorized_parent(kind,record_id,user)
         # Evidence has separate routes, not the operational parent-record registry.
@@ -416,6 +424,11 @@ def router_for(s):
         import framework_summary
         client=await scoped(client_id,user)
         return await framework_summary.read(s,client,(program,detail) if detail else None,offset,limit)
+    @router.get('/frameworks/{key}/client-questions')
+    async def client_questions(key:str,client_id:str,user=Depends(s.get_current_user)):
+        if key not in CATALOGS:
+            raise HTTPException(404,'Framework not found')
+        return await assessment_items.client_questions(s,await scoped(client_id,user),key,user)
     @router.get('/frameworks/{key}')
     async def workspace(key:str,client_id:str,user=Depends(s.get_current_user)):
         import portfolio_progress
@@ -464,7 +477,7 @@ def router_for(s):
         return portfolio_activity.public_source({'framework':framework,'selected':bool(program),'configured':bool(rows),'organizational_controls':controls,
                 'implementation_position':portfolio_progress.current_position(client,framework,[program] if program else [],rows,s._now())['current'] if program else None,
                 'definitions':[d for d in catalog.get('requirements',[]) if d['id'] in retained],
-                'assessments':rows,'configuration':config,'work':await workspace_work(s,client_id,rows,upgraded=upgraded),'guided_assessment_drafts':guided_drafts,
+                'assessments':[assessment_items.with_item_controls(row) for row in rows],'configuration':config,'work':await workspace_work(s,client_id,rows,upgraded=upgraded),'guided_assessment_drafts':guided_drafts,
                 'active_definition_ids':[d['id'] for d in active_definitions(key,config)]})
     @router.patch('/frameworks/cis-ig1/configuration')
     @s.configuration_mutation
@@ -668,7 +681,7 @@ def router_for(s):
                 receipt=await s.db.create_requests.find_one({'_id':identity})
                 if receipt.get('r4_write_plan') is not None:
                     await r4_services.apply_plan(s,receipt['r4_write_plan'],identity,user,'Shared assessment context saved')
-                    return portfolio_activity.public_source(await parent(aid,user))
+                    return portfolio_activity.public_source(assessment_items.with_item_controls(await parent(aid,user)))
                 if current['framework_key']=='iso-27001':
                     async def locked_context_iso(lease):
                         latest,_,actor=await iso_guided_assessment.write_context(s,aid,user)
@@ -699,6 +712,9 @@ def router_for(s):
     async def update_assessment(aid,body,user,old,lease=None,intent_id=None):
         changes=body.model_dump(exclude_unset=True)
         changes.pop('coordination',None)
+        item_draft=changes.pop('item_draft',None)
+        if 'item_draft' in body.model_fields_set and (not item_draft or not changes.get('guided_assessment_source') or 'status' in changes):
+            raise HTTPException(422,'Pending Item edits require the reviewed implementation-only Save')
         context_plan=await r4_services.prepare_context_plan(s,old,user,body.coordination) if body.coordination is not None else None
         if 'guided_assessment_source' in changes:
             await guided_scope(old,await scoped(old['client_id'],user))
@@ -715,15 +731,23 @@ def router_for(s):
                     if not same_application and draft['version'] != guided_assessment.current_version(old['definition_id'], upgraded=True, framework=old['framework_key']):
                         raise HTTPException(409, 'Current-source interview review is required before saving a new assessment')
                     if not same_application:guided_assessment.require_current_lineage(draft,old,source_client)
+                narrative_only = 'status' not in changes
+                if 'status' in changes and changes['status'] is None:
+                    raise HTTPException(422, 'An explicit implementation status cannot be null')
+                if narrative_only:
+                    if set(changes)-{'implementation','guided_assessment_source','expected_last_assessed'}:
+                        raise HTTPException(422, 'Save other assessment edits separately from the reviewed implementation and follow-up items')
+                    if not isinstance(changes.get('implementation'), str) or changes['implementation'] != draft.get('narrative'):
+                        raise HTTPException(422, 'Save the exact reviewed implementation before adopting follow-up items')
                 if old['framework_key'] in generic_guided_assessment.FRAMEWORKS:
                     proposed=generic_guided_assessment.result_status(old['definition_id'],draft['answers'],draft['version'])
-                    if changes.get('implementation')!=draft.get('narrative') or changes.get('status')!=proposed:
+                    if changes.get('implementation')!=draft.get('narrative') or (not narrative_only and changes.get('status')!=proposed):
                         raise HTTPException(422,'Save the exact reviewed text and proposed implementation status')
                 if old['framework_key']=='iso-27001':
                     iso_guided_assessment.validate_completion(old['definition_id'],draft['answers'],draft['version'])
                     if draft.get('summary_review') != {'version':draft['version'],'answers':draft['answers']}:
                         raise HTTPException(409,'Review ISO wording against the current answers before saving')
-                    if changes.get('implementation')!=draft.get('narrative') or changes.get('status')!=iso_guided_assessment.result_status(old['definition_id'],draft['answers'],draft['version']):
+                    if changes.get('implementation')!=draft.get('narrative') or (not narrative_only and changes.get('status')!=iso_guided_assessment.result_status(old['definition_id'],draft['answers'],draft['version'])):
                         raise HTTPException(422,'Save the exact reviewed ISO text and proposed implementation status')
                     if set(changes)-{'implementation','status','guided_assessment_source','expected_last_assessed'}:
                         raise HTTPException(422,'An ISO guided save cannot include other native fields')
@@ -735,7 +759,7 @@ def router_for(s):
                     validate_completion(old['definition_id'],draft['answers'],draft['version'])
                     if draft.get('summary_review') != {'version':draft['version'],'answers':draft['answers']}:
                         raise HTTPException(409,'Review SOC wording against the current answers before saving')
-                    if changes.get('implementation')!=draft.get('narrative') or changes.get('status')!=result_status(old['definition_id'],draft['answers'],draft['version']):
+                    if changes.get('implementation')!=draft.get('narrative') or (not narrative_only and changes.get('status')!=result_status(old['definition_id'],draft['answers'],draft['version'])):
                         raise HTTPException(422,'Save the exact reviewed SOC 2 text and proposed readiness status')
                     allowed={'implementation','status','guided_assessment_source','expected_last_assessed','record_assessment'}
                     if any(key not in allowed and value!=old.get(key) for key,value in changes.items()):
@@ -832,7 +856,13 @@ def router_for(s):
         await assignment_eligibility.validate(s.db, 'framework_assessments', data, s._can_access_client, old)
         if data.get('process_owner_id') and not await s.db.contacts.find_one({'contact_id':data['process_owner_id'],'client_id':old['client_id']}):raise HTTPException(422,'Process owner must be a client Contact')
         if changes.get('guided_assessment_source'):
-            items=assessment_items.reconcile(old,draft,user['user_id'],s._now())
+            evidence_linked = None
+            if assessment_items.reported_evidence(old, draft):
+                # A failed canonical read is not an empty Evidence relationship set.
+                evidence_linked = bool((await related(s, old))['evidence'])
+            items=assessment_items.reconcile(old,draft,user['user_id'],s._now(),evidence_linked=evidence_linked)
+            if item_draft:
+                items=assessment_items.apply_draft(old,items,body.item_draft,user['user_id'],s._now(),allow_replay=same_application)
             if items!=old.get('items_to_address',[]):
                 changes.update(items_to_address=items,items_revision=old.get('items_revision',0)+1)
                 data.update(changes)
@@ -866,7 +896,7 @@ def router_for(s):
                 changes.update(last_saved=at,assessment_recorded_at=at if judgment else old.get('assessment_recorded_at'),
                                assessment_recorded_by=user['user_id'] if judgment else old.get('assessment_recorded_by'))
                 data.update(changes)
-            snapshot={k:data.get(k) for k in AssessmentPatch.model_fields if k not in ('expected_last_assessed','record_assessment','coordination') and (k not in ('cis_assessment_criteria','soc_assessment_checks','iso_assessment_checks','cis_operation','guided_assessment_source') or k in data) and (k not in VERIFICATION_FIELDS or k in history_verification)};snapshot.update(at=at,by=user['user_id'])
+            snapshot={k:data.get(k) for k in AssessmentPatch.model_fields if k not in ('expected_last_assessed','record_assessment','coordination','item_draft') and (k not in ('cis_assessment_criteria','soc_assessment_checks','iso_assessment_checks','cis_operation','guided_assessment_source') or k in data) and (k not in VERIFICATION_FIELDS or k in history_verification)};snapshot.update(at=at,by=user['user_id'])
             if changes.get('guided_assessment_source'):
                 snapshot.update(items_to_address=data.get('items_to_address',[]),items_revision=data.get('items_revision',0))
             if old['framework_key']=='soc-2':
@@ -899,10 +929,10 @@ def router_for(s):
             await s.audit(user,'Framework assessment updated','framework_assessment',aid,old['client_id'],meta={'changed_fields':changed,'status':data['status'],'_portfolio_activity_event_id':portfolio_event['event_id'] if portfolio_event else None})
         elif context_plan is not None:
             await r4_services.commit_context_plan(s,old,user,context_plan,intent_id)
-        return portfolio_activity.public_source(await parent(aid,user))
+        return portfolio_activity.public_source(assessment_items.with_item_controls(await parent(aid,user)))
     @router.get('/framework_assessments/{aid}')
     async def get_assessment(aid:str,user=Depends(s.get_current_user)):
-        return portfolio_activity.public_source(await parent(aid,user))
+        return portfolio_activity.public_source(assessment_items.with_item_controls(await parent(aid,user)))
     @router.get('/framework_assessments/{aid}/related')
     async def get_related(aid:str,user=Depends(s.get_current_user)):
         return portfolio_activity.public_source(await related(s,await parent(aid,user)))
@@ -957,6 +987,8 @@ def router_for(s):
                 if item:
                     current=await parent(aid,user,True)
                     origin=assessment_items.current_item(current,body.item_id)
+                    if not assessment_items.with_item_controls(current)['item_controls'][body.item_id]['can_create_finding']:
+                        raise HTTPException(409,'Only an unlinked open Gap Item can create a Finding')
                 if not body.title.strip() or not body.remediation_title.strip():raise HTTPException(422,'Finding and Action titles are required')
                 owner=row.get('owner_id')
                 if owner and not await assignment_eligibility.eligible(s.db,owner,row['client_id'],s._can_access_client):owner=None

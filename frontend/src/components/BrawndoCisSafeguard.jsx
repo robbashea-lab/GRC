@@ -89,7 +89,7 @@ export default function BrawndoCisSafeguard({state,actions}){
     </>;
   }
   const sectionCounts=visualReference?{
-    items:Array.isArray(current.items_to_address)?current.items_to_address.filter(item=>item.state==='open').length:null,
+    items:state.itemControls?.sectionCounts?state.itemControls.sectionCounts.items:Array.isArray(current.items_to_address)?current.items_to_address.filter(item=>item.state==='open').length:null,
     findings:ctx&&current.work?.context_complete===true&&Array.isArray(related?.findings)?directFindings(current,related).length:null,
   }:undefined;
   const checklist=<AssessmentChecklist title={`Safeguard ${id} checklist`} items={criteria?.criteria} historicalItems={criteria?.legacy_criteria} value={form.cis_assessment_criteria||[]} disabled={disabled} onChange={value=>put('cis_assessment_criteria',value)}/>;
@@ -126,11 +126,11 @@ export default function BrawndoCisSafeguard({state,actions}){
     {state.contextEditor}
     <AssessmentLayout inlineWorkflow guidedWorkflow criteriaSummary="Omnisciente guidance for assessing this safeguard. These are not additional CIS requirements." criteriaTitle="CIS assessment criteria" reference={`CIS v8.1 · Safeguard ${id}`} key={clientId+':'+id} summary={visualReference?undefined:summary?.plain} summaryLabel={visualReference?'Guided assessment':undefined}
       requirement={requirement} checklist={checklist} sectionCounts={sectionCounts} safeguard11={safeguard11||state.assessmentRollout===true}
-      findings={<BrawndoCisFindings {...{record,definition,current,ctx,related,writable,busy,finding,setFinding,run,setNested,setFeedback,safeguard11,error}}/>}
+      findings={<BrawndoCisFindings workDisabled={state.itemWorkDisabled} {...{record,definition,current,ctx,related,writable,busy,finding,setFinding,run,setNested,setFeedback,safeguard11,error}}/>}
       interview={({open,close})=>guideConfiguration?<GuidedAssessor sequential inline inlineOpen={open} onInlineClose={close} visualReference={visualReference} safeguard11={safeguard11} assessmentConcept={referencePilot} assessmentRollout={state.assessmentRollout===true} implementationReviewContainer={assessmentConcept?implementationReviewContainer:undefined} pilotPortalContainer={assessmentConcept?state.pilotPortalContainer:undefined}
         interviewHistoryOpen={assessmentConcept&&detailsView==='history'} onInterviewHistoryOpenChange={open=>{if(!open)setDetailsView(null);}} onInterviewHistoryCloseAutoFocus={returnToDetails}
         clientId={clientId} framework={record.framework_key} configuration={guideConfiguration} record={{...record,title:definition.title}} current={current} related={related} people={ctx?.users} inventoryContext={inventoryContext} contextComplete={!!ctx&&current.work?.context_complete===true} assessmentDirty={dirty&&!state.focusedImplementationOnly} onOpenNative={(kind,record)=>kind==='evidence'?actions.download?.(record):setNested({kind,record})} form={form} disabled={disabled} onApply={actions.applyGuided} onSaveAssessment={actions.saveGuidedAssessment} onDraftChange={actions.setGuidedDraft} onUpdateImplementation={disabled?undefined:actions.stageGuidedImplementation}/>:null}
-      itemsToAddress={<><AssessmentItems safeguard11={safeguard11} record={current} ctx={ctx} disabled={disabled} onSaved={actions.itemsSaved} onCreateFinding={actions.createItemFinding} onDraftChange={actions.setItemsDraft}/>{inventoryReviewPlan&&state.manageRecord&&<section className="sg11-review-schedule"><Button variant="outline" disabled={busy||!ctx} onClick={state.manageRecord}>Schedule six-monthly review in Manage</Button></section>}</>} findingDraft={!!finding}
+      itemsToAddress={<><AssessmentItems standard={state.assessmentRollout===true} controls={state.itemControls} portalContainer={state.pilotPortalContainer} proposedItems={state.guidedItemsDraft} workDisabled={state.itemWorkDisabled} safeguard11={safeguard11} record={current} ctx={ctx} disabled={disabled} onSaved={actions.itemsSaved} onCreateFinding={actions.createItemFinding} onDraftChange={actions.setItemsDraft}/>{inventoryReviewPlan&&state.manageRecord&&<section className="sg11-review-schedule"><Button variant="outline" disabled={busy||!ctx} onClick={state.manageRecord}>Schedule six-monthly review in Manage</Button></section>}</>} findingDraft={!!finding}
       review={guidance.review} outcome={guidance.outcome}>
     <div className={'assessment-implementation'+(assessmentConcept?' gn-assessment-state':'')}>
     <Step title="Implementation status">

@@ -16,7 +16,8 @@ import { assignmentCandidates } from './assignmentEligibility';
 import { clientProjection, leadCandidates } from './clientRelationships';
 import {aiRequest,aiRelated} from './aiGovernance';
 import {aiOnboardingRequest} from './aiOnboarding';
-import {frameworkRequest,frameworkReverse,frameworkScope,prepareGuidedContext} from './frameworks';
+import {frameworkRequest,frameworkReverse,frameworkScope,prepareGuidedContext,authorizeItemTask} from './frameworks';
+import {withItemControls} from './assessmentItems';
 import { baselineState, baselineRecordVersions, saveBaseline } from './baseline';
 import axios from 'axios';
 import fixtures from './demoConfiguration.json';
@@ -89,14 +90,16 @@ function assertFrameworkParentBoundary(db,method,params,body){
 }
 // Decorate copied Demo responses only; scenario dates never enter native rows or write payloads.
 function frameworkDateResponse(data,db){
-  const rows=data?.framework_assessment_id?[data]:data?.framework?.key==='cis-ig1'?data.assessments:null;
-  if(!Array.isArray(rows)||!rows.some(row=>row.client_id==='demo_brawndo'&&row.framework_key==='cis-ig1'))return data;
-  const dateForRecord=createBrawndoScenarioDateSelector(db);
+  const assessment=data?.framework_assessment_id&&typeof data.definition_id==='string';
+  const rows=assessment?[data]:data?.framework?data.assessments:null;
+  if(!Array.isArray(rows))return data;
+  const dateForRecord=rows.some(row=>row.client_id==='demo_brawndo'&&row.framework_key==='cis-ig1')?createBrawndoScenarioDateSelector(db):()=>null;
   const project=row=>{
     const metadata=dateForRecord(row);
-    return metadata?{...row,demo_date_metadata:metadata}:row;
+    const assessment=withItemControls(row);
+    return metadata?{...assessment,demo_date_metadata:metadata}:assessment;
   };
-  return data.framework_assessment_id?project(data):{...data,assessments:rows.map(project)};
+  return assessment?project(data):{...data,assessments:rows.map(project)};
 }
 // Loaded only by the explicit demo build. No request is forwarded to any server.
 async function executePreviewAdapter(config,generation) {
@@ -245,6 +248,11 @@ async function executePreviewAdapter(config,generation) {
     if(path==='/ai-intake'||kind==='ai_systems')return await save(aiRequest(db,path,method,params,body));
     if(path==='/frameworks/summary'&&method==='get')return respond(frameworkSummary(db,params.client_id,params));
     if(kind==='framework_assessments'&&method==='post'&&name==='findings')return await save(commandRequest(db,path,record(db,kind,id).client_id,body.request_id,body,()=>frameworkRequest(db,path,method,params,body)));
+    if(kind==='framework_assessments'&&method==='post'&&parts.length===5&&parts[2]==='items'&&parts[4]==='task'){
+      const key=config.headers?.get?.('Idempotency-Key')||config.headers?.['Idempotency-Key'];
+      authorizeItemTask(db,path,body,key);
+      return await save(commandRequest(db,path,record(db,kind,id).client_id,key,body,()=>frameworkRequest(db,path,method,params,body)));
+    }
     if(['/frameworks/cis-ig1/configuration','/frameworks/cmmc/configuration'].includes(path)&&method==='patch')return await save(commandRequest(db,path,body.client_id,config.headers?.get?.('Idempotency-Key')||config.headers?.['Idempotency-Key'],body,()=>frameworkRequest(db,path,method,params,body)));
     if(kind==='frameworks'||kind==='framework_assessments'){
       const pendingContext=prepareGuidedContext(db,path,method,body);

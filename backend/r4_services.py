@@ -16,7 +16,7 @@ import authorization
 import create_requests
 import review_occurrences
 import shared_review_plans
-from framework_catalog import CATALOGS, active_plans, client_configuration
+from framework_catalog import CATALOGS, active_definitions, active_plans, client_configuration
 from r4_review_completion import CATALOG as TEMPLATES, TOPICS, template_id
 
 CATALOG = json.loads((Path(__file__).parents[1] / 'shared/catalogs/r4ServicesTools.json').read_text(encoding='utf-8'))
@@ -202,6 +202,28 @@ async def client_for(s, cid, user, write=False, identity=None):
     return client
 
 
+async def assessment_writer(s, row, user, identity=None, *, require_active=True):
+    """Recheck the actual assigned writer and current program, including retained commands."""
+    if not authorization.writable(user):
+        raise HTTPException(403, 'Read-only role')
+    authorization.scope(user, row['client_id'])
+    authorization.require_assigned(user, 'framework_assessments', row)
+    assert_settled(row, identity)
+    client = await client_for(s, row['client_id'], user, identity=identity)
+    if client.get('status') == 'archived':
+        raise HTTPException(409, 'Archived clients are read-only')
+    if row['framework_key'] not in CATALOGS:
+        raise HTTPException(404, 'Assessment items are not available for this framework')
+    if not require_active:
+        return  # Existing resolution access to retained records survives a program scope reduction.
+    if not await s.db.requirements.find_one({'client_id': row['client_id'],
+            'baseline_key': row['framework_key'], 'baseline_response': 'applies'}):
+        raise HTTPException(409, 'Activate the program before changing follow-up work')
+    if row['definition_id'] not in {definition['id'] for definition in
+            active_definitions(row['framework_key'], client_configuration(row['framework_key'], client))}:
+        raise HTTPException(409, 'This assessment is outside the current program scope')
+
+
 async def catalog(s):
     merged = {t['tool_id']: {**copy.deepcopy(t), 'updated_at': None} for t in CATALOG['tools']}
     for row in await s.db.tool_catalog.find({}, {'_id': 0}).to_list(None):
@@ -385,9 +407,12 @@ def write_row(collection, field, row, patch, *, new=False, preconditions=None):
             'patch': patch, 'new': new, 'document': row if new else None, 'preconditions': preconditions or {}, 'client_id': row.get('client_id')}
 
 
-async def authorize_write_plan(s, writes, user, identity):
+async def authorize_write_plan(s, writes, user, identity, *, assessment_item=None):
     """A frozen plan retains accepted values, never its actor's former access."""
-    if any(item['collection'] != 'framework_assessments' for item in writes):
+    if assessment_item is not None:
+        from assessment_item_tasks import authorize_plan
+        await authorize_plan(s, writes, user, identity, assessment_item)
+    elif any(item['collection'] != 'framework_assessments' for item in writes):
         authorization.require_program_admin(user)
     elif not authorization.writable(user):
         raise HTTPException(403, 'Read-only role')
@@ -397,13 +422,13 @@ async def authorize_write_plan(s, writes, user, identity):
             raise HTTPException(409, 'Restore the archived client before changing service setup')
 
 
-async def apply_plan(s, writes, identity, user, description):
+async def apply_plan(s, writes, identity, user, description, *, assessment_item=None, after_apply=None):
     """Claim the complete validated write set before business writes; retain failed intents."""
     receipt = await s.db.create_requests.find_one({'_id': identity})
     stored = (receipt or {}).get('r4_write_plan')
     if stored is not None:
         writes = stored
-    await authorize_write_plan(s, writes, user, identity)
+    await authorize_write_plan(s, writes, user, identity, assessment_item=assessment_item)
     if stored is None:
         await s.db.create_requests.update_one({'_id': identity}, {'$set': {'r4_write_plan': writes}})
     claimed = []
@@ -465,6 +490,9 @@ async def apply_plan(s, writes, identity, user, description):
     for cid in sorted({item.get('client_id') for item in writes} - {None}):
         await s.audit(user, description, 'client', cid, cid, meta={'request_id': identity})
     await s.audit(user, description, 'service_configuration', identity, None, meta={'record_count': len(writes)})
+    if after_apply is not None:
+        # Keep the accepted set claimed until its domain-specific audit/effects finish.
+        await after_apply()
     for item in writes:
         await s.db[item['collection']].update_one({item['id_field']: item['id'], '_r4_context_pending': identity}, {'$unset': {'_r4_context_pending': ''}})
 
@@ -557,7 +585,7 @@ async def commit_context_plan(s, assessment, user, plan, identity, additional_wr
     await apply_plan(s, plan['writes'] + (additional_writes or []), identity, user, 'Shared assessment context saved')
 
 
-async def authorize_retained_command(s, key, user, cid, route, payload):
+async def authorize_retained_command(s, key, user, cid, route, payload, *, assessment_item=None):
     # create_requests may repair audits or return a completed receipt before
     # execute runs. Check the retained affected set before either fast path.
     if key is not None and re.fullmatch(r'[A-Za-z0-9_-]{16,128}', key):
@@ -566,7 +594,7 @@ async def authorize_retained_command(s, key, user, cid, route, payload):
         if receipt and receipt.get('fingerprint') == create_requests.digest(payload):
             writes = receipt.get('r4_write_plan')
             if writes is not None:
-                await authorize_write_plan(s, writes, user, identity)
+                await authorize_write_plan(s, writes, user, identity, assessment_item=assessment_item)
                 return identity
             elif receipt.get('primary_started') or receipt.get('state') == 'complete':
                 raise HTTPException(409, 'The retained shared activity plan is unavailable; reconcile its original command')

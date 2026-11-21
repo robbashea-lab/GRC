@@ -13,6 +13,9 @@ jest.mock('@/context/AuthContext',()=>({useAuth:()=>({user:{user_id:'iso-actor',
 jest.mock('@/context/OrgContext',()=>({useOrg:()=>mockOrg}));
 const copy=value=>JSON.parse(JSON.stringify(value)),fingerprint='a'.repeat(64);
 let root,container,stored,props,failWrite,mockOrg,nestedShell,nativeClose;
+function itemProposal(text){return expect.objectContaining({client_id:props.clientId,
+  assessment_id:props.record.framework_assessment_id,actor_id:'iso-actor',completed:true,narrative:text,
+  version:stored.version,revision:stored.revision,generated_at:stored.generated_at,answers:stored.answers});}
 const button=name=>[...document.querySelectorAll('button')].find(item=>item.textContent.trim()===name);
 async function click(name){const target=button(name);expect(target).toBeTruthy();expect(target.disabled).toBe(false);await act(async()=>target.click());}
 async function render(extra={}){props={...props,...extra};await act(async()=>root.render(nestedShell?
@@ -715,7 +718,7 @@ function retainedRolloutSummary(id='4.1',extraAnswers={}){
     for(const question of missing)answers[question.id]=question.type==='text'?'':question.type==='context'?'Relevant':question.optional?'No':'Yes';
   }
   Object.assign(answers,extraAnswers);
-  stored={...stored,answers,step:isoGroups(id,answers).length-1,completed:true,revision:3,narrative:'Exact retained reviewer wording.\nSecond retained paragraph.',summary_review:{version:stored.version,answers:copy(answers)},result:isoGuidedResult(id,answers)};
+  stored={...stored,answers,step:isoGroups(id,answers).length-1,completed:true,revision:3,generated_at:'2026-10-10T12:00:00Z',narrative:'Exact retained reviewer wording.\nSecond retained paragraph.',summary_review:{version:stored.version,answers:copy(answers)},result:isoGuidedResult(id,answers)};
 }
 
 test('rollout completes native groups, retains evidence context and stages reviewed wording without a native save or status update',async()=>{
@@ -734,7 +737,8 @@ test('rollout completes native groups, retains evidence context and stages revie
   expect(stored.answers.evidence).toBe('Exact reported supporting-record location.');expect(stored.completed).toBe(true);
   const wording='Reviewed narrative only.\n\nPreserve this exact second paragraph.';await changeInput('[aria-label="Implementation draft"]',wording);
   const writes=api.put.mock.calls.length;await click('Apply draft');
-  expect(stage).toHaveBeenCalledWith(wording,'');expect(api.put).toHaveBeenCalledTimes(writes);expect(props.onSaveAssessment).not.toHaveBeenCalled();
+  expect(stage).toHaveBeenCalledWith(wording,'',itemProposal(wording));expect(api.put).toHaveBeenCalledTimes(writes+1);
+  expect(stored.narrative).toBe(wording);expect(props.onSaveAssessment).not.toHaveBeenCalled();
   expect(props.current).toEqual(native);expect(props.form.implementation).toBe(wording);expect(props.form.status).toBe(native.status);expect(props.form.verification).toBe(native.verification);
   expect(document.querySelector('.assessment-inline-interview').hidden).toBe(true);expect(document.activeElement).toBe(button('Resume guided assessment'));expect(props.onDraftChange).toHaveBeenLastCalledWith(false);
 });
@@ -744,7 +748,7 @@ test('rollout requires explicit replacement and preserves reviewed wording when 
   const stage=jest.fn(()=>false),native=copy(props.current);await openRollout({onUpdateImplementation:stage});
   expect(document.querySelector('[aria-label="Implementation draft"]').value).toBe(stored.narrative);expect(button('Apply draft').disabled).toBe(true);
   await act(async()=>document.querySelector('.guided-replacement input').click());await click('Apply draft');
-  expect(stage).toHaveBeenCalledWith(stored.narrative,'Existing native wording.');expect(document.body.textContent).toContain('no text was overwritten');
+  expect(stage).toHaveBeenCalledWith(stored.narrative,'Existing native wording.',itemProposal(stored.narrative));expect(document.body.textContent).toContain('no text was overwritten');
   expect(document.querySelector('[aria-label="Implementation draft"]').value).toBe(stored.narrative);expect(props.current).toEqual(native);
   expect(api.put).not.toHaveBeenCalled();expect(props.onSaveAssessment).not.toHaveBeenCalled();
 });
@@ -759,7 +763,7 @@ test('rollout rejects a clean native implementation refresh until the operator r
   expect(document.querySelector('[aria-label="Implementation draft"]').value).toBe(wording);expect(props.form.implementation).toBe('New clean native source.');
   await click('Edit responses');await click('Current position');expect(document.body.textContent).toContain('New clean native source.');await click('Resume your review');
   expect(button('Apply draft').disabled).toBe(true);await act(async()=>document.querySelector('.guided-replacement input').click());await click('Apply draft');
-  expect(stage).toHaveBeenCalledWith(wording,'New clean native source.');expect(props.onSaveAssessment).not.toHaveBeenCalled();expect(api.put).not.toHaveBeenCalled();
+  expect(stage).toHaveBeenCalledWith(wording,'New clean native source.',itemProposal(wording));expect(props.onSaveAssessment).not.toHaveBeenCalled();expect(api.put).not.toHaveBeenCalled();
 });
 
 test('rollout captures the native source before a pending personal completion and never refreshes it from that response',async()=>{
@@ -783,7 +787,7 @@ test('rollout typing in stale manual wording does not approve revised answers wi
   expect(button('Apply draft').disabled).toBe(true);expect(document.body.textContent).toContain('Your answers changed after you edited this draft.');
   const reviewed='Manual wording with another edit after the answer changed.';await changeInput('[aria-label="Implementation draft"]',reviewed);
   expect(button('Apply draft').disabled).toBe(true);expect(stage).not.toHaveBeenCalled();expect(props.onSaveAssessment).not.toHaveBeenCalled();
-  await click('Keep my wording after review');await click('Apply draft');expect(stage).toHaveBeenCalledWith(reviewed,'');
+  await click('Keep my wording after review');await click('Apply draft');expect(stage).toHaveBeenCalledWith(reviewed,'',itemProposal(reviewed));
   expect(props.onSaveAssessment).not.toHaveBeenCalled();expect(props.current.status).toBe('not_assessed');expect(props.current.verification).toBe('not_verified');
 });
 
@@ -837,7 +841,7 @@ test.each([['NATIVE01','additional_gap','gaps','gap','needs_attention','Not Impl
   expect(document.querySelector('[aria-label="Implementation draft"]').value).toBe(stored.narrative);
   for(const section of ['OVERVIEW','IMPLEMENTATION BREAKDOWN','ITEMS TO ADDRESS'])expect(stored.result.narrative).toContain(section);
   expect(stored.result.narrative).toContain(stored.answers[detail]);
-  await click('Apply draft');expect(stage).toHaveBeenCalledWith(stored.narrative,'');expect(props.current).toEqual(native);expect(props.onSaveAssessment).not.toHaveBeenCalled();expect(api.put).not.toHaveBeenCalled();
+  await click('Apply draft');expect(stage).toHaveBeenCalledWith(stored.narrative,'',itemProposal(stored.narrative));expect(props.current).toEqual(native);expect(props.onSaveAssessment).not.toHaveBeenCalled();expect(api.put).not.toHaveBeenCalled();
 });
 
 test('prospective grouped concern guidance leaves the native assessment and interview untouched',async()=>{

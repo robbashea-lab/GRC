@@ -45,8 +45,8 @@ export default function PrestigeSocAssessment({state,actions}){
   const saved=verificationOf(current),context=definition.category==='security'?'Security · Common Criteria':socCategoryCrumb(definition.category);
   const rollout=state.assessmentRollout===true;
   const status=<><span aria-label="Saved implementation status"><SocStatusPill status={current.status}/></span><span aria-label="Saved verification" className={`cis-flag cis-tone-${VERIFICATION_TONE[saved]}`}>{VERIFICATION_LABELS[saved]}</span></>;
-  const findings=<BrawndoCisFindings {...{record,definition,current,ctx,related,writable,busy,finding,setFinding,run,setNested,setFeedback}}/>;
-  const itemsToAddress=<AssessmentItems record={current} ctx={ctx} disabled={disabled} onSaved={itemsSaved} onCreateFinding={createItemFinding} onDraftChange={setItemsDraft}/>;
+  const findings=<BrawndoCisFindings workDisabled={state.itemWorkDisabled} {...{record,definition,current,ctx,related,writable,busy,finding,setFinding,run,setNested,setFeedback}}/>;
+  const itemsToAddress=<AssessmentItems standard={state.assessmentRollout===true} controls={state.itemControls} portalContainer={state.pilotPortalContainer} proposedItems={state.guidedItemsDraft} workDisabled={state.itemWorkDisabled} record={current} ctx={ctx} disabled={disabled} onSaved={itemsSaved} onCreateFinding={createItemFinding} onDraftChange={setItemsDraft}/>;
   const guideConfiguration=ctx?.configuration||state.guidedConfiguration;
   const guideAvailable=!!guideConfiguration&&(!rollout||socGuidedEnabled(record.client_id,user,record.framework_key,guideConfiguration,record.definition_id));
   const interview=guideAvailable?({open,close,historyOpen,onHistoryOpenChange,onHistoryCloseAutoFocus,implementationReviewContainer,pilotPortalContainer})=><SocGuidedAssessor sequential inline inlineOpen={open} onInlineClose={close}

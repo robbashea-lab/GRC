@@ -327,16 +327,23 @@ function Pilot({clientId,framework,configuration,invitationContext,inventoryCont
       setSaveNotice('Interview progress saved. The assessment record, status and verification are unchanged.');
     }
   }
-  function applyConceptDraft(){
+  async function applyConceptDraft(){
     if(!conceptLayout||disabled||busy||updated||assessmentDirty||!result||result.missingRecorded
       ||JSON.stringify(answers)!==saved.current||!narrative.trim()||narrative.length>20000
       ||summaryEdited&&summaryBasis!==JSON.stringify(answers)||!!form?.implementation&&!replace
       ||requireFocusedComparison())return;
-    if(!nativeUpdate.current?.(narrative,reviewedImplementation.current)){
+    const update=nativeUpdate.current,expected=JSON.stringify(nativeApplication.current.form);
+    // Edited wording must have a real completed personal revision before it can be adopted.
+    const completed=draft.narrative===narrative?draft:await save(step,true,answers,false,draft,{...result,narrative});
+    if(!completed)return;
+    if(nativeApplication.current.disabled||nativeApplication.current.assessmentDirty
+      ||JSON.stringify(nativeApplication.current.form)!==expected
+      ||!update?.(completed.narrative,reviewedImplementation.current,{...completed,client_id:clientId,
+        assessment_id:record.framework_assessment_id,actor_id:user.user_id})){
       setError('The native implementation changed. Review it before applying; no text was overwritten.');return;
     }
-    setConceptAppliedText(narrative);setStagedImplementation(narrative);setApplied(true);setReplace(false);
-    setSaveNotice('Current implementation is an unsaved native draft. Use Save assessment to save the record; status and verification remain unchanged.');
+    setConceptAppliedText(completed.narrative);setStagedImplementation(completed.narrative);setApplied(true);setReplace(false);
+    setSaveNotice('Current implementation and proposed Items remain unsaved. Use Save assessment to save them; status and verification remain unchanged.');
     pauseSequential();
   }
 
@@ -558,7 +565,7 @@ function Pilot({clientId,framework,configuration,invitationContext,inventoryCont
             <label className="gn-fieldlabel" htmlFor={conceptDraftId}>Implementation draft</label>
               <Textarea id={conceptDraftId} ref={conceptDraftField} className="gn-field" aria-label="Implementation draft" rows={13} maxLength={20000} disabled={disabled||busy}
                 value={narrative} onChange={event=>{setNarrative(event.target.value);if(!summaryEdited)setSummaryBasis(JSON.stringify(answers));setSummaryEdited(true);setReplace(false);}}/>
-            <p className="gn-wording-note">Apply draft updates Current implementation only. Select Save assessment to save the record. Implementation status and verification remain unchanged.</p>
+            <p className="gn-wording-note">Apply draft stages Current implementation and proposed Items. Save assessment saves them; implementation status and verification remain unchanged.</p>
             {!!form?.implementation&&<label className="guided-replacement"><input type="checkbox" disabled={disabled||busy} checked={replace} onChange={event=>setReplace(event.target.checked)}/> I understand the existing Current implementation narrative will be replaced.</label>}
             <div className="guided-actions gn-dialog-actions">
               <Button className="gn-button" variant="outline" disabled={busy} onClick={backFromSummary}>Edit responses</Button>

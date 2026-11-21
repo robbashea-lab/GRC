@@ -73,8 +73,10 @@ export function isoGroups(id, answers = {}, version = catalog.version) {
   return normalizedGroups(id, version).map(group => ({...group, questions: group.questions.filter(question => active.has(question.id))})).filter(group => group.questions.length > 0);
 }
 
+export const isoQuestionSet=(id,answers={},version=catalog.version)=>[...normalizedGroups(id,version).flatMap(group=>group.questions),...isoExtraQuestions(answers,version,true)];
+
 export function validateIsoAnswers(id, answers, version = catalog.version) {
-  const questions = new Map([...normalizedGroups(id, version).flatMap(group => group.questions), ...isoExtraQuestions(answers,version,true)].map(question => [question.id, question]));
+  const questions = new Map(isoQuestionSet(id,answers,version).map(question => [question.id, question]));
   if (!answers || typeof answers !== 'object' || Array.isArray(answers)) throw new Error('Invalid ISO interview answers.');
   for (const [key, value] of Object.entries(answers)) {
     const detail = key.endsWith('_detail');

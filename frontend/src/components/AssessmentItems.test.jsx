@@ -4,11 +4,12 @@ import AssessmentItems from './AssessmentItems';
 import api from '@/lib/api';
 jest.mock('@/lib/api',()=>({__esModule:true,default:{patch:jest.fn()},formatError:error=>error.message}));
 let container,root,create,draft,record;
+const recordOwner={identity:'synthetic-record-owner'};
 const button=text=>[...container.querySelectorAll('button')].find(element=>element.textContent===text);
-const item={item_id:'item-a',text:'Confirm asset coverage.',state:'open',resolution:'',history:[],finding_id:null};
-beforeEach(()=>{global.IS_REACT_ACT_ENVIRONMENT=true;container=document.createElement('div');document.body.appendChild(container);root=createRoot(container);create=jest.fn();draft=jest.fn();record={framework_assessment_id:'assessment-a',client_id:'client-a',status:'in_progress',implementation:'Manual text',verification:'verified',items_revision:3,items_to_address:[{...item}]};});
+const item={item_id:'item-a',kind:'gap',text:'Confirm asset coverage.',state:'open',resolution:'',history:[],finding_id:null};
+beforeEach(()=>{sessionStorage.clear();global.IS_REACT_ACT_ENVIRONMENT=true;container=document.createElement('div');document.body.appendChild(container);root=createRoot(container);create=jest.fn();draft=jest.fn();record={framework_assessment_id:'assessment-a',client_id:'client-a',status:'in_progress',implementation:'Manual text',verification:'verified',items_revision:3,items_to_address:[{...item}],item_controls:{'item-a':{origin:'guided',can_create_finding:true}}};});
 afterEach(async()=>{await act(async()=>root.unmount());container.remove();jest.clearAllMocks();});
-function Example({disabled=false}){const [saved,setSaved]=useState(record);return <AssessmentItems record={saved} ctx={{}} disabled={disabled} onSaved={setSaved} onDraftChange={draft} onCreateFinding={create}/>;}
+function Example({disabled=false}){const [saved,setSaved]=useState(record);return <AssessmentItems record={saved} ctx={{current:saved}} controls={{scope:recordOwner,commandScope:'synthetic-item-view-owner',writable:!disabled}} disabled={disabled} onSaved={setSaved} onDraftChange={draft} onCreateFinding={create}/>;}
 async function render(disabled=false){await act(async()=>root.render(<Example disabled={disabled}/>));}
 async function note(value){const field=container.querySelector('textarea');await act(async()=>{Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype,'value').set.call(field,value);field.dispatchEvent(new Event('input',{bubbles:true}));});}
 test('resolve, refine, reopen use only the item revision; finding creation is explicit',async()=>{
@@ -16,7 +17,7 @@ test('resolve, refine, reopen use only the item revision; finding creation is ex
   await render();await note('Reviewed coverage with owner.');
   expect(draft).toHaveBeenLastCalledWith(true);expect(api.patch).not.toHaveBeenCalled();expect(create).not.toHaveBeenCalled();
   await act(async()=>container.querySelector('input[type=checkbox]').click());
-  expect(api.patch).toHaveBeenLastCalledWith('/framework_assessments/assessment-a/items/item-a',{expected_revision:3,state:'resolved',resolution:'Reviewed coverage with owner.'});
+  expect(api.patch).toHaveBeenLastCalledWith('/framework_assessments/assessment-a/items/item-a',{expected_revision:3,state:'resolved',resolution:'Reviewed coverage with owner.'},expect.objectContaining({headers:{'Idempotency-Key':expect.any(String)},pendingCommandGeneration:expect.any(Number)}));
   expect(record.status).toBe('in_progress');expect(record.implementation).toBe('Manual text');expect(record.verification).toBe('verified');expect(draft).toHaveBeenLastCalledWith(false);
   await act(async()=>container.querySelector('input[type=checkbox]').click());expect(api.patch.mock.calls[1][1].state).toBe('open');
   await act(async()=>button('Create finding').click());expect(create).toHaveBeenCalledWith(expect.objectContaining({item_id:'item-a',state:'open'}));

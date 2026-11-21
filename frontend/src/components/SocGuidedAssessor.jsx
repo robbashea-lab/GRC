@@ -184,17 +184,25 @@ function SocPilot({clientId,user,configuration,record,current=record,rows=EMPTY,
       setStep(incomplete<0?Math.max(0,groups.length-1):incomplete);setView('interview');setError(formatError(e));
     }
   }
-  function applyRolloutDraft(){
+  async function applyRolloutDraft(){
     const latest=native.current;
     if(!rollout||blocked||relatedDraft||pending.current||!draft?.completed||!narrative.trim()||narrative.length>20000
       ||JSON.stringify(answers)!==saved.current.answers||edited&&basis!==JSON.stringify(answers)
       ||!!latest.form?.implementation&&!replace||!latest.onUpdateImplementation)return;
     const expected=reviewedImplementation.current;
-    if(expected===null||(latest.form?.implementation||'')!==expected||!latest.onUpdateImplementation(narrative,expected)){
+    if(expected===null||(latest.form?.implementation||'')!==expected){
       setError('The native implementation changed. Review it before applying; no text was overwritten.');return;
     }
-    setAppliedText(narrative);setReplace(false);pauseSequential();
-    setNotice('Current implementation is an unsaved native draft. Use Save assessment to save the record; status and verification remain unchanged.');
+    const update=latest.onUpdateImplementation,snapshot=JSON.stringify(latest.form);
+    const completed=draft.narrative===narrative?draft:await persist(index,true,{narrative});
+    if(!completed)return;
+    if(native.current.assessmentDirty||native.current.relatedDraft||JSON.stringify(native.current.form)!==snapshot
+      ||!update?.(completed.narrative,expected,{...completed,client_id:clientId,
+        assessment_id:record.framework_assessment_id,actor_id:user.user_id})){
+      setError('The native implementation changed. Review it before applying; no text was overwritten.');return;
+    }
+    setAppliedText(completed.narrative);setReplace(false);pauseSequential();
+    setNotice('Current implementation and proposed Items remain unsaved. Use Save assessment to save them; status and verification remain unchanged.');
   }
   const restoreGuideFocus=event=>{event.preventDefault();const target=heading.current?.closest('[hidden]')?launcher.current:heading.current;target?.focus({preventScroll:true});};
   const rolloutDialogProps=rollout?{portalContainer:pilotPortalContainer||undefined,overlayClassName:'brawndo-assessment-pilot brawndo-pilot-child-overlay gn-dialog-layer',showCloseButton:false,'data-theme':theme,
@@ -218,7 +226,7 @@ function SocPilot({clientId,user,configuration,record,current=record,rows=EMPTY,
       <label className="gn-fieldlabel" htmlFor={panelId+'-implementation-draft'}>Implementation draft</label>
       <Textarea ref={draftField} id={panelId+'-implementation-draft'} className="gn-field" aria-label="Implementation draft" rows={13} maxLength={20000} disabled={disabled||busy}
         value={narrative} onChange={event=>{setNarrative(event.target.value);if(!edited)setBasis(JSON.stringify(answers));setEdited(true);setReplace(false);setAppliedText(null);}}/>
-      <p className="gn-wording-note">Apply draft updates Current implementation only. Select Save assessment to save the record. Implementation status and verification remain unchanged.</p>
+      <p className="gn-wording-note">Apply draft stages Current implementation and proposed Items. Save assessment saves them; implementation status and verification remain unchanged.</p>
       {!!form?.implementation&&<label className="guided-replacement"><input type="checkbox" disabled={disabled||busy} checked={replace} onChange={event=>setReplace(event.target.checked)}/> I understand the existing Current implementation narrative will be replaced.</label>}
       <div className="guided-actions gn-dialog-actions">
         <Button className="gn-button" variant="outline" disabled={busy} onClick={returnToQuestions}>Edit responses</Button>

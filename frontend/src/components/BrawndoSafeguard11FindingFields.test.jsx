@@ -66,6 +66,22 @@ test('required missing values, disabled context and mismatched source cannot sub
   expect(button('Save finding and action').disabled).toBe(true);expect(container.textContent).toContain('Assessment context unavailable');
 });
 
+test('pending assessment changes block formal work submission without trapping the editable finding draft',()=>{
+  props.submitDisabled=true;render();
+  expect(container.querySelector('fieldset').disabled).toBe(false);
+  expect(button('Save finding and action').disabled).toBe(true);
+  expect(button('Cancel').disabled).toBe(false);
+  change(container.querySelector('[aria-label="Finding title"]'),'Retained local correction');
+  expect(props.onChange).toHaveBeenLastCalledWith('title','Retained local correction');
+  act(()=>button('Save finding and action').click());
+  expect(props.onSubmit).not.toHaveBeenCalled();
+  act(()=>button('Cancel').click());
+  expect(props.onCancel).toHaveBeenCalledTimes(1);
+  expect(props.finding.title).toBe('Inventory gap');
+  expect(props.finding.request_id).toBe('request-original');
+  expect(props.finding.item_id).toBe('item-original');
+});
+
 test.each([
   ['framework_assessment_id','other-assessment'],['framework_key','other-framework'],
   ['framework_version','8.0'],['definition_id','1.2'],['client_id','other-client'],

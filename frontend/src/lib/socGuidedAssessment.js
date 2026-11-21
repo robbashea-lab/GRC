@@ -78,8 +78,10 @@ export function socGroups(id, answers = {}, version = socGuidedCatalog.version) 
   return normalizedGroups(id, version).map(group => ({...group, questions: group.questions.filter(question => active.has(question.id))})).filter(group => group.questions.length > 0);
 }
 
+export const socQuestionSet=(id,answers={},version=socGuidedCatalog.version)=>[...normalizedGroups(id,version).flatMap(group=>group.questions),...socExtraQuestions(answers,version,true)];
+
 export function validateSocAnswers(id, answers, version = socGuidedCatalog.version) {
-  const questions = new Map([...normalizedGroups(id, version).flatMap(group => group.questions), ...socExtraQuestions(answers,version,true)].map(question => [question.id, question]));
+  const questions = new Map(socQuestionSet(id,answers,version).map(question => [question.id, question]));
   if (!answers || typeof answers !== 'object' || Array.isArray(answers)) throw new Error('Invalid SOC interview answers.');
   for (const [key, value] of Object.entries(answers)) {
     const detail = key.endsWith('_detail');

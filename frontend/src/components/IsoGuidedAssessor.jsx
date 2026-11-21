@@ -174,7 +174,7 @@ function IsoPilot({clientId,user,record,current=record,programContent,programLab
     // Personal interview saves may await a response; their completion cannot approve a newer native source.
     reviewedImplementation.current={clientId,assessmentId:record.framework_assessment_id,actorId:user.user_id,text:native.current.form?.implementation||''};
   }
-  function applyDraft(){
+  async function applyDraft(){
     if(!assessmentRollout||blocked||relatedDraft||soaDirty||!implementationAllowed||pending.current||!draft?.completed
       ||JSON.stringify(answers)!==saved.current.answers||!narrative.trim()||narrative.length>20000
       ||edited&&basis!==JSON.stringify(answers)||!!form?.implementation&&!replace)return;
@@ -182,12 +182,19 @@ function IsoPilot({clientId,user,record,current=record,programContent,programLab
     const reviewed=reviewedImplementation.current;
     if(!reviewed||reviewed.clientId!==clientId||reviewed.assessmentId!==record.framework_assessment_id||reviewed.actorId!==user.user_id
       ||latest.current?.client_id!==reviewed.clientId||latest.current?.framework_assessment_id!==reviewed.assessmentId
-      ||latest.assessmentDirty||latest.relatedDraft||(latest.form?.implementation||'')!==reviewed.text
-      ||!latest.onUpdateImplementation?.(narrative,reviewed.text)){
+      ||latest.assessmentDirty||latest.relatedDraft||(latest.form?.implementation||'')!==reviewed.text){
       setError('The native implementation changed. Review it before applying; no text was overwritten.');return;
     }
-    setAppliedNarrative(narrative);setReplace(false);
-    setNotice('Current implementation is an unsaved native draft. Use Save assessment to save the record; status and verification remain unchanged.');
+    const update=latest.onUpdateImplementation,expected=JSON.stringify(latest.form);
+    const completed=draft.narrative===narrative?draft:await persist(index,true,{narrative});
+    if(!completed)return;
+    if(native.current.assessmentDirty||native.current.relatedDraft||JSON.stringify(native.current.form)!==expected
+      ||!update?.(completed.narrative,reviewed.text,{...completed,client_id:clientId,
+        assessment_id:record.framework_assessment_id,actor_id:user.user_id})){
+      setError('The native implementation changed. Review it before applying; no text was overwritten.');return;
+    }
+    setAppliedNarrative(completed.narrative);setReplace(false);
+    setNotice('Current implementation and proposed Items remain unsaved. Use Save assessment to save them; status and verification remain unchanged.');
     pauseSequential();
   }
   function requestSave(close=true){setCloseAfter(close);if(current?.implementation?.trim()||current?.status!=='not_assessed')setConfirmUpdate(true);else commit(close);}
@@ -329,7 +336,7 @@ function IsoPilot({clientId,user,record,current=record,programContent,programLab
           <p>Proposed implementation status: <strong>{LABELS[result?.status]}</strong></p>
           {edited&&basis!==JSON.stringify(answers)&&<section role="status"><p>Your answers changed after you edited this draft. Your wording is preserved.</p><Button className="gn-button" variant="outline" disabled={blocked} onClick={()=>{setNarrative(isoInlineNarrative(id,answers,version,clientName));setEdited(false);setBasis(JSON.stringify(answers));setAppliedNarrative(null);setReplace(false);}}>Refresh from answers</Button><Button className="gn-button" variant="outline" disabled={blocked} onClick={()=>setBasis(JSON.stringify(answers))}>Keep my wording after review</Button></section>}
           <label className="gn-fieldlabel" htmlFor={panelId+'-draft'}>Implementation draft</label><Textarea id={panelId+'-draft'} ref={draftField} className="gn-field" aria-label="Implementation draft" rows={13} maxLength={20000} disabled={disabled||busy} value={narrative} onChange={event=>{setNarrative(event.target.value);if(!edited)setBasis(JSON.stringify(answers));setEdited(true);setAppliedNarrative(null);setReplace(false);}}/>
-          <p className="gn-wording-note">Apply draft updates Current implementation only. Select Save assessment to save the record. Implementation status and verification remain unchanged.</p>
+          <p className="gn-wording-note">Apply draft stages Current implementation and proposed Items. Save assessment saves them; implementation status and verification remain unchanged.</p>
           {!!form?.implementation&&<label className="guided-replacement"><input type="checkbox" disabled={disabled||busy} checked={replace} onChange={event=>setReplace(event.target.checked)}/> I understand the existing Current implementation narrative will be replaced.</label>}
           <div className="guided-actions gn-dialog-actions"><Button className="gn-button" variant="outline" disabled={busy} onClick={()=>{setView('interview');setReplace(false);}}>Edit responses</Button><Button className="gn-button gn-primary" disabled={saveDisabled||!draft?.completed||JSON.stringify(answers)!==saved.current.answers||!!form?.implementation&&!replace||!onUpdateImplementation} onClick={applyDraft}>Apply draft</Button></div>
         </DialogContent>

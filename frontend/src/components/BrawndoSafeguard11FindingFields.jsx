@@ -7,7 +7,7 @@ import {calendarDay} from '@/lib/tableFilters';
 const SEVERITIES=[['low','Low','Minor gap, little exposure'],['medium','Medium','Limited exposure'],['high','High','Material gap, fix soon'],['critical','Critical','Active exposure, fix now']];
 
 // Presentation only: the assessment controller retains draft identity, validation and submission.
-export default function BrawndoSafeguard11FindingFields({finding,onChange,record,definition,current,users=[],disabled=false,clientId,implementationGroup,onCancel,onSubmit}){
+export default function BrawndoSafeguard11FindingFields({finding,onChange,record,definition,current,users=[],disabled=false,submitDisabled=false,clientId,implementationGroup,onCancel,onSubmit}){
   const id=useId();
   const ownerLabel=personLabel(users,finding.owner_id);
   const inheritsOwner=!!finding.owner_id&&finding.owner_id===(current.owner_id||'');
@@ -42,7 +42,7 @@ export default function BrawndoSafeguard11FindingFields({finding,onChange,record
     </fieldset>
     <footer className="sg11-finding-footer">
       <p className="sg11-finding-summary"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 8h.01M11 12h1v4h1"/></svg><span>Saving creates a <b>{severity} finding</b>{sourceAccepted?<> on <span title={definition.title}>Safeguard {definition.id}</span></>:null} and an <b>action item</b>{finding.owner_id?<> for <b>{ownerLabel}</b>{inheritsOwner?' (if eligible; otherwise unassigned)':null}</>:' initially unassigned'}{finding.due_date?<>, due <b>{dueLabel}</b></>:null}.</span></p>
-      <div className="sg11-finding-actions"><button type="button" className="sg11-button" disabled={disabled} onClick={onCancel}>Cancel</button><button type="button" className="sg11-button sg11-button-primary" disabled={disabled||!sourceAccepted||!finding.title.trim()||!finding.remediation_title.trim()} onClick={onSubmit}>Save finding and action</button></div>
+      <div className="sg11-finding-actions"><button type="button" className="sg11-button" disabled={disabled} onClick={onCancel}>Cancel</button><button type="button" className="sg11-button sg11-button-primary" disabled={disabled||submitDisabled||!sourceAccepted||!finding.title.trim()||!finding.remediation_title.trim()} onClick={onSubmit}>Save finding and action</button></div>
     </footer>
   </div>;
 }
