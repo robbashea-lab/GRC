@@ -125,3 +125,25 @@ test('qualified native CIS and Omni invitation primaries retain CTA foregrounds 
     shell.className='';for(const primary of shell.querySelectorAll('[data-target]'))expect(properties(primary)).toEqual({});
   }finally{shell.remove();}
 });
+
+test('only the first native CIS recommendation keeps its primary foreground while later recommendations stay secondary',()=>{
+  const stylesheet=postcss.parse(fs.readFileSync(path.join(__dirname,'NativeStandard.css'),'utf8'));
+  const selector='.native-standard .brawndo-cis-visual-omni .omni-recommendation:first-child>.ui-button.bg-primary';
+  const rules=[];stylesheet.walkRules(rule=>{if(rule.selector===selector)rules.push(rule);});
+  expect(rules).toHaveLength(1);
+  const declarations={};rules[0].walkDecls(declaration=>{declarations[declaration.prop]=declaration.value;});
+  expect(declarations).toEqual({color:'var(--cta-fg)'});
+  const shell=document.createElement('div');shell.className='native-standard';
+  shell.innerHTML='<div class="brawndo-cis-visual-omni"><div class="omni-recommendations"><article class="omni-recommendation"><button class="ui-button bg-primary" data-target>Open safeguard 14.8</button><button class="ui-button" data-preserve>Neutral</button></article><article class="omni-recommendation"><button class="ui-button bg-primary" data-preserve>Open safeguard 9.1</button></article></div></div><div class="shared-program-omni"><article class="omni-recommendation"><button class="ui-button bg-primary" data-preserve>Other program</button></article></div>';
+  document.body.appendChild(shell);
+  try{
+    for(const theme of ['light','dark']){
+      shell.dataset.theme=theme;
+      const target=shell.querySelector('[data-target]');
+      expect(target.matches(selector)).toBe(true);
+      target.disabled=true;expect(target.matches(selector)).toBe(true);target.disabled=false;
+      for(const other of shell.querySelectorAll('[data-preserve]'))expect(other.matches(selector)).toBe(false);
+    }
+    shell.className='';expect(shell.querySelector('[data-target]').matches(selector)).toBe(false);
+  }finally{shell.remove();}
+});

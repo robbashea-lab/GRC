@@ -1178,6 +1178,7 @@
 .native-standard.native-standard .ui-button.bg-primary{background:var(--cta);border:0;color:var(--cta-fg);font-weight:600}
 .native-standard .brawndo-cis-visual .btn.primary{color:var(--cta-fg)}
 .native-standard .brawndo-cis-visual-omni .cis-omni-invitation-actions .ui-button.bg-primary{color:var(--cta-fg)}
+.native-standard .brawndo-cis-visual-omni .omni-recommendation:first-child>.ui-button.bg-primary{color:var(--cta-fg)}
 .native-standard.native-standard .ui-button.border{border:1px solid var(--input-bd);background:var(--input);color:var(--text)}
 .native-standard.native-standard :is(.admin-row-actions,.admin-pagination) .ui-button{min-height:32px;border-radius:9px;font-size:12.5px;padding:0 12px}
 .native-standard.native-standard :is(.admin-table,.admin-matrix){border-collapse:collapse;color:var(--text)}
