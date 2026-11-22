@@ -24,7 +24,10 @@ beforeEach(()=>{
  api.patch.mockImplementation(async(path,body)=>{const judgment=body.record_assessment||body.status!==record.status&&body.status!=='not_assessed';record={...record,...body,last_saved:'2026-10-01T12:00:00Z',assessment_recorded_at:judgment?'2026-10-01T12:00:00Z':record.assessment_recorded_at??null,last_assessed:'2026-10-01T12:00:00Z',assessed_by:'u',assessment_history:[{...body,at:'2026-10-01T12:00:00Z',by:'u'}]};return {data:record};});
 });
 afterEach(async()=>{await act(async()=>root.unmount());container.remove();jest.clearAllMocks();});
-const render=async(clientId='demo_prestige')=>act(async()=>root.render(<FrameworkDrawer open record={{...record,client_id:clientId}} clientId={clientId} onOpenChange={close} position="33 of 38 in framework order" breadcrumb={[{label:'SOC 2',onClick:jest.fn()},{label:'Security',onClick:jest.fn()},{label:'CC9',onClick:jest.fn()},{label:'CC9.2'}]}/>));
+const render=async(clientId='demo_prestige')=>{
+ record={...record,client_id:clientId};
+ await act(async()=>root.render(<FrameworkDrawer open record={record} clientId={clientId} onOpenChange={close} position="33 of 38 in framework order" breadcrumb={[{label:'SOC 2',onClick:jest.fn()},{label:'Security',onClick:jest.fn()},{label:'CC9',onClick:jest.fn()},{label:'CC9.2'}]}/>));
+};
 const expandSummary=async()=>act(async()=>{const disclosure=container.querySelector('.cis-collapsible-requirement');expect(disclosure).not.toBeNull();if(!disclosure.open)disclosure.querySelector('summary').click();expect(disclosure.open).toBe(true);});
 
 test('removed linked-work footer leaves stored control descriptions and mappings unchanged',async()=>{
@@ -76,7 +79,7 @@ test('native saves and reopen preserve retired checklist responses and independe
  expect(container.querySelector('.assessment-inline-criteria,.assessment-check')).toBeNull();
  await setValue('Current implementation','Reviewed current vendor monitoring.');
  await act(async()=>button('Save assessment').click());
- expect(api.patch).toHaveBeenCalledWith('/framework_assessments/soc-a',expect.objectContaining({soc_assessment_checks:['CC9.2-v1-r1','CC9.2-v1-o1'],owner_id:'david',status:'in_progress',verification:'needs_validation',implementation:'Reviewed current vendor monitoring.'}));
+ expect(api.patch).toHaveBeenCalledWith('/framework_assessments/soc-a',expect.objectContaining({soc_assessment_checks:['CC9.2-v1-r1','CC9.2-v1-o1'],owner_id:'david',status:'in_progress',verification:'needs_validation',implementation:'Reviewed current vendor monitoring.'}),{assessmentAuthority:expect.any(Function)});
  await act(async()=>root.unmount());root=createRoot(container);await render();
  expect(record.soc_assessment_checks).toEqual(['CC9.2-v1-r1','CC9.2-v1-o1']);
  expect(record.owner_id).toBe('david');expect(record.verification).toBe('needs_validation');
@@ -168,7 +171,7 @@ test('new SOC tenants retain historical management-Control observations',async()
 
 test('status, verification, owner and current implementation persist with the concurrency token',async()=>{
  record.owner_id='david';await render();await act(async()=>container.querySelector('input[value="addressed"]').click());await setValue('Current implementation','Prestige reviews critical vendors and tracks exceptions through the existing Findings workflow.');await act(async()=>button('Save assessment').click());
- expect(api.patch).toHaveBeenCalledWith('/framework_assessments/soc-a',expect.objectContaining({status:'addressed',verification:'needs_validation',owner_id:'david',implementation:'Prestige reviews critical vendors and tracks exceptions through the existing Findings workflow.',technology:'Retained legacy field',notes:'Retained note',expected_last_assessed:'2026-09-22T12:00:00Z'}));
+ expect(api.patch).toHaveBeenCalledWith('/framework_assessments/soc-a',expect.objectContaining({status:'addressed',verification:'needs_validation',owner_id:'david',implementation:'Prestige reviews critical vendors and tracks exceptions through the existing Findings workflow.',technology:'Retained legacy field',notes:'Retained note',expected_last_assessed:'2026-09-22T12:00:00Z'}),{assessmentAuthority:expect.any(Function)});
  expect(container.textContent).toContain('Assessment recorded.');expect(container.querySelector('[aria-label="Saved verification"]').textContent).toBe('Needs validation');
 
 });
@@ -201,7 +204,7 @@ test.each(['PI1.1','P1.1'])('%s retains its existing reference and assessment wi
  expect(container.querySelector('[data-source-kind="authored"]').textContent).toBe(socGuidance.criteria[id].practical.summary);
  expect(container.querySelector('.assessment-check')).toBeNull();
  expect(container.querySelector('[aria-label="Current implementation"]').value).toBe(record.implementation);
- await act(async()=>button('Save assessment').click());expect(api.patch).toHaveBeenCalledWith('/framework_assessments/soc-a',expect.objectContaining({status:'in_progress',verification:'needs_validation',implementation:record.implementation}));
+ await act(async()=>button('Save assessment').click());expect(api.patch).toHaveBeenCalledWith('/framework_assessments/soc-a',expect.objectContaining({status:'in_progress',verification:'needs_validation',implementation:record.implementation}),{assessmentAuthority:expect.any(Function)});
 
 });
 
@@ -218,7 +221,7 @@ test('Prestige Findings tab retains tickets and creates one sourced Finding and 
  expect(container.querySelector('[data-testid="finding-origin"]').textContent).toContain('CC9.2');
  await setValue('Finding title','CC9.2 vendor gap');await setValue('Corrective action','Correct CC9.2 gap');
  await act(async()=>button('Create Finding & Action').click());
- expect(api.post).toHaveBeenCalledWith('/framework_assessments/soc-a/findings',expect.objectContaining({title:expect.stringContaining('CC9.2'),remediation_title:expect.stringContaining('CC9.2'),request_id:expect.any(String)}));
+ expect(api.post).toHaveBeenCalledWith('/framework_assessments/soc-a/findings',expect.objectContaining({title:expect.stringContaining('CC9.2'),remediation_title:expect.stringContaining('CC9.2'),request_id:expect.any(String)}),{assessmentAuthority:expect.any(Function)});
  expect(container.textContent).toContain('Ticket saved. Assessment changes remain separate.');
 });
 test('collapsed source and independent guided entry preserve native fields without writes',async()=>{

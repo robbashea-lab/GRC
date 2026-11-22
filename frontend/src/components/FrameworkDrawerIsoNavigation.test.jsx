@@ -117,7 +117,7 @@ test.each([false,true])('ISO Save & next keeps a newer Back destination and the 
   expect(api.patch).toHaveBeenCalledWith('/framework_assessments/'+current.framework_assessment_id,{
     status:'in_progress',implementation:'Exact unsaved ISO implementation wording.',technology:'',notes:'',na_rationale:'',owner_id:null,process_owner_id:null,
     addressable_decision:'',addressable_rationale:'',iso_assessment_checks:[],expected_last_assessed:'2026-10-31T12:00:00Z',
-  });
+  },{assessmentAuthority:expect.any(Function)});
   expect(heldDuringSave).toBe(true);expect(confirmationDuringSave).toBeNull();
   expect(api.patch).toHaveBeenCalledTimes(1);for(const method of ['put','post','delete'])expect(api[method]).not.toHaveBeenCalled();
   if(failure){

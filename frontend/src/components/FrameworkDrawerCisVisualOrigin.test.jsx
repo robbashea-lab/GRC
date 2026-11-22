@@ -67,7 +67,7 @@ test.each([false,true])('legacy appearance toggle: real native drawer retains th
   expect(api.patch).toHaveBeenCalledWith('/framework_assessments/native-visual-1.1',expect.objectContaining({
     implementation:'Reviewed native inventory wording',status:'not_assessed',verification:'needs_validation',
     technology:'Retained native platform',notes:'Retained native notes',expected_last_assessed:token,
-  }));
+  }),{assessmentAuthority:expect.any(Function)});
   expect(host.querySelector('[aria-label="Current implementation"]').value).toBe('Reviewed native inventory wording');
   expect(!!visual()).toBe(variant);expect(api.put).not.toHaveBeenCalled();expect(api.post).not.toHaveBeenCalled();
 });
@@ -254,7 +254,7 @@ test.each([1,2,3])('an authenticated CIS IG%i inherited opener preserves exact n
   await render(false,{clientId,cisVisualOrigin:receipt});expect(visual()).toBeTruthy();
   await editNativeImplementation('A saved native authenticated implementation.');
   await clickNative(nativeButton('Save assessment'));
-  expect(api.patch).toHaveBeenCalledWith(`/framework_assessments/${clientId}:1.1`,expect.objectContaining({expected_last_assessed:token,implementation:'A saved native authenticated implementation.'}));
+  expect(api.patch).toHaveBeenCalledWith(`/framework_assessments/${clientId}:1.1`,expect.objectContaining({expected_last_assessed:token,implementation:'A saved native authenticated implementation.'}),{assessmentAuthority:expect.any(Function)});
   expect(native.client_id).toBe(clientId);expect(native.framework_key).toBe('cis-ig1');
   expect(api.put).not.toHaveBeenCalled();expect(api.post).not.toHaveBeenCalled();
 });

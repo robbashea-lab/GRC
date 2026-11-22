@@ -407,9 +407,9 @@ function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, user
     }).filter(([k, v]) => !isEdit || !(JSON.stringify(v) === JSON.stringify(record[k]) || (v == null || v === "") && (record[k] == null || record[k] === "") || schema.find(f => f.name === k)?.type === "date" && String(record[k] || '').slice(0,10) === v)));
   }
 
-  async function save(taskStatus,keepOpen=false) {
+  async function save(taskStatus,keepOpen=false,retryCreate=false) {
     if (!canWrite || saving) return;
-    const retryingCreate=!isEdit&&createRecord.unconfirmed();
+    const retryingCreate=retryCreate===true;
     if(policyPilot&&approvalDirty){toast.error('Save or discard unfinished approval details before saving the Policy.');return;}
     if((pilot||actionLayout)&&newComment.trim()){toast.error('Post or discard the unfinished comment before saving or completing this item.');return;}
     const missing = (schema || []).find(f => f.required && !String(form[f.name] || "").trim());
@@ -435,11 +435,14 @@ function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, user
       if (kind === "policies" && (record?.schedule_from_reviews || related.reviews?.length)) { delete clean.next_review_date; delete clean.last_reviewed_at; }
       }
       let savedRecord;
-      if (isEdit) {
+      if (retryingCreate) {
+        savedRecord=(await createRecord.retry()).data;
+        toast.success("Created");
+      } else if (isEdit) {
         savedRecord=(await updateRecord(`/${kind}/${record[idField]}`, {...clean,expected_updated_at:kind==='vendors'?vendorEditVersion.current:record.updated_at??null})).data;
         if(kind!=="tasks"||savedRecord.status!=="done"||record.status==="done")toast.success("Saved");
       } else {
-        savedRecord=(await (retryingCreate?createRecord.retry():createRecord(`/${kind}`, clean))).data;
+        savedRecord=(await createRecord(`/${kind}`, clean)).data;
         toast.success("Created");
       }
       if(kind==='tasks'&&savedRecord.status==='done'&&record?.status!=='done') {
@@ -1059,7 +1062,7 @@ function EntityDrawer({ open, onOpenChange, kind, record, schema, clientId, user
           {pilot&&kind==='tasks'&&isEdit&&canWrite&&!taskCompletion&&!['done','cancelled'].includes(record.status)&&<Button size="sm" disabled={saving} onClick={()=>save('done')} data-testid="complete-action">Complete Action Item</Button>}
         </div>
         </>}
-        {!isEdit&&createRecord.unconfirmed()&&<div role="status" className="p-4"><p>Create is unconfirmed. Retry its original values before closing.</p><Button type="button" disabled={saving||!canWrite} onClick={save}>Retry unconfirmed create</Button></div>}
+        {!isEdit&&createRecord.unconfirmed()&&<div role="status" className="p-4"><p>Create is unconfirmed. Retry its original values before closing.</p><Button type="button" disabled={saving||!canWrite} onClick={()=>save(undefined,false,true)}>Retry unconfirmed create</Button></div>}
       </Content>
       {(pilot||actionLayout)&&<AlertDialog open={discardOpen} onOpenChange={setDiscardOpen}><AlertDialogContent><AlertDialogTitle>Discard unsaved changes?</AlertDialogTitle><AlertDialogDescription>Your saved records remain unchanged. Keep editing to retain this draft.</AlertDialogDescription><AlertDialogFooter><AlertDialogCancel>Keep editing</AlertDialogCancel><AlertDialogAction onClick={event=>{if(saving||commentPosting||blockUnconfirmedCreate()){event.preventDefault();return;}setDiscardOpen(false);onOpenChange(false);}}>Discard changes</AlertDialogAction></AlertDialogFooter></AlertDialogContent></AlertDialog>}
 

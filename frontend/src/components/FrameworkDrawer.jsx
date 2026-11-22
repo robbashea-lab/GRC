@@ -131,7 +131,8 @@ function FrameworkDrawerContent({open,onOpenChange,record,requestedRecord=record
   if(guidedOwner.current?.identity!==draftIdentity)guidedOwner.current={identity:draftIdentity};
   const guidedScope=guidedOwner.current;
   const [guidedItemsDraft,setGuidedItemsDraft]=useState(null);
-  const proposedItems=guidedItemsDraft?.scope===guidedScope?guidedItemsDraft.items:null;
+  const activeGuidedItemsDraft=guidedItemsDraft?.scope===guidedScope&&guidedItemsDraft.commandOwner===commandOwner?guidedItemsDraft:null;
+  const proposedItems=activeGuidedItemsDraft?.items??null;
   const [genericInterviewScope,setGenericInterviewScope]=useState(null),genericGuideOwner=useRef(null);
   const genericInterviewOpen=genericInterviewScope===guidedScope;
   const genericDraftChanged=useCallback(value=>{if(guidedOwner.current===guidedScope)setGuidedDraft(value);},[guidedScope]);
@@ -308,7 +309,7 @@ function FrameworkDrawerContent({open,onOpenChange,record,requestedRecord=record
         ...(latest.form.cis_operation&&text!==latest.savedForm.implementation?{cis_operation:{...latest.form.cis_operation,confirmed:false}}:{})};
       const snapshot=JSON.stringify(next);
       setForm(next);setStagedImplementationForm(snapshot);setGuidedDraft(false);
-      setGuidedItemsDraft({scope:guidedScope,source,items,answers:proposal.answers,operations:[],
+      setGuidedItemsDraft({scope:guidedScope,commandOwner,source,items,answers:proposal.answers,operations:[],
         expected_items_revision:latest.savedForm.items_revision||0,form:snapshot,baseline:JSON.stringify(latest.savedForm)});
       setFeedback('Current implementation and proposed Items remain unsaved. Save assessment commits them; status and verification are unchanged.');
       return true;
@@ -348,7 +349,7 @@ function FrameworkDrawerContent({open,onOpenChange,record,requestedRecord=record
     setCtx(previous=>previous&&frameworkContextResponse(previous.current,contextIdentity)
       ?{...previous,current:{...data,work:previous.current?.work},itemCountRead:null}:previous);
     setSavedForm(data);
-    setGuidedItemsDraft(previous=>previous?.scope===guidedScope&&data.guided_assessment_source
+    setGuidedItemsDraft(previous=>previous?.scope===guidedScope&&previous.commandOwner===commandOwner&&data.guided_assessment_source
       &&['version','revision','generated_at'].every(key=>data.guided_assessment_source[key]===previous.source[key])?null:previous);
     if(!contextReceipt){setForm(data);return false;}
     const newerForm=!contextReceipt.draft||JSON.stringify(nativeSnapshot.current.form)!==contextReceipt.draft.form;
@@ -434,7 +435,7 @@ function FrameworkDrawerContent({open,onOpenChange,record,requestedRecord=record
     const saved=await run(async()=>{
       let body;
       if(guidedItemsDraft){
-        if(guidedItemsDraft.scope!==guidedScope||guidedOwner.current!==guidedScope||!nativeSnapshot.current.guidedContextAvailable||recordAssessment
+        if(guidedItemsDraft.scope!==guidedScope||guidedItemsDraft.commandOwner!==commandOwner||guidedOwner.current!==guidedScope||!nativeSnapshot.current.guidedContextAvailable||recordAssessment
           ||nativeSnapshot.current.relatedDraft||JSON.stringify(assessment)!==guidedItemsDraft.form
           ||JSON.stringify(savedForm)!==guidedItemsDraft.baseline){
           throw new Error('Save this guided draft separately. Restore other assessment edits or cancel and reopen; no fields were omitted and your edits remain here.');
@@ -484,12 +485,15 @@ function FrameworkDrawerContent({open,onOpenChange,record,requestedRecord=record
       target?.focus({preventScroll:true});
     }}:{};
   function itemsSaved(data){
+    if(activeContextOwner.current!==contextOwner||authority.current?.commandOwner!==commandOwner||!authority.current?.available)return;
+    const draft=nativeSnapshot.current.guidedItemsDraft;
+    if(draft&&(draft.scope!==guidedScope||draft.commandOwner!==commandOwner))return;
     if(data.framework_assessment_id!==aid||data.client_id!==clientId)return;
     const fields={items_to_address:data.items_to_address,items_revision:data.items_revision,item_controls:data.item_controls};
     setForm(previous=>({...previous,...fields}));setSavedForm(previous=>({...previous,...fields}));
     setCtx(previous=>previous?{...previous,current:{...previous.current,...fields}}:previous);
     // Item resolution is independent; carry only its native receipt into the pending comparison snapshots.
-    setGuidedItemsDraft(previous=>previous?.scope===guidedScope?{...previous,
+    setGuidedItemsDraft(previous=>previous?.scope===guidedScope&&previous.commandOwner===commandOwner?{...previous,
       form:JSON.stringify({...JSON.parse(previous.form),...fields}),
       baseline:JSON.stringify({...JSON.parse(previous.baseline),...fields})}:previous);
     setStagedImplementationForm(previous=>previous?JSON.stringify({...JSON.parse(previous),...fields}):previous);
@@ -503,7 +507,7 @@ function FrameworkDrawerContent({open,onOpenChange,record,requestedRecord=record
   }
   function stageItemOperation(operation){
     const latest=nativeSnapshot.current,draft=latest.guidedItemsDraft;
-    if(activeContextOwner.current!==contextOwner||authority.current?.commandOwner!==commandOwner||!authority.current?.available||guidedOwner.current!==guidedScope||draft?.scope!==guidedScope||!latest.writable||latest.busy
+    if(activeContextOwner.current!==contextOwner||authority.current?.commandOwner!==commandOwner||!authority.current?.available||guidedOwner.current!==guidedScope||draft?.scope!==guidedScope||draft.commandOwner!==commandOwner||!latest.writable||latest.busy
       ||!latest.guidedContextAvailable||JSON.stringify(latest.form)!==draft.form||draft.operations.length>=100)return false;
     try{projectItemDraft(current,draft.items,[...draft.operations,operation],draft.answers);}
     catch(failure){setError(formatError(failure));return false;}
@@ -518,12 +522,12 @@ function FrameworkDrawerContent({open,onOpenChange,record,requestedRecord=record
     &&liveGuideContext.itemCountRead?.generation===contextReadGeneration.current
     &&!Object.hasOwn(current,'items_to_address');
   let openItemCount=null;
-  try{if(Array.isArray(current.items_to_address)||omittedItemsLoaded)openItemCount=projectItemDraft(current,proposedItems,guidedItemsDraft?.scope===guidedScope?guidedItemsDraft.operations:[],guidedItemsDraft?.scope===guidedScope?guidedItemsDraft.answers:{}).filter(item=>item.state==='open').length;}
+  try{if(Array.isArray(current.items_to_address)||omittedItemsLoaded)openItemCount=projectItemDraft(current,proposedItems,activeGuidedItemsDraft?.operations||[],activeGuidedItemsDraft?.answers||{}).filter(item=>item.state==='open').length;}
   catch{/* The Item view reports the projection error; unavailable is not zero. */}
   const itemControls={scope:guidedScope,commandScope:frameworkContextScope(contextIdentity),writable,pending:proposedItems!==null,
     sectionCounts:{items:openItemCount,findings:ctx&&current.work?.context_complete===true&&Array.isArray(related.findings)?directFindings(current,related).length:null},
-    operations:writable&&authorityReady&&guidedItemsDraft?.scope===guidedScope?guidedItemsDraft.operations:[],
-    answers:guidedItemsDraft?.scope===guidedScope?guidedItemsDraft.answers:{},onOperation:stageItemOperation,
+    operations:writable&&authorityReady&&activeGuidedItemsDraft?activeGuidedItemsDraft.operations:[],
+    answers:activeGuidedItemsDraft?.answers||{},onOperation:stageItemOperation,
     onRefresh:()=>{setRevision(value=>value+1);onSaved?.();},onOpenWork:setNested,
     clientLabel:org.currentClient?.name||org.currentClient?.client_name};
   async function saveOwner(){return run(async()=>{const {data}=await api.patch(`/framework_assessments/${aid}`,{owner_id:form.owner_id||null,...(record.framework_key==='iso-27001'?{process_owner_id:form.process_owner_id||null}:{}),expected_last_assessed:savedForm.last_saved??savedForm.last_assessed??null},{assessmentOperation:true});setForm(data);setSavedForm(data);setFeedback('Changes saved.');},commandOwner);}
@@ -543,7 +547,7 @@ function FrameworkDrawerContent({open,onOpenChange,record,requestedRecord=record
   </AlertDialog></AssessmentSurfaceAvailability.Provider>{nested&&<RecordDrawer {...nested} open clientId={clientId} users={ctx?.users||[]} cisVisualOrigin={nestedCisVisualOrigin} schema={SCHEMAS[nested.kind]?.fields} onOpenChange={v=>{if(!v){setNested(null);setRevision(n=>n+1);}}} onSaved={()=>{setRevision(n=>n+1);onSaved?.();}}/>}</>;
   const owned=children=><AssessmentCommandApi.Provider value={api}><AssessmentClientContextProvider record={record} scopeKey={contextOwner} available={authorityReady}><AssessmentSurfaceAvailability.Provider value={authorityReady}>{children}</AssessmentSurfaceAvailability.Provider></AssessmentClientContextProvider></AssessmentCommandApi.Provider>;
   if(recordManagement||reviewManagement)return owned(<><FrameworkRecordAccess reviewsOnly={reviewManagement} state={{itemControls,guidedItemsDraft:proposedItems,itemWorkDisabled:dirty||!!guidedItemsDraft,contextEditor,isoView,assessmentRollout:rolloutPresentation,open,current,definition,catalog,ctx,form,dirty,busy,error,feedback,writable,comment,link}} controlsManagement={current.framework_key==='iso-27001'&&!reviewManagement?<OrganizationalControls clientId={current.client_id} onDraftChange={setControlDraft} onSaved={()=>{setRevision(n=>n+1);onSaved?.();}}/>:undefined} actions={{put,saveOwner,run,setComment,setLink,setNested,setReviewDraft,close:()=>leave(()=>onOpenChange(false)),openReviews:url=>leave(()=>onReviews?.(url)),reviewSaved:()=>{setRevision(n=>n+1);onSaved?.();setFeedback('Review linked.');}}}/>{overlays}</>);
-if(prototype)return owned(<>{brawndoCis?<BrawndoCisSafeguard state={{itemControls,guidedItemsDraft:proposedItems,itemWorkDisabled:dirty||!!guidedItemsDraft,detailsOwner:guidedScope,contextEditor,assessmentRollout:rolloutPresentation,visualReference:cisVisualReference,directProgramOpener:visualReference===true,pilotSurfaceRef:setAssessmentSurface,pilotPortalContainer:assessmentSurface,manageRecord:onManage?()=>leave(onManage):undefined,open,record,definition,form,current,ctx:liveCisContext,guidedConfiguration,related,finding,error,busy,dirty,focusedImplementationOnly:stagedImplementationForm===JSON.stringify(form),feedback,writable,position,otherDraft:itemsDraft||guidedDraft||reviewDraft||!!finding,breadcrumb:breadcrumb?.map(c=>c.onClick?{...c,onClick:()=>leave(c.onClick)}:c)}} actions={{itemsSaved,createItemFinding,setItemsDraft,put,save,run,download,applyGuided,saveGuidedAssessment,stageGuidedImplementation,setGuidedDraft,setFinding,setNested,setFeedback,setReviewDraft,reviewSaved:()=>{setRevision(n=>n+1);onSaved?.();setFeedback('Review linked.');},retry:()=>setRevision(n=>n+1),close:()=>leave(()=>onOpenChange(false)),previous:onPrevious?()=>leave(onPrevious):null,next:onNext?()=>leave(onNext):null,saveAndNext:onNext?async()=>{if(!itemsDraft&&!guidedDraft&&!reviewDraft&&!finding&&await save())onNext();}:null}}/>:prestigeSoc?<PrestigeSocAssessment state={{itemControls,guidedItemsDraft:proposedItems,itemWorkDisabled:dirty||!!guidedItemsDraft,contextEditor,isoView,assessmentRollout:rolloutPresentation,pilotSurfaceRef:setAssessmentSurface,pilotPortalContainer:assessmentSurface,manageRecord:onManage?()=>leave(onManage):undefined,focusedImplementationOnly:stagedImplementationForm===JSON.stringify(form),open,record,definition,form,current,ctx,guidedConfiguration,error,busy,dirty,relatedDraft:itemsDraft||reviewDraft||controlDraft||!!finding||!!comment.trim()||linkDraft,otherDraft:itemsDraft||guidedDraft||reviewDraft||controlDraft||!!finding||!!comment.trim(),feedback,writable,position,related,finding,breadcrumb:breadcrumb?.map(c=>c.onClick?{...c,onClick:()=>leave(c.onClick)}:c)}} actions={{itemsSaved,createItemFinding,setItemsDraft,put,save,stageGuidedImplementation,saveGuidedAssessment,setGuidedDraft,run,download,setFinding,setNested,setFeedback,retry:()=>setRevision(n=>n+1),close:()=>leave(()=>onOpenChange(false)),previous:onPrevious?()=>leave(onPrevious):null,next:onNext?()=>leave(onNext):null,saveAndNext:onNext?async()=>{if(!itemsDraft&&!guidedDraft&&!reviewDraft&&!controlDraft&&!finding&&!comment.trim()&&await save())onNext();}:null}}/>:<FrameworkAssessmentWorkspace
+if(prototype)return owned(<>{brawndoCis?<BrawndoCisSafeguard state={{itemControls,guidedItemsDraft:proposedItems,itemWorkDisabled:dirty||!!guidedItemsDraft,detailsOwner:commandOwner,contextEditor,assessmentRollout:rolloutPresentation,visualReference:cisVisualReference,directProgramOpener:visualReference===true,pilotSurfaceRef:setAssessmentSurface,pilotPortalContainer:assessmentSurface,manageRecord:onManage?()=>leave(onManage):undefined,open,record,definition,form,current,ctx:liveCisContext,guidedConfiguration,related,finding,error,busy,dirty,focusedImplementationOnly:stagedImplementationForm===JSON.stringify(form),feedback,writable,position,otherDraft:itemsDraft||guidedDraft||reviewDraft||!!finding,breadcrumb:breadcrumb?.map(c=>c.onClick?{...c,onClick:()=>leave(c.onClick)}:c)}} actions={{itemsSaved,createItemFinding,setItemsDraft,put,save,run,download,applyGuided,saveGuidedAssessment,stageGuidedImplementation,setGuidedDraft,setFinding,setNested,setFeedback,setReviewDraft,reviewSaved:()=>{setRevision(n=>n+1);onSaved?.();setFeedback('Review linked.');},retry:()=>setRevision(n=>n+1),close:()=>leave(()=>onOpenChange(false)),previous:onPrevious?()=>leave(onPrevious):null,next:onNext?()=>leave(onNext):null,saveAndNext:onNext?async()=>{if(!itemsDraft&&!guidedDraft&&!reviewDraft&&!finding&&await save())onNext();}:null}}/>:prestigeSoc?<PrestigeSocAssessment state={{itemControls,guidedItemsDraft:proposedItems,itemWorkDisabled:dirty||!!guidedItemsDraft,contextEditor,isoView,assessmentRollout:rolloutPresentation,pilotSurfaceRef:setAssessmentSurface,pilotPortalContainer:assessmentSurface,manageRecord:onManage?()=>leave(onManage):undefined,focusedImplementationOnly:stagedImplementationForm===JSON.stringify(form),open,record,definition,form,current,ctx,guidedConfiguration,error,busy,dirty,relatedDraft:itemsDraft||reviewDraft||controlDraft||!!finding||!!comment.trim()||linkDraft,otherDraft:itemsDraft||guidedDraft||reviewDraft||controlDraft||!!finding||!!comment.trim(),feedback,writable,position,related,finding,breadcrumb:breadcrumb?.map(c=>c.onClick?{...c,onClick:()=>leave(c.onClick)}:c)}} actions={{itemsSaved,createItemFinding,setItemsDraft,put,save,stageGuidedImplementation,saveGuidedAssessment,setGuidedDraft,run,download,setFinding,setNested,setFeedback,retry:()=>setRevision(n=>n+1),close:()=>leave(()=>onOpenChange(false)),previous:onPrevious?()=>leave(onPrevious):null,next:onNext?()=>leave(onNext):null,saveAndNext:onNext?async()=>{if(!itemsDraft&&!guidedDraft&&!reviewDraft&&!controlDraft&&!finding&&!comment.trim()&&await save())onNext();}:null}}/>:<FrameworkAssessmentWorkspace
     state={{itemControls,guidedItemsDraft:proposedItems,itemWorkDisabled:dirty||!!guidedItemsDraft,contextEditor,isoView,assessmentRollout:rolloutPresentation,pilotSurfaceRef:setAssessmentSurface,pilotPortalContainer:assessmentSurface,manageRecord:onManage?()=>leave(onManage):undefined,focusedImplementationOnly:stagedImplementationForm===JSON.stringify(form),open,record,definition,catalog,form,current,ctx,guidedConfiguration,related,error,busy,dirty,feedback,writable,comment,finding,tab,position,link,breadcrumb:breadcrumb?.map(c=>c.onClick?{...c,onClick:()=>leave(c.onClick)}:c),otherDraft:itemsDraft||guidedDraft||reviewDraft||controlDraft||!!finding||!!comment.trim(),relatedDraft:itemsDraft||reviewDraft||controlDraft||!!finding||!!comment.trim()}}
     actions={{itemsSaved,createItemFinding,setItemsDraft,put,save,stageGuidedImplementation,saveGuidedAssessment,setGuidedDraft,run,download,setComment,setFinding,setTab,setNested,setFeedback,setReviewDraft,setLink,setControlDraft,
       controlSaved:()=>{setRevision(n=>n+1);onSaved?.();},

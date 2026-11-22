@@ -21,7 +21,7 @@ const deferred = () => {
 };
 let root, host, record, draft, requests, props;
 const dialog = () => document.querySelector('.brawndo-pilot-history[role="dialog"]');
-const loading = () => dialog().querySelector('[role="status"]');
+const loading = () => dialog().querySelector('[role="status"]:not([data-assessment-suspension-status])');
 const historyPage = (narrative, revision) => ({items: [{revision, version: draft.version,
   completed: true, user_id: mockAuth.user.user_id, updated_at: '2026-11-08T12:00:00Z',
   narrative, answers: {inventory: 'Not sure'}, result: null}], next_before_revision: null});
@@ -61,6 +61,10 @@ function expectNoWrites() {
 
 function expectLatest(outcome) {
   expect(loading()).toBeNull();
+  const suspension = dialog().querySelector('[data-assessment-suspension-status]');
+  expect(suspension).not.toBeNull();
+  expect(suspension.hidden).toBe(true);
+  expect(suspension.style.display).toBe('none');
   expect(dialog().textContent).not.toContain('Obsolete');
   if (outcome === 'success') {
     expect(dialog().textContent).toContain('Latest archived snapshot.');

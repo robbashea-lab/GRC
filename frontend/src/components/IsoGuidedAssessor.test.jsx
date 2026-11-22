@@ -19,8 +19,7 @@ function itemProposal(text){return expect.objectContaining({client_id:props.clie
 const button=name=>[...document.querySelectorAll('button')].find(item=>item.textContent.trim()===name);
 async function click(name){const target=button(name);expect(target).toBeTruthy();expect(target.disabled).toBe(false);await act(async()=>target.click());}
 async function render(extra={}){props={...props,...extra};await act(async()=>root.render(nestedShell?
-  <AssessmentShell title="Native ISO assessment" description="Review the current implementation." close={nativeClose}
-    onEscapeKeyDown={e=>{if(document.activeElement?.closest('[data-testid="iso-guided-assessment"] .omni-workspace-window'))e.preventDefault();}}>
+  <AssessmentShell title="Native ISO assessment" description="Review the current implementation." close={nativeClose}>
     <label>Native implementation<textarea aria-label="Nested native implementation" defaultValue="Retained native draft"/></label><IsoGuidedAssessor {...props}/>
   </AssessmentShell>:<IsoGuidedAssessor {...props}/>));}
 function setup(id){

@@ -71,7 +71,7 @@ test('Omni Finding navigation retains the existing native RecordDrawer callback'
 test('scoped Omni save reuses native PATCH, CAS and fields without changing verification',async()=>{
   api.patch.mockImplementation(async (_path,body)=>({data:{...saved,...body,last_saved:'2026-10-09T12:01:00Z',assessment_history:[saved]}}));
   await render();await click('Save Omni native assessment');
-  expect(api.patch).toHaveBeenCalledTimes(1);expect(api.patch).toHaveBeenCalledWith('/framework_assessments/native-1.1',expect.objectContaining({implementation:'Reviewed synthetic inventory',status:'in_progress',verification:'verified',expected_last_assessed:null,guided_assessment_source:{version:'cis-v8.1-control1-5',revision:9,generated_at:'2026-10-09T12:00:00Z'}}));
+  expect(api.patch).toHaveBeenCalledTimes(1);expect(api.patch).toHaveBeenCalledWith('/framework_assessments/native-1.1',expect.objectContaining({implementation:'Reviewed synthetic inventory',status:'in_progress',verification:'verified',expected_last_assessed:null,guided_assessment_source:{version:'cis-v8.1-control1-5',revision:9,generated_at:'2026-10-09T12:00:00Z'}}),{assessmentAuthority:expect.any(Function)});
   expect(container.textContent).toContain('Assessment saved.');
 });
 
@@ -88,11 +88,16 @@ test.each(['1.2','2.1'])('native save adapter uses the same authoritative path f
   const other={...saved,definition_id:id,framework_assessment_id:'native-'+id},read=api.get.getMockImplementation();
   api.get.mockImplementation(async(path,...options)=>path.startsWith('/frameworks/')?{data:{configuration:{implementation_group:1},assessments:[saved,other],work:{[saved.framework_assessment_id]:{context_complete:true},[other.framework_assessment_id]:{context_complete:true}}}}:read(path,...options));
   api.patch.mockImplementation(async(_path,body)=>({data:{...other,...body}}));await act(async()=>root.render(<FrameworkDrawer open record={other} clientId="demo_brawndo" onOpenChange={()=>{}}/>));
-  await click('Save Omni native assessment');expect(api.patch).toHaveBeenCalledTimes(1);expect(api.patch).toHaveBeenCalledWith('/framework_assessments/native-'+id,expect.objectContaining({verification:'verified',guided_assessment_source:expect.objectContaining({version:require('@/lib/guidedAssessment').versionForSafeguard(id)})}));
+  await click('Save Omni native assessment');expect(api.patch).toHaveBeenCalledTimes(1);expect(api.patch).toHaveBeenCalledWith('/framework_assessments/native-'+id,expect.objectContaining({verification:'verified',guided_assessment_source:expect.objectContaining({version:require('@/lib/guidedAssessment').versionForSafeguard(id)})}),{assessmentAuthority:expect.any(Function)});
 });
 
 test.each([{definition_id:'1.3'},{framework_key:'soc-2',definition_id:'CC1.1'},{framework_key:'iso-27001',definition_id:'A.5.1'},{client_id:'foreign-client'}])('native save adapter refuses excluded configuration or identity %j',async changes=>{
-  const other={...saved,...changes};await act(async()=>root.render(<FrameworkDrawer open record={other} clientId="demo_brawndo" onOpenChange={()=>{}}/>));if(changes.definition_id==='1.3')await click('Save Omni native assessment');else expect([...container.querySelectorAll('button')].find(button=>button.textContent==='Save Omni native assessment')).toBeUndefined();expect(api.patch).not.toHaveBeenCalled();
+  const other={...saved,...changes};
+  if(changes.definition_id==='1.3'){
+    const read=api.get.getMockImplementation();
+    api.get.mockImplementation(async(path,...options)=>path.startsWith('/frameworks/')?{data:{configuration:{implementation_group:1},assessments:[other],work:{[other.framework_assessment_id]:{context_complete:true}}}}:read(path,...options));
+  }
+  await act(async()=>root.render(<FrameworkDrawer open record={other} clientId="demo_brawndo" onOpenChange={()=>{}}/>));if(changes.definition_id==='1.3')await click('Save Omni native assessment');else expect([...container.querySelectorAll('button')].find(button=>button.textContent==='Save Omni native assessment')).toBeUndefined();expect(api.patch).not.toHaveBeenCalled();
 });
 
 test('native adapter guards duplicate pending submissions',async()=>{

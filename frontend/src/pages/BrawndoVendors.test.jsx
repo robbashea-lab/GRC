@@ -76,13 +76,55 @@ test('a future client shared register preserves under-review vendors and expirat
   expect(api.post).not.toHaveBeenCalled();expect(api.patch).not.toHaveBeenCalled();
 });
 test('new vendor draft is protected and failed create remains open',async()=>{
-  const close=jest.fn();api.post.mockRejectedValue(new Error('Save unavailable'));
+  const close=jest.fn();api.post.mockRejectedValue(Object.assign(new Error('Save unavailable'),{response:{headers:{'x-create-rejected':'true'}}}));
   await act(async()=>root.render(<RecordDrawer open onOpenChange={close} kind="vendors" schema={SCHEMAS.vendors.fields} clientId={mockClient}/>));
   await input(document.querySelector('[data-testid="field-name"]'),'Draft vendor');await input(document.querySelector('[data-testid="field-service"]'),'Service');
   await input(document.querySelector('[data-testid="field-next_review"]'),'2026-10-15');await input(document.querySelector('[data-testid="field-contract_renewal"]'),'2027-04-01');
   await click(vendorButton('Add to register'));expect(close).not.toHaveBeenCalled();expect(document.querySelector('[data-testid="field-name"]').value).toBe('Draft vendor');
   expect(api.post.mock.calls[0][1]).toMatchObject({next_review:'2026-10-15',contract_renewal:'2027-04-01'});
   await click(vendorButton('Cancel'));expect(document.body.textContent).toContain('Discard unsaved changes?');expect(close).not.toHaveBeenCalled();
+});
+
+test('an uncertain vendor create blocks discard and explicitly retries its original schedules and identity',async()=>{
+  const close=jest.fn(),onSaved=jest.fn();api.post.mockReset();
+  api.post.mockRejectedValueOnce(Object.assign(new Error('Response lost'),{response:{status:503,headers:{}}}))
+    .mockResolvedValueOnce({data:{vendor_id:'synthetic-created-vendor',client_id:mockClient}});
+  await act(async()=>root.render(<RecordDrawer open onOpenChange={close} onSaved={onSaved} kind="vendors" schema={SCHEMAS.vendors.fields} clientId={mockClient}/>));
+  await input(document.querySelector('[data-testid="field-name"]'),'Original vendor');
+  await input(document.querySelector('[data-testid="field-service"]'),'Original service');
+  await input(document.querySelector('[data-testid="field-next_review"]'),'2026-10-15');
+  await input(document.querySelector('[data-testid="field-contract_renewal"]'),'2027-04-01');
+  await click(vendorButton('Add to register'));
+  expect(api.post).toHaveBeenCalledTimes(1);
+  const original=api.post.mock.calls[0];
+  expect(original[0]).toBe('/vendors');
+  expect(original[1]).toMatchObject({client_id:mockClient,name:'Original vendor',service:'Original service',next_review:'2026-10-15',contract_renewal:'2027-04-01'});
+  expect(original[2]).toMatchObject({headers:{'Idempotency-Key':'test-request-identity'}});
+  await click(vendorButton('Cancel'));
+  expect(close).not.toHaveBeenCalled();expect(onSaved).not.toHaveBeenCalled();
+  expect(document.querySelector('[role="alertdialog"]')).toBeNull();
+  expect(document.querySelector('[data-testid="field-name"]').value).toBe('Original vendor');
+  expect(document.querySelector('[data-testid="field-service"]').value).toBe('Original service');
+  expect(document.querySelector('[data-testid="field-next_review"]').value).toBe('2026-10-15');
+  expect(document.querySelector('[data-testid="field-contract_renewal"]').value).toBe('2027-04-01');
+  expect(document.body.textContent).toContain('Create is unconfirmed. Retry its original request before closing.');
+  expect(api.post).toHaveBeenCalledTimes(1);expect(api.patch).not.toHaveBeenCalled();
+  await input(document.querySelector('[data-testid="field-name"]'),'Newer unsaved vendor wording');
+  await click(vendorButton('Add to register'));
+  expect(api.post).toHaveBeenCalledTimes(1);expect(api.patch).not.toHaveBeenCalled();
+  expect(close).not.toHaveBeenCalled();expect(onSaved).not.toHaveBeenCalled();
+  expect(document.querySelector('[data-testid="field-name"]').value).toBe('Newer unsaved vendor wording');
+  expect(document.querySelector('[data-testid="field-service"]').value).toBe('Original service');
+  expect(document.querySelector('[data-testid="field-next_review"]').value).toBe('2026-10-15');
+  expect(document.querySelector('[data-testid="field-contract_renewal"]').value).toBe('2027-04-01');
+  await click(vendorButton('Retry unconfirmed create'));
+  expect(api.post).toHaveBeenCalledTimes(2);
+  const retried=api.post.mock.calls[1];
+  expect(retried[0]).toBe(original[0]);expect(JSON.stringify(retried[1])).toBe(JSON.stringify(original[1]));
+  expect(retried[2].headers).toEqual(original[2].headers);
+  expect(retried[2].pendingCommandGeneration).toBe(original[2].pendingCommandGeneration);
+  expect(api.patch).not.toHaveBeenCalled();expect(onSaved).toHaveBeenCalledTimes(1);
+  expect(close).toHaveBeenCalledTimes(1);expect(close).toHaveBeenCalledWith(false);
 });
 test.each(['/vendors','/risks'])('native Vendor controls preserve legacy details from %s',async path=>{
   window.history.replaceState({},'',path);

@@ -66,6 +66,10 @@ test('source disclosure, independent interview and Items tabs preserve drafts wi
  expect(container.textContent).toContain('Unsaved assessment changes');
  expect(api.patch).not.toHaveBeenCalled();expect(api.post).not.toHaveBeenCalled();expect(api.delete).not.toHaveBeenCalled();
  record={...record,framework_assessment_id:'iso-b',definition_id:'A.5.1'};await render();
+ const confirmation=document.querySelector('[role="alertdialog"]');expect(confirmation.textContent).toContain('Leave unsaved changes?');
+ expect(container.querySelector('[aria-label="Current implementation"]').value).toBe('Retain my draft');
+ await tick([...confirmation.querySelectorAll('button')].find(item=>item.textContent==='Discard changes'));
+ expect(api.patch).not.toHaveBeenCalled();expect(api.post).not.toHaveBeenCalled();expect(api.delete).not.toHaveBeenCalled();
  expect(button('Requirement & implementation').getAttribute('aria-selected')).toBe('true');
  expect(container.querySelector('.cis-collapsible-requirement p').textContent).toBe(guide.entries['A.5.1'].plain);
  expect(container.querySelector('.cis-collapsible-requirement').open).toBe(false);
@@ -78,7 +82,7 @@ test('failed ISO save keeps narrative and blocks next; retry keeps concurrency t
  await tick(button('Save & next'));expect(next).not.toHaveBeenCalled();expect(container.textContent).toContain('Stale assessment');
  expect(container.querySelector('[aria-label="Current implementation"]').value).toBe('New implementation');
  await tick(button('Save & next'));expect(next).toHaveBeenCalledTimes(1);
- expect(api.patch).toHaveBeenLastCalledWith('/framework_assessments/iso-a',expect.objectContaining({implementation:'New implementation',expected_last_assessed:null,owner_id:'u'}));
+ expect(api.patch).toHaveBeenLastCalledWith('/framework_assessments/iso-a',expect.objectContaining({implementation:'New implementation',expected_last_assessed:null,owner_id:'u'}),{assessmentAuthority:expect.any(Function)});
 });
 
 test('read-only ISO assessment retains interview and linked findings without write affordances',async()=>{
@@ -94,7 +98,7 @@ test('removing the old checklist surface preserves status and all previously sav
  expect(container.querySelector('.assessment-inline-criteria')).toBeNull();expect(container.querySelector('.assessment-check')).toBeNull();
  expect(api.patch).not.toHaveBeenCalled();expect(container.querySelector('input[value="in_progress"]').checked).toBe(true);
  await tick(button('Save assessment'));
- expect(api.patch).toHaveBeenLastCalledWith('/framework_assessments/iso-a',expect.objectContaining({status:'in_progress',iso_assessment_checks:['retired:context',criteria.requirements['4.1'].criteria[0].id],expected_last_assessed:null}));
+ expect(api.patch).toHaveBeenLastCalledWith('/framework_assessments/iso-a',expect.objectContaining({status:'in_progress',iso_assessment_checks:['retired:context',criteria.requirements['4.1'].criteria[0].id],expected_last_assessed:null}),{assessmentAuthority:expect.any(Function)});
 });
 
 test('SoA decision, status and retained notes remain independent editable fields',async()=>{
@@ -103,7 +107,7 @@ test('SoA decision, status and retained notes remain independent editable fields
  expect(container.querySelector('[aria-label="SoA justification"]').value).toBe('Risk treatment');
  expect(container.querySelector('[aria-label="Previously recorded notes"]').value).toBe('Prior record');
  await guidance();expect(container.querySelectorAll('.assessment-check input')).toHaveLength(0);
- await tick(button('Save assessment'));expect(api.patch).toHaveBeenLastCalledWith('/framework_assessments/iso-a',expect.objectContaining({status:'in_progress',soa_applicability:'included',soa_justification:'Risk treatment',notes:'Prior record'}));
+ await tick(button('Save assessment'));expect(api.patch).toHaveBeenLastCalledWith('/framework_assessments/iso-a',expect.objectContaining({status:'in_progress',soa_applicability:'included',soa_justification:'Risk treatment',notes:'Prior record'}),{assessmentAuthority:expect.any(Function)});
 });
 
 test('context load failure disables ISO save and offers retry',async()=>{

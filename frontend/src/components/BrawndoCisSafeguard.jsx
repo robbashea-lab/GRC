@@ -1,5 +1,5 @@
 import AssessmentShell,{AssessmentStep as Step} from './AssessmentShell';
-import {useEffect,useRef,useState} from 'react';
+import {useEffect,useLayoutEffect,useRef,useState} from 'react';
 import {BookOpen,CalendarClock,ChevronDown,ExternalLink,ArrowRight} from 'lucide-react';
 import {Button} from './ui/button';
 import {Textarea} from './ui/textarea';
@@ -50,8 +50,17 @@ export default function BrawndoCisSafeguard({state,actions}){
   const {currentClient}=useOrg()||{};
   const [implementationReviewContainer,setImplementationReviewContainer]=useState(null);
   const [detailsIntent,setDetailsIntent]=useState(null);
-  const detailsView=detailsIntent&&detailsIntent.owner===state.detailsOwner?detailsIntent.view:null;
-  const setDetailsView=view=>setDetailsIntent(view?{owner:state.detailsOwner,view}:null);
+  const detailsIdentity=JSON.stringify([state.record.client_id,state.record.framework_assessment_id,user?.user_id]);
+  const detailsOwner=useRef(null);
+  if(detailsOwner.current?.command!==state.detailsOwner||detailsOwner.current?.identity!==detailsIdentity)detailsOwner.current={command:state.detailsOwner,identity:detailsIdentity};
+  const detailsScope=detailsOwner.current;
+  const detailsView=detailsIntent?.owner===detailsScope?detailsIntent.view:null;
+  const setDetailsView=view=>{
+    if(detailsOwner.current!==detailsScope)return false;
+    setDetailsIntent(previous=>detailsOwner.current!==detailsScope?previous:view?{owner:detailsScope,view}:previous?.owner===detailsScope?null:previous);
+    return true;
+  };
+  useLayoutEffect(()=>{detailsOwner.current=detailsScope;return()=>{if(detailsOwner.current===detailsScope)detailsOwner.current=null;};},[detailsScope]);
   const detailsTrigger=useRef(null),detailsDestination=useRef(false),recordedNotesField=useRef(null),recordedNotesHeading=useRef(null);
   const {open,record,definition,form,current,ctx,error,busy,dirty,feedback,writable,position,breadcrumb,related,finding,otherDraft}=state;
   const guideConfiguration=ctx?ctx.configuration:state.guidedConfiguration;
@@ -72,8 +81,8 @@ export default function BrawndoCisSafeguard({state,actions}){
   const assessmentConcept=referencePilot||state.assessmentRollout===true;
   const rolloutEntry=assessmentRolloutEntry('cis-ig1',id,{module:'safeguard'});
   // Only this owner's History choice survives a temporary loss of live assessment context.
-  useEffect(()=>setDetailsIntent(previous=>previous?.view==='history'?previous:null),[assessmentConcept]);
-  useEffect(()=>setDetailsIntent(null),[state.detailsOwner,clientId,record.framework_assessment_id,user?.user_id]);
+  useEffect(()=>setDetailsIntent(previous=>detailsOwner.current!==detailsScope?previous:previous?.view==='history'?previous:null),[assessmentConcept,detailsScope]);
+  useEffect(()=>setDetailsIntent(previous=>detailsOwner.current!==detailsScope||previous?.owner===detailsScope?previous:null),[detailsScope]);
   const nativeBreadcrumb=(safeguard11||state.assessmentRollout)&&definition.control_name?breadcrumb?.map(entry=>entry.label===`Control ${definition.control}`?{...entry,label:`${entry.label} · ${definition.control_name}`}:entry):breadcrumb;
   const displayBreadcrumb=assessmentConcept&&currentClient?.client_id===clientId&&currentClient.name
     ?[{label:currentClient.name},...(nativeBreadcrumb||[])]:nativeBreadcrumb;
@@ -104,14 +113,19 @@ export default function BrawndoCisSafeguard({state,actions}){
     {officialUrl&&<a className="gn-source" href={officialUrl} target="_blank" rel="noopener noreferrer">Official CIS source<ExternalLink className="gn-icon" aria-hidden="true"/></a>}
   </div>:<div className="cis-native-requirement-meta">{presentation?.trigger&&<span><strong>Required operation / trigger:</strong> {presentation.trigger}</span>}{officialUrl&&<a href={officialUrl} target="_blank" rel="noopener noreferrer">Official CIS source</a>}</div>;
   const requirement=state.assessmentRollout&&!referencePilot?<AssessmentRequirementDisclosure frameworkLabel="CIS" reference={`CIS v8.1 · ${id}`} text={source.text||rolloutEntry?.requirement.text} trigger={rolloutEntry?.requirement.trigger||presentation?.trigger} highlight={rolloutEntry?.requirement.trigger} source={{url:rolloutEntry?.sources[0]?.url||officialUrl,label:"Official CIS source"}}/>:<section className="cis-native-requirement"><details className={'cis-collapsible-requirement'+(assessmentConcept?' gn-requirement':'')}><summary>{assessmentConcept?<><span className="gn-summary-left"><BookOpen className="gn-icon" aria-hidden="true"/>What CIS requires <span className="gn-summary-ref">CIS v8.1 · {id}</span></span><ChevronDown className="gn-icon gn-chevron" aria-hidden="true"/></>:<>What CIS requires · CIS v8.1 safeguard {id}</>}</summary>{officialRequirement}{assessmentConcept&&requirementMeta}</details>{!assessmentConcept&&requirementMeta}</section>;
-  const returnToDetails=event=>{event.preventDefault();detailsTrigger.current?.focus({preventScroll:true});};
-  const detailsMenu=assessmentConcept?<DropdownMenu onOpenChange={open=>{if(open)detailsDestination.current=false;}}>
+  const returnToDetails=event=>{
+    event.preventDefault();if(detailsOwner.current!==detailsScope)return;
+    const trigger=detailsTrigger.current;
+    const target=trigger?.isConnected&&!trigger.closest('[hidden],[inert],[aria-hidden="true"],[role="dialog"][data-state="closed"]')?trigger:state.pilotPortalContainer?.querySelector('[data-assessment-suspension-status]:not([hidden])');
+    target?.focus({preventScroll:true});
+  };
+  const detailsMenu=assessmentConcept?<DropdownMenu onOpenChange={open=>{if(detailsOwner.current===detailsScope&&open)detailsDestination.current=false;}}>
     <DropdownMenuTrigger asChild><Button ref={detailsTrigger} className="gn-button gn-details-trigger" variant="outline" disabled={busy}>Assessment details<ChevronDown className="gn-icon" aria-hidden="true"/></Button></DropdownMenuTrigger>
     <DropdownMenuContent className="gn-details-menu" portalContainer={state.pilotPortalContainer||undefined} align="end"
-      onCloseAutoFocus={event=>{if(detailsDestination.current)event.preventDefault();}}>
-      <DropdownMenuItem disabled={!state.manageRecord||busy} onSelect={()=>{detailsDestination.current=true;state.manageRecord?.();}}>Ownership &amp; assessment history</DropdownMenuItem>
-      <DropdownMenuItem disabled={!form.notes&&!current.notes||busy} onSelect={()=>{detailsDestination.current=true;setDetailsView('notes');}}>Recorded notes</DropdownMenuItem>
-      <DropdownMenuItem disabled={!guideConfiguration||!ctx||busy} onSelect={()=>{detailsDestination.current=true;setDetailsView('history');}}>Interview history</DropdownMenuItem>
+      onCloseAutoFocus={event=>{if(detailsOwner.current!==detailsScope||detailsDestination.current)event.preventDefault();}}>
+      <DropdownMenuItem disabled={!state.manageRecord||busy} onSelect={()=>{if(detailsOwner.current!==detailsScope)return;detailsDestination.current=true;state.manageRecord?.();}}>Ownership &amp; assessment history</DropdownMenuItem>
+      <DropdownMenuItem disabled={!form.notes&&!current.notes||busy} onSelect={()=>{if(setDetailsView('notes'))detailsDestination.current=true;}}>Recorded notes</DropdownMenuItem>
+      <DropdownMenuItem disabled={!guideConfiguration||!ctx||busy} onSelect={()=>{if(setDetailsView('history'))detailsDestination.current=true;}}>Interview history</DropdownMenuItem>
     </DropdownMenuContent>
   </DropdownMenu>:null;
   return <AssessmentShell open={open} title={definition.title} description={<span className="sr-only">Safeguard assessment workspace</span>}

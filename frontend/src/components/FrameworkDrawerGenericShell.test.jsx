@@ -215,14 +215,21 @@ test('two acknowledged pending Item edits in one input turn are both retained wi
   await act(async()=>{expect(commands.onOperation(first)).toBe(true);expect(commands.onOperation(second)).toBe(true);});
   expect(mockFrame.itemsToAddress.props.controls.operations).toEqual([first,second]);
   expect(nativeRecord).toEqual(record);expect(api.patch).not.toHaveBeenCalled();expect(api.post).not.toHaveBeenCalled();
+  const retainedForm=copy(mockFrame.state.form),retainedNative=copy(nativeRecord);
   mockAuth={...mockAuth,user:{...mockAuth.user,role:'client_readonly'}};await render();
+  expect(mockFrame.state.writable).toBe(false);expect(mockFrame.state.form).toEqual(retainedForm);
   expect(commands.onOperation({...first,request_id:'synthetic_retired_owner_edit'})).toBe(false);
   expect(mockFrame.itemsToAddress.props.controls.operations).toEqual([]);
   mockAuth={...mockAuth,user:{...mockAuth.user,role:'super_admin'}};await render();
-  expect(mockFrame.itemsToAddress.props.controls.operations).toEqual([first,second]);
+  expect(mockFrame.state.writable).toBe(true);expect(mockFrame.state.form).toEqual(retainedForm);
+  expect(mockFrame.itemsToAddress.props.controls.operations).toEqual([]);
   expect(commands.onOperation({...first,request_id:'synthetic_retired_owner_after_restore'})).toBe(false);
-  expect(mockFrame.itemsToAddress.props.controls.operations).toEqual([first,second]);
-  expect(api.patch).not.toHaveBeenCalled();expect(api.post).not.toHaveBeenCalled();
+  expect(mockFrame.itemsToAddress.props.controls.operations).toEqual([]);
+  await act(async()=>{expect(await mockFrame.actions.save()).toBe(false);});
+  expect(mockFrame.state.error).toContain('no fields were omitted');
+  expect(mockFrame.state.form).toEqual(retainedForm);expect(mockFrame.state.form.last_saved).toBe(retainedForm.last_saved);
+  expect(mockFrame.state.form.items_revision).toBe(retainedForm.items_revision);expect(nativeRecord).toEqual(retainedNative);
+  expect(api.patch).not.toHaveBeenCalled();expect(api.post).not.toHaveBeenCalled();expect(api.put).not.toHaveBeenCalled();
 });
 
 test('unsupported subject context never creates a broken generic Related opener',async()=>{

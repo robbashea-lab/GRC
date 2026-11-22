@@ -49,7 +49,7 @@ test('notes save once, confirm success and remain readable in history including 
   await act(async()=>{Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype,'value').set.call(field,'Inventory omits remote devices.');field.dispatchEvent(new Event('input',{bubbles:true}));});
   expect(container.textContent).toContain('Unsaved assessment changes');
   await act(async()=>button('Save assessment').click());
-  expect(api.patch).toHaveBeenCalledWith('/framework_assessments/a',expect.objectContaining({implementation:'Inventory omits remote devices.',notes:'Legacy narrative retained'}));
+  expect(api.patch).toHaveBeenCalledWith('/framework_assessments/a',expect.objectContaining({implementation:'Inventory omits remote devices.',notes:'Legacy narrative retained'}),{assessmentAuthority:expect.any(Function)});
   expect(container.textContent).toContain('Assessment saved.');
   expect(container.textContent).not.toContain('View History');
   expect(record.assessment_history[0]).toEqual(expect.objectContaining({implementation:'Inventory omits remote devices.',notes:'Legacy narrative retained'}));

@@ -22,6 +22,10 @@ jest.mock('@/lib/api', () => ({__esModule: true, PREVIEW_MODE: false, API: '/api
 
 const CLIENT = 'synthetic-management-a', OTHER = 'synthetic-management-b', ACTOR = 'synthetic-management-owner';
 const copy = value => JSON.parse(JSON.stringify(value));
+const copyGuardedCalls = calls => calls.map(([path, body, config]) => {
+  expect(config).toEqual({assessmentAuthority: expect.any(Function)});
+  return [path, copy(body), {...config}];
+});
 const baseUrl = clientId => '/compliance/cis-ig1?client_id=' + clientId;
 let root, host, clients, sources, currentLocation, navigate, org, before, unexpectedReads;
 
@@ -343,7 +347,7 @@ test.each([
   });
   await settleNativeFocusLifecycle();expectVisibleInterviewHistory(dialog);
   expect(api.get.mock.calls.filter(([path]) => path === request.path))
-    .toEqual([[request.path, {params: {limit: 25}}]]);
+    .toEqual([[request.path, {params: {limit: 25}, assessmentAuthority: expect.any(Function)}]]);
   if (shape === 'populated') {
     expect(dialog.textContent).toContain(retainedInterviewNarrative);
     expect(dialog.querySelector('pre').textContent).toBe(JSON.stringify(retainedInterviewAnswers, null, 2));
@@ -627,7 +631,7 @@ test.each(['matrix row', 'response review'])('CIS 2.1 preserves its %s through a
   }
   assertSequentialView(view, fixture.questions, detail);
   const parent = assessment(), locationBefore = currentLocation.pathname + currentLocation.search;
-  const writesBefore = copy(api.put.mock.calls), checkpointBefore = transport.checkpoint();
+  const writesBefore = copyGuardedCalls(api.put.mock.calls), checkpointBefore = transport.checkpoint();
   const clientsBefore = JSON.stringify(clients), body = document.querySelector('[data-client-workspace-body]');
   transport.arm();
   await act(async () => { window.dispatchEvent(new Event('focus')); await transport.clientDispatched; });
@@ -654,7 +658,7 @@ test('CIS 2.1 sequential view resets on committed role and client withdrawal rat
   await openSequential21();await advanceSequential21(fixture.questions, 'unknowns');
   await click(button(sequentialGuide(), 'Review responses'));
   expect(sequentialGuide().querySelector('.cis-answer-review')).not.toBeNull();
-  const writesBefore = copy(api.put.mock.calls), checkpointBefore = transport.checkpoint();
+  const writesBefore = copyGuardedCalls(api.put.mock.calls), checkpointBefore = transport.checkpoint();
   mockAuth = {...mockAuth, user: {...mockAuth.user, role: 'client_readonly'}};
   await action(() => root.render(<RefreshApp/>));await settleNativeFocusLifecycle();
   expect(org.currentClientId).toBe(CLIENT);

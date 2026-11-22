@@ -6,7 +6,7 @@ import catalog from '@catalogs/cisIG1.json';
 let mockGuideProps,mockShellProps,mockBrawndoRecord=true;
 jest.mock('@/lib/brawndoFullRecord',()=>({useBrawndoFullRecord:()=>mockBrawndoRecord}));
 jest.mock('@/context/AuthContext',()=>({useAuth:()=>({user:{user_id:'u',role:'super_admin',workspace_mode:'demo'}})}));
-jest.mock('./AssessmentShell',()=>({__esModule:true,default:props=>{mockShellProps=props;const {className,title,status,children,footer}=props;return <section className={className} data-testid="native-shell"><h2>{title}</h2>{status}{children}<footer>{footer}</footer></section>;},AssessmentStep:({title,children})=><section><h3>{title}</h3>{children}</section>}));
+jest.mock('./AssessmentShell',()=>({__esModule:true,default:props=>{mockShellProps=props;const {className,title,status,navigationActions,children,footer}=props;return <section className={className} data-testid="native-shell"><h2>{title}</h2>{status}{navigationActions}{children}<footer>{footer}</footer></section>;},AssessmentStep:({title,children})=><section><h3>{title}</h3>{children}</section>}));
 jest.mock('./GuidedAssessor',()=>props=>{mockGuideProps=props;return <section hidden={!props.inlineOpen} data-testid="native-interview"><button onClick={props.onInlineClose}>Close interview</button></section>;});
 jest.mock('./BrawndoCisFindings',()=>({__esModule:true,default:()=> <p>Native Findings</p>,directFindings:(record,related)=>related?.findings||[]}));
 jest.mock('./AssessmentItems',()=>()=> <p>Native items</p>);
@@ -155,4 +155,36 @@ test('fresh unassessed footer is honest and draft dates never supply saved metad
   state.current={...state.current,status:'not_assessed'};
   state.form={...state.form,status:'addressed',last_saved:'2030-01-01T00:00:00Z'};
   await render();expect(container.querySelector('footer').textContent).toContain('Not yet assessed.');expect(container.querySelector('footer time')).toBeNull();
+});
+
+
+test('ended history close and autofocus callbacks cannot affect a restored permission owner',async()=>{
+  const firstOwner={capabilities:'writable'},withdrawnOwner={capabilities:'readonly'},restoredOwner={capabilities:'writable'};
+  state={...state,assessmentRollout:true,detailsOwner:firstOwner};await render();
+  // Frame's actual permission-owner integration is covered by the native Router cases.
+  // This existing captured-Guide fixture checks the retained callback boundary itself.
+  const chooseHistory=async()=>{
+    const trigger=button('Assessment details');expect(trigger).toBeTruthy();
+    await act(async()=>trigger.dispatchEvent(new MouseEvent('pointerdown',{bubbles:true,button:0,ctrlKey:false})));
+    const choice=[...document.querySelectorAll('[role="menuitem"]')].find(node=>node.textContent==='Interview history');
+    expect(choice).toBeTruthy();await act(async()=>choice.click());
+    expect(mockGuideProps.interviewHistoryOpen).toBe(true);
+  };
+  await chooseHistory();
+  const oldClose=mockGuideProps.onInterviewHistoryOpenChange,oldAutofocus=mockGuideProps.onInterviewHistoryCloseAutoFocus;
+  state={...state,writable:false,detailsOwner:withdrawnOwner};await render();expect(mockGuideProps.interviewHistoryOpen).toBe(false);
+  state={...state,writable:true,detailsOwner:restoredOwner};await render();expect(mockGuideProps.interviewHistoryOpen).toBe(false);
+  await chooseHistory();
+  const field=container.querySelector('[aria-label="Current implementation"]');field.focus();expect(document.activeElement).toBe(field);
+  const staleEvent={preventDefault:jest.fn()};
+  await act(async()=>{oldClose(false);oldAutofocus(staleEvent);});
+  expect(mockGuideProps.interviewHistoryOpen).toBe(true);expect(document.activeElement).toBe(field);
+  expect(staleEvent.preventDefault).toHaveBeenCalledTimes(1);
+  expect(field.value).toBe(state.form.implementation);
+  const currentClose=mockGuideProps.onInterviewHistoryOpenChange,currentAutofocus=mockGuideProps.onInterviewHistoryCloseAutoFocus;
+  await act(async()=>currentClose(false));expect(mockGuideProps.interviewHistoryOpen).toBe(false);
+  const currentEvent={preventDefault:jest.fn()};await act(async()=>currentAutofocus(currentEvent));
+  expect(currentEvent.preventDefault).toHaveBeenCalledTimes(1);expect(document.activeElement).toBe(button('Assessment details'));
+  expect(actions.put).not.toHaveBeenCalled();expect(actions.save).not.toHaveBeenCalled();
+  expect(actions.saveGuidedAssessment).not.toHaveBeenCalled();expect(actions.stageGuidedImplementation).not.toHaveBeenCalled();
 });

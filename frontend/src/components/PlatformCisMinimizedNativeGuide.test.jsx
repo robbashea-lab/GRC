@@ -36,6 +36,14 @@ async function toggleSummary(open){
 }
 async function open(){await toggleSummary(true);expect(workspace()).toBeTruthy();}
 async function typeAndCloseSummary(){await open();const rootQuestion=workspace().querySelector('select');expect(rootQuestion).toBeTruthy();await act(async()=>{Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype,'value').set.call(rootQuestion,'Not sure');rootQuestion.dispatchEvent(new Event('change',{bubbles:true}));});await value('[aria-label="Known gaps or uncertainties"]',detail);await toggleSummary(false);expect(workspace()).toBeNull();}
+function expectRetainedClosedSummary(original){
+  const retained=document.querySelector('[aria-label="CIS assessment interview"]');
+  expect(retained).toBe(original);expect(retained.hidden).toBe(true);
+  expect(retained.querySelector('[aria-label="Known gaps or uncertainties"]').value).toBe(detail);
+  expect(retained.querySelector('fieldset').disabled).toBe(true);
+  const saveClose=[...retained.querySelectorAll('button')].find(button=>button.textContent.trim()==='Save & close');
+  expect(saveClose).toBeTruthy();expect(saveClose.disabled).toBe(true);
+}
 async function nativeSave(){await value('[aria-label="Current implementation"]','SYNTHETIC native receipt B.');await click('Save assessment',container);expect(container.textContent).toContain('Assessment saved.');expect(native.last_saved).toBe(tokenB);}
 
 beforeEach(()=>{
@@ -88,9 +96,12 @@ test('failed context refresh after confirmed native save reports its error and r
 
 test.each(['client','assessment'])('unavailable context never reuses cached guide eligibility after a %s identity switch',async kind=>{
   await render();await typeAndCloseSummary();holdRefresh=true;await nativeSave();await act(async()=>pending.splice(0).forEach(read=>read.reject(new Error('Synthetic joined context refresh failed'))));
+  const originalGuide=document.querySelector('[aria-label="CIS assessment interview"]');expect(originalGuide).not.toBeNull();
   const nextRecord={...record,framework_assessment_id:'timing-next',...(kind==='client'?{client_id:'timing-other-client'}:{})};
   await act(async()=>root.render(<FrameworkDrawer open record={nextRecord} clientId={nextRecord.client_id} onOpenChange={()=>{}}/>));
-  expect(document.querySelector('[aria-label="CIS assessment interview"]')).toBeNull();expect(workspace()).toBeNull();expect(api.put).not.toHaveBeenCalled();expect(api.patch).toHaveBeenCalledTimes(1);expect(api.post).not.toHaveBeenCalled();expect(api.delete).not.toHaveBeenCalled();
+  if(kind==='client'){expect(document.querySelector('[aria-label="CIS assessment interview"]')).toBeNull();expect(originalGuide.isConnected).toBe(false);}
+  else expectRetainedClosedSummary(originalGuide);
+  expect(workspace()).toBeNull();expect(api.put).not.toHaveBeenCalled();expect(api.patch).toHaveBeenCalledTimes(1);expect(api.post).not.toHaveBeenCalled();expect(api.delete).not.toHaveBeenCalled();
 });
 
 test('failed-context retry retains persisted manual wording and still requires explicit comparison',async()=>{
@@ -102,8 +113,9 @@ test('failed-context retry retains persisted manual wording and still requires e
 
 test('a successful context refresh omitting the selected assessment cannot reactivate earlier cached guide eligibility',async()=>{
   await render();await typeAndCloseSummary();holdRefresh=true;await nativeSave();expect(pending).toHaveLength(1);const savedNative=copy(native);
+  const originalGuide=document.querySelector('[aria-label="CIS assessment interview"]');expect(originalGuide).not.toBeNull();
   await act(async()=>pending.splice(0).forEach(read=>read.resolve({data:{...read.data,assessments:[]}})));
-  expect(document.querySelector('[aria-label="CIS assessment interview"]')).toBeNull();expect(workspace()).toBeNull();expect(native).toEqual(savedNative);expect(nativeHistory).toHaveLength(1);expect(api.put).not.toHaveBeenCalled();expect(api.patch).toHaveBeenCalledTimes(1);expect(api.post).not.toHaveBeenCalled();expect(api.delete).not.toHaveBeenCalled();
+  expectRetainedClosedSummary(originalGuide);expect(workspace()).toBeNull();expect(native).toEqual(savedNative);expect(nativeHistory).toHaveLength(1);expect(api.put).not.toHaveBeenCalled();expect(api.patch).toHaveBeenCalledTimes(1);expect(api.post).not.toHaveBeenCalled();expect(api.delete).not.toHaveBeenCalled();
 });
 
 test('in-flight first progress rechecks unavailable context before PUT and resumes only after retry',async()=>{

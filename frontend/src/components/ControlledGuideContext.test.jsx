@@ -46,8 +46,12 @@ test.each([['iso-27001','A.8.11'],['iso-27001','6.2'],['soc-2','CC1.1']])('%s %s
   expect(answer.value).toBe('Retain exact unsaved answer');expect(mockProps.disabled).toBe(true);
   let saved;await act(async()=>{saved=await mockProps.onSaveAssessment({implementation:'Must not write',status:'addressed'},JSON.stringify(record));});
   expect(saved).toBe(false);expect(api.patch).not.toHaveBeenCalled();
-  mockFail=false;await act(async()=>mockRefresh());
+  mockFail=false;
+  const retry=[...document.querySelectorAll('button')].find(button=>button.textContent==='Retry');
+  expect(retry).toBeTruthy();expect(retry.disabled).toBe(false);
+  await act(async()=>retry.click());
   expect(document.querySelector('[data-testid="retained-guide-answer"]')).toBe(answer);expect(mockProps.disabled).toBe(false);
+  expect(api.patch).not.toHaveBeenCalled();
 });
 
 test('retained configuration never crosses client or assessment identity after a failed read',async()=>{

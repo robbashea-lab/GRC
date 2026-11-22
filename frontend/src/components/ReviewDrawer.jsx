@@ -337,8 +337,8 @@ export default function ReviewDrawer({open,onOpenChange,record,clientId,onSaved,
     acknowledgeReviewRevision(previous,data,owner,version,request[1].expected_updated_at);
     setCurrent(data);await reload();onSaved?.();toast.success('Saved');
   }
-  async function saveFinding(){
-    await (createFinding.unconfirmed()?createFinding.retry():createFinding(`/reviews/${current.review_id}/create-finding`,{...finding,owner_id:finding.owner_id||null,occurrence_id:occurrenceId(current)}));
+  async function saveFinding(retry=false){
+    await (retry?createFinding.retry():createFinding(`/reviews/${current.review_id}/create-finding`,{...finding,owner_id:finding.owner_id||null,occurrence_id:occurrenceId(current)}));
     setFinding(null);await reload();onSaved?.();toast.success('Finding and Action Item created');
   }
   const lifecycle = action => run(async () => {
@@ -531,7 +531,7 @@ export default function ReviewDrawer({open,onOpenChange,record,clientId,onSaved,
     }}} onRiskLinked={refreshAfterLinkedRisk} onSaved={() => {reload();onSaved?.();}} />}
     <Sheet open={!!finding} onOpenChange={v => {if (!v) leave(()=>setFinding(null),true);}}>
       <SheetContent description="Describe the gap identified in this Review and the corrective Action required to address it." className={'w-full sm:max-w-xl overflow-y-auto'+(findingPresentation?' brawndo-review-finding':'')} data-testid="review-finding-form"><SheetHeader className={findingPresentation?'review-finding-header':undefined}><div className={findingPresentation?'review-finding-heading':undefined}>{findingPresentation&&<span className="review-finding-icon" aria-hidden="true"><AlertTriangle size={18}/></span>}<SheetTitle>Raise Finding</SheetTitle></div>{findingPresentation&&<div className="review-finding-context"><span>From {current.title}</span><span>{current.period||reviewSchedule(current).period} occurrence</span></div>}</SheetHeader>
-        {createFinding.unconfirmed()&&<div role="status"><p>Finding create is unconfirmed. Retry its original values before closing.</p><Button type="button" disabled={busy} onClick={()=>run(saveFinding)}>Retry unconfirmed finding</Button></div>}
+        {createFinding.unconfirmed()&&<div role="status"><p>Finding create is unconfirmed. Retry its original values before closing.</p><Button type="button" disabled={busy} onClick={()=>run(()=>saveFinding(true))}>Retry unconfirmed finding</Button></div>}
         {finding && <form className={findingPresentation?'review-finding-form':'mt-5 space-y-4'} onSubmit={e => {e.preventDefault();run(saveFinding);}}>
           {findingPresentation?<BrawndoReviewFindingFields finding={finding} onChange={setFinding} record={current} occurrenceId={occurrenceId(current)} users={members} clientId={cid} busy={busy} onCancel={()=>leave(()=>setFinding(null),true)}/>:<>
           <Label className="block">Finding title *<Input required data-testid="finding-title" value={finding.title} onChange={e => setFinding(p => ({...p,title:e.target.value}))} /></Label>

@@ -59,7 +59,7 @@ test('saving a client-wide Control refreshes ISO management and the caller witho
   api.post.mockImplementation(async path=>({data:path==='/organizational-controls'?control:{}}));
   await render({onSaved});await act(async()=>button('Create organizational Control').click());await nameControl(control.name);
   await act(async()=>controlButton('Save Control').click());
-  expect(api.post).toHaveBeenCalledWith('/organizational-controls',{name:control.name,description:'',frequency:'',design:'not_assessed',owner_id:null,assessment_ids:[],related_links:[],client_id:'client',request_id:expect.any(String)});
+  expect(api.post).toHaveBeenCalledWith('/organizational-controls',{name:control.name,description:'',frequency:'',design:'not_assessed',owner_id:null,assessment_ids:[],related_links:[],client_id:'client',request_id:expect.any(String)},{assessmentAuthority:expect.any(Function)});
   expect(onSaved).toHaveBeenCalledTimes(1);
   expect(api.get.mock.calls.filter(([path])=>path==='/frameworks/iso-27001').length).toBeGreaterThan(1);
   expect(controlDialog().textContent).toContain('Control saved. Framework assessments are unchanged.');
@@ -80,18 +80,23 @@ test('Frameworks owner save uses only exact assessment owner and version guard; 
   expect(node.textContent).toContain('Historical scope');expect(node.textContent).toContain('Historical discussion');expect(node.textContent).toContain('assessment saved');
   await change(node.querySelector('[aria-label="Assessment Owner"]'),'contributor');
   await act(async()=>button('Save owner').click());
-  expect(api.patch).toHaveBeenCalledWith('/framework_assessments/assessment-4.1',{owner_id:'contributor',process_owner_id:null,expected_last_assessed:'2026-10-01'});
+  expect(api.patch).toHaveBeenCalledWith('/framework_assessments/assessment-4.1',{owner_id:'contributor',process_owner_id:null,expected_last_assessed:'2026-10-01'},{assessmentAuthority:expect.any(Function)});
   expect(api.post).not.toHaveBeenCalled();expect(record.implementation).toBe('Saved scope');
 });
 
 test('ISO comment and record link keep exact source context; Review navigation protects the unsaved draft',async()=>{
   const navigate=jest.fn();await render({onReviews:navigate});
   await change(node.querySelector('[aria-label="Requirement comment"]'),'Unsaved ISO discussion');
+  await act(async()=>button('Add comment').click());
+  expect(api.post).toHaveBeenCalledWith('/comments',{client_id:'client',entity_type:'framework_assessments',entity_id:'assessment-4.1',body:'Unsaved ISO discussion'},{assessmentAuthority:expect.any(Function)});
+  expect(api.post).toHaveBeenCalledTimes(1);expect(api.patch).not.toHaveBeenCalled();
+  expect(node.querySelector('[aria-label="Requirement comment"]').value).toBe('');
+  await change(node.querySelector('[aria-label="Requirement comment"]'),'Separate unsaved Review navigation discussion');
   await act(async()=>node.querySelector('a[href^="/reviews"]').click());expect(navigate).not.toHaveBeenCalled();expect(node.textContent).toContain('Leave unsaved changes?');
   await act(async()=>button('Discard changes').click());
   expect(navigate).toHaveBeenCalledWith('/reviews?client_id=client&framework_key=iso-27001&framework_assessment=assessment-4.1');
-  await act(async()=>button('Add comment').click());
-  expect(api.post).toHaveBeenCalledWith('/comments',{client_id:'client',entity_type:'framework_assessments',entity_id:'assessment-4.1',body:'Unsaved ISO discussion'});
+  expect(node.querySelector('[aria-label="Requirement comment"]').value).toBe('');
+  expect(api.post).toHaveBeenCalledTimes(1);expect(api.patch).not.toHaveBeenCalled();
 });
 
 test('readonly retains history but cannot assign, comment or link; Review management has no assessment-owner editor',async()=>{
@@ -109,7 +114,7 @@ test('selected relationship stays a protected draft until the exact link command
   await change(node.querySelector('[aria-label="Related record"]'),'risk');
   await act(async()=>button('Close').click());expect(close).not.toHaveBeenCalled();expect(node.textContent).toContain('Leave unsaved changes?');
   await act(async()=>button('Link record').click());
-  expect(api.post).toHaveBeenCalledWith('/framework_assessments/assessment-4.1/links',{kind:'risks',id:'risk'});
+  expect(api.post).toHaveBeenCalledWith('/framework_assessments/assessment-4.1/links',{kind:'risks',id:'risk'},{assessmentAuthority:expect.any(Function)});
   expect(node.querySelector('[aria-label="Related record"]').value).toBe('');
 });
 
@@ -121,7 +126,7 @@ test.each([1,2,3])('Reviews reuses configured CIS IG%s plan scope and separate R
   expect(node.textContent).toContain('Related requirements: '+plan.safeguards.join(', ')+'.');
   await change(node.querySelector('[aria-label="Review Owner"]'),'contributor');
   await act(async()=>button('Save Review').click());
-  expect(api.post).toHaveBeenCalledWith('/framework_assessments/assessment-4.1/reviews',expect.objectContaining({owner_id:'contributor',plan_key:plan.key}));
+  expect(api.post).toHaveBeenCalledWith('/framework_assessments/assessment-4.1/reviews',expect.objectContaining({owner_id:'contributor',plan_key:plan.key}),{assessmentAuthority:expect.any(Function),headers:{'Idempotency-Key':expect.any(String)},pendingCommandGeneration:expect.any(Number)});
   expect(record.owner_id).toBe('manager');expect(api.patch).not.toHaveBeenCalled();
 });
 
@@ -149,9 +154,9 @@ test('ISO process owner remains a contact draft with guarded save and clear; rea
  await change(node.querySelector('[aria-label="Process Owner"]'),'contact-business');
  await act(async()=>button('Close').click());expect(close).not.toHaveBeenCalled();expect(node.textContent).toContain('Leave unsaved changes?');
  await act(async()=>button('Save owner').click());
- expect(api.patch).toHaveBeenLastCalledWith('/framework_assessments/assessment-4.1',{owner_id:'manager',process_owner_id:'contact-business',expected_last_assessed:'2026-10-01'});
+ expect(api.patch).toHaveBeenLastCalledWith('/framework_assessments/assessment-4.1',{owner_id:'manager',process_owner_id:'contact-business',expected_last_assessed:'2026-10-01'},{assessmentAuthority:expect.any(Function)});
  await change(node.querySelector('[aria-label="Process Owner"]'),'');await act(async()=>button('Save owner').click());
- expect(api.patch).toHaveBeenLastCalledWith('/framework_assessments/assessment-4.1',{owner_id:'manager',process_owner_id:null,expected_last_assessed:'2026-10-01'});
+ expect(api.patch).toHaveBeenLastCalledWith('/framework_assessments/assessment-4.1',{owner_id:'manager',process_owner_id:null,expected_last_assessed:'2026-10-01'},{assessmentAuthority:expect.any(Function)});
  mockUser.role='client_viewer';await render();expect(node.querySelector('[aria-label="Process Owner"]').closest('fieldset').disabled).toBe(true);
 });
 
@@ -180,8 +185,8 @@ test('eligible SoA management adds guidance beside existing owner, links and Rev
   for(const element of node.querySelectorAll('[data-soa-guidance]')){expect(element.textContent).toContain('ISO/IEC 27001:2022 · 6.1.3(d)');expect(element.querySelectorAll('input,textarea,select,button')).toHaveLength(0);}
   expect(api.post).not.toHaveBeenCalled();expect(api.patch).not.toHaveBeenCalled();expect(node.querySelectorAll('[aria-label="Assessment Owner"]')).toHaveLength(1);expect(node.querySelectorAll('[aria-label="Process Owner"]')).toHaveLength(1);
   await change(node.querySelector('[aria-label="Assessment Owner"]'),'contributor');await act(async()=>button('Save owner').click());
-  expect(api.patch).toHaveBeenCalledWith('/framework_assessments/synthetic-soa-A.5.1',{owner_id:'contributor',process_owner_id:null,expected_last_assessed:'2026-10-01'});
-  await change(node.querySelector('[aria-label="Related record"]'),'risk');await act(async()=>button('Link record').click());expect(api.post).toHaveBeenCalledWith('/framework_assessments/synthetic-soa-A.5.1/links',{kind:'risks',id:'risk'});
+  expect(api.patch).toHaveBeenCalledWith('/framework_assessments/synthetic-soa-A.5.1',{owner_id:'contributor',process_owner_id:null,expected_last_assessed:'2026-10-01'},{assessmentAuthority:expect.any(Function)});
+  await change(node.querySelector('[aria-label="Related record"]'),'risk');await act(async()=>button('Link record').click());expect(api.post).toHaveBeenCalledWith('/framework_assessments/synthetic-soa-A.5.1/links',{kind:'risks',id:'risk'},{assessmentAuthority:expect.any(Function)});
   await act(async()=>node.querySelector('a[href^="/reviews?"]').click());expect(navigate).toHaveBeenCalledWith('/reviews?client_id=client&framework_key=iso-27001&framework_assessment=synthetic-soa-A.5.1');
   expect(record.soa_applicability).toBe('included');expect(record.soa_justification).toBe('Exact native SoA decision.');expect(record.implementation).toBe('Saved scope');
 });

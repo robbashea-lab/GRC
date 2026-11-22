@@ -182,7 +182,7 @@ test.each([false,true])('native Save & next with a newer POP preserves the pendi
   expect(mockNativeState.busy).toBe(true);expect(api.patch).toHaveBeenCalledTimes(1);
   expect(api.patch).toHaveBeenCalledWith('/framework_assessments/'+source.framework_assessment_id,expect.objectContaining({
     implementation:'Exact reviewed native wording before the browser navigation.',status:source.status,expected_last_assessed:source.last_saved,
-  }));
+  }),{assessmentAuthority:expect.any(Function)});
   await act(async()=>navigationBoundary.navigate(-1));
   const requestedKey=navigationBoundary.location.key;
   expect(navigationBoundary.location.search).toBe('?soc_category=availability');

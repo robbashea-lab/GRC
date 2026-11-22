@@ -120,7 +120,7 @@ test('status, narrative and verification save while retaining prior criteria and
  record.owner_id='u';record.verification='needs_validation';record.cis_assessment_criteria=['1.1-c1'];
  await render();await tick(container.querySelector('input[value="in_progress"]'));await input('Current implementation','Inventory maintained in RMM; reconciled monthly.');
  await act(async()=>button('Save assessment').click());
- expect(api.patch).toHaveBeenCalledWith('/framework_assessments/a',expect.objectContaining({status:'in_progress',implementation:'Inventory maintained in RMM; reconciled monthly.',verification:'needs_validation',owner_id:'u',cis_assessment_criteria:['1.1-c1'],notes:'Older notes',technology:'Recorded platform',expected_last_assessed:null}));
+ expect(api.patch).toHaveBeenCalledWith('/framework_assessments/a',expect.objectContaining({status:'in_progress',implementation:'Inventory maintained in RMM; reconciled monthly.',verification:'needs_validation',owner_id:'u',cis_assessment_criteria:['1.1-c1'],notes:'Older notes',technology:'Recorded platform',expected_last_assessed:null}),{assessmentAuthority:expect.any(Function)});
  expect(container.textContent).toContain('Assessment saved.');expect(container.querySelector('[aria-label="Saved verification"]').textContent).toBe('Needs validation');
 
 });

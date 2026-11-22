@@ -180,7 +180,7 @@ test.each(['1.1','1.2','12.1'])('%s saves from each entry path, reloads the nati
   await mount();await openDomain(id);
   expect(native().textContent).toContain('Preserve native item');expect(native().textContent).toContain('Original linked finding');
   await value('Current implementation','Exact manual domain wording '+id);await click(native().querySelector('input[value="addressed"]'));await clickName('Save assessment',native());
-  expect(api.patch).toHaveBeenLastCalledWith('/framework_assessments/native-'+id,expect.objectContaining({implementation:'Exact manual domain wording '+id,status:'addressed',verification:'needs_validation',owner_id:'native-owner',expected_last_assessed:TOKEN}));
+  expect(api.patch).toHaveBeenLastCalledWith('/framework_assessments/native-'+id,expect.objectContaining({implementation:'Exact manual domain wording '+id,status:'addressed',verification:'needs_validation',owner_id:'native-owner',expected_last_assessed:TOKEN}),{assessmentAuthority:expect.any(Function)});
   expect(native().textContent).toContain('Assessment saved.');await closeNative();
   expect(container.querySelector('[data-testid="bcis-seg-addressed"]').getAttribute('aria-label')).toContain('1 of 56');
   expect(query(`[data-testid="security-domain-${domain.id}"]`).textContent).toContain('1 of '+domain.safeguardIds.length);
@@ -276,11 +276,11 @@ test.each(['1.1','1.2'])('Demo Brawndo keeps %s on its own native routes and man
   await closeNative();await openControl(id);
   expect(route()).toEqual(domainRoute);expect(editorSnapshot()).toEqual(domainView);
   await value('Current implementation','Synthetic Controls wording '+id);await clickName('Save assessment',native());
-  expect(api.patch).toHaveBeenLastCalledWith('/framework_assessments/'+assessmentId,expect.objectContaining({implementation:'Synthetic Controls wording '+id,owner_id:preserved.owner,verification:preserved.verification,expected_last_assessed:TOKEN}));
+  expect(api.patch).toHaveBeenLastCalledWith('/framework_assessments/'+assessmentId,expect.objectContaining({implementation:'Synthetic Controls wording '+id,owner_id:preserved.owner,verification:preserved.verification,expected_last_assessed:TOKEN}),{assessmentAuthority:expect.any(Function)});
   const firstSavedToken=record(id).last_saved;
   await closeNative();await openDomain(id);expect(editorSnapshot().implementation).toBe('Synthetic Controls wording '+id);
   await value('Current implementation','Synthetic domain wording '+id);await clickName('Save assessment',native());
-  expect(api.patch).toHaveBeenLastCalledWith('/framework_assessments/'+assessmentId,expect.objectContaining({implementation:'Synthetic domain wording '+id,owner_id:preserved.owner,verification:preserved.verification,expected_last_assessed:firstSavedToken}));
+  expect(api.patch).toHaveBeenLastCalledWith('/framework_assessments/'+assessmentId,expect.objectContaining({implementation:'Synthetic domain wording '+id,owner_id:preserved.owner,verification:preserved.verification,expected_last_assessed:firstSavedToken}),{assessmentAuthority:expect.any(Function)});
   await closeNative();await remount(CLIENT);await openControl(id);
   expect(editorSnapshot().implementation).toBe('Synthetic domain wording '+id);
   expect(record(id).assessment_history).toHaveLength(2);
@@ -297,14 +297,14 @@ test.each(['1.1','1.2'])('Demo Brawndo keeps %s on its native Omnibot checkpoint
   const assessmentId=record(id).framework_assessment_id,originalRecord=clone(record(id)),otherRecords=clone(records.filter(value=>value.definition_id!==id));
   const answers={[id==='1.1'?'inventory':'process']:'No'},path='/framework_assessments/'+assessmentId+'/guided-assessment';
   await mount(CLIENT);await openDomain(id);await openOmni();await setOmniRootAnswer('No');await clickName('Save & close',omni());
-  expect(api.put).toHaveBeenLastCalledWith(path,expect.objectContaining({expected_revision:0,completed:false,answers:expect.objectContaining(answers)}));
+  expect(api.put).toHaveBeenLastCalledWith(path,expect.objectContaining({expected_revision:0,completed:false,answers:expect.objectContaining(answers)}),{assessmentAuthority:expect.any(Function)});
   await closeNative();await remount(CLIENT);await openControl(id);await openOmni();
   expect(new URLSearchParams(route().search).get('assessment')).toBe(assessmentId);expect(assessmentId).toBe('fixture-native-'+id);
   expect(route().state).toEqual({fromWorkspace:true});expect(omniRootAnswer().value).toBe('No');
   expect(record(id)).toEqual(originalRecord);
   expect(interviews[id]).toEqual(expect.objectContaining({client_id:CLIENT,assessment_id:assessmentId,revision:1,answers}));
   await clickName('Save & close',omni());
-  expect(api.put).toHaveBeenLastCalledWith(path,expect.objectContaining({expected_revision:1,completed:false,answers:expect.objectContaining(answers)}));
+  expect(api.put).toHaveBeenLastCalledWith(path,expect.objectContaining({expected_revision:1,completed:false,answers:expect.objectContaining(answers)}),{assessmentAuthority:expect.any(Function)});
   expect(interviews[id]).toEqual(expect.objectContaining({client_id:CLIENT,assessment_id:assessmentId,revision:2,answers}));
   expect(record(id)).toEqual(originalRecord);expect(records.filter(value=>value.definition_id!==id)).toEqual(otherRecords);
   expect(api.put).toHaveBeenCalledTimes(2);expect(api.put.mock.calls.every(([target])=>target===path)).toBe(true);
@@ -383,7 +383,7 @@ test('native authorization/context rejection does not turn domain entry into a w
 test.each(['1.1','1.2'])('%s Omnibot interview saving resumes from Controls after domain entry without replacing manual implementation',async id=>{
   const before=clone(record(id));await mount();await openDomain(id);await openOmni();
   await setOmniRootAnswer('No');await clickName('Save & close',omni());
-  expect(api.put).toHaveBeenCalledWith('/framework_assessments/native-'+id+'/guided-assessment',expect.objectContaining({expected_revision:0,completed:false,answers:expect.objectContaining({[id==='1.1'?'inventory':'process']:'No'})}));
+  expect(api.put).toHaveBeenCalledWith('/framework_assessments/native-'+id+'/guided-assessment',expect.objectContaining({expected_revision:0,completed:false,answers:expect.objectContaining({[id==='1.1'?'inventory':'process']:'No'})}),{assessmentAuthority:expect.any(Function)});
   expect(api.patch).not.toHaveBeenCalled();expect(record(id)).toEqual(before);
   await closeNative();await openControl(id);await openOmni();
   expect(omniRootAnswer().value).toBe('No');
@@ -398,7 +398,7 @@ test.each(['domain','Controls'])('a reviewed Omnibot summary from %s uses native
   expect(document.body.textContent).toContain('Update this assessment?');expect(api.patch).not.toHaveBeenCalled();
   await clickName('Cancel',query('.omni-refined-close'));expect(record(id)).toEqual(before);
   await clickName('Update assessment',omni());await clickName('Yes, update assessment',query('.omni-refined-close'));
-  expect(api.patch).toHaveBeenCalledTimes(1);expect(api.patch).toHaveBeenCalledWith('/framework_assessments/native-1.1',expect.objectContaining({implementation:'Exact operator-reviewed Omnibot wording',status:'addressed',verification:'needs_validation',expected_last_assessed:TOKEN,guided_assessment_source:expect.objectContaining({version:versionForSafeguard(id),revision:3})}));
+  expect(api.patch).toHaveBeenCalledTimes(1);expect(api.patch).toHaveBeenCalledWith('/framework_assessments/native-1.1',expect.objectContaining({implementation:'Exact operator-reviewed Omnibot wording',status:'addressed',verification:'needs_validation',expected_last_assessed:TOKEN,guided_assessment_source:expect.objectContaining({version:versionForSafeguard(id),revision:3})}),{assessmentAuthority:expect.any(Function)});
   expect(record(id).assessment_history).toHaveLength(1);expect(record(id).notes).toBe(before.notes);expect(record(id).owner_id).toBe(before.owner_id);
   await closeNative();if(entry==='domain')await openControl(id);else await openDomain(id);
   expect(editorSnapshot().implementation).toBe('Exact operator-reviewed Omnibot wording');expect(editorSnapshot().status).toBe('addressed');
@@ -428,7 +428,7 @@ describe('current rollout through the real domain and Controls routes',()=>{
     expect(api.patch).toHaveBeenCalledTimes(1);
     expect(api.patch).toHaveBeenCalledWith('/framework_assessments/native-1.2',expect.objectContaining({
       implementation:'Synthetic current domain implementation.',status:before.status,verification:before.verification,expected_last_assessed:TOKEN,
-    }));
+    }),{assessmentAuthority:expect.any(Function)});
     await closeNative();await remount();await openControl('1.2');
     expect(native().querySelector('[aria-label="Current implementation"]').value).toBe('Synthetic current domain implementation.');
     expect(record('1.2').assessment_history).toHaveLength(1);
