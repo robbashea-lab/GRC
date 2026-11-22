@@ -125,6 +125,14 @@ jobs:
         options: >-
           --health-cmd "mongosh --quiet --eval 'db.adminCommand({ping:1})'"
           --health-interval 10s --health-timeout 5s --health-retries 12
+      # Snapshot transactions require a replica set; retain the standalone persistence gate.
+      framework-reports:
+        image: mongo:8.0
+        command: mongod --replSet framework_reports_ci --bind_ip_all --port 27018
+        ports: ['127.0.0.1:27018:27018']
+        options: >-
+          --health-cmd "mongosh --port 27018 --quiet --eval 'db.adminCommand({ping:1})'"
+          --health-interval 10s --health-timeout 5s --health-retries 12
     steps:
       - name: Report hosted Mongo verification kernel
         run: uname -r
@@ -145,6 +153,60 @@ jobs:
           --include-ai-onboarding
       - name: Native R4 preservation, recovery and authorization on disposable Mongo
         run: python backend/scripts/verify_r4_mongo.py --mongo-url mongodb://127.0.0.1:27017
+
+      - name: Elect the isolated framework-report replica set
+        shell: python
+        run: |
+          from time import monotonic, sleep
+          from pymongo import MongoClient
+          from pymongo.errors import ConnectionFailure
+
+          with MongoClient('mongodb://127.0.0.1:27018/?directConnection=true',
+                           serverSelectionTimeoutMS=5000, connectTimeoutMS=5000, socketTimeoutMS=5000) as mongo:
+              mongo.admin.command('replSetInitiate', {
+                  '_id': 'framework_reports_ci',
+                  'members': [{'_id': 0, 'host': '127.0.0.1:27018'}],
+              })
+              deadline = monotonic() + 60
+              while monotonic() < deadline:
+                  try:
+                      hello = mongo.admin.command('hello')
+                  except ConnectionFailure:
+                      sleep(1)
+                      continue
+                  if hello.get('isWritablePrimary'):
+                      assert hello.get('setName') == 'framework_reports_ci', hello
+                      assert hello.get('logicalSessionTimeoutMinutes') is not None, hello
+                      break
+                  sleep(1)
+              else:
+                  raise RuntimeError('Framework-report replica set did not elect a session-capable primary')
+      - name: Real framework-report snapshot isolation and authorization
+        run: >-
+          python -m pytest -c backend/pytest.ini
+          backend/tests/test_framework_reports.py::FrameworkReportMongoSnapshotTests
+          -vv --junitxml=framework-report-snapshot.xml
+        env:
+          FRAMEWORK_REPORT_TEST_MONGO: mongodb://127.0.0.1:27018/?replicaSet=framework_reports_ci
+      - name: Require all three native snapshot checks without skips
+        shell: python
+        run: |
+          import xml.etree.ElementTree as ET
+
+          result = ET.parse('framework-report-snapshot.xml').getroot()
+          cases = result.findall('.//testcase')
+          expected = {
+              'test_real_transaction_concurrent_assessment_and_evidence_edits_use_one_snapshot',
+              'test_real_snapshot_has_no_source_writes',
+              'test_real_snapshot_rechecks_role_membership_enabled_program_and_session_fences',
+          }
+          assert len(cases) == 3 and {case.attrib['name'] for case in cases} == expected
+          assert all(case.attrib['classname'].endswith('.FrameworkReportMongoSnapshotTests') for case in cases)
+          assert not list(result.iter('skipped')) and not list(result.iter('failure')) and not list(result.iter('error'))
+          suites = list(result.iter('testsuite'))
+          assert suites and sum(int(suite.attrib['tests']) for suite in suites) == 3
+          assert all(int(suite.get(field, '0')) == 0
+                     for suite in result.iter('testsuite') for field in ('errors', 'failures', 'skipped'))
 
   release-gate:
     name: Release gate
