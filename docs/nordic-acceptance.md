@@ -20,8 +20,8 @@ These are bounded preflight observations, not completion of P1 or native accepta
 | Candidate field | Current binding |
 | --- | --- |
 | Delivered source commit/tree | Historical checkpoints remain preserved. The continuing repair candidate is bound outside Git in `../verification/nordic-repair-checkpoint-02.json` once its documentation-corrected commit and builds are complete. |
-| Frontend standard build/hash | Normal09 qualified commit 79357d9 only. New receipt/guard repairs require a new exact-commit normal build; see the repair checkpoint. |
-| Separate intentional Demo build/hash | Demo08 qualified commit 79357d9 only. New repairs require a separate new exact-commit Demo build. |
+| Frontend standard build/hash | Normal10 passed at implementation commit 6043438e. The documentation-corrected head requires its own exact normal-build receipt in the repair checkpoint. |
+| Separate intentional Demo build/hash | Demo09 passed at implementation commit 6043438e. The documentation-corrected head requires its own separate exact Demo-build receipt. |
 | Backend source/runtime identity | The continuing framework Review receipt change creates a new backend tree. Earlier native Mongo, HTTP and full offline evidence is historical; new focused and full offline checks are required. |
 | Owned new runtime/database/port/PID | Native read-only reconciliation at 2026-11-22 04:38:40 UTC confirms API 21652/launcher 12132 alive with their original start ticks and 127.0.0.1:52861 listener; retained API 2428/Mongo 13688 and 52619/52841/52863 listeners are absent. Restricted 03:54 process visibility was incomplete and cannot prove absence. Mongo-backed QA remains unavailable. No task stop/restart targeted these resources. See the visibility correction and served-static receipts below. |
 | Exact-commit CI run/attempt/conclusion | BLOCKED before dispatch: authenticated and unauthenticated GitHub metadata report the requested private target is public; no remote write |
@@ -129,7 +129,7 @@ The final repair commit still needs exact normal/Demo builds, independent full-d
 
 The source-repair auto-review rejection is retained in `../verification/nordic-repair-progress-01.json`. Its accepted material alternative kept all three new role/actor/status regression cases and strengthened read-only draft/CAS and stale-callback denial assertions; original native tests were not deleted. Earlier failures remain evidence.
 
-Before a downgrade, settle the original framework Review and AI receipt/audit work under a compatible implementation, preserving original request keys, bodies, actors and canonical IDs. A prior CSS-compatible build is not proof that an older backend can safely resume these new receipts. Original retained database namespaces were not reset, restored, deleted or targeted with QA mutations. New recovery proposals must use current source/build and process-absence evidence; old PID/starttick admissions cannot be reused. No restore, service launch, hosted migration, merge, public push or deployment is authorized by these local test results.
+Before a downgrade, settle the original framework Review and AI receipt/audit work under a compatible implementation, preserving original request keys, bodies, actors and canonical IDs. A prior CSS-compatible build is not proof that an older backend can safely resume these new receipts. Original retained database namespaces were not reset, restored, deleted or targeted with QA mutations. New recovery proposals must use current source/build and fresh native process/socket identity evidence; old PID/starttick admissions cannot be reused. No restore, service launch, hosted migration, merge, public push or deployment is authorized by these local test results.
 
 
 ## Native resource visibility correction and complete backend result
