@@ -30,7 +30,13 @@ class HostingTests(unittest.TestCase):
             Path(__file__).with_name('render_staging.py'))
         module = importlib.util.module_from_spec(spec)
         with patch.dict(sys.modules, {'server': SimpleNamespace(app=api)}), \
-             patch.dict(os.environ, {'FRONTEND_BUILD_DIR': self.directory.name}):
+             patch.dict(os.environ, {
+                 'APP_ENV': 'staging',
+                 'RUN_LEGACY_MIGRATIONS': 'false',
+                 'DEMO_MODE': 'false',
+                 'REACT_APP_PREVIEW': 'false',
+                 'FRONTEND_BUILD_DIR': self.directory.name,
+             }, clear=True):
             spec.loader.exec_module(module)
         self.client = TestClient(module.app)
         self.addCleanup(self.client.close)
@@ -69,6 +75,52 @@ class HostingTests(unittest.TestCase):
     def test_files_outside_build_are_not_exposed(self):
         for path in ('/..%2fsecret.txt', '/%2e%2e%2findex.html'):
             self.assertEqual(self.client.get(path).status_code, 404)
+
+
+class PoisonServer:
+    @property
+    def app(self):
+        raise AssertionError('Application import must not occur')
+
+
+class EnvironmentGuardTests(unittest.TestCase):
+    def test_rejects_unsafe_environment_before_application_import(self):
+        environment_error = 'APP_ENV must be staging for the staging entrypoint'
+        switch_error = 'Unsafe switches must be disabled for the staging entrypoint'
+        cases = [({}, environment_error)]
+        cases.extend(({'APP_ENV': value}, environment_error) for value in (
+            'development', 'test', 'production', 'invalid', '',
+            'STAGING', ' staging', 'staging ',
+        ))
+        cases.extend(({'APP_ENV': 'staging', name: 'true'}, switch_error)
+            for name in ('RUN_LEGACY_MIGRATIONS', 'DEMO_MODE', 'REACT_APP_PREVIEW'))
+        for environment, message in cases:
+            with self.subTest(environment=environment):
+                spec = importlib.util.spec_from_file_location('render_staging_fixture',
+                    Path(__file__).with_name('render_staging.py'))
+                module = importlib.util.module_from_spec(spec)
+                with patch.dict(sys.modules, {'server': PoisonServer()}), \
+                     patch.dict(os.environ, environment, clear=True):
+                    with self.assertRaises(ValueError) as error:
+                        spec.loader.exec_module(module)
+                self.assertEqual(str(error.exception), message)
+
+    def test_switches_only_reject_exact_true(self):
+        with tempfile.TemporaryDirectory() as directory:
+            for value in (None, '', 'false', 'False', 'True', 'TRUE', ' true', 'true ', '1'):
+                with self.subTest(value=value):
+                    environment = {'APP_ENV': 'staging', 'FRONTEND_BUILD_DIR': directory}
+                    if value is not None:
+                        environment.update({name: value for name in (
+                            'RUN_LEGACY_MIGRATIONS', 'DEMO_MODE', 'REACT_APP_PREVIEW')})
+                    api = FastAPI()
+                    spec = importlib.util.spec_from_file_location('render_staging_fixture',
+                        Path(__file__).with_name('render_staging.py'))
+                    module = importlib.util.module_from_spec(spec)
+                    with patch.dict(sys.modules, {'server': SimpleNamespace(app=api)}), \
+                         patch.dict(os.environ, environment, clear=True):
+                        spec.loader.exec_module(module)
+                    self.assertIs(module.app, api)
 
 
 if __name__ == '__main__':

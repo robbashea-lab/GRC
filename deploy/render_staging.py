@@ -31,6 +31,13 @@ class FrontendFiles(StaticFiles):
             return await super().get_response('index.html', scope)
 
 
+if os.environ.get('APP_ENV') != 'staging':
+    raise ValueError('APP_ENV must be staging for the staging entrypoint')
+if any(os.environ.get(name) == 'true' for name in (
+        'RUN_LEGACY_MIGRATIONS', 'DEMO_MODE', 'REACT_APP_PREVIEW')):
+    raise ValueError('Unsafe switches must be disabled for the staging entrypoint')
+
+
 # Import the unchanged application's routes, authorization and startup checks.
 from server import app
 
