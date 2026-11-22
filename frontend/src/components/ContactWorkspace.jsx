@@ -113,7 +113,7 @@ export default function ContactWorkspace({open,onOpenChange,record,clientId,onSa
     }catch(e){if(isSaveCurrent(scope))setError(formatError(e));}
     finally{if(isSaveCurrent(scope))setSaving(false);}
   }
-  async function save(event){
+  async function save(event,retryCreate=false){
     event.preventDefault();if(!canWrite||saving||!open)return;
     if(record?.contact_id&&current?.contact_id!==record.contact_id||current&&current.client_id!==clientId)return;
     // Capture targets before awaiting; live baseline refs may belong to another Contact on return.
@@ -124,8 +124,8 @@ export default function ContactWorkspace({open,onOpenChange,record,clientId,onSa
     let saved,refreshOrg=false;
     try{
       const body={...form,name:form.name.trim(),email:form.email.trim()};
-      if(!create.unconfirmed()&&(!body.name||!body.email))throw new Error('Full name and email are required.');
-      const response=current?await update(`/contacts/${current.contact_id}`,{...body,expected_updated_at:current.updated_at??null}):create.unconfirmed()?await create.retry():await create('/contacts',{...body,client_id:clientId,status:'active'});
+      if(retryCreate!==true&&(!body.name||!body.email))throw new Error('Full name and email are required.');
+      const response=retryCreate===true?await create.retry():current?await update(`/contacts/${current.contact_id}`,{...body,expected_updated_at:current.updated_at??null}):await create('/contacts',{...body,client_id:clientId,status:'active'});
       saved=response.data;
       if(!isSaveCurrent(scope))return;
       if(workflow&&!current)contextLoaded.current=`${clientId}:${saved.contact_id}:${saved.linked_user_id||''}`;
@@ -237,7 +237,7 @@ export default function ContactWorkspace({open,onOpenChange,record,clientId,onSa
         <footer className="contact-workspace-footer"><Button type="button" variant="outline" disabled={saving} onClick={close}>{canWrite?'Cancel':'Close'}</Button>{canWrite&&<Button type="submit" disabled={saving}>{saving?'Saving…':current?'Save Changes':invite?'Create & Invite':'Create Contact'}</Button>}</footer>
       </form>
       </>}
-      {!current&&create.unconfirmed()&&<div role="status"><p>Create is unconfirmed. Retry its original values before closing.</p><Button type="button" disabled={saving||!canWrite} onClick={save}>Retry unconfirmed create</Button></div>}
+      {!current&&create.unconfirmed()&&<div role="status"><p>Create is unconfirmed. Retry its original values before closing.</p><Button type="button" disabled={saving||!canWrite} onClick={event=>save(event,true)}>Retry unconfirmed create</Button></div>}
       {related&&<RecordDrawer open kind={related.kind} record={related.record} schema={SCHEMAS[related.kind]?.fields} clientId={clientId} onOpenChange={value=>{if(!value){setRelated(null);setContextRevision(value=>value+1);}}} onSaved={()=>{setContextRevision(value=>value+1);onSaved?.();}}/>}
       <AlertDialog open={discard} onOpenChange={setDiscard}><AlertDialogContent><AlertDialogTitle>Discard contact changes?</AlertDialogTitle><AlertDialogDescription>Your unsaved contact information will be lost. Saved account actions remain unchanged.</AlertDialogDescription><AlertDialogFooter><AlertDialogCancel>Keep editing</AlertDialogCancel><AlertDialogAction onClick={event=>{if(saving||blockUnconfirmedCreate()){event.preventDefault();return;}setDiscard(false);onOpenChange(false);}}>Discard changes</AlertDialogAction></AlertDialogFooter></AlertDialogContent></AlertDialog>
       <AlertDialog open={archive} onOpenChange={setArchive}><AlertDialogContent><AlertDialogTitle>{archived?'Restore this contact?':'Archive this contact?'}</AlertDialogTitle><AlertDialogDescription>{archived?'Return this contact to the directory. Platform access will not change.':'Remove this contact from the default directory. Historical relationships, notes and account records will be retained.'}</AlertDialogDescription><AlertDialogFooter><AlertDialogCancel disabled={saving}>Cancel</AlertDialogCancel><AlertDialogAction disabled={saving} onClick={e=>{e.preventDefault();archiveContact();}}>{archived?'Restore Contact':'Archive Contact'}</AlertDialogAction></AlertDialogFooter></AlertDialogContent></AlertDialog>

@@ -82,6 +82,50 @@ test('new contact uses unique input IDs and creates no account without the expli
   expect(api.post).toHaveBeenCalledTimes(1);expect(api.post.mock.calls[0][0]).toBe('/contacts');expect(api.post.mock.calls[0][1]).not.toHaveProperty('role');expect(close).toHaveBeenCalledWith(false);
 });
 
+test.each([false,true])('an ordinary edited create preserves its uncertain Contact draft until explicit retry (workflow: %s)',async workflow=>{
+  mockEligible=workflow;const saved=jest.fn();
+  api.post.mockRejectedValueOnce(Object.assign(Error('Response lost'),{response:{status:503}}));
+  await render(null,{onSaved:saved});
+  const field=key=>document.querySelector(`#contact-${workflow?'workflow-':''}${key}`);
+  await input(field('name'),'Original contact');await input(field('email'),'original@example.test');
+  await click(document.querySelector('form button[type="submit"]'));
+  expect(api.post).toHaveBeenCalledTimes(1);
+  const original=api.post.mock.calls[0],originalBody=JSON.stringify(original[1]);
+  expect(original[0]).toBe('/contacts');
+  expect(original[2].headers['Idempotency-Key']).toEqual(expect.any(String));expect(original[2].headers['Idempotency-Key']).not.toBe('');
+  expect(Number.isInteger(original[2].pendingCommandGeneration)).toBe(true);
+  await input(field('name'),'Newer contact draft');await input(field('email'),'newer@example.test');
+  await click(document.querySelector('form button[type="submit"]'));
+  expect(api.post).toHaveBeenCalledTimes(1);expect(api.patch).not.toHaveBeenCalled();
+  expect(field('name').value).toBe('Newer contact draft');expect(field('email').value).toBe('newer@example.test');
+  expect(saved).not.toHaveBeenCalled();expect(close).not.toHaveBeenCalled();
+  expect(document.body.textContent).toContain('A previous create has not been confirmed');
+  await click(button('Cancel'));expect(close).not.toHaveBeenCalled();expect(button('Discard changes')).toBeUndefined();
+  await click(button('Retry unconfirmed create'));
+  expect(api.post).toHaveBeenCalledTimes(2);expect(api.post.mock.calls[1][0]).toBe('/contacts');
+  expect(JSON.stringify(api.post.mock.calls[1][1])).toBe(originalBody);
+  expect(api.post.mock.calls[1][2]).toEqual({headers:{'Idempotency-Key':original[2].headers['Idempotency-Key']},pendingCommandGeneration:original[2].pendingCommandGeneration});
+  expect(api.patch).not.toHaveBeenCalled();expect(saved).toHaveBeenCalledTimes(1);expect(close).toHaveBeenCalledTimes(1);expect(close).toHaveBeenCalledWith(false);
+  expect(field('name').value).toBe('Original contact');expect(field('email').value).toBe('original@example.test');
+});
+
+test.each([false,true])('explicit Contact create retry uses original valid values after current fields are cleared (workflow: %s)',async workflow=>{
+  mockEligible=workflow;const saved=jest.fn();
+  api.post.mockRejectedValueOnce(Object.assign(Error('Response lost'),{response:{status:503}}));
+  await render(null,{onSaved:saved});
+  const field=key=>document.querySelector(`#contact-${workflow?'workflow-':''}${key}`);
+  await input(field('name'),'Recoverable contact');await input(field('email'),'recoverable@example.test');
+  await click(document.querySelector('form button[type="submit"]'));
+  const original=api.post.mock.calls[0],originalBody=JSON.stringify(original[1]);
+  expect(api.post).toHaveBeenCalledTimes(1);expect(saved).not.toHaveBeenCalled();expect(close).not.toHaveBeenCalled();
+  await input(field('name'),'');await input(field('email'),'');
+  await click(button('Retry unconfirmed create'));
+  expect(api.post).toHaveBeenCalledTimes(2);expect(JSON.stringify(api.post.mock.calls[1][1])).toBe(originalBody);
+  expect(api.post.mock.calls[1][2]).toEqual({headers:{'Idempotency-Key':original[2].headers['Idempotency-Key']},pendingCommandGeneration:original[2].pendingCommandGeneration});
+  expect(api.patch).not.toHaveBeenCalled();expect(saved).toHaveBeenCalledTimes(1);expect(close).toHaveBeenCalledTimes(1);
+  expect(field('name').value).toBe('Recoverable contact');expect(field('email').value).toBe('recoverable@example.test');
+});
+
 test('Contact editing preserves hidden values and account identity; Owns opens the real same-client record',async()=>{
   await render(contact);await input(document.querySelector('#contact-workflow-email'),'contact-only@example.test');await submit();
   expect(api.patch).toHaveBeenCalledWith('/contacts/person',expect.objectContaining({email:'contact-only@example.test',phone:'Retained phone',notes:'Retained notes',expected_updated_at:'contact-v1'}),expect.objectContaining({headers:expect.objectContaining({'Idempotency-Key':expect.any(String)})}));
