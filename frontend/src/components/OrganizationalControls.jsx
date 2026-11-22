@@ -1,5 +1,6 @@
 import {useEffect,useRef,useState} from 'react';
-import api,{formatError} from '@/lib/api';
+import {formatError} from '@/lib/api';
+import {useAssessmentApi} from '@/lib/assessmentCommandScope';
 import {recordUuid} from '@/lib/recordUuid';
 import {useAuth} from '@/context/AuthContext';
 import {isInternal} from '@/lib/permissions';
@@ -26,13 +27,14 @@ const initialObservation=()=>({request_id:recordUuid(),period_start:'',period_en
 const path=id=>`${BASE}/${encodeURIComponent(id)}`;
 
 function RecordPicker({clientId,onLink,disabled}) {
+  const api=useAssessmentApi();
   const [kind,setKind]=useState('reviews'),[q,setQ]=useState(''),[offset,setOffset]=useState(0),[result,setResult]=useState(null),[error,setError]=useState('');
   useEffect(()=>{
     if(kind==='evidence')return;
     const c=new AbortController();setResult(null);setError('');
     api.get(BASE+'/candidates',{params:{client_id:clientId,kind,q,offset},signal:c.signal}).then(r=>setResult(r.data)).catch(e=>{if(!c.signal.aborted)setError(formatError(e));});
     return()=>c.abort();
-  },[clientId,kind,q,offset]);
+  },[api,clientId,kind,q,offset]);
   return <div className="space-y-2"><label className="block">Record type<select aria-label="Control relationship type" className={SELECT} value={kind} disabled={disabled} onChange={e=>{setKind(e.target.value);setQ('');setOffset(0);}}>{Object.entries(LABELS).map(([k,v])=><option key={k} value={k}>{v}</option>)}</select></label>
     {kind==='evidence'?<EvidenceCatalogPicker clientId={clientId} disabled={disabled} onLink={id=>onLink({kind,id})}/>:<>
       <Input aria-label="Search Control relationship records" value={q} maxLength={100} onChange={e=>{setQ(e.target.value);setOffset(0);}} placeholder="Search existing records…"/>
@@ -45,21 +47,28 @@ function RecordPicker({clientId,onLink,disabled}) {
 }
 
 function ControlEditor({clientId,controlId,assessmentId,writable,onClose,onSaved,onDraftChange}) {
+  const api=useAssessmentApi();
   const [row,setRow]=useState(null),[form,setForm]=useState(()=>blank(assessmentId)),[saved,setSaved]=useState(()=>blank(assessmentId));
   const [criteria,setCriteria]=useState([]),[people,setPeople]=useState([]),[error,setError]=useState(''),[busy,setBusy]=useState(false),[loaded,setLoaded]=useState(false);
   const [resolve,setResolve]=useState(false),[note,setNote]=useState(''),[observation,setObservation]=useState(null),[confirm,setConfirm]=useState(false),[nested,setNested]=useState(null);
   const [revision,setRevision]=useState(0),[feedback,setFeedback]=useState(''),[requirementSearch,setRequirementSearch]=useState('');
-  const [requestId]=useState(recordUuid),opener=useRef(document.activeElement),heading=useRef(null);
+  const [requestId]=useState(recordUuid),opener=useRef(document.activeElement),heading=useRef(null),initialRead=useRef(null);
   const dirty=JSON.stringify(form)!==JSON.stringify(saved)||resolve||!!note.trim()||!!observation;
   useEffect(()=>{onDraftChange?.(dirty);return()=>onDraftChange?.(false);},[dirty,onDraftChange]);
   useEffect(()=>{if(!dirty)return;const warn=e=>{e.preventDefault();e.returnValue='';};window.addEventListener('beforeunload',warn);return()=>window.removeEventListener('beforeunload',warn);},[dirty]);
   useEffect(()=>{
-    const c=new AbortController();setLoaded(false);setError('');
-    Promise.all([controlId?api.get(path(controlId),{signal:c.signal}):Promise.resolve({data:null}),api.get(BASE+'/assessments',{params:{client_id:clientId},signal:c.signal}),api.get('/clients/'+clientId+'/members',{signal:c.signal})]).then(([r,w,p])=>{
-      if(c.signal.aborted)return;setRow(r.data);if(r.data){setForm(designOf(r.data));setSaved(designOf(r.data));}
-      setCriteria(w.data);setPeople(p.data);setLoaded(true);
-    }).catch(e=>{if(!c.signal.aborted)setError(formatError(e));});return()=>c.abort();
+    const owner={initialized:false};initialRead.current=owner;setLoaded(false);setError('');
+    return()=>{if(initialRead.current===owner)initialRead.current=null;};
   },[controlId,clientId,revision]);
+  useEffect(()=>{
+    const owner=initialRead.current;if(!owner||owner.initialized)return;
+    const c=new AbortController();
+    Promise.all([controlId?api.get(path(controlId),{signal:c.signal}):Promise.resolve({data:null}),api.get(BASE+'/assessments',{params:{client_id:clientId},signal:c.signal}),api.get('/clients/'+clientId+'/members',{signal:c.signal})]).then(([r,w,p])=>{
+      if(c.signal.aborted||initialRead.current!==owner||owner.initialized)return;
+      setRow(r.data);if(r.data){setForm(designOf(r.data));setSaved(designOf(r.data));}
+      setCriteria(w.data);setPeople(p.data);setLoaded(true);owner.initialized=true;setError('');
+    }).catch(e=>{if(!c.signal.aborted&&initialRead.current===owner&&!owner.initialized)setError(formatError(e));});return()=>c.abort();
+  },[api,controlId,clientId,revision]);
   const put=(key,value)=>{setFeedback('');setForm(p=>({...p,[key]:value}));};
   const close=()=>{if(busy)return;if(dirty)setConfirm(true);else onClose();};
   async function save(){
@@ -123,13 +132,14 @@ export function OrganizationalControlDrawer({open,record,clientId,onOpenChange,o
 }
 
 export default function OrganizationalControls({clientId,assessmentId,onDraftChange,onSaved}) {
+  const api=useAssessmentApi();
   const {user}=useAuth(),writable=isInternal(user);
   const [data,setData]=useState(null),[error,setError]=useState(''),[revision,setRevision]=useState(0),[offset,setOffset]=useState(0),[all,setAll]=useState(false),[editing,setEditing]=useState(null),[busy,setBusy]=useState(false);
   const refresh=()=>{setRevision(n=>n+1);onSaved?.();};
   // Retain the same trigger during same-scope refresh so dialog focus can return
   // to it. Scope/page changes still clear the previous result before rendering.
   useEffect(()=>setData(null),[clientId,assessmentId,offset,all]);
-  useEffect(()=>{const c=new AbortController();setError('');api.get(BASE,{params:{client_id:clientId,assessment_id:all?undefined:assessmentId,offset},signal:c.signal}).then(r=>setData(r.data)).catch(e=>{if(!c.signal.aborted)setError(formatError(e));});return()=>c.abort();},[clientId,assessmentId,revision,offset,all]);
+  useEffect(()=>{const c=new AbortController();setError('');api.get(BASE,{params:{client_id:clientId,assessment_id:all?undefined:assessmentId,offset},signal:c.signal}).then(r=>setData(r.data)).catch(e=>{if(!c.signal.aborted)setError(formatError(e));});return()=>c.abort();},[api,clientId,assessmentId,revision,offset,all]);
   async function migrate(){setBusy(true);setError('');try{await api.post(BASE+'/migrate',{client_id:clientId});refresh();}catch(e){setError(formatError(e));}finally{setBusy(false);}}
   return <section aria-label="Organizational Controls" className="space-y-3 border-t border-line pt-4"><h3 className="font-semibold">Organizational Controls</h3><p className="text-sm text-ink-secondary">Reuse the client's operating Controls across framework requirements. Shared work never implies a shared assessment conclusion.</p>
     {error&&<p role="alert">{error} <Button variant="ghost" onClick={refresh}>Retry</Button></p>}

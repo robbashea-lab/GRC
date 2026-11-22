@@ -62,10 +62,13 @@ export default function BrawndoCisSafeguard({state,actions}){
   const saved=verificationOf(current),presentation=presentationData.requirements[id];
   const programLabel=ctx?cisLabel(ctx.configuration):breadcrumb?.[0]?.label||'CIS';
   const inventoryContext=id==='1.2'&&focusedOmniEnabled(clientId,user,record.framework_key,ctx?.configuration,id)?ctx?.inventoryContext:undefined;
-  const visualReference=state.visualReference===true||state.assessmentRollout===true,summary=summaryData.requirements[id];
+  const visualReference=!!ctx&&(state.visualReference===true||state.assessmentRollout===true),summary=summaryData.requirements[id];
   const brawndoRecord=useBrawndoFullRecord(record,clientId);
   const safeguard11=safeguard11Eligible({visualReference,brawndoRecord,record,current,definition,ctx});
-  const referencePilot=brawndoAssessmentPilotEligible({demoMode:PREVIEW_MODE,workspaceMode,user,safeguard11,directProgramOpener:state.directProgramOpener,record,current,ctx,pathname:window.location.pathname});
+  const currentReferencePilot=brawndoAssessmentPilotEligible({demoMode:PREVIEW_MODE,workspaceMode,user,safeguard11,directProgramOpener:state.directProgramOpener,record,current,ctx,pathname:window.location.pathname});
+  const retainedPilotLayout=useRef(false);
+  if(ctx)retainedPilotLayout.current=currentReferencePilot;
+  const referencePilot=currentReferencePilot||!ctx&&retainedPilotLayout.current;
   const assessmentConcept=referencePilot||state.assessmentRollout===true;
   const rolloutEntry=assessmentRolloutEntry('cis-ig1',id,{module:'safeguard'});
   // Only this owner's History choice survives a temporary loss of live assessment context.

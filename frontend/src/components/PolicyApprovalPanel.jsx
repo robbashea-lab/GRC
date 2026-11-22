@@ -1,5 +1,6 @@
-import {useCallback, useEffect, useState} from 'react';
-import api, {formatError} from '@/lib/api';
+import {useCallback, useEffect, useRef, useState} from 'react';
+import {formatError} from '@/lib/api';
+import {useAssessmentApi} from '@/lib/assessmentCommandScope';
 import {Button} from './ui/button';
 import {Textarea} from './ui/textarea';
 import AssigneeSelect from './AssigneeSelect';
@@ -7,23 +8,34 @@ import {toast} from 'sonner';
 import PolicyApprovalSubject,{ApprovalSubject} from './PolicyApprovalSubject';
 
 export default function PolicyApprovalPanel({record, onChanged, compact=false, onDraftChange}) {
+  const api=useAssessmentApi();
   const [context,setContext]=useState(null),[error,setError]=useState(''),[busy,setBusy]=useState(false);
   const [contacts,setContacts]=useState([]),[contactId,setContactId]=useState(''),[accountId,setAccountId]=useState(null),[comment,setComment]=useState('');
   const [subjectDirty,setSubjectDirty]=useState(false);
   useEffect(()=>{onDraftChange?.(!!context&&(!!comment.trim()||subjectDirty||contactId!==(context.named_approver?.contact_id||'')||accountId!==(context.authorized_account?.user_id||null)));},[context,comment,subjectDirty,contactId,accountId,onDraftChange]);
-  const id=record.policy_id, cid=record.client_id;
+  const id=record.policy_id, cid=record.client_id,initialRead=useRef(null);
   const load=useCallback(async(signal)=>{
+    const owner=initialRead.current;
     try {
       const {data}=await api.get('/policies/'+id+'/approval-context',{signal});
-      if(signal?.aborted)return;
+      if(signal?.aborted||initialRead.current!==owner||signal&&owner?.initialized)return;
       setContext(data);setContactId(data.named_approver?.contact_id||'');setAccountId(data.authorized_account?.user_id||null);setError('');
+      if(owner)owner.initialized=true;
       if(data.can_configure) {
         const res=await api.get('/contacts',{params:{client_id:cid},signal});
-        if(!signal?.aborted)setContacts(res.data);
+        if(!signal?.aborted&&initialRead.current===owner)setContacts(res.data);
       }
-    } catch(e) {if(!signal?.aborted)setError(formatError(e));}
-  },[id,cid]);
-  useEffect(()=>{const c=new AbortController();setContext(null);setContacts([]);setComment('');load(c.signal);return()=>c.abort();},[load,record.status,record.updated_at]);
+    } catch(e) {if(!signal?.aborted&&initialRead.current===owner)setError(formatError(e));}
+  },[api,id,cid]);
+  // Keep approval drafts when only the inherited assessment API changes.
+  useEffect(()=>{
+    const owner={initialized:false};initialRead.current=owner;setContext(null);setContacts([]);setComment('');
+    return()=>{if(initialRead.current===owner)initialRead.current=null;};
+  },[id,cid,record.status,record.updated_at]);
+  useEffect(()=>{
+    const owner=initialRead.current;if(!owner||owner.initialized)return;
+    const controller=new AbortController();load(controller.signal);return()=>controller.abort();
+  },[load,record.status,record.updated_at]);
   async function act(action,body={}) {
     setBusy(true);setError('');
     try {

@@ -19,11 +19,11 @@ These are bounded preflight observations, not completion of P1 or native accepta
 
 | Candidate field | Current binding |
 | --- | --- |
-| Delivered source commit/tree | Recorded outside this commit in `../verification/nordic-local-checkpoint.json`; avoids a self-referential commit hash |
-| Frontend standard build/hash | `../verification/nordic-normal-build-04-receipt.json`: full output/input SHA256 manifests; PASS |
-| Separate intentional Demo build/hash | `../verification/nordic-demo-build-03-receipt.json`: separate full output/input SHA256 manifests; PASS |
-| Backend source/runtime identity | Runtime source-file manifest plus local checkpoint equivalence receipt; see owned runtime metadata |
-| Owned new runtime/database/port/PID | `../qa/native-nordic-runtime-dddef850f84343529386f8279329a8c0.json`; loopback52861/PID12132; fresh `test_grc_quality_dddef850f84343529386f8279329a8c0`; initial readiness only |
+| Delivered source commit/tree | Historical checkpoints remain preserved. The continuing repair candidate is bound outside Git in `../verification/nordic-repair-checkpoint.json` once its exact commit and builds are complete. |
+| Frontend standard build/hash | Normal09 qualified commit 79357d9 only. New receipt/guard repairs require a new exact-commit normal build; see the repair checkpoint. |
+| Separate intentional Demo build/hash | Demo08 qualified commit 79357d9 only. New repairs require a separate new exact-commit Demo build. |
+| Backend source/runtime identity | The continuing framework Review receipt change creates a new backend tree. Earlier native Mongo, HTTP and full offline evidence is historical; new focused and full offline checks are required. |
+| Owned new runtime/database/port/PID | Historical metadata: `../qa/native-nordic-runtime-dddef850f84343529386f8279329a8c0.json`. At2026-11-22 03:54:51 UTC, recorded API 21652/launcher 12132 and retained API 2428/Mongo 13688 were absent; ports 52861/52841/52619/52863 had no listeners. Current native QA is unavailable. No task stop/restart targeted these recorded resources; cause is unestablished. |
 | Exact-commit CI run/attempt/conclusion | BLOCKED before dispatch: authenticated and unauthenticated GitHub metadata report the requested private target is public; no remote write |
 | Deployed Nordic version / hosted QA | NOT RUN; deployment is on hold |
 | Robb visual/product acceptance | NOT RUN |
@@ -36,7 +36,7 @@ The action inventory is the lexical union of the exact approved HTML, including 
 
 All surfaces apply to authorized existing/new/future clients in authenticated and deliberate Demo modes. Include CISv8.1 IG1/2/3, ISO27001, SOC2 categories, HIPAA, NISTCSF2 and CMMC1/2. Counts come from current catalog versions and saved scope/applicability; do not copy examples. Preserve lawful qualified ISO summaries and stronger native rules.
 
-Confirmed implementation owners: Portfolio `portfolio`; combined guidance/context `guidance`; AI scheduling `ai_reviews`; global Nordic styles/login `nordic_visual`; root owns integration, build/test/runtime, independent review and release coordination. These are implementation allocations, not acceptance sign-offs.
+Confirmed implementation owners: Portfolio `portfolio`; combined guidance/context `guidance`; AI scheduling `ai_reviews`; global Nordic styles/login `nordic_visual`; the continuation owner performs integration and verification; root coordinates the candidate. Robb retains deployment and release approval authority. These are implementation allocations, not acceptance or release sign-offs.
 
 ## Native case register
 
@@ -111,3 +111,22 @@ For local recovery rehearsal, use only generated disposable databases and the re
 Fresh Render status reads confirm the sole existing GRC service remains branch `main`, automatic deploy off, preview generation off and PR previews off; no settings were changed. The existing release-verification workflow is checks/build/artifact only, and repository hooks read back empty. However, GitHub metadata for `robbashea-lab/GRC` reports `private:false` and `visibility:public`, including an unauthenticated HTTP200 metadata request. This conflicts with the requested private destination. All branch pushes, draft PRs and workflow dispatches remain on hold until Robb resolves the publication destination/privacy. Do not change repository visibility, create another repository or publish a release as a workaround.
 
 Local implementation and verification continue within the existing isolated worktree. Exact-commit GitHub CI, deployment, hosted QA and Robb acceptance remain separate, unperformed gates. The candidate is not release-ready.
+
+
+## Continued native repair qualification
+
+The user requested continued work after the earlier local candidate was presented. Preserve the delivered candidate and its evidence as history. Presentation is not human visual acceptance, public-source publication permission or deployment approval.
+
+The complete native frontend campaign at commit 79357d918c5ebd254058ae9cd16d8418e7343dba executed all 640 discovered suites exactly once across the six prescribed partitions: 635 suites passed and 5 failed; 15526 tests passed and 12 failed, with no skipped tests. The failures exposed a real full-citation regression and lost assessment drafts, obsolete appearance/order expectations, and one original 5000 ms monthly operating-model timeout. The single isolated six-case diagnostic passed but does not waive that partition failure. The earlier monolithic 3600 s timeout and Windows config-admission failure remain recorded. Windows execution does not qualify the Linux/x64/UTC runtime envelope or required exact-commit GitHub CI.
+
+The continued repair retains the entire private assessment editor across temporary same-record read gaps, refreshes source authority independently, fences stale callbacks and native dispatch/settlement, preserves original revisions and pending request identities, and resets the private owner only on verified record transitions or actual security retirement. Same-actor read-only drafts remain private and read-only. Native whole-owner Discard uses the latest confirmed matching baseline only after explicit confirmation; assessment-only Discard keeps its separate Guide contract. Child memory-only unknown saves block ordinary leave and retain their existing explicit original Retry. A proven unchanged client-list portfolio refresh preserves an already-dispatched workflow; foreground access checks and actual client/program/permission changes still invalidate authority. Full framework citations use native source metadata without changing persisted IDs or questionnaire versions.
+
+- `../verification/nordic-repair-ui-04-receipt.json`: 22 whole files, 305 tests passed, zero skipped, 88.22 s within the unchanged 180 s outer budget, 2494 inputs with zero drift. This includes the original role/draft/CAS/focus/source contracts and real Layout/Org continuation versus role-revocation regressions. It precedes the additional framework Review native/Demo receipt changes and does not qualify the final full frontend workload.
+- `../verification/nordic-framework-review-backend-02-receipt.json`: 17 native ASGI modules covering all six framework families, 263 tests and 365 subtests passed with unchanged two-worker/loadscope settings, 19.02 s, zero input drift. These use isolated fixture storage, not Motor or a running native database.
+- Framework Review setup reuses the existing optional Idempotency-Key receipt/lease and canonical Review identity. Raw request fingerprints precede the same native model validation; current authorization precedes replay; primary markers precede possible writes. Frozen native provenance repairs original audit gaps without claiming another request's creation. A proven historical link step is acknowledged without restoring a later removed relationship; unproved stale CAS remains denied. Intentional Demo uses its existing atomic effect-plus-receipt commit. Headerless behavior and the Evidence-only unlink API remain protected. Later Review-removal fault tests arrange synthetic administrative fixture state; they do not establish a new Review unlink API or UI.
+
+The final repair commit still needs exact normal/Demo builds, independent full-diff review and a fresh complete frontend campaign. Run the full classified offline backend suite once on its frozen new backend tree with the original 1800 s budget and native settings. Required real storage, wire/session/concurrency and fresh-process restore gates remain unperformed while resources and explicit lifecycle authorization are unavailable. Do not relabel earlier successful executions as new-source runs.
+
+The source-repair auto-review rejection is retained in `../verification/nordic-repair-progress-01.json`. Its accepted material alternative kept all three new role/actor/status regression cases and strengthened read-only draft/CAS and stale-callback denial assertions; original native tests were not deleted. Earlier failures remain evidence.
+
+Before a downgrade, settle the original framework Review and AI receipt/audit work under a compatible implementation, preserving original request keys, bodies, actors and canonical IDs. A prior CSS-compatible build is not proof that an older backend can safely resume these new receipts. Original retained database namespaces were not reset, restored, deleted or targeted with QA mutations. New recovery proposals must use current source/build and process-absence evidence; old PID/starttick admissions cannot be reused. No restore, service launch, hosted migration, merge, public push or deployment is authorized by these local test results.

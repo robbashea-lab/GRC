@@ -31,6 +31,33 @@ const VERIFICATION_FIELDS=['verification','verification_checklist'],VERIFICATION
 const fail=(message,status=422)=>{const error=new Error(message);error.status=status;throw error;};
 const copy=value=>JSON.parse(JSON.stringify(value));
 
+export function authorizeFrameworkReviewSetup(db,id,key){
+  const row=record(db,'framework_assessments',id);
+  frameworkScope(db,row.client_id);writable(db);
+  const client=record(db,'clients',row.client_id);
+  if(client._r4_context_pending||row._r4_context_pending)fail('An earlier Client or assessment save needs recovery',409);
+  if(!db.requirements.some(requirement=>requirement.client_id===row.client_id&&requirement.baseline_key===row.framework_key&&requirement.baseline_response==='applies'))fail('Activate the program before configuring Reviews',409);
+  if(!activeDefinitions(row.framework_key,clientConfiguration(row.framework_key,client)).some(definition=>definition.id===row.definition_id))fail('This assessment is retained outside the active program scope; existing work and history remain available',409);
+  if(typeof key!=='string'||!/^[A-Za-z0-9_-]{16,128}$/.test(key))fail('Invalid Idempotency-Key');
+  return row;
+}
+// Mirror native ReviewSetup only for keyed requests; fingerprint the raw body first.
+export function frameworkReviewSetupBody(body){
+  const defaults={plan_key:null,review_id:null,title:'',owner_id:null,recurrence:'quarterly',custom_recurrence_days:null,due_date:null};
+  if(!body||typeof body!=='object'||Array.isArray(body)||Object.keys(body).some(key=>!Object.hasOwn(defaults,key)))fail('Invalid Review setup fields');
+  const input={...defaults,...body};
+  for(const [key,max] of [['plan_key',160],['review_id',160],['owner_id',Infinity],['due_date',10]])
+    if(input[key]!==null&&(typeof input[key]!=='string'||input[key].length>max))fail('Invalid Review '+key);
+  if(typeof input.title!=='string'||input.title.length>500||!CADENCES.includes(input.recurrence))fail('Review title and valid cadence are required');
+  if(input.custom_recurrence_days!==null){
+    const value=input.custom_recurrence_days;
+    const days=typeof value==='number'||typeof value==='boolean'||typeof value==='string'&&/^\s*[+-]?\d+(?:\.0+)?\s*$/.test(value)?Number(value):NaN;
+    if(!Number.isInteger(days)||days<1||days>3660)fail('Custom cadence must be 1-3660 days');
+    input.custom_recurrence_days=days;
+  }
+  return input;
+}
+
 export function authorizeItemTask(db,path,body,key){
   const parts=path.split('/'),row=record(db,'framework_assessments',parts[2]);
   frameworkScope(db,row.client_id);writable(db);
@@ -434,21 +461,26 @@ export function frameworkRequest(db,path,method,params,body,context=null){
     (db.guided_assessment_pilot||={})[draftKey]=data;return upgraded?contextualDraft(data,trustedBase(db,row,context)):data;
   }
   if(method==='post'&&operation==='reviews'){
-    if(Object.keys(body).some(k=>!['plan_key','review_id','title','owner_id','recurrence','custom_recurrence_days','due_date'].includes(k)))throw new Error('Invalid Review setup fields');
+    const invalid=message=>{if(context?.reviewSetup)fail(message);throw new Error(message);};
+    if(Object.keys(body).some(k=>!['plan_key','review_id','title','owner_id','recurrence','custom_recurrence_days','due_date'].includes(k)))invalid('Invalid Review setup fields');
     if(!db.requirements.some(r=>r.client_id===row.client_id&&r.baseline_key===row.framework_key&&r.baseline_response==='applies'))throw new Error('Activate the program before configuring Reviews');
     const catalog=frameworkCatalog(row.framework_key),client=record(db,'clients',row.client_id),configuration=clientConfiguration(row.framework_key,client);
     if(!activeDefinitions(row.framework_key,configuration).some(d=>d.id===row.definition_id))fail('This assessment is retained outside the active program scope; existing work and history remain available',409);
     const plan=activePlans(row.framework_key,configuration).find(p=>p.key===body.plan_key&&p.safeguards.includes(row.definition_id));
-    if(body.plan_key&&!plan)throw new Error('Review plan does not map to this requirement');
+    if(body.plan_key&&!plan)invalid('Review plan does not map to this requirement');
     let review=body.review_id?record(db,'reviews',body.review_id):plan?existingFrameworkReview(db.reviews.filter(r=>r.client_id===row.client_id),plan):null;
-    if(review&&review.client_id!==row.client_id)throw new Error('Relationship must belong to this client');
+    if(review&&review.client_id!==row.client_id)invalid('Relationship must belong to this client');
     const canonical=Object.entries(CATALOGS).flatMap(([key,c])=>c.review_plans.map(p=>({key,plan:p}))).find(p=>plan?.baseline_key&&p.plan.baseline_key===plan.baseline_key);
     const rid=stable(row.client_id,'review',plan?(canonical?.plan.key||plan.key):'requirement:'+row.definition_id,canonical?.key||row.framework_key);
     review||=db.reviews.find(r=>(r.review_id===rid||r.framework_setup_key===rid)&&r.client_id===row.client_id);
     if(!review){
-      if(typeof body.title!=='string'||!body.title.trim()||body.title.length>500||!CADENCES.includes(body.recurrence))throw new Error('Review title and valid cadence are required');
-      if(body.due_date&&(!/^\d{4}-\d{2}-\d{2}$/.test(body.due_date)||calendarDay(body.due_date)===null))throw new Error('Invalid Review date');
-      if(body.recurrence==='custom'&&(!Number.isInteger(body.custom_recurrence_days)||body.custom_recurrence_days<1||body.custom_recurrence_days>3660))throw new Error('Custom cadence must be 1–3660 days');
+      if(typeof body.title!=='string'||!body.title.trim()||body.title.length>500||!CADENCES.includes(body.recurrence))invalid('Review title and valid cadence are required');
+      if(body.due_date&&(!/^\d{4}-\d{2}-\d{2}$/.test(body.due_date)||calendarDay(body.due_date)===null))invalid('Invalid Review date');
+      if(body.recurrence==='custom'&&(!Number.isInteger(body.custom_recurrence_days)||body.custom_recurrence_days<1||body.custom_recurrence_days>3660))invalid('Custom cadence must be 1-3660 days');
+      if(context?.reviewSetup){
+        try{validateAssignment(db,'reviews',{client_id:row.client_id,owner_id:body.owner_id});}
+        catch(error){if(error.message==='Choose an active platform user with access to this client')fail(error.message);throw error;}
+      }
       review=write(db,'reviews',{client_id:row.client_id,title:body.title.trim(),review_type:plan?.review_type||'requirements',owner_id:body.owner_id||null,recurrence:body.recurrence,custom_recurrence_days:body.custom_recurrence_days,due_date:body.due_date||null,status:body.due_date?'upcoming':'needs_scheduling',framework_key:row.framework_key,framework_plan_key:plan?.key,baseline_key:plan?.baseline_key,framework_safeguards:plan?.safeguards||[row.definition_id],framework_basis:plan?.basis,framework_source_cadence:plan?.source_cadence,framework_setup_key:rid});
     }
     if(plan)addReviewDriver(review,row.framework_key,plan);

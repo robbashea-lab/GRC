@@ -7,9 +7,9 @@ import BrawndoContactWorkflow from './BrawndoContactWorkflow';
 import useContactWorkflowData from './useContactWorkflowData';
 import {SCHEMAS} from '@/lib/schemas';
 import RecordDrawer from './RecordDrawer';
-import api,{formatError} from '@/lib/api';
+import {formatError} from '@/lib/api';
 import {useAuth} from '@/context/AuthContext';
-import {useCreateIntent} from '@/lib/createIntent';
+import {useAssessmentApi,useAssessmentCreateIntent} from '@/lib/assessmentCommandScope';
 import {invitationFeedback} from '@/lib/invitationFeedback';
 import {CONTACT_FIELDS,contactForm,directoryAccess,isArchivedContact} from '@/lib/contactDirectory';
 import {useContactAccess} from './ContactAccess';
@@ -26,14 +26,15 @@ import './Contacts.css';
 export function ContactAccessPill({state}) {return <span className={`contact-access contact-access-${state.key}`} title={state.description}>{state.label}</span>;}
 
 export default function ContactWorkspace({open,onOpenChange,record,clientId,onSaved,additionalPresentation=false}) {
+  const api=useAssessmentApi();
   const {user,workspaceMode}=useAuth(),navigate=useNavigate(),org=useOrg();
   const canWrite=['super_admin','platform_admin'].includes(user?.role);
   const [current,setCurrent]=useState(record),[form,setForm]=useState(()=>contactForm(record));
   const baseline=useRef(contactForm(record)),opener=useRef(null);
   const [invite,setInvite]=useState(false),[role,setRole]=useState('client_readonly');
   const [saving,setSaving]=useState(false),[error,setError]=useState(''),[discard,setDiscard]=useState(false),[archive,setArchive]=useState(false);
-  const create=useCreateIntent((...args)=>api.post(...args),`${clientId}:${user?.user_id}:contacts`);
-  const update=useCreateIntent((...args)=>api.patch(...args),`${user?.user_id}:${clientId}:contacts:${record?.contact_id}:update`,true);
+  const create=useAssessmentCreateIntent((...args)=>api.post(...args),`${clientId}:${user?.user_id}:contacts`);
+  const update=useAssessmentCreateIntent((...args)=>api.patch(...args),`${user?.user_id}:${clientId}:contacts:${record?.contact_id}:update`,true);
   const context=useContactAccess(clientId,open,current);
   const state=directoryAccess(current||{client_id:clientId},clientId,context);
   const fullRecord=useBrawndoFullRecord(record,clientId)&&(!current||current.client_id===clientId);
@@ -72,8 +73,10 @@ export default function ContactWorkspace({open,onOpenChange,record,clientId,onSa
   const archived=isArchivedContact(current||{});
   const dirty=JSON.stringify(form)!==JSON.stringify(baseline.current)||(!current&&invite)||workflow&&(primary!==primaryBaseline.current||!!current&&!!accountBaseline.current&&role!==accountRoleBaseline.current);
   useEffect(()=>{if(open){setCurrent(record);const value=contactForm(record);setForm(value);baseline.current=value;setInvite(false);setError('');setRole('client_readonly');setDiscard(false);setArchive(false);setPrimary(false);primaryBaseline.current=false;accountRoleBaseline.current='client_readonly';accountBaseline.current=null;contextLoaded.current=null;setRelated(null);}},[open,record,clientId,user?.user_id,user?.role,user?.workspace_mode,workspaceMode,user?.status]);
-  useEffect(()=>{if(!open||!dirty)return;const warn=e=>{e.preventDefault();e.returnValue='';};window.addEventListener('beforeunload',warn);return()=>window.removeEventListener('beforeunload',warn);},[open,dirty]);
-  const close=()=>{if(saving)return;if(dirty)setDiscard(true);else onOpenChange(false);};
+  const memoryCreateUnconfirmed=create.unconfirmed();
+  useEffect(()=>{if(!open||!dirty&&!memoryCreateUnconfirmed)return;const warn=e=>{e.preventDefault();e.returnValue='';};window.addEventListener('beforeunload',warn);return()=>window.removeEventListener('beforeunload',warn);},[open,dirty,memoryCreateUnconfirmed]);
+  function blockUnconfirmedCreate(){if(!create.unconfirmed())return false;setError('Create is unconfirmed. Retry its original request before closing.');return true;}
+  const close=()=>{if(saving||blockUnconfirmedCreate())return;if(dirty)setDiscard(true);else onOpenChange(false);};
   async function refreshAccount(){
     // ContactAccountActions passes linked-account data here; arguments are not a scope token.
     const scope=activeSaveScope,id=current?.contact_id;
@@ -121,8 +124,8 @@ export default function ContactWorkspace({open,onOpenChange,record,clientId,onSa
     let saved,refreshOrg=false;
     try{
       const body={...form,name:form.name.trim(),email:form.email.trim()};
-      if(!body.name||!body.email)throw new Error('Full name and email are required.');
-      const response=current?await update(`/contacts/${current.contact_id}`,{...body,expected_updated_at:current.updated_at??null}):await create('/contacts',{...body,client_id:clientId,status:'active'});
+      if(!create.unconfirmed()&&(!body.name||!body.email))throw new Error('Full name and email are required.');
+      const response=current?await update(`/contacts/${current.contact_id}`,{...body,expected_updated_at:current.updated_at??null}):create.unconfirmed()?await create.retry():await create('/contacts',{...body,client_id:clientId,status:'active'});
       saved=response.data;
       if(!isSaveCurrent(scope))return;
       if(workflow&&!current)contextLoaded.current=`${clientId}:${saved.contact_id}:${saved.linked_user_id||''}`;
@@ -234,8 +237,9 @@ export default function ContactWorkspace({open,onOpenChange,record,clientId,onSa
         <footer className="contact-workspace-footer"><Button type="button" variant="outline" disabled={saving} onClick={close}>{canWrite?'Cancel':'Close'}</Button>{canWrite&&<Button type="submit" disabled={saving}>{saving?'Saving…':current?'Save Changes':invite?'Create & Invite':'Create Contact'}</Button>}</footer>
       </form>
       </>}
+      {!current&&create.unconfirmed()&&<div role="status"><p>Create is unconfirmed. Retry its original values before closing.</p><Button type="button" disabled={saving||!canWrite} onClick={save}>Retry unconfirmed create</Button></div>}
       {related&&<RecordDrawer open kind={related.kind} record={related.record} schema={SCHEMAS[related.kind]?.fields} clientId={clientId} onOpenChange={value=>{if(!value){setRelated(null);setContextRevision(value=>value+1);}}} onSaved={()=>{setContextRevision(value=>value+1);onSaved?.();}}/>}
-      <AlertDialog open={discard} onOpenChange={setDiscard}><AlertDialogContent><AlertDialogTitle>Discard contact changes?</AlertDialogTitle><AlertDialogDescription>Your unsaved contact information will be lost. Saved account actions remain unchanged.</AlertDialogDescription><AlertDialogFooter><AlertDialogCancel>Keep editing</AlertDialogCancel><AlertDialogAction onClick={()=>{setDiscard(false);onOpenChange(false);}}>Discard changes</AlertDialogAction></AlertDialogFooter></AlertDialogContent></AlertDialog>
+      <AlertDialog open={discard} onOpenChange={setDiscard}><AlertDialogContent><AlertDialogTitle>Discard contact changes?</AlertDialogTitle><AlertDialogDescription>Your unsaved contact information will be lost. Saved account actions remain unchanged.</AlertDialogDescription><AlertDialogFooter><AlertDialogCancel>Keep editing</AlertDialogCancel><AlertDialogAction onClick={event=>{if(saving||blockUnconfirmedCreate()){event.preventDefault();return;}setDiscard(false);onOpenChange(false);}}>Discard changes</AlertDialogAction></AlertDialogFooter></AlertDialogContent></AlertDialog>
       <AlertDialog open={archive} onOpenChange={setArchive}><AlertDialogContent><AlertDialogTitle>{archived?'Restore this contact?':'Archive this contact?'}</AlertDialogTitle><AlertDialogDescription>{archived?'Return this contact to the directory. Platform access will not change.':'Remove this contact from the default directory. Historical relationships, notes and account records will be retained.'}</AlertDialogDescription><AlertDialogFooter><AlertDialogCancel disabled={saving}>Cancel</AlertDialogCancel><AlertDialogAction disabled={saving} onClick={e=>{e.preventDefault();archiveContact();}}>{archived?'Restore Contact':'Archive Contact'}</AlertDialogAction></AlertDialogFooter></AlertDialogContent></AlertDialog>
     </SheetContent>
   </Sheet>;

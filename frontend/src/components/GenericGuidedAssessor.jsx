@@ -1,5 +1,6 @@
 import {useCallback,useEffect,useRef,useState} from 'react';
-import api,{formatError} from '@/lib/api';
+import {formatError} from '@/lib/api';
+import {useAssessmentApi} from '@/lib/assessmentCommandScope';
 import {useAuth} from '@/context/AuthContext';
 import {genericGuidedCatalog,genericGuidedResult,genericGuidedVersion,genericQuestions,validateGenericCompletion} from '@/lib/genericGuidedAssessment';
 import {operatorStatuses} from '@/lib/frameworkOperator';
@@ -12,6 +13,7 @@ import OmniGuideCharacter from './OmniGuideCharacter';
 import AssessmentQuestionGuidance from './AssessmentQuestionGuidance';
 
 export default function GenericGuidedAssessor({record,form=record,assessmentDirty=false,disabled,onUpdateImplementation,onDraftChange,inline=false,onInlineOpenChange,historyScope,interviewHistoryOpen=false,onInterviewHistoryOpenChange,onInterviewHistoryCloseAutoFocus,pilotPortalContainer}){
+  const api=useAssessmentApi();
   const {user,workspaceMode}=useAuth();
   const native=useRef(null),reviewedImplementation=useRef(null),mounted=useRef(true);
   native.current={form,assessmentDirty,disabled};
@@ -39,11 +41,20 @@ export default function GenericGuidedAssessor({record,form=record,assessmentDirt
   const panelId='r4-assessment-guide-'+record.framework_assessment_id;
   const start=()=>{setOpen(true);setIntro(false);};
   const base='/framework_assessments/'+record.framework_assessment_id+'/guided-assessment';
+  const initialRead=useRef(null);
   useEffect(()=>{
-    let active=true;mounted.current=true;
-    api.get(base).then(({data})=>{if(active){setDraft(data);setAnswers(data.answers);setStep(data.step||0);setResponses(data.completed===true);}}).catch(error=>{if(active)setError(formatError(error));});
-    return()=>{active=false;mounted.current=false;onDraftChange?.(false);};
+    const owner={initialized:false};initialRead.current=owner;mounted.current=true;
+    return()=>{if(initialRead.current===owner)initialRead.current=null;mounted.current=false;onDraftChange?.(false);};
   },[base,onDraftChange]);
+  useEffect(()=>{
+    const owner=initialRead.current;if(!owner||owner.initialized)return;
+    const controller=new AbortController();
+    api.get(base,{signal:controller.signal}).then(({data})=>{
+      if(controller.signal.aborted||initialRead.current!==owner||owner.initialized)return;
+      setDraft(data);setAnswers(data.answers);setStep(data.step||0);setResponses(data.completed===true);owner.initialized=true;setError('');
+    }).catch(error=>{if(!controller.signal.aborted&&initialRead.current===owner&&!owner.initialized)setError(formatError(error));});
+    return()=>controller.abort();
+  },[api,base,onDraftChange]);
   const cancelHistoryRead=useCallback(scope=>{
     const reading=historyReading.current;
     if(reading?.scope!==scope)return;
@@ -77,7 +88,7 @@ export default function GenericGuidedAssessor({record,form=record,assessmentDirt
     }catch(error){
       if(current()){const next={...loading,busy:false,error:formatError(error)};historySnapshot.current=next;setHistory(next);}
     }finally{if(current())historyReading.current=null;}
-  },[base,historyContext]);
+  },[api,base,historyContext]);
   useEffect(()=>{
     if(!interviewHistoryOpen||!historyIdentityValid)return;
     loadHistory();return()=>cancelHistoryRead(historyContext);

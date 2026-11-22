@@ -2,6 +2,7 @@ import {useId} from 'react';
 import {BookOpen,ChevronDown} from 'lucide-react';
 import {assessmentClientRecords} from '@/lib/assessmentClientContext';
 import {r4FrameworkSource} from '@/lib/r4FrameworkSource';
+import {frameworkGuidanceReference} from '@/lib/frameworkGuidanceReference';
 import {useAssessmentClientContext} from './AssessmentClientContext';
 import './AssessmentClientContext.css';
 
@@ -18,13 +19,14 @@ export default function AssessmentQuestionGuidance({guidance, reference, descrip
   const context=useAssessmentClientContext(),bodyId=useId();
   const source=context?.source;
   const fallback=source?.definition?r4FrameworkSource(context.record.framework_key,source.definition,source.configuration):null;
+  const sourceReference=frameworkGuidanceReference(reference,{frameworkKey:context?.record?.framework_key,definition:source?.definition,configuration:source?.configuration});
   const advice=guidance|| (fallback?{requirement:fallback.text,context:fallback.qualification}:null);
   if (!advice && !context) return null;
   const requirement=advice&&(advice.requirement||advice.context)?<aside className="brawndo-pilot-guidance gn-inline-requirement"
     aria-label={advice.requirement ? 'Framework requirement' : 'Implementation context'}>
     <div className="gn-rule-heading"><BookOpen size={16} aria-hidden="true"/>
       <span>{advice.requirement ? 'Framework requirement' : 'Implementation context'}</span>
-      {(reference||fallback?.id) && <span className="gn-rule-reference">{reference||fallback.id}</span>}
+      {sourceReference && <span className="gn-rule-reference">{sourceReference}</span>}
     </div>
     {advice.requirement && <p id={descriptionId} className="gn-rule-copy">{requirementText(advice)}</p>}
     {advice.context && <p id={advice.requirement ? undefined : descriptionId} className="gn-rule-context">

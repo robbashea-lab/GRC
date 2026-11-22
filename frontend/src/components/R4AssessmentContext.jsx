@@ -84,8 +84,9 @@ export default function R4AssessmentContext({record,disabled,value,onApply,onDra
     if(!context||disabled||stale)return;
     if(custom.trim()){setError('Add the client-specific tool to the draft, or clear its name before applying context.');return;}
     if(selected&&!entry){setError('Choose a current activity.');return;}
-    onApply({...changes,activity_id:selected||null,review_id:entry?.review_id??null,expected_updated_at:draftBase.current?.activities[selected]??entry?.expected_updated_at??null,
+    const accepted=onApply({...changes,activity_id:selected||null,review_id:entry?.review_id??null,expected_updated_at:draftBase.current?.activities[selected]??entry?.expected_updated_at??null,
       expected_client_updated_at:draftBase.current?.client??context.expected_client_updated_at??null,...(area?{area_id:area}:{})});
+    if(accepted===false)return;
     edited.current=false;onDraftChange?.(false);setError('');
   }
   function addTool(){

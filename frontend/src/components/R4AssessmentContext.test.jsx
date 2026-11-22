@@ -116,3 +116,24 @@ test.each(['client-v1','client-v2'])('authority-only reread retains unapplied co
   }
   for(const method of ['post','put','patch'])expect(api[method]).not.toHaveBeenCalled();
 });
+
+
+test('a refused parent handoff retains unapplied context and the original CAS through a later authority reread',async()=>{
+  api.get.mockResolvedValueOnce({data:contextFor('new-client','client-v1')})
+    .mockResolvedValueOnce({data:contextFor('new-client','client-v2')});
+  const onApply=jest.fn(()=>false),onDraftChange=jest.fn();
+  const record={client_id:'new-client',framework_assessment_id:'assessment-id',framework_key:'hipaa',definition_id:'synthetic-native-item'};
+  const render=async scopeKey=>{await act(async()=>root.render(<AssessmentClientContextProvider {...{record,scopeKey}}><R4AssessmentContext {...{record,onApply,onDraftChange}}/></AssessmentClientContextProvider>));};
+  await render('original-authority');
+  const notes=host.querySelector('[aria-label="Assessment setup notes"]');
+  await act(async()=>{Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype,'value').set.call(notes,'Original unapplied context wording');notes.dispatchEvent(new Event('input',{bubbles:true}));});
+  const apply=()=>[...host.querySelectorAll('button')].find(node=>node.textContent==='Apply context to draft');
+  await act(async()=>apply().click());
+  expect(onApply).toHaveBeenCalledWith(expect.objectContaining({notes:'Original unapplied context wording',expected_client_updated_at:'client-v1',expected_updated_at:'client-v1'}));
+  expect(onDraftChange.mock.calls.at(-1)[0]).toBe(true);
+  await render('fresh-authority');
+  expect(host.querySelector('[aria-label="Assessment setup notes"]').value).toBe('Original unapplied context wording');
+  expect(host.textContent).toContain('Your draft is retained');expect(apply().disabled).toBe(true);
+  expect(onApply).toHaveBeenCalledTimes(1);
+  for(const method of ['post','put','patch'])expect(api[method]).not.toHaveBeenCalled();
+});

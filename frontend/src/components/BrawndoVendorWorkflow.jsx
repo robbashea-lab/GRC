@@ -1,6 +1,7 @@
 import {Fragment, useEffect, useId, useState} from 'react';
 import {Building2, FileText, LockKeyhole, MessageSquare, Pencil, Plus, Search} from 'lucide-react';
-import api, {formatError} from '@/lib/api';
+import {formatError} from '@/lib/api';
+import {useAssessmentApi} from '@/lib/assessmentCommandScope';
 import {useAuth} from '@/context/AuthContext';
 import {editableFields} from '@/lib/permissions';
 import {calendarDay, managementDay} from '@/lib/managementDates';
@@ -74,6 +75,7 @@ export function BrawndoVendorWorkflowHeading({record, form, users=[], reviews=[]
 
 // The drawer supplies its existing commands and save boundary; this component edits that draft only.
 export default function BrawndoVendorWorkflow(props) {
+  const api=useAssessmentApi();
   const {tab,record,form,setForm,canWrite,isAdmin,users=[],reviews=[],tasks=[],risks=[],evidence=EMPTY_EVIDENCE,openRecord,uploadFiles,downloadEv,onSaved,setTab}=props;
   const criticalityLabel=useId();
   const {user}=useAuth(), fields=editableFields('vendors',user,record);
@@ -91,7 +93,7 @@ export default function BrawndoVendorWorkflow(props) {
   useEffect(()=>{let active=true;if(tab==='linked'||tab==='assurance'){
     const kind=tab==='linked'?'risks':'evidence';
     api.get('/'+kind,{params:{client_id:cid}}).then(({data})=>{if(active){const scoped=data.filter(item=>item.client_id===cid&&!item.archived_at);if(kind==='risks')setRiskOptions(scoped);else setCatalog(scoped);setError('');}}).catch(e=>{if(active)setError(formatError(e));});
-  }return()=>{active=false;};},[tab,cid,evidence]);
+  }return()=>{active=false;};},[api,tab,cid,evidence]);
   const set=(key,value)=>setForm(previous=>({...previous,[key]:value,
     ...(key==='criticality'&&record?.criticality_provisional?{confirm_criticality:true}:{})}));
   const input=(key,title,type='text',disabled=!write,help)=> <label className="f" key={key}><span>{title}</span><input className="in" aria-label={title} data-testid={'field-'+key} type={type} value={type==='date'?(form[key]||'').slice(0,10):form[key]??''} disabled={disabled} onChange={event=>set(key,type==='number'?(event.target.value===''?'':Number(event.target.value)):event.target.value)}/>{help&&<small className="help">{help}</small>}</label>;

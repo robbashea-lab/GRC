@@ -4,7 +4,8 @@ import {createPortal} from 'react-dom';
 import {ArrowRight,FilePenLine,Info,ListChecks} from 'lucide-react';
 import {useAuth} from '@/context/AuthContext';
 import {useOrg} from '@/context/OrgContext';
-import api,{formatError} from '@/lib/api';
+import {formatError} from '@/lib/api';
+import {useAssessmentApi} from '@/lib/assessmentCommandScope';
 import {socGuidedCatalog,socGuidedEnabled,socGroups,socGuidedResult,socInlineSummary,socExtraQuestions,socUsesReportedWorkStatus,validateSocCompletion} from '@/lib/socGuidedAssessment';
 import {operatorStatuses} from '@/lib/frameworkOperator';
 import {rankProgramRows} from '@/lib/programTriage';
@@ -30,6 +31,7 @@ export default function SocGuidedAssessor(props){
 }
 
 function SocPilot({clientId,user,configuration,record,current=record,rows=EMPTY,draftSummaries={},contextComplete=false,onSelect,onViewAll,form,assessmentDirty=false,relatedDraft=false,onDraftChange,onSaveAssessment,onUpdateImplementation,disabled=false,inline=false,inlineOpen=false,onInlineClose,sequential=false,assessmentRollout=false,implementationReviewContainer,pilotPortalContainer,interviewHistoryOpen=false,onInterviewHistoryOpenChange,onInterviewHistoryCloseAutoFocus}){
+  const api=useAssessmentApi();
   const embedded=!!record&&inline;
   const rollout=assessmentRollout===true&&embedded&&sequential;
   const [sequentialOpen,setSequentialOpen]=useState(false);
@@ -63,6 +65,7 @@ function SocPilot({clientId,user,configuration,record,current=record,rows=EMPTY,
   useEffect(()=>{
     if(!dirty)return;const warn=e=>{e.preventDefault();e.returnValue='';};window.addEventListener('beforeunload',warn);return()=>window.removeEventListener('beforeunload',warn);
   },[dirty]);
+  const initialRead=useRef(null);
   const adopt=useCallback((data,restoring=false)=>{
     setDraft(data);setAnswers(data.answers||{});setStep(data.step||0);setNarrative(data.narrative||'');saved.current={answers:JSON.stringify(data.answers||{}),narrative:data.narrative||''};
     if(restoring){
@@ -75,10 +78,18 @@ function SocPilot({clientId,user,configuration,record,current=record,rows=EMPTY,
     }
   },[id]);
   useEffect(()=>{
-    if(!route)return;const controller=new AbortController();
-    api.get(route,{signal:controller.signal}).then(({data})=>{if(!controller.signal.aborted){adopt(data,true);setLoaded(true);}}).catch(e=>{if(!controller.signal.aborted){setError(formatError(e));setLoaded(true);}});
-    return()=>controller.abort();
+    const owner={initialized:false};initialRead.current=owner;
+    return()=>{if(initialRead.current===owner)initialRead.current=null;};
   },[route,adopt]);
+  useEffect(()=>{
+    const owner=initialRead.current;if(!route||!owner||owner.initialized)return;
+    const controller=new AbortController();
+    api.get(route,{signal:controller.signal}).then(({data})=>{
+      if(controller.signal.aborted||initialRead.current!==owner||owner.initialized)return;
+      adopt(data,true);owner.initialized=true;setError('');setLoaded(true);
+    }).catch(e=>{if(!controller.signal.aborted&&initialRead.current===owner&&!owner.initialized){setError(formatError(e));setLoaded(true);}});
+    return()=>controller.abort();
+  },[api,route,adopt]);
   function changeMode(value){setMode(value);setPrompt(false);if(value!=='expanded'){if(embedded){if(sequential){setSequentialOpen(false);launcher.current?.focus({preventScroll:true});}onInlineClose?.();}else launcher.current?.focus({preventScroll:true});}}
   function pauseSequential(){if(rollout)pauseFocusRequested.current=true;setSequentialOpen(false);if(!rollout)launcher.current?.focus({preventScroll:true});}
   function toggleSequential(){
@@ -87,7 +98,7 @@ function SocPilot({clientId,user,configuration,record,current=record,rows=EMPTY,
     if(!rollout&&!disabled&&!updated&&!validationError&&draft&&view==='position')start();
   }
   function close(){if(busy)return;if(dirty)setConfirmClose(true);else changeMode('collapsed');}
-  async function load(){setBusy(true);setError('');try{const {data}=await api.get(route);if(active.current){adopt(data,true);setLoaded(true);}return data;}catch(e){if(active.current)setError(formatError(e));return null;}finally{if(active.current)setBusy(false);}}
+  async function load(){const owner=initialRead.current;setBusy(true);setError('');try{const {data}=await api.get(route);if(active.current){adopt(data,true);if(owner&&initialRead.current===owner)owner.initialized=true;setLoaded(true);}return data;}catch(e){if(active.current)setError(formatError(e));return null;}finally{if(active.current)setBusy(false);}}
   function put(key,value){setAnswers(old=>({...old,[key]:value}));setNotice('');if(rollout){setAppliedText(null);setReplace(false);}}
   async function persist(nextStep,completed,override={}){
     if(disabled||pending.current||!draft)return null;
@@ -159,7 +170,7 @@ function SocPilot({clientId,user,configuration,record,current=record,rows=EMPTY,
     if(!rollout||!interviewHistoryOpen)return;
     historyLoad();
     return()=>{historyRequest.current+=1;};
-  },[rollout,interviewHistoryOpen,route]);// eslint-disable-line react-hooks/exhaustive-deps
+  },[api,rollout,interviewHistoryOpen,route]);// eslint-disable-line react-hooks/exhaustive-deps
   async function saveProgress(){
     if(blocked||pending.current)return null;
     const data=await persist(index,view==='summary'&&draft?.completed===true);

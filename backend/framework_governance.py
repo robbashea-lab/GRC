@@ -6,11 +6,12 @@ import re
 import uuid
 from datetime import date, datetime, timezone
 from pathlib import Path
-from typing import Literal, Optional
-from fastapi import APIRouter, Depends, HTTPException, Query, Header
+from typing import Any, Literal, Optional
+from fastapi import APIRouter, Body, Depends, HTTPException, Query, Header
+from fastapi.encoders import jsonable_encoder
 from fastapi.responses import StreamingResponse
 import security_runtime
-from pydantic import BaseModel, ConfigDict, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field, ValidationError, field_validator
 import review_occurrences
 import assignment_eligibility
 import create_requests
@@ -597,77 +598,168 @@ def router_for(s):
         await s.audit(user,'SOC 2 readiness scope updated','client',body.client_id,body.client_id,
                       meta={'categories':config['categories'],'period_start':config['period_start'],'period_end':config['period_end'],'_portfolio_activity_event_id':portfolio_event['event_id'] if portfolio_event else None})
         return {**config,'expected_updated_at':at}
-    @router.post('/framework_assessments/{aid}/reviews')
-    async def setup_review(aid:str,body:ReviewSetup,user=Depends(s.get_current_user)):
-        row=await parent(aid,user,True);cid=row['client_id'];key=row['framework_key'];catalog=CATALOGS[key]
+    async def review_setup_context(aid,user):
+        row=await parent(aid,user,True);cid=row['client_id'];key=row['framework_key']
         if not await s.db.requirements.find_one({'client_id':cid,'baseline_key':key,'baseline_response':'applies'}):raise HTTPException(409,'Activate the program before configuring Reviews')
         client=await scoped(cid,user)
         scope=client_configuration(key,client)
         if row['definition_id'] not in {d['id'] for d in active_definitions(key,scope)}:
             raise HTTPException(409,'This assessment is retained outside the active program scope; existing work and history remain available')
-        plan=next((p for p in active_plans(key,scope) if p['key']==body.plan_key and row['definition_id'] in p['safeguards']),None)
-        if body.plan_key and not plan:raise HTTPException(422,'Review plan does not map to this requirement')
-        old=None
-        if body.review_id:
-            old=await target_record('reviews',body.review_id,user)
-            if old['client_id']!=cid:raise HTTPException(422,'Relationship must belong to this client')
-        elif plan:
-            equivalent=[p['key'] for c in CATALOGS.values() for p in c['review_plans'] if plan.get('baseline_key') and p.get('baseline_key')==plan['baseline_key']]
-            clauses=[{'framework_plan_key':plan['key']}]
-            if plan.get('baseline_key'):clauses.extend([{'baseline_key':plan['baseline_key']},{'framework_plan_key':{'$in':equivalent}}])
-            old=await s.db.reviews.find_one({'client_id':cid,'$or':clauses},{'_id':0})
-        canonical=next(((k,p) for k,c in CATALOGS.items() for p in c['review_plans'] if plan and plan.get('baseline_key') and p.get('baseline_key')==plan['baseline_key']), (key,plan))
-        rid=old['review_id'] if old else stable(cid,'review',canonical[1]['key'] if plan else 'requirement:'+row['definition_id'],canonical[0])
-        if not old:
-            old=await s.db.reviews.find_one({'review_id':rid,'client_id':cid},{'_id':0})
-        if not old:
-            if not body.title.strip():raise HTTPException(422,'Review title is required')
-            if body.due_date and not review_occurrences.scheduled_date(body.due_date):raise HTTPException(422,'Invalid Review date')
-            if body.recurrence=='custom' and not body.custom_recurrence_days:raise HTTPException(422,'Custom interval is required')
-            draft=s.ReviewIn(client_id=cid,title=body.title.strip(),review_type=plan['review_type'] if plan else 'requirements',owner_id=body.owner_id,recurrence=body.recurrence,custom_recurrence_days=body.custom_recurrence_days,due_date=body.due_date or None,status='upcoming' if body.due_date else 'needs_scheduling').model_dump()
-            await assignment_eligibility.validate(s.db,'reviews',draft,s._can_access_client)
-            draft.update(review_id=rid,created_at=s._now(),created_by=user['user_id'],framework_key=key,framework_safeguards=plan['safeguards'] if plan else [row['definition_id']])
-            if plan:draft.update(framework_plan_key=plan['key'],baseline_key=plan.get('baseline_key'),framework_basis=plan['basis'],framework_source_cadence=plan['source_cadence'])
-            draft.update(review_occurrences.schedule(draft));draft['current_occurrence_id']=review_occurrences.occurrence_id(draft)
-            _, portfolio_event = s._portfolio_event_patch('review', rid, cid, user, None, draft, draft['created_at'], 'create')
-            if portfolio_event:
-                portfolio_event['program_keys'] = [key]
-                draft['_portfolio_activity_pending'] = {portfolio_event['event_id']: portfolio_event}
-                draft['_portfolio_activity_last_event_id'] = portfolio_event['event_id']
-            inserted=await s.db.reviews.update_one({'_id':rid},{'$setOnInsert':draft},upsert=True)
-            if inserted.upserted_id:await s.audit(user,'create','reviews',rid,cid,meta={
-                'framework_assessment_id':aid, '_portfolio_activity_event_id':portfolio_event['event_id'] if portfolio_event else None,
-                '_portfolio_activity_noop':portfolio_event is None})
-        if plan:await add_driver(s,cid,rid,key,plan)
-        mapped=plan['safeguards'] if plan else [row['definition_id']]
-        assessments=await s._bounded(s.db.framework_assessments.find(
-            {'client_id':cid,'framework_key':key,'definition_id':{'$in':mapped}}, {'_id':0,'assessment_history':0}),
-            10000,'framework Review relationships')
-        linked_events=[]
-        for assessment in assessments:
-            r4_services.assert_settled(assessment)
-            link={'kind':'reviews','id':rid}
-            if link in assessment.get('related_links',[]):
-                continue
-            after={**assessment,'related_links':[*assessment.get('related_links',[]),link]}
-            at=s._now()
-            portfolio_patch, portfolio_event=s._portfolio_event_patch(
-                'framework_assessment',assessment['framework_assessment_id'],cid,user,assessment,after,at)
-            update={'$addToSet':{'related_links':link}}
-            if portfolio_patch:update['$set']=portfolio_patch
-            linked=await s.db.framework_assessments.update_one({
-                'framework_assessment_id':assessment['framework_assessment_id'],'client_id':cid,
-                'related_links':assessment.get('related_links'), 'last_saved':assessment.get('last_saved'),
-                'last_assessed':assessment.get('last_assessed'),'_r4_context_pending':None},update)
-            if not linked.matched_count:raise HTTPException(409,'Assessment relationships changed; retry the Review setup')
-            if linked.modified_count:linked_events.append((portfolio_event['event_id'] if portfolio_event else None,
-                                                         assessment['framework_assessment_id']))
-        acknowledged=next(((event_id,source_id) for event_id,source_id in linked_events if event_id),(None,None))
-        if linked_events:await s.audit(user,'Framework Review linked','framework_assessments',aid,cid,meta={
-            'review_id':rid,'_portfolio_activity_event_id':acknowledged[0],
-            '_portfolio_activity_source_type':'framework_assessments','_portfolio_activity_source_id':acknowledged[1],
-            '_portfolio_activity_noop':acknowledged[0] is None})
-        return portfolio_activity.public_source(await s.db.reviews.find_one({'review_id':rid,'client_id':cid},{'_id':0}))
+        return row,scope
+
+    @router.post('/framework_assessments/{aid}/reviews',openapi_extra={
+        'requestBody':{'required':True,'content':{'application/json':{'schema':ReviewSetup.model_json_schema()}}}})
+    async def setup_review(aid:str,body:Any=Body(...),user=Depends(s.get_current_user),
+                           idempotency_key:Optional[str]=Header(default=None,alias='Idempotency-Key')):
+        def validated_body():
+            try:return ReviewSetup.model_validate(body)
+            except ValidationError as error:
+                errors=[{**item,'loc':('body',*item['loc'])} for item in error.errors(include_url=False)]
+                raise HTTPException(422,jsonable_encoder(errors)) from error
+
+        # Header-free callers keep native validation and canonical Review reuse.
+        legacy=validated_body() if idempotency_key is None else None
+        row,_=await review_setup_context(aid,user)
+        cid=row['client_id']
+        async def execute(identity):
+            row,scope=await review_setup_context(aid,user)
+            key=row['framework_key']
+            data=legacy if legacy is not None else validated_body()
+            receipt=await s.db.create_requests.find_one({'_id':identity}) if identity else {}
+            actor=(receipt or {}).get('framework_review_actor') or {
+                field:user.get(field) for field in ('user_id','email','name')}
+            plan=next((p for p in active_plans(key,scope) if p['key']==data.plan_key and row['definition_id'] in p['safeguards']),None)
+            if data.plan_key and not plan:raise HTTPException(422,'Review plan does not map to this requirement')
+            old=None
+            if data.review_id:
+                old=await target_record('reviews',data.review_id,user)
+                if old['client_id']!=cid:raise HTTPException(422,'Relationship must belong to this client')
+            elif plan:
+                equivalent=[p['key'] for c in CATALOGS.values() for p in c['review_plans'] if plan.get('baseline_key') and p.get('baseline_key')==plan['baseline_key']]
+                clauses=[{'framework_plan_key':plan['key']}]
+                if plan.get('baseline_key'):clauses.extend([{'baseline_key':plan['baseline_key']},{'framework_plan_key':{'$in':equivalent}}])
+                old=await s.db.reviews.find_one({'client_id':cid,'$or':clauses},{'_id':0})
+            canonical=next(((k,p) for k,c in CATALOGS.items() for p in c['review_plans'] if plan and plan.get('baseline_key') and p.get('baseline_key')==plan['baseline_key']), (key,plan))
+            rid=old['review_id'] if old else stable(cid,'review',canonical[1]['key'] if plan else 'requirement:'+row['definition_id'],canonical[0])
+            if (receipt or {}).get('framework_review_id',rid)!=rid:
+                raise HTTPException(409,'The original Review setup target changed; recover the original request')
+            if not old:
+                old=await s.db.reviews.find_one({'review_id':rid,'client_id':cid},{'_id':0})
+            context={'assessment_id':aid,'client_id':cid,'framework_key':key,
+                     'definition_id':row['definition_id'],'plan_key':data.plan_key}
+            if (receipt or {}).get('framework_review_context',context)!=context:
+                raise HTTPException(409,'The original Review setup context changed; recover the original request')
+            creation=(receipt or {}).get('framework_review_document')
+            if creation and (creation.get('review_id')!=rid or creation.get('client_id')!=cid or
+                             creation.get('framework_key')!=key or creation.get('created_by')!=actor['user_id']):
+                raise HTTPException(409,'The original Review setup provenance changed; recover the original request')
+
+            async def primary_started(document=None):
+                if identity:
+                    fields={'primary_started':True,'framework_review_id':rid,'framework_review_actor':actor,'framework_review_context':context}
+                    if document is not None:fields['framework_review_document']=document
+                    await s.db.create_requests.update_one({'_id':identity},{'$set':fields})
+
+            async def committed_event(source,kind,event):
+                if not event:return False
+                event_id=event['event_id']
+                if source.get('_portfolio_activity_pending',{}).get(event_id)==event:return True
+                published=await s.db.portfolio_events.find_one({'event_id':event_id,'source_kind':kind,
+                    'source_id':event['source_id'],'client_id':cid},{'_id':0})
+                return published==event
+
+            inserted=None
+            if not old:
+                if not data.title.strip():raise HTTPException(422,'Review title is required')
+                if data.due_date and not review_occurrences.scheduled_date(data.due_date):raise HTTPException(422,'Invalid Review date')
+                if data.recurrence=='custom' and not data.custom_recurrence_days:raise HTTPException(422,'Custom interval is required')
+                draft=s.ReviewIn(client_id=cid,title=data.title.strip(),review_type=plan['review_type'] if plan else 'requirements',owner_id=data.owner_id,recurrence=data.recurrence,custom_recurrence_days=data.custom_recurrence_days,due_date=data.due_date or None,status='upcoming' if data.due_date else 'needs_scheduling').model_dump()
+                await assignment_eligibility.validate(s.db,'reviews',draft,s._can_access_client)
+                draft.update(review_id=rid,created_at=s._now(),created_by=user['user_id'],framework_key=key,framework_safeguards=plan['safeguards'] if plan else [row['definition_id']])
+                if plan:draft.update(framework_plan_key=plan['key'],baseline_key=plan.get('baseline_key'),framework_basis=plan['basis'],framework_source_cadence=plan['source_cadence'])
+                draft.update(review_occurrences.schedule(draft));draft['current_occurrence_id']=review_occurrences.occurrence_id(draft)
+                _, portfolio_event = s._portfolio_event_patch('review', rid, cid, user, None, draft, draft['created_at'], 'create')
+                if portfolio_event:
+                    if identity:portfolio_event['event_id']=create_requests.digest([identity,portfolio_event['event_id']])
+                    portfolio_event['program_keys'] = [key]
+                    draft['_portfolio_activity_pending'] = {portfolio_event['event_id']: portfolio_event}
+                    draft['_portfolio_activity_last_event_id'] = portfolio_event['event_id']
+                    if identity:draft['_portfolio_activity_creation_event_id']=portfolio_event['event_id']
+                if identity:
+                    draft=creation or draft
+                    creation=draft
+                await primary_started(draft)
+                inserted=await s.db.reviews.update_one({'_id':rid},{'$setOnInsert':draft},upsert=True)
+                if not identity and inserted.upserted_id:await s.audit(user,'create','reviews',rid,cid,meta={
+                    'framework_assessment_id':aid, '_portfolio_activity_event_id':portfolio_event['event_id'] if portfolio_event else None,
+                    '_portfolio_activity_noop':portfolio_event is None})
+            if identity and creation:
+                saved=await s.db.reviews.find_one({'_id':rid},{'_id':0})
+                event_id=creation.get('_portfolio_activity_creation_event_id')
+                # The source envelope proves this intent's insert, including a lost acknowledgement.
+                event=creation.get('_portfolio_activity_pending',{}).get(event_id)
+                if saved and saved.get('_portfolio_activity_creation_event_id')==event_id and await committed_event(saved,'reviews',event):
+                    await s.audit(actor,'create','reviews',rid,cid,meta={
+                        'framework_assessment_id':aid,'_portfolio_activity_event_id':event_id,
+                        '_portfolio_activity_noop':event_id is None})
+            if plan:
+                await primary_started()
+                await add_driver(s,cid,rid,key,plan)
+            mapped=plan['safeguards'] if plan else [row['definition_id']]
+            assessments=await s._bounded(s.db.framework_assessments.find(
+                {'client_id':cid,'framework_key':key,'definition_id':{'$in':mapped}}, {'_id':0,'assessment_history':0}),
+                10000,'framework Review relationships')
+            intents=(receipt or {}).get('framework_review_links',{})
+            linked_events=[]
+            for assessment in assessments:
+                r4_services.assert_settled(assessment)
+                source_id=assessment['framework_assessment_id']
+                intent=intents.get(source_id)
+                if intent:
+                    event=intent.get('event')
+                    if set(intent.get('before',{}))!={'related_links','last_saved','last_assessed'} or event and (
+                        event.get('source_kind')!='framework_assessments' or event.get('source_id')!=source_id or
+                        event.get('client_id')!=cid):
+                        raise HTTPException(409,'The original Review relationship provenance changed; recover the original request')
+                link={'kind':'reviews','id':rid}
+                if link in assessment.get('related_links',[]):
+                    if intent and await committed_event(assessment,'framework_assessments',intent.get('event')):
+                        linked_events.append(((intent.get('event') or {}).get('event_id'),source_id))
+                    continue
+                if intent and await committed_event(assessment,'framework_assessments',intent.get('event')):
+                    # A later removal does not undo this already-committed historical step.
+                    linked_events.append(((intent.get('event') or {}).get('event_id'),source_id))
+                    continue
+                if not intent:
+                    after={**assessment,'related_links':[*assessment.get('related_links',[]),link]}
+                    _, portfolio_event=s._portfolio_event_patch(
+                        'framework_assessment',source_id,cid,user,assessment,after,s._now())
+                    if portfolio_event and identity:portfolio_event['event_id']=create_requests.digest([identity,portfolio_event['event_id']])
+                    intent={'event':portfolio_event,'before':{
+                        field:assessment.get(field) for field in ('related_links','last_saved','last_assessed')}}
+                    if identity:
+                        await s.db.create_requests.update_one({'_id':identity},{'$set':{
+                            'framework_review_links.'+source_id:intent}})
+                query={'framework_assessment_id':source_id,'client_id':cid,
+                       '_r4_context_pending':None,**intent['before']}
+                update={'$addToSet':{'related_links':link}}
+                event=intent.get('event')
+                if event:update['$set']={'_portfolio_activity_pending.'+event['event_id']:event,
+                                         '_portfolio_activity_last_event_id':event['event_id']}
+                await primary_started()
+                linked=await s.db.framework_assessments.update_one(query,update)
+                if not linked.matched_count:raise HTTPException(409,'Assessment relationships changed; retry the Review setup')
+                if linked.modified_count:linked_events.append((event['event_id'] if event else None,source_id))
+            acknowledged=next(((event_id,source_id) for event_id,source_id in linked_events if event_id),(None,None))
+            if linked_events:await s.audit(actor if identity else user,'Framework Review linked','framework_assessments',aid,cid,meta={
+                'review_id':rid,'_portfolio_activity_event_id':acknowledged[0],
+                '_portfolio_activity_source_type':'framework_assessments','_portfolio_activity_source_id':acknowledged[1],
+                '_portfolio_activity_noop':acknowledged[0] is None})
+            return portfolio_activity.public_source(await s.db.reviews.find_one({'review_id':rid,'client_id':cid},{'_id':0}))
+
+        if idempotency_key is None:return await execute(None)
+        return await create_requests.run(s.db,idempotency_key,user['user_id'],cid,
+            '/framework_assessments/'+aid+'/reviews',body,execute)
 
     @router.patch('/framework_assessments/{aid}')
     async def update(aid:str,body:AssessmentPatch,user=Depends(s.get_current_user),idempotency_key:Optional[str]=Header(default=None,alias='Idempotency-Key')):

@@ -33,11 +33,23 @@ async function openTicket(outer){
   const opener=outer.querySelector('[data-ticket-id="finding:'+finding.finding_id+'"] button');
   expect(opener).toBeTruthy();await act(async()=>opener.click());expect(ticket()).toBeTruthy();
 }
-async function openSource(){
+async function openSource(fixtureState){
   const prior=assessments();await click(ticket(),'CIS Controls v8.1 Assessment → Safeguard 1.1');
   const added=assessments().filter(node=>!prior.includes(node));expect(added).toHaveLength(1);
   expect(added[0].classList.contains('brawndo-assessment-pilot')).toBe(false);
-  expect(added[0].querySelector('.brawndo-pilot-guidance')).toBeNull();
+  expect(['saved-result','live-question']).toContain(fixtureState);
+  if(fixtureState==='saved-result'){
+    expect(added[0].querySelector('fieldset[data-question-id]')).toBeNull();
+    expect(added[0].querySelector('details.gn-control-guidance')).toBeNull();
+    expect(added[0].querySelector('.brawndo-pilot-guidance')).toBeNull();
+  }else{
+    const question=added[0].querySelector('.cis-sequential-interview fieldset[data-question-id="inventory"]');
+    expect(question).toBeTruthy();
+    const guidance=question.querySelector('details.gn-control-guidance');
+    expect(guidance).toBeTruthy();
+    expect(guidance.querySelector('summary').textContent).toBe('Control guidance & client context');
+    expect(guidance.textContent).toContain('Framework requirement');
+  }
   return added[0];
 }
 async function revealInterview(surface){
@@ -110,7 +122,7 @@ test.each(['Close','Escape'])('legacy source appearance: the completed ticket op
   expect(before.records[4].status).toBe('closed');observeWrites();
   const sourceOpener=button(ticket(),'CIS Controls v8.1 Assessment → Safeguard 1.1');
   sourceOpener.focus();expect(document.activeElement).toBe(sourceOpener);
-  const nested=await openSource();expect(nested.classList.contains('brawndo-cis-visual-safeguard')).toBe(true);
+  const nested=await openSource('saved-result');expect(nested.classList.contains('brawndo-cis-visual-safeguard')).toBe(true);
   expect(nested.querySelector('[aria-label="Current implementation"]').value).toBe(record.implementation);
   expect(nested.querySelector('[aria-label="Saved implementation status"]').textContent).toBe(outer.querySelector('[aria-label="Saved implementation status"]').textContent);
   expect(nested.querySelector('[aria-label="Saved verification"]').textContent).toBe(outer.querySelector('[aria-label="Saved verification"]').textContent);
@@ -133,7 +145,7 @@ test.each(['Close','Escape'])('legacy source appearance: the completed ticket op
 test('nested assessment and ticket drafts retain their independent close guards and saved personal checkpoint',async()=>{
   await savePersonalProgress();const before=await snapshot();observeWrites();await render();const outer=assessments()[0];await openTicket(outer);
   await edit(ticket().querySelector('[aria-label="Planned action"]'),'Retained unsaved ticket plan.');
-  const nested=await openSource();expect(nested.classList.contains('brawndo-cis-visual-safeguard')).toBe(true);
+  const nested=await openSource('live-question');expect(nested.classList.contains('brawndo-cis-visual-safeguard')).toBe(true);
   const guide=await revealInterview(nested);expect(inventoryAnswer(guide).value).toBe('Not sure');
   await edit(nested.querySelector('[aria-label="Current implementation"]'),'Retained unsaved source wording.');
   await click(nested,'Close');await click(document.body,'Keep editing');expect(nested.isConnected).toBe(true);
@@ -148,7 +160,7 @@ test('nested assessment and ticket drafts retain their independent close guards 
 
 test('a default parent keeps the same source native without creating a presentation receipt',async()=>{
   await savePersonalProgress();const before=await snapshot();observeWrites();await render(false);const outer=assessments()[0];await openTicket(outer);
-  const nested=await openSource();expect(nested.classList.contains('brawndo-cis-visual-safeguard')).toBe(false);
+  const nested=await openSource('live-question');expect(nested.classList.contains('brawndo-cis-visual-safeguard')).toBe(false);
   expect(nested.querySelector('.cis-collapsible-requirement summary').textContent).toBe('What CIS requires · CIS v8.1 safeguard 1.1');
   const launcher=button(nested,'Resume guided assessment')||button(nested,'Begin guided assessment');
   expect(launcher).toBeTruthy();expect(launcher.getAttribute('aria-expanded')).toBe('false');
@@ -158,7 +170,7 @@ test('a default parent keeps the same source native without creating a presentat
 
 test('revoking the live parent origin removes nested appearance without losing its unsaved native draft',async()=>{
   await savePersonalProgress();const before=await snapshot();observeWrites();await render();const outer=assessments()[0];await openTicket(outer);
-  const nested=await openSource();expect(nested.classList.contains('brawndo-cis-visual-safeguard')).toBe(true);
+  const nested=await openSource('live-question');expect(nested.classList.contains('brawndo-cis-visual-safeguard')).toBe(true);
   await edit(nested.querySelector('[aria-label="Current implementation"]'),'Retained draft after origin withdrawal.');
   await render(false);expect(nested.isConnected).toBe(true);expect(outer.isConnected).toBe(true);
   expect(nested.classList.contains('brawndo-cis-visual-safeguard')).toBe(false);
@@ -168,7 +180,7 @@ test('revoking the live parent origin removes nested appearance without losing i
 
 test('losing the current resolved ticket source withdraws appearance and preserves a newer unsaved source draft',async()=>{
   await savePersonalProgress();const before=await snapshot();observeWrites();await render();await openTicket(assessments()[0]);
-  const nested=await openSource();expect(nested.classList.contains('brawndo-cis-visual-safeguard')).toBe(true);
+  const nested=await openSource('live-question');expect(nested.classList.contains('brawndo-cis-visual-safeguard')).toBe(true);
   const read=api.get.bind(api);let rejectSource;
   const unavailable=new Promise((_resolve,reject)=>{rejectSource=reject;});
   const reads=jest.spyOn(api,'get').mockImplementation((path,...args)=>path===base?unavailable:read(path,...args));
@@ -192,7 +204,7 @@ test('source refresh loss preserves an unsaved supported interview answer and no
   let completeAction;
   patchSpy.mockImplementationOnce((...args)=>new Promise((resolve,reject)=>{completeAction=()=>write(...args).then(resolve,reject);}));
   await click(ticket().querySelector('[data-ticket-task="'+task.task_id+'"]'),'Complete work');
-  const nested=await openSource(),pilot=nested.querySelector('[data-testid="guided-pilot"]'),guide=await revealInterview(nested);
+  const nested=await openSource('live-question'),pilot=nested.querySelector('[data-testid="guided-pilot"]'),guide=await revealInterview(nested);
   await chooseInventoryAnswer(guide,'Yes');await edit(guide.querySelector('[aria-label="Known gaps or uncertainties"]'),'Retain this exact unsaved interview note.');
   const read=api.get.bind(api),reads=jest.spyOn(api,'get').mockImplementation((path,...args)=>path===base?Promise.reject({response:{status:404},message:'Source unavailable for this ticket refresh'}):read(path,...args));
   await act(async()=>completeAction());

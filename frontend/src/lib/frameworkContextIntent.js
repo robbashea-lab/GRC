@@ -30,12 +30,14 @@ export function frameworkContextResponse(data, identity) {
 }
 
 // Only coordinated final PATCH uses this store; ordinary native saves stay independent.
-export function useFrameworkContextIntent(identity) {
-  return useCreateIntent(async (path, body, options) => {
+export function useFrameworkContextIntent(identity,transport=api) {
+  const post=async (path, body, options) => {
     if (!frameworkContextRequest([path, body], identity)) throw new Error('The retained assessment save does not match this workspace.');
-    const response = await api.patch(path, body, options);
+    const response = await transport.patch(path, body, options);
     // Check before createIntent acknowledges and removes the retained command.
     if (!frameworkContextResponse(response.data, identity)) throw new Error('The assessment save response could not be verified. Its original request remains available for retry.');
     return response;
-  }, frameworkContextScope(identity), frameworkContextIdentity(identity));
+  };
+  if(transport!==api)post.assertCommandCurrent=()=>transport.assertAssessmentCurrent();
+  return useCreateIntent(post,frameworkContextScope(identity),frameworkContextIdentity(identity),transport!==api);
 }

@@ -3,14 +3,21 @@ import {useEffect, useRef} from 'react';
 export const PORTFOLIO_CHANGED = 'grc:portfolio-changed';
 
 // Successful writes refresh mounted views; focus and bounded polling cover other sessions.
-export function usePortfolioRefresh(load) {
-  const latest = useRef(load);
-  latest.current = load;
+export function usePortfolioRefresh(load, onPortfolioChanged) {
+  const latest = useRef({load, onPortfolioChanged});
+  latest.current = {load, onPortfolioChanged};
   useEffect(() => {
-    let queued;
-    const refresh = () => {
-      if (document.hidden || queued != null) return;
-      queued = window.setTimeout(() => { queued = null; latest.current(); }, 0);
+    let queued, portfolioOnly = false;
+    const refresh = event => {
+      if (document.hidden) return;
+      const portfolio = event?.type === PORTFOLIO_CHANGED;
+      if (queued != null) { if (!portfolio) portfolioOnly = false; return; }
+      portfolioOnly = portfolio;
+      queued = window.setTimeout(() => {
+        queued = null;
+        const callback = portfolioOnly && latest.current.onPortfolioChanged || latest.current.load;
+        callback();
+      }, 0);
     };
     window.addEventListener(PORTFOLIO_CHANGED, refresh);
     window.addEventListener('focus', refresh);

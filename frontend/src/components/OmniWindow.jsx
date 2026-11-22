@@ -1,6 +1,8 @@
 import {useEffect,useLayoutEffect,useRef,useState} from 'react';
 import {Maximize2,Minimize2,Minus,X,MoreHorizontal} from 'lucide-react';
 import useOmniModalVisibility from '@/lib/useOmniModalVisibility';
+import {useSurfaceRef} from '@/lib/useSurfaceRef';
+import {useAssessmentSurfaceSuspension} from '@/lib/assessmentSurfaceAvailability';
 
 export function fitOmniRect(rect,width=window.innerWidth,height=window.innerHeight,minWidth=490,minHeight=470){
   const pad=8,top=height>350?82:8,maxW=Math.max(1,width-pad*2),maxH=Math.max(1,height-top-pad);
@@ -38,7 +40,9 @@ export default function OmniWindow({id,children,onOpenAutoFocus,onCloseAutoFocus
   const [rect,setRect]=useState(initialRect),[maximized,setMaximized]=useState(false);
   const rectRef=useRef(rect),restore=useRef(null),drag=useRef(null),focusHandlers=useRef({onOpenAutoFocus,onCloseAutoFocus});rectRef.current=rect;
   const surface=useRef(null),closeHandler=useRef(onClose);closeHandler.current=onClose;
+  const suspension=useAssessmentSurfaceSuspension(useSurfaceRef(surface)),available=suspension.available;
   useOmniModalVisibility(surface);
+  useLayoutEffect(()=>{if(!available)drag.current=null;},[available]);
   useEffect(()=>{
     const node=surface.current,close=()=>closeHandler.current?.();
     node.addEventListener(OMNI_ESCAPE_EVENT,close);
@@ -46,15 +50,15 @@ export default function OmniWindow({id,children,onOpenAutoFocus,onCloseAutoFocus
   },[]);
   // Measure after the launcher has expanded from its minimized size, before paint.
   useLayoutEffect(()=>{if(anchor)setRect(initialRect());},[]); // eslint-disable-line react-hooks/exhaustive-deps
-  useEffect(()=>{const handlers=focusHandlers.current;handlers.onOpenAutoFocus?.({preventDefault(){}});return()=>handlers.onCloseAutoFocus?.({preventDefault(){}});},[]);
+  useEffect(()=>{const handlers=focusHandlers.current;suspension.onOpenAutoFocus({preventDefault(){}},handlers.onOpenAutoFocus);return()=>handlers.onCloseAutoFocus?.({preventDefault(){}});},[]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(()=>{const resize=()=>setRect(r=>fit(maximized?{x:8,y:82,w:window.innerWidth-16,h:window.innerHeight-90}:r));window.addEventListener('resize',resize);return()=>window.removeEventListener('resize',resize);},[maximized,visualProgram]); // eslint-disable-line react-hooks/exhaustive-deps
-  function expand(){if(maximized){setRect(fit(restore.current||initialRect()));}else{restore.current=rectRef.current;setRect(fit(visualProgram?{x:window.innerWidth-Math.min(560,window.innerWidth-44)-22,y:82,w:Math.min(560,window.innerWidth-44),h:window.innerHeight-110}:{x:8,y:82,w:window.innerWidth-16,h:window.innerHeight-90}));}setMaximized(!maximized);}
+  function expand(){if(!available)return;if(maximized){setRect(fit(restore.current||initialRect()));}else{restore.current=rectRef.current;setRect(fit(visualProgram?{x:window.innerWidth-Math.min(560,window.innerWidth-44)-22,y:82,w:Math.min(560,window.innerWidth-44),h:window.innerHeight-110}:{x:8,y:82,w:window.innerWidth-16,h:window.innerHeight-90}));}setMaximized(!maximized);}
   function start(event,edge){
-    if(event.button!==0||maximized||(!edge&&!event.target.closest('.omni-panel-header'))||(!edge&&event.target.closest('button,details,input,select,textarea,a')))return;
+    if(!available||event.button!==0||maximized||(!edge&&!event.target.closest('.omni-panel-header'))||(!edge&&event.target.closest('button,details,input,select,textarea,a')))return;
     drag.current={id:event.pointerId,x:event.clientX,y:event.clientY,rect:rectRef.current,edge};event.currentTarget.setPointerCapture(event.pointerId);event.preventDefault();
   }
   function move(event){
-    const d=drag.current;if(!d||d.id!==event.pointerId)return;
+    const d=drag.current;if(!available||!d||d.id!==event.pointerId)return;
     const dx=event.clientX-d.x,dy=event.clientY-d.y,r={...d.rect};
     if(!d.edge){r.x+=dx;r.y+=dy;}else{
       if(d.edge.includes('e'))r.w+=dx;if(d.edge.includes('s'))r.h+=dy;
@@ -63,18 +67,20 @@ export default function OmniWindow({id,children,onOpenAutoFocus,onCloseAutoFocus
     setRect(fit(r));
   }
   function nudge(event,resize=false){
-    if(!['ArrowLeft','ArrowRight','ArrowUp','ArrowDown'].includes(event.key)||maximized)return;
+    if(!available||!['ArrowLeft','ArrowRight','ArrowUp','ArrowDown'].includes(event.key)||maximized)return;
     event.preventDefault();const step=event.shiftKey?30:10,dx=event.key==='ArrowRight'?step:event.key==='ArrowLeft'?-step:0,dy=event.key==='ArrowDown'?step:event.key==='ArrowUp'?-step:0;
     setRect(r=>fit(resize?{...r,w:r.w+dx,h:r.h+dy}:{...r,x:r.x+dx,y:r.y+dy}));
   }
-  return <section ref={surface} id={id} role="dialog" aria-modal="false" aria-labelledby={id+'-title'} aria-describedby={id+'-description'} className={'guided-panel omni-workspace-window'+(refined?' omni-refined-window':'')+(visualProgram?' cis-omni-program-window':'')} style={{left:rect.x,top:rect.y,width:rect.w,height:rect.h}}
-    onPointerDown={e=>start(e)} onDoubleClick={e=>{if(e.target.closest('.omni-panel-header')&&!e.target.closest('button,details,input,select,textarea,a'))expand();}} onPointerMove={move} onPointerUp={()=>{drag.current=null;}} onPointerCancel={()=>{drag.current=null;}} onKeyDown={e=>{if(e.key==='Escape'){e.stopPropagation();onClose();}else if(refined&&e.target.closest('.omni-panel-header')&&!e.target.closest('button'))nudge(e,e.altKey);}}>
-    <div className="omni-window-controls">{!refined&&<details><summary aria-label={name+" window position and size"}><MoreHorizontal size={18}/></summary><div className="omni-window-menu">
+  return <section ref={suspension.ref} id={id} role="dialog" aria-modal="false" aria-labelledby={id+'-title'} aria-describedby={id+'-description'} {...suspension.contentProps} className={'guided-panel omni-workspace-window'+(refined?' omni-refined-window':'')+(visualProgram?' cis-omni-program-window':'')} style={{left:rect.x,top:rect.y,width:rect.w,height:rect.h}}
+    onClickCapture={event=>{if(!available&&event.target.closest('[role="dialog"],[role="alertdialog"]')===event.currentTarget&&!event.target.closest('[data-assessment-suspension-close]')){event.preventDefault();event.stopPropagation();}}}
+    onPointerDown={e=>start(e)} onDoubleClick={e=>{if(e.target.closest('.omni-panel-header')&&!e.target.closest('button,details,input,select,textarea,a'))expand();}} onPointerMove={move} onPointerUp={()=>{drag.current=null;}} onPointerCancel={()=>{drag.current=null;}} onKeyDown={e=>{if(e.key==='Escape'){if(e.defaultPrevented||e.target.closest('[role="dialog"],[role="alertdialog"]')!==e.currentTarget)return;e.stopPropagation();onClose();}else if(refined&&e.target.closest('.omni-panel-header')&&!e.target.closest('button'))nudge(e,e.altKey);}}>
+    <div className="omni-window-controls" data-assessment-suspension-controls="">{!refined&&<details><summary aria-label={name+" window position and size"}><MoreHorizontal size={18}/></summary><div className="omni-window-menu">
       <button type="button" onKeyDown={e=>nudge(e)}>Position: use arrow keys</button><button type="button" onKeyDown={e=>nudge(e,true)}>Size: use arrow keys</button>
       <button type="button" onClick={()=>{setMaximized(false);setRect(defaultRect());}}>Reset window</button>
       <button type="button" onClick={()=>{setMaximized(false);setRect(fitOmniRect({...rectRef.current,x:8}));}}>Place on left</button><button type="button" onClick={()=>{setMaximized(false);setRect(fitOmniRect({...rectRef.current,x:window.innerWidth-rectRef.current.w-8}));}}>Place on right</button>
-    </div></details>}<button type="button" aria-label={"Minimize "+name+" Guide"} onClick={onMinimize}><Minus size={18}/></button><button type="button" aria-label={maximized?'Restore '+name+' Guide size':'Expand '+name+' Guide'} onClick={expand}>{maximized?<Minimize2 size={18}/>:<Maximize2 size={18}/>}</button><button type="button" aria-label={"Close "+name+" Guide"} onClick={onClose}><X size={18}/></button></div>
+    </div></details>}<button type="button" aria-label={"Minimize "+name+" Guide"} onClick={onMinimize}><Minus size={18}/></button><button type="button" aria-label={maximized?'Restore '+name+' Guide size':'Expand '+name+' Guide'} onClick={expand}>{maximized?<Minimize2 size={18}/>:<Maximize2 size={18}/>}</button><button type="button" data-assessment-suspension-close="" aria-label={"Close "+name+" Guide"} onClick={onClose}><X size={18}/></button></div>
     {children}
+    <p {...suspension.statusProps}>Assessment unavailable. Your unsaved work is preserved.</p>
     {!maximized&&EDGES.map(edge=><div key={edge} className={'omni-resize omni-resize-'+edge} onPointerDown={e=>{e.stopPropagation();start(e,edge);}} onPointerMove={move} onPointerUp={()=>{drag.current=null;}} onPointerCancel={()=>{drag.current=null;}}/>)}
   </section>;
 }

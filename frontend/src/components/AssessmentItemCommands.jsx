@@ -1,6 +1,6 @@
 import {useEffect,useRef,useState} from 'react';
-import api,{formatError} from '@/lib/api';
-import {useCreateIntent} from '@/lib/createIntent';
+import {formatError} from '@/lib/api';
+import {useAssessmentApi,useAssessmentCreateIntent} from '@/lib/assessmentCommandScope';
 import {recordUuid} from '@/lib/recordUuid';
 import {operatorProgram} from '@/lib/frameworkOperator';
 import {Button} from './ui/button';
@@ -12,6 +12,7 @@ const EMPTY_TASK={title:'',description:'',priority:'medium',assignee_id:null,due
 
 // One native command owner for the assessment's Item forms. No new persistence mechanism.
 export default function AssessmentItemCommands({record,ctx,disabled,workDisabled,standard=false,controls,onSaved,onDraftChange,portalContainer,children}){
+  const api=useAssessmentApi();
   const [addOpen,setAddOpen]=useState(false),[add,setAdd]=useState(EMPTY_ITEM);
   const [taskItem,setTaskItem]=useState(null),[task,setTask]=useState(EMPTY_TASK);
   const [busy,setBusy]=useState(false),[error,setError]=useState('');
@@ -39,15 +40,15 @@ export default function AssessmentItemCommands({record,ctx,disabled,workDisabled
     if(!matchesAssessment(response.data))throw new Error('The saved Item response could not be verified. Retry its original command.');
     return response;
   }
-  const createItem=useCreateIntent(postAssessment,commandScope+':assessment-item-add',!!commandScope);
-  const removeItem=useCreateIntent(postAssessment,commandScope+':assessment-item-remove',!!commandScope);
-  const resolveItem=useCreateIntent(async(path,body,options)=>{
+  const createItem=useAssessmentCreateIntent(postAssessment,commandScope+':assessment-item-add',!!commandScope);
+  const removeItem=useAssessmentCreateIntent(postAssessment,commandScope+':assessment-item-remove',!!commandScope);
+  const resolveItem=useAssessmentCreateIntent(async(path,body,options)=>{
     if(!itemPath(path,''))throw new Error('The retained Item resolution belongs to another assessment.');
     const response=await api.patch(path,body,options);
     if(!matchesAssessment(response.data))throw new Error('The Item resolution response could not be verified. Retry its original command.');
     return response;
   },commandScope+':assessment-item-resolve',!!commandScope);
-  const createTask=useCreateIntent(async(path,body,options)=>{
+  const createTask=useAssessmentCreateIntent(async(path,body,options)=>{
     const item=itemPath(path,'task');
     if(!item)throw new Error('The retained Action command belongs to another assessment.');
     const response=await api.post(path,body,options),data=response.data;

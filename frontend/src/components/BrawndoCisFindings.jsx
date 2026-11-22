@@ -5,7 +5,7 @@ import {Button} from './ui/button';
 import {Input} from './ui/input';
 import {Textarea} from './ui/textarea';
 import AssigneeSelect from './AssigneeSelect';
-import api from '@/lib/api';
+import {useAssessmentApi} from '@/lib/assessmentCommandScope';
 import {recordUuid} from '@/lib/recordUuid';
 import RemediationTickets from './RemediationTickets';
 import BrawndoSafeguard11Findings from './BrawndoSafeguard11Findings';
@@ -29,6 +29,7 @@ function sameFindingDraft(left,right){
 }
 
 export default function BrawndoCisFindings({record,definition,current,ctx,related,writable,busy,finding,setFinding,run,setNested,setFeedback,safeguard11=false,error,workDisabled=false}){
+  const api=useAssessmentApi();
   const findings=record.framework_key==='cis-ig1'?directFindings(current,related):(related?.findings||[]).filter(f=>f.client_id===record.client_id);
   const disabled=!writable||busy||!ctx,aid=record.framework_assessment_id;
   const liveDraft=useRef(null),sheetElement=useRef(null),withdrawnFocus=useRef(null);

@@ -5,7 +5,7 @@ import SoaFieldGuidance from './SoaFieldGuidance';
 import {Sheet,SheetContent,SheetHeader,SheetTitle,SheetDescription} from './ui/sheet';
 import {Button} from './ui/button';
 import {Textarea} from './ui/textarea';
-import api from '@/lib/api';
+import {useAssessmentApi} from '@/lib/assessmentCommandScope';
 import {operatorProgram} from '@/lib/frameworkOperator';
 import {activePlans,activeDefinitions} from '@/lib/frameworks';
 import {useAuth} from '@/context/AuthContext';
@@ -18,6 +18,7 @@ export function FrameworkRecordButton({record,onManage}){
 
 // Existing FrameworkDrawer owns loading, authorization, version guards and draft protection.
 export default function FrameworkRecordAccess({state,actions,reviewsOnly=false,controlsManagement}){
+  const api=useAssessmentApi();
   const {user}=useAuth();
   const opener=useRef(document.activeElement);
   const {open,current,definition,catalog,ctx,form,dirty,busy,error,feedback,writable,comment,link}=state;

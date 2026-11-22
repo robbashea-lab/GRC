@@ -16,7 +16,7 @@ import {readEvidenceFile as fileData} from '@/lib/evidenceFile';
 import { personLabel } from '@/lib/people';
 
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
-import {useCreateIntent} from '@/lib/createIntent';
+import {useAssessmentApi,useAssessmentCreateIntent} from '@/lib/assessmentCommandScope';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import {Dialog,DialogContent,DialogDescription} from '@/components/ui/dialog';
 import {AlertDialog,AlertDialogContent,AlertDialogTitle,AlertDialogDescription,AlertDialogFooter,AlertDialogCancel,AlertDialogAction} from '@/components/ui/alert-dialog';
@@ -30,7 +30,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from 'sonner';
-import api, { formatError } from '@/lib/api';
+import { formatError } from '@/lib/api';
 import { SCHEMAS } from '@/lib/schemas';
 import RequirementBasis, {GovernanceContextFields} from './RequirementBasis';
 import { occurrenceId, reviewSchedule, reviewView, belongsToOccurrence } from '@/lib/reviewOccurrences';
@@ -58,6 +58,7 @@ const outcome = o => o.checklist_outcome || nativeOutcome(o);
 const evaluationFields=[['conclusion','Reviewer conclusion',20000],['tested_scope','Scope examined',4000],['tested_period','Period examined',4000],['no_evidence_reason','Supporting records / reason no separate artifact is appropriate',4000]];
 
 export default function ReviewDrawer({open,onOpenChange,record,clientId,onSaved,onRiskLinked,initialValues,reviewsPilot=false}) {
+  const api=useAssessmentApi();
   const {user,workspaceMode,loading:authLoading,error:authError} = useAuth();
   const {currentClient,currentClientId,loading:orgLoading,error:orgError}=useOrg()||{};
   const pilot=isReferenceWorkflow(clientId,user,currentClient) && (!record || record.client_id===clientId);
@@ -107,9 +108,9 @@ export default function ReviewDrawer({open,onOpenChange,record,clientId,onSaved,
   // Appearance follows an existing same-client Review, independently of opener workflow flags.
   const workflowPresentation=fullRecord&&!!record?.review_id&&current?.review_id===record.review_id
     && (!selected || selected.review_id===record.review_id&&selected.client_id===clientId);
-  const createRecord = useCreateIntent((...args) => api.post(...args), cid);
-  const updateRecord = useCreateIntent((...args)=>api.patch(...args), `${user?.user_id}:${cid}:${record?.review_id}:update`, true);
-  const createFinding = useCreateIntent(async (...args) => {
+  const createRecord = useAssessmentCreateIntent((...args) => api.post(...args), cid);
+  const updateRecord = useAssessmentCreateIntent((...args)=>api.patch(...args), `${user?.user_id}:${cid}:${record?.review_id}:update`, true);
+  const createFinding = useAssessmentCreateIntent(async (...args) => {
     try { return await api.post(...args); }
     catch(error) {
       // This command's identity is in the body, not only the transport header.
@@ -185,7 +186,7 @@ export default function ReviewDrawer({open,onOpenChange,record,clientId,onSaved,
     setMembers([]);setPolicies([]);setHistory([]);setRelated({});setComments([]);setActivity([]);setBasisLoading(pilot?!!record:true);setBasisError('');
     api.get(`/clients/${readClientId}/members`).then(({data})=>{if(accepted())setMembers(data);}).catch(error=>{if(accepted())toast.error(formatError(error));});
     api.get('/policies',{params:{client_id:readClientId}}).then(({data})=>{if(accepted())setPolicies(data);}).catch(error=>{if(accepted())toast.error(formatError(error));});
-  },[open,record,clientId,readClientId,initialValues?.occurrence,pilot,readScope]);
+  },[api,open,record,clientId,readClientId,initialValues?.occurrence,pilot,readScope]);
 
   function changeConfiguration(key,value) {
     if (key === 'recurrence') recurrenceEdited.current=true;
@@ -213,7 +214,7 @@ export default function ReviewDrawer({open,onOpenChange,record,clientId,onSaved,
       return {ok:true};
     } catch(e) { const error=formatError(e);if (accepted()) {setBasisError(error);if(!options?.quiet)toast.error(error);} return {ok:false,error}; }
     finally {if(accepted())setBasisLoading(false);}
-  }, [open,rid,oid,current?.review_id,current?.risk_id,selected,readScope]);
+  }, [api,open,rid,oid,current?.review_id,current?.risk_id,selected,readScope]);
   // Scope resolution resets the detail state above even when Review IDs stay the same.
   useEffect(() => { reload(); },[reload,pilot]);
   // Only the new linked-Risk command requires confirmed parent refresh before success.
@@ -280,23 +281,28 @@ export default function ReviewDrawer({open,onOpenChange,record,clientId,onSaved,
   const guideDirty=!frozen&&completionGuide&&guideBaseline.current&&JSON.stringify([completionGuide.results,completionGuide.supporting_reference])!==JSON.stringify([guideBaseline.current.results,guideBaseline.current.supporting_reference]);
   const dirty=guideDirty || !frozen&&Object.values(evaluation).some(Boolean) || draftProtected && !frozen && (current ? Object.keys(changes()).length>0 : !!(form.title||form.review_type||form.owner_id||form.due_date||form.notes||form.governance_context||form.policy_id||form.custom_recurrence_days||form.recurrence&&form.recurrence!=='none')) ||
     draftProtected && (!!comment.trim()||!!finding||!!riskDraft&&JSON.stringify(riskDraft)!==JSON.stringify(riskBase.current)||!frozen&&!!current?.risk_id&&(riskOutcome!=="Reviewed — No Change"||!!riskNext));
+  const memoryCreateUnconfirmed=createRecord.unconfirmed()||createFinding.unconfirmed();
+  function blockUnconfirmedCreate(){
+    if(!createRecord.unconfirmed()&&!createFinding.unconfirmed())return false;
+    toast.error('A create is unconfirmed. Retry its original request before leaving this Review.');return true;
+  }
   function leave(action,hasDraft=dirty) {
-    if(draftProtected&&busy)return;
+    if(draftProtected&&busy||blockUnconfirmedCreate())return;
     if(hasDraft)setPending(()=>action);
     else action();
   }
   function close(value) { if(value)onOpenChange(true);else leave(()=>onOpenChange(false)); }
   useEffect(()=>{
-    if(!open||!dirty)return undefined;
+    if(!open||!dirty&&!memoryCreateUnconfirmed)return undefined;
     const warn=e=>{e.preventDefault();e.returnValue='';};
     window.addEventListener('beforeunload',warn);
     return ()=>window.removeEventListener('beforeunload',warn);
-  },[open,dirty]);
+  },[open,dirty,memoryCreateUnconfirmed]);
   async function saveChanges() {
     if(updateRecord.unconfirmed())throw new Error('Save is unconfirmed. Use Retry unconfirmed save before another edit or Review action.');
     const patch = changes();
     if (!current) {
-      const {data} = await createRecord('/reviews',{...patch,client_id:cid});
+      const {data} = await (createRecord.unconfirmed()?createRecord.retry():createRecord('/reviews',{...patch,client_id:cid}));
       setCurrent(data); setForm({...data,due_date:data.due_date?.slice(0,10) || ''}); onSaved?.(); return data;
     }
     if (Object.keys(patch).length) {
@@ -330,6 +336,10 @@ export default function ReviewDrawer({open,onOpenChange,record,clientId,onSaved,
     const {data}=await updateRecord.retry();
     acknowledgeReviewRevision(previous,data,owner,version,request[1].expected_updated_at);
     setCurrent(data);await reload();onSaved?.();toast.success('Saved');
+  }
+  async function saveFinding(){
+    await (createFinding.unconfirmed()?createFinding.retry():createFinding(`/reviews/${current.review_id}/create-finding`,{...finding,owner_id:finding.owner_id||null,occurrence_id:occurrenceId(current)}));
+    setFinding(null);await reload();onSaved?.();toast.success('Finding and Action Item created');
   }
   const lifecycle = action => run(async () => {
     const owner=reviewRevisionOwner.current,version=generation.current;
@@ -500,12 +510,12 @@ export default function ReviewDrawer({open,onOpenChange,record,clientId,onSaved,
           {activity.map(a => <div key={a.log_id || a.audit_id} className="border-b border-line py-2 text-sm"><div className="text-xs text-ink-help">{new Date(a.at).toLocaleString()} · {a.meta?.by_name || a.user_name || a.user_email}</div><p>{a.action}{a.meta?.task_id ? ` · ${a.meta.task_id}` : a.meta?.finding_id ? ` · ${a.meta.finding_id}` : ''}{a.meta?.filename ? ` · ${a.meta.filename}` : ''}{a.meta?.due_date ? ` · ${date(a.meta.due_date)}` : ''}</p></div>)}
         </>)}
       </div>
-      <div className="review-workflow-footer px-6 py-3 border-t border-line bg-surface-subtle flex shrink-0 justify-end gap-2">{workflowPresentation&&<span className="review-workflow-feedback">{busy?'Working…':dirty?'Unsaved changes':'No unsaved changes'}</span>}{updateRecord.unconfirmed()&&<><p role="status">Save is unconfirmed. Retry the original save before another edit.</p><Button size="sm" disabled={busy||!writable} onClick={()=>run(retryChanges)}>Retry unconfirmed save</Button></>}<Button variant="outline" size="sm" onClick={() => close(false)}>Close</Button>{!frozen && (current ? writable : admin) && (workflowPresentation||['Overview','Requirements'].includes(tab)) && <Button size="sm" data-testid="drawer-save" disabled={busy || !form.title?.trim() || !form.review_type || workflowPresentation&&current&&!Object.keys(changes()).length} onClick={() => run(async () => { await saveChanges(); await reload(); toast.success('Saved'); })}>{current ? 'Save changes' : 'Create'}</Button>}</div>
+      <div className="review-workflow-footer px-6 py-3 border-t border-line bg-surface-subtle flex shrink-0 justify-end gap-2">{workflowPresentation&&<span className="review-workflow-feedback">{busy?'Working…':dirty?'Unsaved changes':'No unsaved changes'}</span>}{createRecord.unconfirmed()&&<p role="status">Create is unconfirmed. Retry its original values before leaving.</p>}{updateRecord.unconfirmed()&&<><p role="status">Save is unconfirmed. Retry the original save before another edit.</p><Button size="sm" disabled={busy||!writable} onClick={()=>run(retryChanges)}>Retry unconfirmed save</Button></>}<Button variant="outline" size="sm" onClick={() => close(false)}>Close</Button>{!frozen && (current ? writable : admin) && (workflowPresentation||['Overview','Requirements'].includes(tab)) && <Button size="sm" data-testid="drawer-save" disabled={busy || !createRecord.unconfirmed()&&(!form.title?.trim() || !form.review_type) || workflowPresentation&&current&&!Object.keys(changes()).length} onClick={() => run(async () => { await saveChanges(); await reload(); toast.success('Saved'); })}>{current ? 'Save changes' : createRecord.unconfirmed()?'Retry unconfirmed create':'Create'}</Button>}</div>
     </DialogContent>
     {<AlertDialog open={!!pending} onOpenChange={v=>{if(!v)setPending(null);}}>
       <AlertDialogContent><AlertDialogTitle>Leave unsaved changes?</AlertDialogTitle>
         <AlertDialogDescription>Saved records are unchanged. Keep editing, or discard the unfinished draft for this action.</AlertDialogDescription>
-        <AlertDialogFooter><AlertDialogCancel>Keep editing</AlertDialogCancel><AlertDialogAction onClick={()=>{const action=pending;setPending(null);action?.();}}>Discard changes</AlertDialogAction></AlertDialogFooter>
+        <AlertDialogFooter><AlertDialogCancel>Keep editing</AlertDialogCancel><AlertDialogAction onClick={event=>{if(busy||blockUnconfirmedCreate()){event.preventDefault();return;}const action=pending;setPending(null);action?.();}}>Discard changes</AlertDialogAction></AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>}
     {pilot&&<AlertDialog open={confirmComplete} onOpenChange={setConfirmComplete}>
@@ -521,7 +531,8 @@ export default function ReviewDrawer({open,onOpenChange,record,clientId,onSaved,
     }}} onRiskLinked={refreshAfterLinkedRisk} onSaved={() => {reload();onSaved?.();}} />}
     <Sheet open={!!finding} onOpenChange={v => {if (!v) leave(()=>setFinding(null),true);}}>
       <SheetContent description="Describe the gap identified in this Review and the corrective Action required to address it." className={'w-full sm:max-w-xl overflow-y-auto'+(findingPresentation?' brawndo-review-finding':'')} data-testid="review-finding-form"><SheetHeader className={findingPresentation?'review-finding-header':undefined}><div className={findingPresentation?'review-finding-heading':undefined}>{findingPresentation&&<span className="review-finding-icon" aria-hidden="true"><AlertTriangle size={18}/></span>}<SheetTitle>Raise Finding</SheetTitle></div>{findingPresentation&&<div className="review-finding-context"><span>From {current.title}</span><span>{current.period||reviewSchedule(current).period} occurrence</span></div>}</SheetHeader>
-        {finding && <form className={findingPresentation?'review-finding-form':'mt-5 space-y-4'} onSubmit={e => {e.preventDefault();run(async () => {await createFinding(`/reviews/${current.review_id}/create-finding`,{...finding,owner_id:finding.owner_id || null,occurrence_id:occurrenceId(current)});setFinding(null);await reload();onSaved?.();toast.success('Finding and Action Item created');});}}>
+        {createFinding.unconfirmed()&&<div role="status"><p>Finding create is unconfirmed. Retry its original values before closing.</p><Button type="button" disabled={busy} onClick={()=>run(saveFinding)}>Retry unconfirmed finding</Button></div>}
+        {finding && <form className={findingPresentation?'review-finding-form':'mt-5 space-y-4'} onSubmit={e => {e.preventDefault();run(saveFinding);}}>
           {findingPresentation?<BrawndoReviewFindingFields finding={finding} onChange={setFinding} record={current} occurrenceId={occurrenceId(current)} users={members} clientId={cid} busy={busy} onCancel={()=>leave(()=>setFinding(null),true)}/>:<>
           <Label className="block">Finding title *<Input required data-testid="finding-title" value={finding.title} onChange={e => setFinding(p => ({...p,title:e.target.value}))} /></Label>
           <Label className="block">Description<Textarea value={finding.description} onChange={e => setFinding(p => ({...p,description:e.target.value}))} /></Label>

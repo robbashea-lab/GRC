@@ -2,7 +2,8 @@ import {useBrawndoFullRecord} from '@/lib/brawndoFullRecord';
 import './BrawndoFullRecord.css';
 import {useEffect,useRef,useState} from 'react';
 import { isInternal } from '@/lib/permissions';
-import api,{formatError} from '@/lib/api';
+import {formatError} from '@/lib/api';
+import {useAssessmentApi} from '@/lib/assessmentCommandScope';
 import {useAuth} from '@/context/AuthContext';
 import {Sheet,SheetContent,SheetHeader,SheetTitle,SheetDescription} from './ui/sheet';
 import {Button} from './ui/button';
@@ -14,6 +15,7 @@ import {displayRecordedAt} from '@/lib/managementDates';
 import './EvidenceRepository.css';
 
 export default function EvidenceItemDrawer({id,onClose,onOpen:onSourceOpen,onChanged}){
+  const api=useAssessmentApi();
   const {user}=useAuth(),[refresh,setRefresh]=useState(0),[tab,setTab]=useState('Overview'),[draft,setDraft]=useState(null),[draftVersion,setDraftVersion]=useState(null),[kind,setKind]=useState('findings'),[busy,setBusy]=useState(false),[activityPage,setActivityPage]=useState(1);
   const {data:item,error,loading}=useLibraryRequest(`/evidence-library/items/${encodeURIComponent(id)}`,{},refresh);
   const downloadEvidence=useEvidenceDownload(item?.client_id,id);

@@ -1,6 +1,7 @@
 import {useEffect,useState} from 'react';
 import AssigneeSelect from './AssigneeSelect';
-import api,{formatError} from '@/lib/api';
+import {formatError} from '@/lib/api';
+import {useAssessmentApi} from '@/lib/assessmentCommandScope';
 import {Button} from '@/components/ui/button';
 import {Input} from '@/components/ui/input';
 import {Textarea} from '@/components/ui/textarea';
@@ -11,8 +12,9 @@ import {toast} from 'sonner';
 const dateText=value=>value?String(value).slice(0,10):'—';
 const label=value=>String(value||'').replaceAll('_',' ');
 export default function VendorGovernancePanel({tab,record,form,setForm,canWrite,isAdmin,users,reviews,tasks,risks,evidence,openRecord,uploadFiles,downloadEv,onSaved}) {
+  const api=useAssessmentApi();
   const [riskOptions,setRiskOptions]=useState([]);
-  useEffect(()=>{let alive=true;if(tab==='risks_tab')api.get('/risks',{params:{client_id:record.client_id}}).then(r=>{if(alive)setRiskOptions(r.data);}).catch(e=>toast.error(formatError(e)));return()=>{alive=false;};},[tab,record.client_id]);
+  useEffect(()=>{let alive=true;if(tab==='risks_tab')api.get('/risks',{params:{client_id:record.client_id}}).then(r=>{if(alive)setRiskOptions(r.data);}).catch(e=>toast.error(formatError(e)));return()=>{alive=false;};},[api,tab,record.client_id]);
   const write=canWrite&&record.status!=='inactive';
   const set=(key,value)=>setForm(f=>({...f,[key]:value}));
   const field=(key,title,type='text')=><label className="block text-sm" key={key}>{title}<Input aria-label={title} data-testid={'field-'+key} type={type} value={form[key]??''} disabled={!write} onChange={e=>set(key,type==='number'?Number(e.target.value):e.target.value)} /></label>;

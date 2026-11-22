@@ -47,7 +47,7 @@ test('1.2 receives only its client’s saved 1.1 record from the existing worksp
   expect(container.querySelector('[aria-label="Current implementation"]').value).toBe(record.implementation);
   expect(container.querySelector('input[value="not_assessed"]').checked).toBe(true);
   expect(container.querySelector('[aria-label="Saved verification"]').textContent).toBe('Not verified');
-  expect(api.get.mock.calls.map(([path]) => path)).toEqual(['/framework_assessments/handling/related', '/clients/demo_brawndo/members', '/contacts', '/comments', '/framework_assessments/handling/activity', '/frameworks/cis-ig1', '/framework_assessments/handling/service-context']);
+  expect(api.get.mock.calls.map(([path]) => path).sort()).toEqual(['/framework_assessments/handling/related', '/clients/demo_brawndo/members', '/contacts', '/comments', '/framework_assessments/handling/activity', '/frameworks/cis-ig1', '/framework_assessments/handling/service-context'].sort());
   expect(container.querySelector('[aria-label="Assessment recurring activity"]').value).toBe('');
   expectNoWrites();
 });

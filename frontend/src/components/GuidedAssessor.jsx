@@ -4,7 +4,8 @@ import {createPortal} from 'react-dom';
 import {ArrowRight,FilePenLine,Info,ListChecks} from 'lucide-react';
 import {useAuth} from '@/context/AuthContext';
 import {useOrg} from '@/context/OrgContext';
-import api,{formatError,PREVIEW_MODE} from '@/lib/api';
+import {formatError,PREVIEW_MODE} from '@/lib/api';
+import {useAssessmentApi} from '@/lib/assessmentCommandScope';
 import {cisExperienceEligible, cisDefinitions} from '@/lib/cisExperience';
 import {guidedCatalog,catalogForPilot,versionForSafeguard,catalogForVersion,pilotEnabled,prioritizeGuidedRows,visibleQuestions,generateResult,validateAnswers,validateGuidedCompletion,compatibleInterviewAnswers,updateGuidedAnswer,updateGuidedMultiAnswer} from '@/lib/guidedAssessment';
 import {Dialog,DialogContent,DialogTitle,DialogDescription} from './ui/dialog';
@@ -43,6 +44,7 @@ export default function GuidedAssessor(props){
   return <Pilot key={user?.user_id+':'+props.clientId+':'+props.record?.framework_assessment_id+(focusedOmniEnabled(props.clientId,user,props.framework,props.configuration,props.record?.definition_id)?':'+(props.invitationContext||'program'):'')} {...props}/>;
 }
 function Pilot({clientId,framework,configuration,invitationContext,inventoryContext,record,rows=EMPTY_ROWS,draftSummaries={},onSelect,onViewAll,form,onApply,onSaveAssessment,onDraftChange,onUpdateImplementation,disabled=false,current=record,related={},contextComplete=false,assessmentDirty=false,onOpenNative,people=EMPTY_ROWS,inline=false,inlineOpen=false,onInlineClose,onFreshInterviewReady,visualReference=false,safeguard11=false,sequential=false,assessmentConcept=false,assessmentRollout=false,implementationReviewContainer=null,pilotPortalContainer=null,interviewHistoryOpen=false,onInterviewHistoryOpenChange,onInterviewHistoryCloseAutoFocus}){
+  const api=useAssessmentApi();
   const [sequentialOpen,setSequentialOpen]=useState(false);
   const [theme]=useBrawndoTheme();
   const auth=useAuth(),{user}=auth,org=useOrg(),key='guided-pilot-ui:'+user?.user_id+':'+clientId,initial=readPreference(key);
@@ -101,7 +103,7 @@ function Pilot({clientId,framework,configuration,invitationContext,inventoryCont
   useEffect(()=>()=>{activeIdentity.current=null;},[]);
   const [applied,setApplied]=useState(false),[contextPrompt,setContextPrompt]=useState(false);
   const [view,setView]=useState(workspacePilot?'position':'interview'),[loaded,setLoaded]=useState(!record),[changeAnswer,setChangeAnswer]=useState(''),[history,setHistory]=useState(null),[historyError,setHistoryError]=useState(''),[historyBusy,setHistoryBusy]=useState(false);
-  const historyRequestId=useRef(0);
+  const historyRequestId=useRef(0),initialRead=useRef(null);
   const currentVersion=record?versionForSafeguard(record.definition_id,workspacePilot):catalogForPilot(workspacePilot).version;
   const version=draft?.version||currentVersion,updated=version!==currentVersion;
 
@@ -157,12 +159,15 @@ function Pilot({clientId,framework,configuration,invitationContext,inventoryCont
     try{if(!sessionStorage.getItem(sessionKey)&&!initial.dismissGreeting&&mode!=='dismissed'){setGreeting(true);sessionStorage.setItem(sessionKey,'1');}}catch{/* Greeting preferences do not store assessment answers. */}
   },[]);// eslint-disable-line react-hooks/exhaustive-deps
   useEffect(()=>{
-    const controller=new AbortController();
-
+    const owner={initialized:false};initialRead.current=owner;
     if(workspacePilot){focusedStarted.current=false;setDraft(null);setResult(null);setAnswers({});saved.current='{}';setStep(0);setNarrative('');setError('');setBusy(false);setLoaded(!base);setSummaryEdited(false);setSummaryBasis('');setView('position');setHistory(null);setHistoryError('');setHistoryBusy(false);}
-
-    if(base){api.get(base,{signal:controller.signal}).then(({data})=>{
-      if(controller.signal.aborted)return;
+    return()=>{if(initialRead.current===owner)initialRead.current=null;};
+  },[base,id,clientId,user?.user_id]);// eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(()=>{
+    const owner=initialRead.current;if(!base||!owner||owner.initialized)return;
+    const controller=new AbortController();
+    api.get(base,{signal:controller.signal}).then(({data})=>{
+      if(controller.signal.aborted||initialRead.current!==owner||owner.initialized)return;
       if(!data||!catalogForVersion(data.version)||!Number.isInteger(data.revision)||!Number.isInteger(data.step)||typeof data.completed!=='boolean')throw new Error('Saved interview could not be read. Close and reopen the assessment to retry; the assessment itself is unchanged.');
       validateAnswers(id,data.answers,data.version);
       setDraft(data);setAnswers(data.answers);saved.current=JSON.stringify(data.answers);setStep(data.step);
@@ -170,10 +175,10 @@ function Pilot({clientId,framework,configuration,invitationContext,inventoryCont
       if(data.completed){const output=workspacePilot?(data.result||{status:null,narrative:data.narrative||'',basis:[],gaps:[],unknowns:[],nextSteps:[],evidence:[],answers:[],missingRecorded:true}):generateResult(id,data.answers,data.generated_at?new Date(data.generated_at):new Date(),data.version);setResult(output);setNarrative(data.narrative||output.narrative);if(focused){setSummaryEdited(true);setSummaryBasis(JSON.stringify(data.answers));}}
 
       if(refined&&!data.completed&&data.narrative){setNarrative(data.narrative);setSummaryEdited(true);setSummaryBasis('');}
-      setLoaded(true);
-    }).catch(e=>{if(!controller.signal.aborted){setError(formatError(e));setLoaded(true);}});}
+      owner.initialized=true;setError('');setLoaded(true);
+    }).catch(e=>{if(!controller.signal.aborted&&initialRead.current===owner&&!owner.initialized){setError(formatError(e));setLoaded(true);}});
     return()=>controller.abort();
-  },[base,id,clientId,user?.user_id]);// eslint-disable-line react-hooks/exhaustive-deps
+  },[api,base,id,clientId,user?.user_id,workspacePilot,focused,refined]);
   const changeMode=value=>{setMode(value);setGreeting(false);setContextPrompt(false);if(inline){if(value==='collapsed'){setSequentialOpen(false);if(sequential)launcher.current?.focus();onInlineClose?.();}return;}try{if(!focused)sessionStorage.setItem(workspacePilot?promptKey:key+':'+id+':prompt','1');localStorage.setItem(key,JSON.stringify({...readPreference(key),mode:value==='expanded'?'collapsed':value,...(!workspacePilot?{dismissGreeting:true}:{})}));}catch{/* Cosmetic preferences are optional. */}};
 
   const savedAnswers=loaded&&draft?.revision>0&&Object.keys(draft.answers||{}).length>0;
@@ -402,7 +407,7 @@ function Pilot({clientId,framework,configuration,invitationContext,inventoryCont
     const data=await save(step,true,answers,false,draft,{...result,narrative});if(!data)return;
     if(nativeApplication.current.assessmentDirty||JSON.stringify(nativeApplication.current.form)!==expected||nativeApplication.current.current?.last_saved!==savedToken){setError('The native assessment changed while saving this summary. Review the current assessment before applying it.');return;}
 
-    nativeApplication.current.onApply({implementation:data.narrative,status:data.result.status,guided_assessment_source:Object.fromEntries(['version','revision','generated_at'].map(k=>[k,data[k]]))});
+    if(nativeApplication.current.onApply({implementation:data.narrative,status:data.result.status,guided_assessment_source:Object.fromEntries(['version','revision','generated_at'].map(k=>[k,data[k]]))})===false)return;
 
     setApplied(true);setConfirmClose(false);changeMode('collapsed');
 
@@ -483,7 +488,7 @@ function Pilot({clientId,framework,configuration,invitationContext,inventoryCont
   }
   useEffect(()=>{
     if(conceptLayout&&interviewHistoryOpen)loadHistory();
-  },[conceptLayout,interviewHistoryOpen,identity]);// eslint-disable-line react-hooks/exhaustive-deps
+  },[api,conceptLayout,interviewHistoryOpen,identity]);// eslint-disable-line react-hooks/exhaustive-deps
 
   const visibleHistory=conceptLayout&&history?.identity!==identity?null:history;
   const historyContent=<>
@@ -612,7 +617,7 @@ function Pilot({clientId,framework,configuration,invitationContext,inventoryCont
             <details><summary>Answers driving the recommendation</summary>{result.answers.map((a,i)=><p key={i}>{a.prompt} — {a.answer}</p>)}</details>
             <p>Apply changes only Current Implementation and Implementation Status in the unsaved assessment draft. Verification, evidence, findings, actions, and Last Assessed remain unchanged until normal Save.</p>
             {!!form?.implementation&&<label className="guided-replacement"><input type="checkbox" disabled={disabled||busy} checked={replace} onChange={e=>setReplace(e.target.checked)}/> I understand the existing Current Implementation narrative will be replaced.</label>}
-            <Button disabled={disabled||busy||workspacePilot&&(result.missingRecorded||dirty||assessmentDirty||context.lineageStale!==false||context.applicationState==='previous')||focused&&result.status==='addressed'&&focusedResult(id,answers,version,reviewedDate).status!=='addressed'||!narrative.trim()||narrative.length>20000||!!form?.implementation&&!replace} onClick={()=>{onApply({implementation:narrative,status:result.status,guided_assessment_source:Object.fromEntries(['version','revision','generated_at'].map(k=>[k,draft[k]]))});setApplied(true);close();}}>Apply to Assessment</Button>
+            <Button disabled={disabled||busy||workspacePilot&&(result.missingRecorded||dirty||assessmentDirty||context.lineageStale!==false||context.applicationState==='previous')||focused&&result.status==='addressed'&&focusedResult(id,answers,version,reviewedDate).status!=='addressed'||!narrative.trim()||narrative.length>20000||!!form?.implementation&&!replace} onClick={()=>{if(onApply({implementation:narrative,status:result.status,guided_assessment_source:Object.fromEntries(['version','revision','generated_at'].map(k=>[k,draft[k]]))})===false)return;setApplied(true);close();}}>Apply to Assessment</Button>
             {workspacePilot&&<p>Save edited interview text before applying. A recommendation with an unknown or changed assessment base requires a fresh review.</p>}
             <Button variant="outline" disabled={disabled||busy} onClick={()=>{setResult(null);setStep(0);setView('interview');}}>Review answers</Button>
           </>:question?<>

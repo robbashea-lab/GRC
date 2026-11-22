@@ -218,6 +218,11 @@ test('two acknowledged pending Item edits in one input turn are both retained wi
   mockAuth={...mockAuth,user:{...mockAuth.user,role:'client_readonly'}};await render();
   expect(commands.onOperation({...first,request_id:'synthetic_retired_owner_edit'})).toBe(false);
   expect(mockFrame.itemsToAddress.props.controls.operations).toEqual([]);
+  mockAuth={...mockAuth,user:{...mockAuth.user,role:'super_admin'}};await render();
+  expect(mockFrame.itemsToAddress.props.controls.operations).toEqual([first,second]);
+  expect(commands.onOperation({...first,request_id:'synthetic_retired_owner_after_restore'})).toBe(false);
+  expect(mockFrame.itemsToAddress.props.controls.operations).toEqual([first,second]);
+  expect(api.patch).not.toHaveBeenCalled();expect(api.post).not.toHaveBeenCalled();
 });
 
 test('unsupported subject context never creates a broken generic Related opener',async()=>{

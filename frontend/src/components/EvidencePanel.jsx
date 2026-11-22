@@ -2,7 +2,8 @@ import {useEffect,useState} from 'react';
 import { isInternal } from '@/lib/permissions';
 import {Download} from 'lucide-react';
 import {Button} from './ui/button';
-import api,{formatError} from '@/lib/api';
+import {formatError} from '@/lib/api';
+import {useAssessmentApi} from '@/lib/assessmentCommandScope';
 import {useEvidenceDownload,EvidenceSource,uploaderLabel} from '@/lib/evidenceContext';
 import {toast} from 'sonner';
 import {useAuth} from '@/context/AuthContext';
@@ -10,6 +11,7 @@ import {Input} from './ui/input';
 import {displayRecordedAt} from '@/lib/managementDates';
 
 function ReuseEvidence({clientId,kind,id,occurrenceId,onSaved}){
+  const api=useAssessmentApi();
   const [q,setQ]=useState(''),[page,setPage]=useState(1),[busy,setBusy]=useState(false);
   const {data,error,loading}=useEvidenceCatalog({client_id:clientId,q,page,page_size:25});
   async function link(row){setBusy(true);try{await api.post(`/evidence-library/items/${row.evidence_id}/relationships`,{linked_type:kind,linked_id:id,occurrence_id:occurrenceId||null,expected_updated_at:row.updated_at||null});toast.success('Existing Evidence linked — no file copied');onSaved();}catch(e){toast.error(formatError(e));}finally{setBusy(false);}}
@@ -17,12 +19,13 @@ function ReuseEvidence({clientId,kind,id,occurrenceId,onSaved}){
 }
 
 export function useEvidenceCatalog(params,refreshKey=0){
+  const api=useAssessmentApi();
   const key=JSON.stringify(params),[result,setResult]=useState({}),[version,setVersion]=useState(0);
   useEffect(()=>{
     let active=true;setResult({key,loading:true});
     api.get('/evidence/catalog',{params:JSON.parse(key)}).then(({data})=>{if(active)setResult({key,data});}).catch(e=>{if(active)setResult({key,error:formatError(e)});});
     return()=>{active=false;};
-  },[key,version,refreshKey]);
+  },[api,key,version,refreshKey]);
   return {...(result.key===key?result:{loading:true}),reload:()=>setVersion(v=>v+1)};
 }
 // Link picker over the paged, searchable Evidence Library catalog. It never loads the whole
@@ -48,6 +51,7 @@ export function EvidenceDownload({row}){
   return <button type="button" aria-label={`Download ${row.filename}`} title={`Download ${row.filename}`} className="shrink-0 p-2 rounded hover:bg-surface-subtle text-ink-secondary" onClick={()=>downloadEvidence(row).catch(e=>toast.error(formatError(e)))}><Download aria-hidden="true" className="h-3.5 w-3.5"/></button>;
 }
 function RelationshipAction({row,kind,id,occurrenceId,onDelete,onChanged,allowLink}){
+  const api=useAssessmentApi();
   const {user}=useAuth(),[busy,setBusy]=useState(false);
   const ref=row.references?.find(r=>r.kind===kind&&r.id===id&&(kind!=='reviews'||r.occurrence_id===occurrenceId));
   if(ref?.origin==='supporting'&&!ref.module_owned&&allowLink&&isInternal(user))return <button type="button" className="text-xs underline p-2" disabled={busy} onClick={async()=>{if(!window.confirm('Unlink this supporting Evidence? The file and other relationships remain.'))return;setBusy(true);try{await api.post(`/evidence-library/items/${row.evidence_id}/relationships`,{linked_type:kind,linked_id:id,occurrence_id:occurrenceId||null,remove:true,expected_updated_at:row.updated_at||null});onChanged();}catch(e){toast.error(formatError(e));}finally{setBusy(false);}}}>Unlink</button>;

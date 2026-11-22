@@ -29,9 +29,9 @@ jest.mock('./R4AssessmentContext',()=>props=>{
 function mockEditor({state,actions}){
   mockState=state;mockActions=actions;
   return <section data-testid="actual-framework-controller">{state.contextEditor}
-    <textarea aria-label="Native implementation draft" disabled={!state.writable||state.busy}
+    <textarea aria-label="Native implementation draft" disabled={!state.writable||state.busy||!state.ctx}
       value={state.form.implementation} onChange={event=>actions.put('implementation',event.target.value)}/>
-    <button disabled={!state.writable||state.busy} onClick={()=>actions.save()}>Native Save</button>
+    <button disabled={!state.writable||state.busy||!state.ctx} onClick={()=>actions.save()}>Native Save</button>
     <button onClick={actions.close}>Native Close</button>
     {state.error&&<p role="alert">{state.error}</p>}<p>{state.feedback}</p>
   </section>;
@@ -198,7 +198,8 @@ test('ordinary noncoordinated PATCH remains direct and creates no persistent con
   await render({direct:true,url:'/reviews'});
   await act(async()=>mockActions.put('implementation','Ordinary native save'));
   let saved;await act(async()=>{saved=await mockActions.save();});
-  expect(saved).toBe(true);expect(api.patch.mock.calls[0][2]).toBeUndefined();
+  expect(saved).toBe(true);expect(api.patch.mock.calls[0][2]).toEqual({assessmentAuthority:expect.any(Function)});
+  expect(api.patch.mock.calls[0][2]).not.toHaveProperty('headers');
   expect(api.patch.mock.calls[0][1]).not.toHaveProperty('coordination');expect(retained()).toBeNull();
   expect(mockState.dirty).toBe(false);expect(mockState.form.implementation).toBe('Ordinary native save');
 });
@@ -321,4 +322,355 @@ test('the actual FrameworkDrawer suppresses evidence bytes delivered after its o
   await act(async()=>root.render(<p>Closed native drawer</p>));expect(options.signal.aborted).toBe(true);
   await act(async()=>{pending.resolve({data:{content_base64:'AAECAw==',filename:'synthetic.bin'}});await downloading;});
   expect(URL.createObjectURL).not.toHaveBeenCalled();expect(click).not.toHaveBeenCalled();
+});
+
+
+test('a temporarily unresolved record retains all assessment fields and unapplied context against its original service revision',async()=>{
+  mockRealContext=true;
+  const original=copy(native);
+  await render({direct:true,url:'/reviews'});
+  const editor=host.querySelector('[data-testid="actual-framework-controller"]');
+  const edit=async(node,value)=>act(async()=>{
+    Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype,'value').set.call(node,value);
+    node.dispatchEvent(new Event('input',{bubbles:true}));
+  });
+  await act(async()=>{
+    mockActions.put('implementation','Retained implementation draft');
+    mockActions.put('notes','Retained additional notes');
+    mockActions.put('technology','Retained actual tools');
+    mockActions.put('owner_id','synthetic-proposed-owner');
+  });
+  await edit(host.querySelector('[aria-label="Assessment setup notes"]'),'Unapplied recurring notes');
+  const custom=host.querySelector('[aria-label="Client-specific interview tool"]');
+  await act(async()=>{
+    Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,'value').set.call(custom,'Unapplied client-specific tool');
+    custom.dispatchEvent(new Event('input',{bubbles:true}));
+  });
+  const absent={...original,framework_assessment_id:AID+'-unresolved'};
+  await render({direct:true,url:'/reviews',record:absent});
+  expect(host.querySelector('[data-testid="actual-framework-controller"]')).toBe(editor);
+  expect(mockState.form).toMatchObject({implementation:'Retained implementation draft',notes:'Retained additional notes',technology:'Retained actual tools',owner_id:'synthetic-proposed-owner'});
+  expect(button('Native Save').disabled).toBe(true);
+  expect(api.patch).not.toHaveBeenCalled();
+  contextVersion='different-server-service-revision';
+  native={...native,implementation:'Concurrent server wording',last_saved:'concurrent-assessment-revision'};
+  await render({direct:true,url:'/reviews',record:original});
+  expect(host.querySelector('[data-testid="actual-framework-controller"]')).toBe(editor);
+  expect(mockState.form).toMatchObject({implementation:'Retained implementation draft',notes:'Retained additional notes',technology:'Retained actual tools',owner_id:'synthetic-proposed-owner',last_saved:'assessment-A'});
+  expect(host.querySelector('[aria-label="Assessment setup notes"]').value).toBe('Unapplied recurring notes');
+  expect(host.querySelector('[aria-label="Client-specific interview tool"]').value).toBe('Unapplied client-specific tool');
+  expect(host.textContent).toContain('Saved service or activity context changed. Your draft is retained.');
+  expect(button('Apply context to draft').disabled).toBe(true);
+  expect(api.patch).not.toHaveBeenCalled();
+});
+
+test.each(['success','rejected'])('an ambiguous %s response across unresolved identity retains exact coordinated request and current retry sends its original key and revisions',async outcome=>{
+  const original=copy(native);
+  await render({direct:true,url:'/reviews'});await stage();
+  const wire=deferred();api.patch.mockImplementationOnce(()=>wire.promise);
+  let saving;await act(async()=>{saving=mockActions.save();});
+  const first=api.patch.mock.calls[0],stored=retained();
+  await render({direct:true,url:'/reviews',record:{...original,framework_assessment_id:AID+'-unresolved'}});
+  await act(async()=>{
+    if(outcome==='success')wire.resolve(confirm(first[1]));
+    else wire.reject({response:{headers:{'x-create-rejected':'true'},data:{detail:'An ended epoch rejection'}}});
+    await saving;
+  });
+  expect(retained()).toBe(stored);
+  expect(onSaved).not.toHaveBeenCalled();
+  await render({direct:true,url:'/reviews',record:original});
+  expect(mockState.form.implementation).toBe('Exact accepted assessment A');
+  expect(mockState.form.last_saved).toBe('assessment-A');
+  expect(retry()).toBeTruthy();expect(retry().disabled).toBe(false);
+  api.patch.mockRejectedValueOnce({response:{status:409,data:{detail:'Original assessment revision is stale'}}});
+  await act(async()=>retry().click());
+  const replay=api.patch.mock.calls.at(-1);
+  expect(replay.slice(0,2)).toEqual(first.slice(0,2));
+  expect(replay[2].headers['Idempotency-Key']).toBe(first[2].headers['Idempotency-Key']);
+  expect(replay[1].expected_last_assessed).toBe('assessment-A');
+  expect(replay[1].coordination).toEqual(coordination);
+  expect(retained()).toBe(stored);
+  expect(mockState.form.implementation).toBe('Exact accepted assessment A');
+  expect(mockState.form.last_saved).toBe('assessment-A');
+});
+
+test('an actually verified different control uses native Keep editing or Discard before replacing the whole draft owner',async()=>{
+  const original=copy(native);
+  await render({direct:true,url:'/reviews'});await stage('Private original control draft');
+  const other={...original,framework_assessment_id:'synthetic-other-assessment',definition_id:'CC1.2',implementation:'Other native control',last_saved:'other-assessment-A'};
+  const priorGet=api.get.getMockImplementation();
+  api.get.mockImplementation(async(path,...args)=>{
+    if(path==='/frameworks/soc-2')return {data:{...workspace(),assessments:[copy(native),copy(other)]}};
+    return priorGet(path,...args);
+  });
+  await render({direct:true,url:'/reviews',record:other});
+  expect(document.body.textContent).toContain('Leave unsaved changes?');
+  expect(mockState.record.framework_assessment_id).toBe(AID);
+  expect(mockState.form.implementation).toBe('Private original control draft');
+  const action=name=>[...document.body.querySelectorAll('button')].find(node=>node.textContent===name);
+  await act(async()=>action('Keep editing').click());
+  expect(mockState.record.framework_assessment_id).toBe(AID);
+  expect(mockState.form.implementation).toBe('Private original control draft');
+  // A subsequent deliberate request (after the original identity is presented)
+  // uses the same native leave guard; B never receives A's form or command.
+  await render({direct:true,url:'/reviews',record:original});
+  await render({direct:true,url:'/reviews',record:other});
+  await act(async()=>action('Discard changes').click());
+  expect(mockState.record.framework_assessment_id).toBe(other.framework_assessment_id);
+  expect(mockState.form.implementation).toBe('Other native control');
+  expect(mockState.form.last_saved).toBe('other-assessment-A');
+  expect(api.patch).not.toHaveBeenCalled();
+});
+
+test.each([['user_id','replacement-actor',true],['role','client_readonly',false],['status','disabled',true]])('a security %s switch fences old callbacks and preserves only the same private draft owner',async(field,value,retire)=>{
+  const originalUser=copy(mockAuth.user);
+  await render({direct:true,url:'/reviews'});await stage('Private ended-owner wording');
+  const old=host.querySelector('[data-testid="actual-framework-controller"]'),oldActions=mockActions;
+  mockAuth={...mockAuth,user:{...mockAuth.user,[field]:value}};
+  await render({direct:true,url:'/reviews'});
+  if(retire){
+    expect(host.querySelector('[data-testid="actual-framework-controller"]')).not.toBe(old);
+    expect(mockState.form.implementation).toBe('Saved native assessment');
+  }else{
+    expect(host.querySelector('[data-testid="actual-framework-controller"]')).toBe(old);
+    expect(mockState.form.implementation).toBe('Private ended-owner wording');
+    expect(mockState.writable).toBe(false);
+    expect(host.querySelector('[aria-label="Native implementation draft"]').disabled).toBe(true);
+    expect(button('Native Save').disabled).toBe(true);
+  }
+  expect(mockState.form.last_saved).toBe('assessment-A');
+  await act(async()=>oldActions.save());
+  expect(api.patch).not.toHaveBeenCalled();
+  mockAuth={...mockAuth,user:originalUser};
+  await render({direct:true,url:'/reviews'});
+  expect(mockState.form.implementation).toBe(retire?'Saved native assessment':'Private ended-owner wording');
+  expect(mockState.form.last_saved).toBe('assessment-A');
+  await act(async()=>oldActions.save());
+  expect(api.patch).not.toHaveBeenCalled();
+});
+
+
+test('an equivalent-permission ordinary receipt settles before fresh context reads without unlocking another Save or rebasing its original request',async()=>{
+  await render({direct:true,url:'/reviews'});
+  await act(async()=>mockActions.put('implementation','Ordinary accepted request before fresh reads'));
+  const wire=deferred(),reads=deferred(),priorGet=api.get.getMockImplementation();
+  api.patch.mockImplementationOnce(async(_path,body)=>{await wire.promise;return confirm(body);});
+  let saving;await act(async()=>{saving=mockActions.save();});
+  const original=api.patch.mock.calls[0];
+  api.get.mockImplementation((path,...args)=>path==='/frameworks/soc-2'?reads.promise:priorGet(path,...args));
+  mockAuth={...mockAuth,user:{...mockAuth.user,role:'platform_admin'}};
+  await render({direct:true,url:'/reviews'});
+  expect(mockState.busy).toBe(true);
+  expect(button('Native Save').disabled).toBe(true);
+  await act(async()=>{wire.resolve();await saving;});
+  expect(mockState.form.implementation).toBe('Ordinary accepted request before fresh reads');
+  expect(mockState.form.last_saved).toBe('confirmed-assessment-A');
+  expect(button('Native Save').disabled).toBe(true);
+  expect(api.patch).toHaveBeenCalledTimes(1);
+  expect(original[1].expected_last_assessed).toBe('assessment-A');
+  expect(original[1]).not.toHaveProperty('coordination');
+  expect(retained()).toBeNull();
+  await act(async()=>reads.resolve({data:workspace()}));
+  expect(mockState.busy).toBe(false);
+  expect(button('Native Save').disabled).toBe(false);
+  expect(mockState.form.implementation).toBe('Ordinary accepted request before fresh reads');
+  expect(api.patch).toHaveBeenCalledTimes(1);
+});
+
+test('a precommit workspace bundle released after an ordinary receipt cannot replace the confirmed current assessment or its fresh guidance context',async()=>{
+  native={...native,status:'not_assessed'};
+  await render({direct:true,url:'/reviews'});
+  await act(async()=>{
+    mockActions.put('implementation','Ordinary confirmed wording survives stale joined reads');
+    mockActions.put('status','in_progress');
+  });
+  const precommit=copy(workspace()),wire=deferred(),stale=deferred(),priorGet=api.get.getMockImplementation();
+  expect(precommit.assessments[0]).toMatchObject({last_saved:'assessment-A',status:'not_assessed',implementation:'Saved native assessment'});
+  api.patch.mockImplementationOnce(async(_path,body)=>{await wire.promise;return confirm(body);});
+  let saving;await act(async()=>{saving=mockActions.save();});
+  const original=copy(api.patch.mock.calls[0][1]);
+  let holdRefresh=true;
+  api.get.mockImplementation((path,...args)=>{
+    if(path==='/frameworks/soc-2'&&holdRefresh)return stale.promise;
+    return priorGet(path,...args);
+  });
+  const readsBeforeRefresh=api.get.mock.calls.length;
+  mockAuth={...mockAuth,user:{...mockAuth.user,role:'platform_admin'}};
+  await render({direct:true,url:'/reviews'});
+  const heldRead=api.get.mock.calls.slice(readsBeforeRefresh)
+    .filter(([path,config])=>path==='/frameworks/soc-2'&&config?.signal&&!config.signal.aborted).at(-1);
+  expect(heldRead).toBeTruthy();expect(heldRead[1].signal.aborted).toBe(false);
+  expect(mockState.busy).toBe(true);expect(button('Native Save').disabled).toBe(true);
+  const programReadsBeforeReceipt=api.get.mock.calls.filter(([path])=>path==='/frameworks/soc-2').length;
+  holdRefresh=false;
+  await act(async()=>{wire.resolve();await saving;});
+  expect(api.get.mock.calls.filter(([path])=>path==='/frameworks/soc-2').length).toBeGreaterThan(programReadsBeforeReceipt);
+  expect(heldRead[1].signal.aborted).toBe(true);
+  const confirmed={implementation:'Ordinary confirmed wording survives stale joined reads',status:'in_progress',last_saved:'confirmed-assessment-A'};
+  expect(mockState.form).toMatchObject(confirmed);
+  expect(mockState.current).toMatchObject(confirmed);expect(mockState.ctx.current).toMatchObject(confirmed);
+  await act(async()=>stale.resolve({data:precommit}));
+  expect(mockState.form).toMatchObject(confirmed);
+  expect(mockState.current).toMatchObject(confirmed);expect(mockState.ctx.current).toMatchObject(confirmed);
+  expect(mockState.dirty).toBe(false);expect(mockState.busy).toBe(false);
+  expect(button('Native Save').disabled).toBe(false);
+  expect(api.patch).toHaveBeenCalledTimes(1);expect(api.patch.mock.calls[0][1]).toEqual(original);
+  expect(original.expected_last_assessed).toBe('assessment-A');expect(original).not.toHaveProperty('coordination');
+  expect(onSaved).toHaveBeenCalledTimes(1);expect(onNext).not.toHaveBeenCalled();expect(retained()).toBeNull();
+});
+
+test('a late guided Item receipt across an equivalent-role refresh retains newer wording and the original assessment and Item draft revisions',async()=>{
+  const {socGuidedCatalog,socQuestionSet,validateSocCompletion}=jest.requireActual('@/lib/socGuidedAssessment');
+  native={...native,items_revision:7,items_to_address:[],item_controls:{}};
+  await render({direct:true,url:'/reviews'});
+  const source={version:socGuidedCatalog.version,revision:2,generated_at:'2099-01-01T00:00:00.000Z'};
+  const answers=Object.fromEntries(socQuestionSet('CC1.1',{},source.version).map(question=>[question.id,
+    question.type==='text'?'Synthetic reported context':question.choices.includes('Not sure')?'Not sure':question.choices[0]]));
+  expect(()=>validateSocCompletion('CC1.1',answers,source.version)).not.toThrow();
+  const wording='Guided native wording A with original pending Item operations';
+  let staged;await act(async()=>{staged=mockActions.stageGuidedImplementation(wording,'Saved native assessment',{
+    ...source,client_id:CID,assessment_id:AID,actor_id:ACTOR,completed:true,narrative:wording,answers});});
+  expect(staged).toBe(true);expect(mockState.guidedItemsDraft.length).toBeGreaterThan(0);
+  const item=mockState.guidedItemsDraft[0],operation={operation:'resolve',target:{question_id:item.question_id,kind:item.kind},
+    state:'resolved',resolution:'Exact pending Item resolution A'};
+  let applied;await act(async()=>{applied=mockState.itemControls.onOperation(operation);});
+  expect(applied).toBe(true);
+  const proposedItems=copy(mockState.guidedItemsDraft),wire=deferred();
+  api.patch.mockImplementationOnce(async(_path,body)=>{await wire.promise;return confirm(body);});
+  let saving;await act(async()=>{saving=mockActions.saveAndNext();});
+  expect(api.patch).toHaveBeenCalledTimes(1);
+  const original=copy(api.patch.mock.calls[0][1]);
+  expect(original).toEqual({implementation:wording,guided_assessment_source:source,expected_last_assessed:'assessment-A',
+    item_draft:{expected_revision:7,operations:[operation]}});
+  mockAuth={...mockAuth,user:{...mockAuth.user,role:'platform_admin'}};
+  await render({direct:true,url:'/reviews'});
+  expect(mockState.busy).toBe(false);expect(button('Native Save').disabled).toBe(false);
+  await act(async()=>mockActions.put('implementation','Newer native wording B after the guided request'));
+  await act(async()=>{wire.resolve();await saving;});
+  expect(mockState.form).toMatchObject({implementation:'Newer native wording B after the guided request',last_saved:'assessment-A'});
+  expect(mockState.current).toMatchObject({implementation:'Saved native assessment',last_saved:'assessment-A'});
+  expect(mockState.guidedItemsDraft).toEqual(proposedItems);
+  expect(mockState.itemControls.operations).toEqual([operation]);expect(mockState.itemControls.answers).toEqual(answers);
+  expect(mockState.dirty).toBe(true);expect(mockState.busy).toBe(false);
+  expect(onSaved).not.toHaveBeenCalled();expect(onNext).not.toHaveBeenCalled();expect(retained()).toBeNull();
+  let saved;await act(async()=>{saved=await mockActions.save();});
+  expect(saved).toBe(false);expect(api.patch).toHaveBeenCalledTimes(1);
+  expect(api.patch.mock.calls[0][1]).toEqual(original);expect(mockState.itemControls.operations).toEqual([operation]);
+  expect(mockState.form.last_saved).toBe('assessment-A');
+});
+
+test('an alternate strict Save remains fenced when its unchanged saved guided source is omitted from the native payload',async()=>{
+  const {socGuidedCatalog}=jest.requireActual('@/lib/socGuidedAssessment');
+  const savedSource={version:socGuidedCatalog.version,revision:1,generated_at:'2098-12-01T00:00:00.000Z'};
+  native={...native,guided_assessment_source:savedSource};
+  await render({direct:true,url:'/reviews'});
+  const alternate={...copy(mockState.form),implementation:'Alternate strict assessment A'},wire=deferred();
+  api.patch.mockImplementationOnce(async(_path,body)=>{await wire.promise;return confirm(body);});
+  let saving;await act(async()=>{saving=mockActions.save({assessment:alternate});});
+  const original=copy(api.patch.mock.calls[0][1]);
+  expect(original).toMatchObject({implementation:'Alternate strict assessment A',expected_last_assessed:'assessment-A'});
+  expect(original).not.toHaveProperty('guided_assessment_source');expect(original).not.toHaveProperty('coordination');
+  mockAuth={...mockAuth,user:{...mockAuth.user,role:'platform_admin'}};
+  await render({direct:true,url:'/reviews'});
+  expect(mockState.busy).toBe(false);
+  await act(async()=>mockActions.put('implementation','Newer alternate-path draft B'));
+  await act(async()=>{wire.resolve();await saving;});
+  expect(mockState.form).toMatchObject({implementation:'Newer alternate-path draft B',last_saved:'assessment-A'});
+  expect(mockState.current).toMatchObject({implementation:'Saved native assessment',last_saved:'assessment-A',guided_assessment_source:savedSource});
+  expect(mockState.dirty).toBe(true);expect(mockState.busy).toBe(false);
+  expect(api.patch).toHaveBeenCalledTimes(1);expect(api.patch.mock.calls[0][1]).toEqual(original);
+  expect(onSaved).not.toHaveBeenCalled();expect(onNext).not.toHaveBeenCalled();expect(retained()).toBeNull();
+});
+
+test('native Next discards the whole dirty assessment once before a controlled parent selects the next verified record',async()=>{
+  const original=copy(native),other={...copy(native),framework_assessment_id:'synthetic-next-assessment',definition_id:'CC1.2',
+    implementation:'Next verified native assessment B',last_saved:'next-assessment-B'};
+  const priorGet=api.get.getMockImplementation();
+  api.get.mockImplementation((path,...args)=>path==='/frameworks/soc-2'?Promise.resolve({data:{...workspace(),
+    assessments:[copy(native),copy(other)]}}):priorGet(path,...args));
+  function NextParent(){
+    const [selected,setSelected]=React.useState(original);
+    return <FrameworkDrawer open record={selected} clientId={CID} onSaved={onSaved} onOpenChange={()=>{}}
+      onNext={()=>{onNext();setSelected(other);}}/>;
+  }
+  await act(async()=>root.render(<MemoryRouter initialEntries={['/reviews']}><OrgProvider><NextParent/><Probe/></OrgProvider></MemoryRouter>));
+  await stage('Private unsaved native assessment A before Next');
+  await act(async()=>mockActions.next());
+  expect(onNext).not.toHaveBeenCalled();expect(document.body.textContent).toContain('Leave unsaved changes?');
+  const discard=[...document.body.querySelectorAll('button')].find(node=>node.textContent==='Discard changes');
+  expect(discard).toBeTruthy();await act(async()=>discard.click());
+  expect(onNext).toHaveBeenCalledTimes(1);expect(host.querySelector('[role="alertdialog"]')).toBeNull();
+  expect(mockState.record.framework_assessment_id).toBe(other.framework_assessment_id);
+  expect(mockState.form).toMatchObject({implementation:'Next verified native assessment B',last_saved:'next-assessment-B'});
+  expect(mockState.current).toMatchObject({framework_assessment_id:other.framework_assessment_id,implementation:'Next verified native assessment B'});
+  expect(mockState.dirty).toBe(false);expect(mockContext.value).toBeNull();
+  for(const method of ['patch','post','put','delete'])expect(api[method]).not.toHaveBeenCalled();
+  expect(onSaved).not.toHaveBeenCalled();
+});
+
+test('native Next with a no-op parent leaves a clean latest saved assessment after whole-draft Discard',async()=>{
+  await render({direct:true,url:'/reviews'});await stage('Private unsaved A before no-op Next');
+  native={...native,implementation:'Latest reread native A',last_saved:'latest-native-A',status:'needs_attention'};
+  mockAuth={...mockAuth,user:{...mockAuth.user,role:'platform_admin'}};
+  await render({direct:true,url:'/reviews'});
+  expect(mockState.current).toMatchObject({implementation:'Latest reread native A',last_saved:'latest-native-A'});
+  expect(mockState.form).toMatchObject({implementation:'Private unsaved A before no-op Next',last_saved:'assessment-A'});
+  await act(async()=>mockActions.next());
+  expect(onNext).not.toHaveBeenCalled();expect(document.body.textContent).toContain('Leave unsaved changes?');
+  await act(async()=>[...document.body.querySelectorAll('button')].find(node=>node.textContent==='Discard changes').click());
+  expect(onNext).toHaveBeenCalledTimes(1);expect(host.querySelector('[role="alertdialog"]')).toBeNull();
+  const latest={implementation:'Latest reread native A',last_saved:'latest-native-A',status:'needs_attention'};
+  expect(mockState.form).toMatchObject(latest);expect(mockState.current).toMatchObject(latest);
+  expect(mockState.dirty).toBe(false);expect(mockContext.value).toBeNull();
+  await act(async()=>mockActions.next());
+  expect(onNext).toHaveBeenCalledTimes(2);expect(host.querySelector('[role="alertdialog"]')).toBeNull();
+  for(const method of ['patch','post','put','delete'])expect(api[method]).not.toHaveBeenCalled();
+  expect(onSaved).not.toHaveBeenCalled();
+});
+
+test('whole-draft Discard uses a same-owner native refresh that settles after the Next prompt opens',async()=>{
+  await render({direct:true,url:'/reviews'});await stage('Private A while Next awaits a decision');
+  const editor=host.querySelector('[data-testid="actual-framework-controller"]');
+  await act(async()=>mockActions.next());
+  expect(document.body.textContent).toContain('Leave unsaved changes?');expect(onNext).not.toHaveBeenCalled();
+  native={...native,implementation:'Latest A delivered while the leave prompt is open',last_saved:'latest-A-after-prompt',
+    status:'needs_attention',technology:'Latest saved native tools',notes:'Latest saved native notes'};
+  await act(async()=>mockActions.retry());
+  const latest={implementation:'Latest A delivered while the leave prompt is open',last_saved:'latest-A-after-prompt',
+    status:'needs_attention',technology:'Latest saved native tools',notes:'Latest saved native notes'};
+  expect(host.querySelector('[data-testid="actual-framework-controller"]')).toBe(editor);
+  expect(mockState.current).toMatchObject(latest);expect(mockState.ctx.current).toMatchObject(latest);
+  expect(mockState.form).toMatchObject({implementation:'Private A while Next awaits a decision',last_saved:'assessment-A'});
+  expect(mockContext.value).toEqual(coordination);expect(mockState.dirty).toBe(true);
+  expect(document.body.textContent).toContain('Leave unsaved changes?');expect(onNext).not.toHaveBeenCalled();
+  await act(async()=>[...document.body.querySelectorAll('button')].find(node=>node.textContent==='Discard changes').click());
+  expect(onNext).toHaveBeenCalledTimes(1);expect(host.querySelector('[role="alertdialog"]')).toBeNull();
+  expect(mockState.form).toMatchObject(latest);expect(mockState.current).toMatchObject(latest);
+  expect(mockState.dirty).toBe(false);expect(mockContext.value).toBeNull();
+  for(const method of ['patch','post','put','delete'])expect(api[method]).not.toHaveBeenCalled();
+  expect(onSaved).not.toHaveBeenCalled();
+});
+
+test('a queued whole-draft Discard cannot reset private work after a same-actor readonly role round trip',async()=>{
+  await render({direct:true,url:'/reviews'});await stage('Private A survives an ended leave confirmation');
+  const editor=host.querySelector('[data-testid="actual-framework-controller"]');
+  await act(async()=>mockActions.next());
+  const capturedDiscard=[...document.body.querySelectorAll('button')].find(node=>node.textContent==='Discard changes');
+  expect(capturedDiscard).toBeTruthy();expect(onNext).not.toHaveBeenCalled();
+  const originalUser=copy(mockAuth.user),draft=copy(mockState.form);
+  mockAuth={...mockAuth,user:{...mockAuth.user,role:'client_readonly'}};
+  await render({direct:true,url:'/reviews'});
+  expect(host.querySelector('[data-testid="actual-framework-controller"]')).toBe(editor);
+  expect(mockState.form).toEqual(draft);expect(mockState.writable).toBe(false);
+  mockAuth={...mockAuth,user:originalUser};
+  await render({direct:true,url:'/reviews'});
+  expect(host.querySelector('[data-testid="actual-framework-controller"]')).toBe(editor);
+  expect(mockState.form).toEqual(draft);expect(mockState.writable).toBe(true);
+  expect(capturedDiscard.isConnected).toBe(true);
+  await act(async()=>capturedDiscard.click());
+  expect(host.querySelector('[data-testid="actual-framework-controller"]')).toBe(editor);
+  expect(mockState.form).toEqual(draft);expect(mockState.form.last_saved).toBe('assessment-A');
+  expect(mockContext.value).toEqual(coordination);expect(mockState.dirty).toBe(true);
+  expect(onNext).not.toHaveBeenCalled();expect(onSaved).not.toHaveBeenCalled();
+  for(const method of ['patch','post','put','delete'])expect(api[method]).not.toHaveBeenCalled();
 });

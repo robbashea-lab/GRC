@@ -341,7 +341,7 @@ test('the header interview archive uses the native personal history read and pre
   expect(dialog.textContent).toContain(archived.narrative);
   expect(dialog.querySelector('pre').textContent).toBe(JSON.stringify(archived.answers,null,2));
   expect(dialog.textContent).toContain('Saved interview snapshots for your account.');
-  expect(getSpy).toHaveBeenCalledWith(base+'/guided-assessment/history',{params:{limit:25}});
+  expect(getSpy).toHaveBeenCalledWith(base+'/guided-assessment/history',{params:{limit:25},assessmentAuthority:expect.any(Function)});
   await click(dialog,'Close');
   expect(document.activeElement).toBe(button(surface(),'Assessment details'));
   for(const write of writes())expect(write).not.toHaveBeenCalled();
@@ -372,7 +372,7 @@ test('the lower implementation entry accepts native Not sure without inventing a
   await render();
   await click(surface(), 'Review implementation');
   expect(putSpy).toHaveBeenCalledTimes(1);
-  expect(putSpy.mock.calls[0]).toEqual([base + '/guided-assessment', expect.objectContaining({version, answers, completed: true})]);
+  expect(putSpy.mock.calls[0]).toEqual([base + '/guided-assessment', expect.objectContaining({version, answers, completed: true}),{assessmentAuthority:expect.any(Function)}]);
   const draftDialog = document.querySelector('.brawndo-pilot-draft[role="dialog"]');
   expect(draftDialog).toBeTruthy();
   expect(draftDialog.querySelector('[aria-label="Implementation draft"]').value).toContain('not confirmed');
@@ -471,7 +471,7 @@ test('full native response review retains edited personal provenance and separat
   expect(putSpy).not.toHaveBeenCalled();
   await click(guide(), 'Review implementation');
   expect(putSpy).toHaveBeenCalledTimes(1);
-  expect(putSpy.mock.calls[0]).toEqual([base + '/guided-assessment', expect.objectContaining({version, answers, completed: true})]);
+  expect(putSpy.mock.calls[0]).toEqual([base + '/guided-assessment', expect.objectContaining({version, answers, completed: true}),{assessmentAuthority:expect.any(Function)}]);
   const completed = (await api.get(base + '/guided-assessment')).data;
   expect(completed).toMatchObject({version, answers, completed: true});
   expect(completed.result).toBeTruthy();
@@ -498,7 +498,7 @@ test('full native response review retains edited personal provenance and separat
   // Edited wording has its own completed personal revision before native adoption.
   expect(putSpy).toHaveBeenCalledTimes(2);
   expect(putSpy.mock.calls[1]).toEqual([base + '/guided-assessment', expect.objectContaining({
-    version, answers, narrative: reviewed, completed: true, expected_revision: completed.revision})]);
+    version, answers, narrative: reviewed, completed: true, expected_revision: completed.revision}),{assessmentAuthority:expect.any(Function)}]);
   const adopted = (await api.get(base + '/guided-assessment')).data;
   expect(adopted).toMatchObject({version, answers, narrative: reviewed, completed: true, revision: completed.revision + 1});
   expect(adopted.result.narrative).toBe(reviewed);
@@ -514,7 +514,7 @@ test('full native response review retains edited personal provenance and separat
   // Native Save changes only reviewed text/provenance; untouched judgment and absent criteria stay absent.
   expect(patchSpy.mock.calls[0]).toEqual([base, {implementation: reviewed,
     guided_assessment_source:{version:adopted.version,revision:adopted.revision,generated_at:adopted.generated_at},
-    expected_last_assessed: baseline.last_saved ?? baseline.last_assessed ?? null}]);
+    expected_last_assessed: baseline.last_saved ?? baseline.last_assessed ?? null}, {assessmentAuthority:expect.any(Function)}]);
   const saved = (await api.get(base)).data;
   expect(saved.implementation).toBe(reviewed);
   expect(saved.cis_assessment_criteria).toEqual(expectedCriteria);
@@ -555,7 +555,7 @@ test('native Save preserves populated valid assessment criteria IDs in their rec
   await click(surface(), 'Save assessment');
   expect(patchSpy).toHaveBeenCalledTimes(1);
   expect(patchSpy.mock.calls[0]).toEqual([base, expect.objectContaining({implementation: reviewed,
-    cis_assessment_criteria: criteria, expected_last_assessed: baseline.last_saved ?? baseline.last_assessed ?? null})]);
+    cis_assessment_criteria: criteria, expected_last_assessed: baseline.last_saved ?? baseline.last_assessed ?? null}),{assessmentAuthority:expect.any(Function)}]);
   const saved = (await api.get(base)).data;
   expect(saved.cis_assessment_criteria).toEqual(criteria);
   for (const key of ['status', 'verification', 'technology', 'owner_id', 'process_owner_id', 'notes', 'na_rationale']) {
@@ -662,10 +662,13 @@ test.each([
   expect(requirement.querySelector('.cis-native-requirement-meta')).toBeNull();
   expect(surface().querySelector('.cis-native-requirement > .cis-native-requirement-meta')).toBeTruthy();
   expect(surface().querySelector('.brawndo-pilot-tool-field')).toBeNull();
-  expect(surface().querySelector('.brawndo-pilot-guidance')).toBeNull();
+  const guidance = guide().querySelector('fieldset[data-question-id] details.gn-control-guidance');
+  expect(guidance).toBeTruthy();
+  expect(guidance.querySelector('summary').textContent).toBe('Control guidance & client context');
+  expect(guidance.textContent).toContain('Framework requirement');
   expect(surface().querySelector('[aria-label="Current implementation"]').value).toBe(baseline.implementation);
   await openInterview();
-  expect(guide().querySelector('.brawndo-pilot-guidance')).toBeNull();
+  expect(guide().querySelector('fieldset[data-question-id] details.gn-control-guidance')).toBe(guidance);
   expect(button(guide(), 'Save & close')).toBeTruthy();
   expect(button(guide(), 'Save progress')).toBeUndefined();
   expect(putSpy).not.toHaveBeenCalled();

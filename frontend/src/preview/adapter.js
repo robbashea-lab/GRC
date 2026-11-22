@@ -16,7 +16,7 @@ import { assignmentCandidates } from './assignmentEligibility';
 import { clientProjection, leadCandidates } from './clientRelationships';
 import {aiRequest,aiRelated} from './aiGovernance';
 import {aiOnboardingRequest} from './aiOnboarding';
-import {frameworkRequest,frameworkReverse,frameworkScope,prepareGuidedContext,authorizeItemTask} from './frameworks';
+import {frameworkRequest,frameworkReverse,frameworkScope,prepareGuidedContext,authorizeItemTask,authorizeFrameworkReviewSetup,frameworkReviewSetupBody} from './frameworks';
 import {withItemControls} from './assessmentItems';
 import { baselineState, baselineRecordVersions, saveBaseline } from './baseline';
 import axios from 'axios';
@@ -248,6 +248,15 @@ async function executePreviewAdapter(config,generation) {
     if(path==='/ai-intake'||kind==='ai_systems')return await save(aiRequest(db,path,method,params,body));
     if(path==='/frameworks/summary'&&method==='get')return respond(frameworkSummary(db,params.client_id,params));
     if(kind==='framework_assessments'&&method==='post'&&name==='findings')return await save(commandRequest(db,path,record(db,kind,id).client_id,body.request_id,body,()=>frameworkRequest(db,path,method,params,body)));
+    const reviewSetupKey=config.headers?.get?.('Idempotency-Key')??config.headers?.['Idempotency-Key'];
+    if(kind==='framework_assessments'&&method==='post'&&name==='reviews'&&parts.length===3&&reviewSetupKey!=null){
+      // Current authority and scope are checked even when the original command completed.
+      const row=authorizeFrameworkReviewSetup(db,id,reviewSetupKey);
+      const prior=db.command_requests?.[JSON.stringify([db.user.user_id,row.client_id,path,reviewSetupKey])];
+      const result=commandRequest(db,path,row.client_id,reviewSetupKey,body,
+        ()=>frameworkRequest(db,path,method,params,frameworkReviewSetupBody(body),{reviewSetup:true}));
+      return prior?respond(result):await save(result);
+    }
     if(kind==='framework_assessments'&&method==='post'&&parts.length===5&&parts[2]==='items'&&parts[4]==='task'){
       const key=config.headers?.get?.('Idempotency-Key')||config.headers?.['Idempotency-Key'];
       authorizeItemTask(db,path,body,key);

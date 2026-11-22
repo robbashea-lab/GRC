@@ -2,6 +2,7 @@ import {useCallback,useEffect,useRef} from 'react';
 import {useAuth} from '@/context/AuthContext';
 import {useOrg} from '@/context/OrgContext';
 import api from './api';
+import {useAssessmentApi} from './assessmentCommandScope';
 import {occurrenceId} from './reviewOccurrences';
 export {evidenceSources,evidenceKind,evidenceSourceLabel,uploaderLabel,sourceReference} from './evidenceReferences';
 
@@ -43,12 +44,12 @@ function decodeEvidenceContent(content){
   }
   catch{throw new Error('Evidence file content could not be decoded.');}
 }
-export async function downloadEvidence(row,{signal,isCurrent=()=>true}={}){
+export async function downloadEvidence(row,{signal,isCurrent=()=>true,transport=api}={}){
   const current=()=>!signal?.aborted&&isCurrent();
   if(!current())return false;
   const path=`/evidence/${encodeURIComponent(row.evidence_id)}/download`;
   let data;
-  try{({data}=signal?await api.get(path,{signal}):await api.get(path));}
+  try{({data}=signal?await transport.get(path,{signal}):await transport.get(path));}
   catch(error){if(!current())return false;throw error;}
   if(!current())return false;
   // Standard responses contain raw base64; Explore uploads retain FileReader data URLs.
@@ -64,7 +65,7 @@ export async function downloadEvidence(row,{signal,isCurrent=()=>true}={}){
 
 // Each mounted owner cancels only its own downloads when its authority or visible scope changes.
 export function useEvidenceDownload(clientId,owner='',active=true){
-  const {user,workspaceMode}=useAuth()||{},org=useOrg()||{};
+  const {user,workspaceMode}=useAuth()||{},org=useOrg()||{},transport=useAssessmentApi();
   const scope=JSON.stringify([clientId,owner,active,user?.user_id,user?.email,user?.role,user?.status,
     user?.updated_at,user?.client_ids,!!user?.all_clients,!!user?.password_change_required,
     workspaceMode,user?.workspace_mode,org.currentClientId,org.currentClient?.client_id,
@@ -72,12 +73,15 @@ export function useEvidenceDownload(clientId,owner='',active=true){
   const live=useRef(scope),mounted=useRef(false),requests=useRef(new Set());live.current=scope;
   const abort=useCallback(()=>{for(const controller of requests.current)controller.abort();requests.current.clear();},[]);
   useEffect(()=>{mounted.current=true;return()=>{mounted.current=false;abort();};},[abort]);
-  useEffect(()=>()=>abort(),[scope,abort]);
+  useEffect(()=>()=>abort(),[scope,abort,transport]);
   return async row=>{
     if(!active||!mounted.current||live.current!==scope)return false;
     const controller=new AbortController();requests.current.add(controller);
-    const isCurrent=()=>mounted.current&&live.current===scope;
-    try{return await downloadEvidence(row,{signal:controller.signal,isCurrent});}
+    const isCurrent=()=>{
+      if(!mounted.current||live.current!==scope)return false;
+      try{transport.assertAssessmentCurrent?.(false);return true;}catch{return false;}
+    };
+    try{return await downloadEvidence(row,{signal:controller.signal,isCurrent,transport});}
     finally{requests.current.delete(controller);}
   };
 }

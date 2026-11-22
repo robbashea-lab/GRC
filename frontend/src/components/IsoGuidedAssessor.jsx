@@ -4,7 +4,8 @@ import {createPortal} from 'react-dom';
 import {ArrowRight,FilePenLine,Info,ListChecks} from 'lucide-react';
 import {useAuth} from '@/context/AuthContext';
 import {useOrg} from '@/context/OrgContext';
-import api,{formatError} from '@/lib/api';
+import {formatError} from '@/lib/api';
+import {useAssessmentApi} from '@/lib/assessmentCommandScope';
 import {isoGuidedCatalog,isoGuidedEnabled,isoGroups,isoGuidedResult,isoInlineNarrative,isoExtraQuestions,validateIsoCompletion,isoUsesConcernStatus} from '@/lib/isoGuidedAssessment';
 import {operatorStatuses} from '@/lib/frameworkOperator';
 import {Dialog,DialogContent,DialogTitle,DialogDescription} from './ui/dialog';
@@ -32,6 +33,7 @@ export default function IsoGuidedAssessor(props){
 }
 
 function IsoPilot({clientId,user,record,current=record,programContent,programLabel='ISO 27001 programme with Omnibot',form,assessmentDirty=false,relatedDraft=false,onDraftChange,onSaveAssessment,onUpdateImplementation,disabled=false,inline=false,inlineOpen=false,onInlineClose,sequential=false,assessmentRollout=false,assessmentModule,implementationReviewContainer=null,pilotPortalContainer=null,interviewHistoryOpen=false,onInterviewHistoryOpenChange,onInterviewHistoryCloseAutoFocus}){
+  const api=useAssessmentApi();
   assessmentRollout=assessmentRollout===true&&!!record&&inline&&sequential;
   const sequentialInline = !!record && inline && sequential;
   const [sequentialOpen, setSequentialOpen] = useState(false);
@@ -80,6 +82,7 @@ function IsoPilot({clientId,user,record,current=record,programContent,programLab
   useEffect(()=>{
     if(!dirty)return;const warn=e=>{e.preventDefault();e.returnValue='';};window.addEventListener('beforeunload',warn);return()=>window.removeEventListener('beforeunload',warn);
   },[dirty]);
+  const initialRead=useRef(null);
   const adopt=useCallback((data,restoring=false)=>{
     setDraft(data);setAnswers(data.answers||{});setStep(data.step||0);setNarrative(data.narrative||'');setAppliedNarrative(null);setReplace(false);saved.current={answers:JSON.stringify(data.answers||{}),narrative:data.narrative||''};
     if(restoring){
@@ -92,10 +95,18 @@ function IsoPilot({clientId,user,record,current=record,programContent,programLab
     }
   },[id,inline]);
   useEffect(()=>{
-    if(!route)return;const controller=new AbortController();
-    api.get(route,{signal:controller.signal}).then(({data})=>{if(!controller.signal.aborted){adopt(data,true);setLoaded(true);}}).catch(e=>{if(!controller.signal.aborted){setError(formatError(e));setLoaded(true);}});
-    return()=>controller.abort();
+    const owner={initialized:false};initialRead.current=owner;
+    return()=>{if(initialRead.current===owner)initialRead.current=null;};
   },[route,adopt]);
+  useEffect(()=>{
+    const owner=initialRead.current;if(!route||!owner||owner.initialized)return;
+    const controller=new AbortController();
+    api.get(route,{signal:controller.signal}).then(({data})=>{
+      if(controller.signal.aborted||initialRead.current!==owner||owner.initialized)return;
+      adopt(data,true);owner.initialized=true;setError('');setLoaded(true);
+    }).catch(e=>{if(!controller.signal.aborted&&initialRead.current===owner&&!owner.initialized){setError(formatError(e));setLoaded(true);}});
+    return()=>controller.abort();
+  },[api,route,adopt]);
   function changeMode(value) {
     setMode(value); setPrompt(false);
     if (value === 'expanded') return;
@@ -114,7 +125,7 @@ function IsoPilot({clientId,user,record,current=record,programContent,programLab
     if (!annex && !disabled && !soaDirty && !updated && !validationError && draft && view === 'position') start();
   }
   function close(){if(busy)return;if(dirty)setConfirmClose(true);else changeMode('collapsed');}
-  async function load(){setBusy(true);setError('');try{const {data}=await api.get(route);if(active.current){adopt(data,true);setLoaded(true);}return data;}catch(e){if(active.current)setError(formatError(e));return null;}finally{if(active.current)setBusy(false);}}
+  async function load(){const owner=initialRead.current;setBusy(true);setError('');try{const {data}=await api.get(route);if(active.current){adopt(data,true);if(owner&&initialRead.current===owner)owner.initialized=true;setLoaded(true);}return data;}catch(e){if(active.current)setError(formatError(e));return null;}finally{if(active.current)setBusy(false);}}
   function put(key,value){setAnswers(old=>({...old,[key]:value}));setAppliedNarrative(null);setReplace(false);setNotice('');}
   async function persist(nextStep,completed,override={}){
     if(disabled||pending.current||!draft)return null;
@@ -242,7 +253,7 @@ function IsoPilot({clientId,user,record,current=record,programContent,programLab
     }
   }
   async function historyLoad(more=false,dialog=false){setBusy(true);setError('');try{const {data}=await api.get(route+'/history',{params:more?{before_revision:history.next_before_revision}:{}});if(active.current){setHistory(previous=>({...data,items:more?[...previous.items,...data.items]:data.items}));if(!dialog)setView('history');}}catch(e){setError(formatError(e));}finally{if(active.current)setBusy(false);}}
-  useEffect(()=>{if(assessmentRollout&&interviewHistoryOpen)historyLoad(false,true);},[assessmentRollout,interviewHistoryOpen,route]);// eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(()=>{if(assessmentRollout&&interviewHistoryOpen)historyLoad(false,true);},[api,assessmentRollout,interviewHistoryOpen,route]);// eslint-disable-line react-hooks/exhaustive-deps
   const start=()=>{if(assessmentRollout){captureImplementationSource();setReplace(false);}setView(draft?.completed?'summary':'interview');heading.current?.focus({preventScroll:true});};
   const saveDisabled=blocked||relatedDraft||soaDirty||!implementationAllowed||!narrative.trim()||edited&&basis!==JSON.stringify(answers);
   const soaBlocked=disabled||busy||assessmentDirty||relatedDraft||interviewDirty;

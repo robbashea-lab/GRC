@@ -17,13 +17,13 @@ import {ticketRecords,ticketStage} from '@/lib/remediationTickets';
 import {independentValidationIssue} from '@/lib/r4Remediation';
 import {actionOrigin} from '@/lib/brawndoActions';
 import {daysDue} from '@/lib/actionItems';
-import {useCreateIntent} from '@/lib/createIntent';
+import {useAssessmentApi,useAssessmentCreateIntent} from '@/lib/assessmentCommandScope';
 import {readEvidenceFile} from '@/lib/evidenceFile';
 import {resolveEvidenceSource} from '@/lib/evidenceContext';
 import {SCHEMAS} from '@/lib/schemas';
 import {displayRecordedAt} from '@/lib/managementDates';
 import {MessageSquare,Check,CheckCircle2,Clock3,Upload} from 'lucide-react';
-import api,{formatError} from '@/lib/api';
+import {formatError} from '@/lib/api';
 import './RemediationTicketDrawer.css';
 import {ActionDetailHeader,ActionDetailWhy,ActionDetailState,ActionDetailSegments} from './BrawndoActionDetail';
 import './BrawndoActionDetail.css';
@@ -39,6 +39,7 @@ const mayEdit=(user,task)=>canOperate(user)&&(user.role!=='client_contributor'||
 const findingRiskAttempts=new Map();
 
 function FindingRiskCommand({open,finding,record,clientId,ready,busy,dirty,workControls,onBusy,refresh,onSaved,fullRecord,risks}) {
+  const api=useAssessmentApi();
   const auth=useAuth(),org=useOrg(),user=auth?.user;
   const eligible=fullRecord&&auth?.loading===false&&org?.loading===false&&!auth?.error&&!org?.error
     &&auth?.workspaceMode==='demo'&&user?.workspace_mode==='demo'&&isInternal(user)
@@ -158,7 +159,8 @@ function FindingRiskCommand({open,finding,record,clientId,ready,busy,dirty,workC
 }
 
 function Work({task,users,user,onSaved,onDirty,onControls,commandBusyRef,detail=false,showInlineSave=true,requiresValidation=false,readOnly=false,pendingValidation=false}) {
-  const update=useCreateIntent((...args)=>api.patch(...args),user.user_id+':'+task.client_id+':'+task.task_id,true);
+  const api=useAssessmentApi();
+  const update=useAssessmentCreateIntent((...args)=>api.patch(...args),user.user_id+':'+task.client_id+':'+task.task_id,true);
   const [edits,setEdits]=useState({}),[busy,setBusy]=useState(false),[error,setError]=useState(''),[feedback,setFeedback]=useState('');
   const editVersion=useRef(task.updated_at??null),current=draft(task);
   const form={...current,...Object.fromEntries(Object.entries(edits).map(([key,edit])=>[key,edit.value]))};
@@ -229,6 +231,7 @@ function Work({task,users,user,onSaved,onDirty,onControls,commandBusyRef,detail=
 }
 
 function History({ticket,onDirty,presentation,detail=false,readOnly=false}) {
+  const api=useAssessmentApi();
   const {user}=useAuth();
   const [comment,setComment]=useState(''),[busy,setBusy]=useState(false),[version,setVersion]=useState(0);
   const [rows,setRows]=useState([]),[error,setError]=useState('');
@@ -240,11 +243,12 @@ function History({ticket,onDirty,presentation,detail=false,readOnly=false}) {
   useEffect(()=>{let active=true;const refs=JSON.parse(key);
     Promise.all(refs.flatMap(([kind,id])=>[api.get('/'+kind+'/'+id+'/activity'),api.get('/comments',{params:{entity_type:kind,entity_id:id}})])).then(results=>{if(active)setRows(results.flatMap(r=>r.data).sort((a,b)=>(a.at||a.created_at||'').localeCompare(b.at||b.created_at||'')));}).catch(e=>{if(active)setError(formatError(e));});
     return()=>{active=false;};
-  },[key,version]); // The ticket's records, not unrelated register changes, invalidate history.
+  },[api,key,version]); // The ticket's records, not unrelated register changes, invalidate history.
   return <details className="bad-history" {...(detail?{open:true}:{})}><summary>History and comments</summary>{error&&<p role="alert">{error}</p>}<ul className="space-y-2 text-sm">{rows.map((r,i)=><li className="whitespace-pre-wrap bad-activity-row" key={r.log_id||r.audit_id||r.comment_id||i}>{detail&&<span className="bad-event-icon" aria-hidden="true">{r.comment_id?<MessageSquare size={14}/>:/(completed|validated)/i.test(r.action||'')?<CheckCircle2 size={14}/>:<Clock3 size={14}/>}</span>}<div className="bad-event-content">{(detail||presentation==='brawndo-demo-actions')&&<span className="block text-xs text-ink-secondary">{r.user_name||r.user_email||r.user_id||'Historical actor unavailable'}</span>}{!detail&&<>{r.at||r.created_at} · </>}{r.action||r.body}{r.meta?.rationale?' · '+r.meta.rationale:''}</div>{detail&&<time className="bad-event-time" dateTime={r.at||r.created_at}>{displayRecordedAt(r.at||r.created_at)||r.at||r.created_at}</time>}</li>)}</ul>{writable&&<div className="space-y-2"><label>Comment (optional)<Textarea aria-label="Ticket comment" value={comment} disabled={busy} onChange={e=>setComment(e.target.value)}/></label><Button disabled={busy||!comment.trim()} onClick={async()=>{setBusy(true);setError('');try{await api.post('/comments',{entity_type:kind,entity_id:id,body:comment});setComment('');setVersion(v=>v+1);}catch(e){setError(formatError(e));}finally{setBusy(false);}}}>Add comment</Button></div>}</details>;
 }
 
 export default function RemediationTicketDrawer({open,onOpenChange,kind,record,clientId,onSaved,onRiskLinked,presentation,closeRequest=0,onCloseCancelled,cisVisualOrigin,onReturnFocus}) {
+  const api=useAssessmentApi();
   const pilot=presentation==='brawndo-demo-actions';
   const panelPrefix=useId();
   const {user}=useAuth(),{data,users,loading,error,load}=useActionRegisterData(record.client_id||clientId,{retainOnRefreshError:pilot});
@@ -266,8 +270,8 @@ export default function RemediationTicketDrawer({open,onOpenChange,kind,record,c
     // An explicit parent owns this return, including a denied stale-context return.
     if(onReturnFocus){onReturnFocus();return;}
     const target=opener.current?.isConnected&&opener.current!==document.body?opener.current:openerSurface.current?.isConnected?openerSurface.current.querySelector('button,input,[tabindex]'):document.querySelector('[data-testid="ai-search"],main h1,main h2');if(target){if(!target.matches('button,input,[tabindex]'))target.tabIndex=-1;target.focus({preventScroll:true});}}
-  const decision=useCreateIntent((path,body,config)=>api.post(path,{...body,request_id:config.headers['Idempotency-Key']},config),user.user_id+':'+record.client_id+':decision:'+(record.finding_id||record.task_id),true);
-  const reopen=useCreateIntent((path,body,config)=>api.post(path,{...body,request_id:config.headers['Idempotency-Key']},config),user.user_id+':'+record.client_id+':reopen:'+(record.finding_id||record.task_id),true);
+  const decision=useAssessmentCreateIntent((path,body,config)=>api.post(path,{...body,request_id:config.headers['Idempotency-Key']},config),user.user_id+':'+record.client_id+':decision:'+(record.finding_id||record.task_id),true);
+  const reopen=useAssessmentCreateIntent((path,body,config)=>api.post(path,{...body,request_id:config.headers['Idempotency-Key']},config),user.user_id+':'+record.client_id+':reopen:'+(record.finding_id||record.task_id),true);
   const markDirty=useRef((id,value)=>{if(value)dirty.current.add(id);else dirty.current.delete(id);setHasDirty(dirty.current.size>0);}).current;
   useEffect(()=>{markDirty('rationale',!!rationale);return()=>markDirty('rationale',false);},[rationale,markDirty]);
   const ticket=ticketRecords(data,record.client_id||clientId).find(t=>kind==='findings'?t.finding?.finding_id===record.finding_id:t.actions.some(a=>a.task_id===record.task_id));
