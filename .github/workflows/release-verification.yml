@@ -4,7 +4,7 @@ on:
   pull_request:
     branches: [main, codex/brawndo-guided-assessor]
   push:
-    branches: [main, codex/cis-demo-data-refresh-20261028, codex/owner-only-client-creation-20261029, codex/visual-consistency-20261029, codex/soc2-program-modernization-20261030, codex/iso27001-program-modernization-20261031, codex/soc2-category-refinements-20261031, codex/soc2-cis-exact-parity-20261031, codex/iso27001-shared-program-20261031]
+    branches: [codex/nordic-staging-ci-20261122, main, codex/cis-demo-data-refresh-20261028, codex/owner-only-client-creation-20261029, codex/visual-consistency-20261029, codex/soc2-program-modernization-20261030, codex/iso27001-program-modernization-20261031, codex/soc2-category-refinements-20261031, codex/soc2-cis-exact-parity-20261031, codex/iso27001-shared-program-20261031]
   workflow_dispatch:
 
 permissions:
@@ -212,10 +212,33 @@ jobs:
           assert all(int(suite.get(field, '0')) == 0
                      for suite in result.iter('testsuite') for field in ('errors', 'failures', 'skipped'))
 
+
+  image-audit:
+    name: Staging image audit
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+        with:
+          python-version: '3.12'
+      - name: Validate image identity and complete inventory guards
+        run: python .github/scripts/audit_images.py --self-check
+      - name: Build and audit final runtime and retained frontend toolchain
+        run: python .github/scripts/audit_images.py
+      - name: Preserve raw findings, SBOMs, inventories and provenance
+        if: ${{ always() }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: staging-image-audit
+          path: ${{ runner.temp }}/governara-image-audit/
+          if-no-files-found: error
+          retention-days: 7
+
   release-gate:
     name: Release gate
     if: ${{ always() }}
-    needs: [frontend, backend, backend-mongo]
+    needs: [frontend, backend, backend-mongo, image-audit]
     runs-on: ubuntu-24.04
     timeout-minutes: 2
     steps:
@@ -224,4 +247,5 @@ jobs:
           FRONTEND_RESULT: ${{ needs.frontend.result }}
           BACKEND_RESULT: ${{ needs.backend.result }}
           MONGO_RESULT: ${{ needs.backend-mongo.result }}
-        run: test "$FRONTEND_RESULT" = success && test "$BACKEND_RESULT" = success && test "$MONGO_RESULT" = success
+          IMAGE_AUDIT_RESULT: ${{ needs.image-audit.result }}
+        run: test "$FRONTEND_RESULT" = success && test "$BACKEND_RESULT" = success && test "$MONGO_RESULT" = success && test "$IMAGE_AUDIT_RESULT" = success
