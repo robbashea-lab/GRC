@@ -8,6 +8,18 @@ const source = fs.readFileSync(path.join(__dirname, 'frontend-runtime-reporter.c
 const SHA = 'a'.repeat(40), INVOCATION = 'd0c0d989-ecab-4de0-b23a-8a179a987606';
 const ROOT = '/checkout/frontend', TARGET = {path: ROOT + '/src/preview/frameworkFiveYear.test.js'};
 const digest = value => createHash('sha256').update(value).digest('hex');
+const regexSource = fs.readFileSync(require.resolve('jest-regex-util'), 'utf8');
+const {replacePathSepForGlob} = require('jest-util');
+function regexNormalizer(paths) {
+  const exports = {};
+  vm.runInNewContext(regexSource, {exports, require: name => {assert.equal(name, 'path');return paths;}});
+  return exports.replacePathSepForRegex;
+}
+function windowsShape(value) {
+  if (Array.isArray(value)) return value.map(windowsShape);
+  if (value && typeof value === 'object') return Object.fromEntries(Object.entries(value).map(([key, item]) => [key, windowsShape(item)]));
+  return typeof value === 'string' && value.startsWith('/checkout/') ? path.win32.normalize('C:' + value) : value;
+}
 // Literal selected values from the sealed native --showConfig receipt. No config child is executed here.
 function nativeConfig() {
   return {name: '081a135eae76da4ab59f8ab4ab81cb26', rootDir: ROOT, roots: [ROOT + '/src'],
@@ -31,17 +43,24 @@ const nativeGlobal = () => ({maxWorkers: 1, collectCoverage: false, watch: false
   reporters: [['default', {}], [ROOT + '/scripts/frontend-runtime-reporter.cjs', {}]]});
 
 function fixture({environment = {}, execArgv = [], failWrite = 0, failDirectory = false, failStderr = false,
-  changeProject, changeGlobal, failRead = false, statSize, changedBytes = false, tick = 0} = {}) {
+  changeProject, changeGlobal, failRead = false, statSize, changedBytes = false, tick = 0, platform = 'linux'} = {}) {
+  const windows = platform === 'win32', paths = windows ? path.win32 : path.posix, root = windows ? path.win32.normalize('C:' + ROOT) : ROOT;
   const env = Object.freeze({FRONTEND_RUNTIME_RECEIPT: '/evidence/runtime.json', FRONTEND_RUNTIME_INVOCATION: INVOCATION,
     FRONTEND_RUNTIME_EARLY_ENV: JSON.stringify({node_env: 'unset', babel_env: 'unset'}), NODE_ENV: 'test', BABEL_ENV: 'test', GITHUB_SHA: SHA, ...environment});
   const writes = [], directories = [], errors = [], cpuCalls = [], requires = [], reads = [];
-  const config = nativeConfig(), globalConfig = nativeGlobal();
+  const config = windows ? windowsShape(nativeConfig()) : nativeConfig(), globalConfig = windows ? windowsShape(nativeGlobal()) : nativeGlobal();
+  if (windows) {
+    // Literal Windows-normalized shapes from the native --showConfig diagnostic.
+    config.transformIgnorePatterns[0] = "[\\\\\\\\]node_modules[\\\\\\\\].+\\.(js|jsx|mjs|cjs|ts|tsx)$";
+    config.testMatch = ['C:/checkout/frontend/src/**/__tests__/**/*.{js,jsx,ts,tsx}', 'C:/checkout/frontend/src/**/*.{spec,test}.{js,jsx,ts,tsx}'];
+    config.cacheDirectory = 'C:\\tmp\\jest_rt';
+  }
   changeProject?.(config);changeGlobal?.(globalConfig);
-  const target = {path: TARGET.path, context: {config}}, fileBytes = Buffer.from('// selected synthetic source\n');
+  const target = {path: paths.join(root, 'src/preview/frameworkFiveYear.test.js'), context: {config}}, fileBytes = Buffer.from('// selected synthetic source\n');
   let clock = 100, attempts = 0, directoryFails = failDirectory;
   const resources = {userCPUTime: 1000, systemCPUTime: 50, maxRSS: 1024};
   const memory = {rss: 1048576, heapUsed: 500};
-  const process = {env, execArgv, cwd: () => ROOT, version: 'v22.23.4', execPath: '/selected/node', pid: 1234, versions: {v8: 'test-v8'}, platform: 'linux', arch: 'x64',
+  const process = {env, execArgv, cwd: () => root, version: 'v22.23.4', execPath: '/selected/node', pid: 1234, versions: {v8: 'test-v8'}, platform, arch: 'x64',
     cpuUsage: previous => {cpuCalls.push(previous);return previous ? {user: 900, system: 60} : {user: 100, system: 40};},
     resourceUsage: () => resources, memoryUsage: () => memory, stderr: {write: value => {if (failStderr) throw new Error('Closed stderr');errors.push(value);}}};
   const mocks = {
@@ -50,12 +69,14 @@ function fixture({environment = {}, execArgv = [], failWrite = 0, failDirectory 
       statSync: () => ({isFile: () => true, size: statSize ?? fileBytes.length}),
       readFileSync: file => {reads.push(file);if (failRead) throw new Error('Private read failure');return changedBytes ? Buffer.from('changed') : fileBytes;}},
     'node:os': {availableParallelism: () => 4, cpus: () => [{model: 'Synthetic CPU model'}], totalmem: () => 16000, freemem: () => 12000},
-    'node:path': path.posix,
+    'node:path': paths,
+    'jest-regex-util': {replacePathSepForRegex: regexNormalizer(paths)},
+    'jest-util': {replacePathSepForGlob},
     'node:crypto': {createHash},
     'node:perf_hooks': {performance: {now: () => {const value = clock;clock += tick;return value;}}},
   };
   const module = {exports: {}};
-  vm.runInNewContext(source, {module, process, Buffer, Intl: {DateTimeFormat: () => ({resolvedOptions: () => ({timeZone: 'UTC'})})},
+  vm.runInNewContext(source, {module, process, Buffer, Intl: {DateTimeFormat: () => ({resolvedOptions: () => ({timeZone: windows ? 'America/Los_Angeles' : 'UTC'})})},
     require: name => {requires.push(name);assert(Object.hasOwn(mocks, name), 'Unexpected dependency: ' + name);return mocks[name];}}, {filename: 'frontend-runtime-reporter.cjs'});
   const Reporter = class extends module.exports {constructor() {super(globalConfig);}};
   return {Reporter, env, writes, directories, errors, cpuCalls, requires, resources, memory, reads, fileBytes, target, config, globalConfig,
@@ -74,7 +95,7 @@ test('passive metadata records actual process, source and invocation without har
     artifact_overhead: {completed_write_ms: 0, completed_write_calls: 0, current_write_excluded: true}});
   assert.equal(JSON.stringify(f.env), before);assert.equal(JSON.stringify(proof).includes('not-for-the-receipt'), false);
   assert.equal(Object.hasOwn(proof, 'application_baseline'), false);assert.equal(Object.hasOwn(proof, 'application_baseline_sha'), false);
-  assert.deepEqual(f.requires, ['node:fs', 'node:os', 'node:path', 'node:perf_hooks', 'node:crypto']);
+  assert.deepEqual(f.requires, ['node:fs', 'node:os', 'node:path', 'node:perf_hooks', 'node:crypto', 'jest-regex-util', 'jest-util']);
   assert.equal(typeof reporter.onTestCaseResult, 'undefined');
 });
 
@@ -149,6 +170,8 @@ test('the pre-file snapshot captures actual selected native configuration and ha
   assert.equal(envelope.identity_evidence, 'configured-selected-resolved');assert.equal(envelope.actual_vm_module_execution, 'UNVERIFIED');
   assert.equal(envelope.test_path, TARGET.path);assert.equal(envelope.cwd, ROOT);assert.equal(envelope.project.name, f.config.name);
   assert.deepEqual(envelope.project.transform, f.config.transform);assert.deepEqual(envelope.project.moduleNameMapper, f.config.moduleNameMapper);
+  assert.deepEqual(envelope.project.transformIgnorePatterns, nativeConfig().transformIgnorePatterns);
+  assert.deepEqual(envelope.project.testMatch, nativeConfig().testMatch);
   assert.equal(envelope.global.maxWorkers, 1);assert.equal(envelope.global.testNamePattern, null);
   assert.deepEqual(envelope.babel_globals, {addPresets: true, addPlugins: true, plugin_slots: ['null'], preset_slots: []});
   assert.deepEqual(envelope.early_environment, {node_env: 'unset', babel_env: 'unset'});
@@ -190,6 +213,32 @@ test('alternate routes, setup, aliases, global filters and Babel slots reject be
     assert.equal(f.reads.length, 0);assert.equal(f.writes.at(-1).proof.completed, false);
     assert.equal(f.writes.at(-1).proof.envelope.capture_status, 'rejected');
     assert.equal(JSON.stringify(f.writes).includes('private'), false);assert(reporter.getLastError());
+  }
+});
+
+
+test('actual Windows-normalized native paths admit without changing the recorded platform or timezone', () => {
+  const f = fixture({platform: 'win32'}), reporter = new f.Reporter(), before = JSON.stringify(f.config);
+  assert.doesNotThrow(() => f.begin(reporter));
+  const proof = f.writes.at(-1).proof;
+  assert.equal(proof.envelope.capture_status, 'admitted');assert.equal(f.reads.length, 9);
+  assert.equal(proof.platform, 'win32');assert.equal(proof.timezone, 'America/Los_Angeles');
+  assert.deepEqual(proof.envelope.project.transformIgnorePatterns, f.config.transformIgnorePatterns);
+  assert.deepEqual(proof.envelope.project.testMatch, f.config.testMatch);
+  assert.equal(JSON.stringify(f.config), before);
+});
+
+test('normalized Windows shape still rejects non-native patterns, globs, roots, mappings and transforms', () => {
+  for (const changeProject of [
+    value => {value.transformIgnorePatterns[0] = value.transformIgnorePatterns[0].replace('node_modules', 'other_modules');},
+    value => {value.testMatch[0] = 'C:/checkout/frontend/src/only-one.test.js';},
+    value => {value.roots = ['C:\\other\\src'];},
+    value => {value.moduleNameMapper[2][1] = 'C:\\other\\src\\$1';},
+    value => {value.transform[0][1] = 'C:\\other\\transform.js';},
+  ]) {
+    const f = fixture({platform: 'win32', changeProject}), reporter = new f.Reporter();reporter.onRunStart();
+    assert.throws(() => reporter.onTestStart(f.target), /NATIVE_PROJECT_CONFIGURATION/);
+    assert.equal(f.reads.length, 0);assert.equal(f.writes.at(-1).proof.envelope.capture_status, 'rejected');
   }
 });
 

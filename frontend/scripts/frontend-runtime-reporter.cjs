@@ -4,6 +4,8 @@ const os = require('node:os');
 const path = require('node:path');
 const {performance} = require('node:perf_hooks');
 const {createHash} = require('node:crypto');
+const {replacePathSepForRegex} = require('jest-regex-util');
+const {replacePathSepForGlob} = require('jest-util');
 
 const TARGET = 'src/preview/frameworkFiveYear.test.js';
 const MAX_FILES = 16, MAX_FILE_BYTES = 4 * 1024 * 1024, MAX_SNAPSHOT_BYTES = 32768, MAX_RECEIPT_BYTES = 65536;
@@ -55,9 +57,9 @@ function nativeProject(root) {
       ['^react-router/dom$', inRoot('node_modules/react-router/dist/development/dom-export.js')],
       ['^react-router-dom$', inRoot('node_modules/react-router-dom/dist/index.js')],
     ],
-    transformIgnorePatterns: ['[/\\\\]node_modules[/\\\\].+\\.(js|jsx|mjs|cjs|ts|tsx)$', '^.+\\.module\\.(css|sass|scss)$'],
+    transformIgnorePatterns: ['[/\\\\]node_modules[/\\\\].+\\.(js|jsx|mjs|cjs|ts|tsx)$', '^.+\\.module\\.(css|sass|scss)$'].map(replacePathSepForRegex),
     resetMocks: true, clearMocks: false, restoreMocks: false, resetModules: false, cache: true,
-    testMatch: [inRoot('src/**/__tests__/**/*.{js,jsx,ts,tsx}'), inRoot('src/**/*.{spec,test}.{js,jsx,ts,tsx}')],
+    testMatch: [inRoot('src/**/__tests__/**/*.{js,jsx,ts,tsx}'), inRoot('src/**/*.{spec,test}.{js,jsx,ts,tsx}')].map(replacePathSepForGlob),
   };
 }
 function captureEnvelope(globalConfig, test) {
