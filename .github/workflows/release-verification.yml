@@ -157,6 +157,8 @@ jobs:
       - name: Elect the isolated framework-report replica set
         shell: python
         run: |
+          if not __debug__:
+              raise RuntimeError('Snapshot qualification requires Python checks to remain enabled')
           from time import monotonic, sleep
           from pymongo import MongoClient
           from pymongo.errors import ConnectionFailure
@@ -191,6 +193,8 @@ jobs:
       - name: Require all three native snapshot checks without skips
         shell: python
         run: |
+          if not __debug__:
+              raise RuntimeError('Snapshot qualification requires Python checks to remain enabled')
           import xml.etree.ElementTree as ET
 
           result = ET.parse('framework-report-snapshot.xml').getroot()
