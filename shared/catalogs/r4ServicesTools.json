@@ -184,7 +184,6 @@
         "msv-IVEN-Server-Managed-Devc",
         "sec-NinjaOne-EndpointOnly-Mgmt-Unit"
       ],
-      "source_observation": "Managed PC on 96 and Managed Server on 79 active client agreements",
       "capabilities": [
         "Workstations and servers with the NinjaOne agent",
         "Hardware, operating system, IP and MAC address, last check-in",
@@ -228,7 +227,6 @@
         "sec-Nerdio-InTune-Mgmt-Unit",
         "csp-NCE-M365BusinessPrem-P1Y-Monthly"
       ],
-      "source_observation": "Orchestration tool on 121 and Business Premium on 108 active client agreements",
       "capabilities": [
         "Enrolled Windows, macOS, iOS and Android devices",
         "Compliance policies, configuration profiles and security baselines",
@@ -269,7 +267,6 @@
         "sec-EDR-Per User",
         "sec-EDR-Per Device"
       ],
-      "source_observation": "Per user on 64 and per device on 10 active client agreements",
       "capabilities": [
         "Workstations and servers with the agent",
         "Malware and ransomware prevention and detection",
@@ -308,7 +305,6 @@
       "source_references": [
         "sec-HUNTRESS-ITDR-M365-User"
       ],
-      "source_observation": "On 139 active client agreements",
       "capabilities": [
         "Microsoft 365 / Entra ID sign-ins and mailbox activity for licensed users",
         "24/7 SOC review and escalation"
@@ -342,7 +338,6 @@
       "source_references": [
         "sec-HUNTRESS-SIEM-Device"
       ],
-      "source_observation": "On 11 active client agreements",
       "capabilities": [
         "Windows event logs from devices with the Huntress agent",
         "Firewall syslog and Microsoft 365 logs, only if onboarded"
@@ -378,7 +373,6 @@
       "source_references": [
         "sec-VULNERABILITYSCANNING-Per Device"
       ],
-      "source_observation": "On 15 active client agreements",
       "capabilities": [
         "Devices with the agent and network ranges reached by a probe",
         "External IP addresses, if an external scan is configured",
@@ -416,7 +410,6 @@
         "sec-AppWhitelisting-Per Device",
         "sec-AppWhitelisting_Elevation-Bundle-Per Device"
       ],
-      "source_observation": "On 27 active client agreements (6 with Elevation Control)",
       "capabilities": [
         "Software execution on devices with the agent",
         "Ringfenced application behavior",
@@ -456,7 +449,6 @@
         "csp-NCE-AzureADP1-Annual",
         "csp-NCE-AzureADP2-Annual"
       ],
-      "source_observation": "Managed User (Full Complete) on 101 active client agreements",
       "capabilities": [
         "Cloud and synced user accounts, groups and admin roles",
         "Conditional Access and MFA enforcement (P1 or Business Premium)",
@@ -495,7 +487,6 @@
         "msv-IVEN-Server-Managed-Devc",
         "MSServerAppMicrosoft"
       ],
-      "source_observation": "Clients with domain-joined servers",
       "capabilities": [
         "Domain user, computer and service accounts",
         "Group Policy"
@@ -532,7 +523,6 @@
         "sec-DUO-DUOMFA-User",
         "sec-DUO-DUOACCESS-User"
       ],
-      "source_observation": "On roughly 25 active client agreements across three Duo lines",
       "capabilities": [
         "Protected applications and systems enrolled in Duo"
       ],
@@ -564,7 +554,6 @@
         "csp-NCE-MicrosoftDefenderP1-Yearly",
         "csp-NCE-M365BusinessPrem-P1Y-Monthly"
       ],
-      "source_observation": "P1 add-on on 36 active client agreements, plus Business Premium",
       "capabilities": [
         "Exchange Online mailboxes",
         "Links and attachments in email and Teams"
@@ -599,7 +588,6 @@
         "Hosting-SpamFilter-10",
         "hsv-GFI-Spam Filter-User"
       ],
-      "source_observation": "Mostly on older agreements",
       "capabilities": [
         "Inbound mail routed through the filter"
       ],
@@ -634,7 +622,6 @@
         "hsv-Bcuda-EmailSecurityATP-User",
         "hsv-Bcuda-CompleteProtection-User"
       ],
-      "source_observation": "Complete Protection on 11 active client agreements",
       "capabilities": [
         "Mailboxes routed through Barracuda"
       ],
@@ -663,7 +650,6 @@
       "source_references": [
         "sec-Dmarc-Monitoring-Domain"
       ],
-      "source_observation": "On 17 active client agreements",
       "capabilities": [
         "Monitored sending domains"
       ],
@@ -695,7 +681,6 @@
       "source_references": [
         "sec-Abnormal-AIEmailSec-P1Y-Monthly"
       ],
-      "source_observation": "On 1 active client agreement",
       "capabilities": [],
       "gaps": [],
       "possible_records": [],
@@ -717,7 +702,6 @@
       "source_references": [
         "hsv-PRF-SEC-ESS-C100-ADV-User"
       ],
-      "source_observation": "On 1 active client agreement",
       "capabilities": [],
       "gaps": [],
       "possible_records": [],
@@ -744,7 +728,6 @@
         "chw-IVEN-FortiFlex-FG-90G-Ent-License-Only",
         "chw-IVEN-FortiFlex-FG-VM02V-BDL-Ent-Unit"
       ],
-      "source_observation": "Managed Network on 72 active client agreements; FortiFlex FortiGate licensing across many",
       "capabilities": [
         "Perimeter firewall policy, NAT and VLAN segmentation",
         "SSL and IPsec VPN for remote access and site-to-site",
@@ -786,7 +769,6 @@
       "source_references": [
         "chw-IVEN-FortiFlex-FortiClientEMSCloud-ZTNA-VPN-25Agents"
       ],
-      "source_observation": "On 2 active client agreements",
       "capabilities": [],
       "gaps": [],
       "possible_records": [],
@@ -810,7 +792,6 @@
         "sec-Timus-PerUser",
         "sec-Timus-Gateway"
       ],
-      "source_observation": "On 2 active client agreements",
       "capabilities": [
         "Users and gateways enrolled in Timus"
       ],
@@ -844,7 +825,6 @@
         "hsv-IVEN-Veeam-Backup-for-Desktop",
         "mbk-VDC365Adv-PerUser"
       ],
-      "source_observation": "Windows Server Backup on 58 and S3 hot storage on 54 active client agreements",
       "capabilities": [
         "Servers and VMs included in backup jobs",
         "Backup copy jobs to a second location",
@@ -885,7 +865,6 @@
         "hsv-Bcuda-EDUCloud-2CloudBackup-User",
         "hsv-Bcuda-EntraID-Backup-Premium-User"
       ],
-      "source_observation": "On 112 active client agreements",
       "capabilities": [
         "Licensed users' Exchange, OneDrive, SharePoint and Teams data"
       ],
@@ -918,7 +897,6 @@
       "source_references": [
         "hsv-BackBlazeBk-Desktop-Dev"
       ],
-      "source_observation": "On 28 active client agreements",
       "capabilities": [
         "Enrolled workstations"
       ],
@@ -947,7 +925,6 @@
       "source_references": [
         "sec-SECURITYAWARENESS-DIAMOND-User"
       ],
-      "source_observation": "On 68 active client agreements",
       "capabilities": [
         "Enrolled users' training assignments and completion",
         "Phishing simulation results"
@@ -981,7 +958,6 @@
       "source_references": [
         "sec-HUNTRESS-SAT-User"
       ],
-      "source_observation": "On 1 active client agreement",
       "capabilities": [],
       "gaps": [],
       "possible_records": [],
@@ -1004,7 +980,6 @@
       "source_references": [
         "sec-ANNUALPENTEST"
       ],
-      "source_observation": "On 12 active client agreements",
       "capabilities": [
         "Systems in the agreed test scope"
       ],
@@ -1036,7 +1011,6 @@
       "source_references": [
         "sec-DARKWEBMONITORING-Domain"
       ],
-      "source_observation": "On 13 active client agreements",
       "capabilities": [
         "Monitored email domains"
       ],
@@ -1066,7 +1040,6 @@
         "sec-NetwrixAuditor-Premium-Bundle",
         "sec-NetwrixData-Classification-Add-On"
       ],
-      "source_observation": "On 4 active client agreements",
       "capabilities": [
         "Audited directories, tenants and file servers"
       ],
@@ -1096,7 +1069,6 @@
         "csp-NCE-MS-PurviewSuite-P1Y-Monthly",
         "csp-NCE-Azure-InfoP-P1-Annual"
       ],
-      "source_observation": "On 6 active client agreements",
       "capabilities": [],
       "gaps": [],
       "possible_records": [
@@ -1121,7 +1093,6 @@
       "source_references": [
         "hsv-IVEN-Nerdio--Unit"
       ],
-      "source_observation": "On 15 active client agreements",
       "capabilities": [
         "AVD host pools and session hosts"
       ],
