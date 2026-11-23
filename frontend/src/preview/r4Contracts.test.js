@@ -164,3 +164,24 @@ test('Setup and assessment context reads preserve all activities without creatin
   expect(plan.review.activity_setup.recurring_ticket_number).toBe('12');expect(snapshot(db)).toBe(before);
   expect(plan.services.areas.endpoint.tool_ids).toEqual(['ninjaone','intune']);
 });
+
+test('Guide PUT without an explicit request key replays its exact payload and refuses a stale changed payload without side effects',async()=>{
+  const db=fixture(),path='/reviews/r/completion-guide';
+  await prepareR4Completion(db,path,'get');
+  const guide=r4ReviewCompletionRequest(db,path,'get');
+  const body={occurrence_id:guide.occurrence_id,expected_updated_at:guide.expected_updated_at,
+    checklist:{contract_token:guide.contract_token,results:[{step_id:guide.steps[0].step_id,result:'NMI',reason:'SYNTHETIC retained partial checkpoint'}]},
+    supporting_reference:'SYNTHETIC checkpoint reference'};
+  await prepareR4Completion(db,path,'put',body);
+  const saved=r4ReviewCompletionRequest(db,path,'put',body),after=snapshot(db);
+  expect(saved.results).toEqual(body.checklist.results);
+  expect(Object.keys(db.command_requests)).toHaveLength(1);
+  expect(db.logs.filter(row=>row.action==='Review checklist saved')).toHaveLength(1);
+  await prepareR4Completion(db,path,'put',body);
+  expect(r4ReviewCompletionRequest(db,path,'put',body)).toEqual(saved);
+  expect(snapshot(db)).toBe(after);
+  const changed={...body,supporting_reference:'SYNTHETIC changed checkpoint with the old revision'};
+  await prepareR4Completion(db,path,'put',changed);
+  expect(()=>r4ReviewCompletionRequest(db,path,'put',changed)).toThrow(/changed/);
+  expect(snapshot(db)).toBe(after);
+});

@@ -33,6 +33,7 @@ export async function prepareR4Completion(db, path, method, body = {}) {
     prepared.set(db, cache);
   }
   cache.set(id, contract);
+  if (operation !== 'completion-guide' || method !== 'put') return contract;
   let keys = fallbackKeys.get(db);
   if (!keys) {
     keys = new Map();

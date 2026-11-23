@@ -2,13 +2,13 @@ import axios from 'axios';
 import {previewAdapter} from './adapter';
 import {STORE_KEY,readStore,saveStore,saveStoreAsync,resetStore,clearEvidenceFiles,write} from './store';
 import {decodeDemoStore} from './demoStorageCodec';
-import {clearFileCache} from './evidenceStorage';
+import {clearFileCache,getEvidenceCacheRevision} from './evidenceStorage';
 
 const {CompressionStream:NativeCompressionStream,WritableStream}=require('node:stream/web');
 const api=axios.create({adapter:previewAdapter}),cid='demo_brawndo';
 const settle=promise=>promise.then(value=>({value}),error=>({error}));
 const create=(title,key,options={})=>api.post('/tasks',{client_id:cid,title},{...options,headers:{'Idempotency-Key':key}});
-let compressionDescriptor,storage,releases=[];
+let compressionDescriptor,storage,releases=[],bridgeCase;
 function gateCompression(){
  let release,started;
  const ready=new Promise(resolve=>{started=resolve;}),gate=new Promise(resolve=>{release=resolve;});
@@ -31,6 +31,12 @@ beforeEach(async()=>{
  await api.post('/demo/enter');
 });
 afterEach(async()=>{
+ const bridge=bridgeCase;bridgeCase=null;
+ if(bridge){
+  bridge.active=false;bridge.controller.abort();
+  if(globalThis.Date===bridge.Date)globalThis.Date=bridge.RealDate;
+  await bridge.pending?.catch(()=>undefined);
+ }
  for(const release of releases)release();
  storage?.mockRestore();storage=null;
  // Drain any rejected or interrupted case before replacing its native stream.
@@ -85,7 +91,11 @@ test('the public adapter rejects malformed URLs through its Promise contract',as
 });
 
 test('synchronous and native asynchronous store bridges preserve complete native documents',async()=>{
- jest.useFakeTimers({doNotFake:['performance','nextTick','queueMicrotask','setTimeout','clearTimeout','setInterval','clearInterval','setImmediate','clearImmediate']}).setSystemTime(new Date('2026-10-22T18:00:00.000Z'));
+ const RealDate=Date,clock=new RealDate('2026-10-22T18:00:00.000Z').getTime();
+ const owner={active:true,pending:null,controller:new AbortController(),RealDate};
+ owner.Date=class extends RealDate{constructor(...args){super(...(args.length?args:[clock]));}static now(){return clock;}};
+ bridgeCase=owner;globalThis.Date=owner.Date;
+ try{
  const base=sessionStorage.getItem(STORE_KEY),source=readStore();
  source.synthetic_unknown=JSON.parse('{"__proto__":{"retained":true},"nested":["日本語",null,{"original":true}]}');
  const risk=source.risks.find(row=>row.client_id===cid),task=source.tasks.find(row=>row.client_id===cid);
@@ -105,11 +115,15 @@ test('synchronous and native asynchronous store bridges preserve complete native
   const sync=saveStore(JSON.parse(JSON.stringify(candidate)));
   const syncSaved=JSON.stringify(decodeDemoStore(sessionStorage.getItem(STORE_KEY))),syncRead=JSON.stringify(readStore()),syncReturned=JSON.stringify(sync);
   storage.mockRestore();storage=null;sessionStorage.setItem(STORE_KEY,base);forceRawQuota();
-  const asynchronous=await saveStoreAsync(JSON.parse(JSON.stringify(candidate)),{expectedSaved:base});
+   const asynchronous=await (owner.pending=saveStoreAsync(JSON.parse(JSON.stringify(candidate)),{expectedSaved:base,signal:owner.controller.signal}));
+   if(!owner.active)return;
   expect(JSON.stringify(decodeDemoStore(sessionStorage.getItem(STORE_KEY)))).toBe(syncSaved);
   expect(JSON.stringify(readStore())).toBe(syncRead);
   expect(JSON.stringify(asynchronous)).toBe(syncReturned);
   expect(readStore().synthetic_unknown.nested).toEqual(['日本語',null,{original:true}]);
+ }
+ }finally{
+  if(globalThis.Date===owner.Date)globalThis.Date=RealDate;
  }
 });
 
@@ -237,4 +251,45 @@ test.each([false,true])('late restoration callbacks retain their failure before 
     await expect(saveStoreAsync(db,{expectedSaved:saved})).rejects.toMatchObject({storage_code:'WRITE_FAILED'});
     expect(restoredArrays).toBe(1);expect(sessionStorage.getItem(STORE_KEY)).toBe(saved);
   }finally{mapping.mockRestore();}
+});
+
+test.each(['saved-bytes','session','role','evidence-revision'])('R4 remaining contract digest refuses a concurrent %s change without stale disclosure or persistence',async mode=>{
+ const review=(await api.post('/reviews',{client_id:cid,title:'SYNTHETIC contract digest boundary',review_type:'governance',recurrence:'annual',due_date:'2027-12-01'})).data;
+ let release,started,active=true,captured=false,contractInput,decodeError;
+ const gate=new Promise(resolve=>{release=resolve;}),ready=new Promise(resolve=>{started=resolve;});
+ releases.push(()=>{active=false;release();});
+ const digest=globalThis.crypto.subtle.digest.bind(globalThis.crypto.subtle);
+ jest.spyOn(globalThis.crypto.subtle,'digest').mockImplementation(async(...args)=>{
+  if(active&&!captured){
+   captured=true;
+   try{contractInput=JSON.parse(new TextDecoder().decode(args[1]));}catch(error){decodeError=error;}
+   started();await gate;
+  }
+  return digest(...args);
+ });
+ const before=sessionStorage.getItem(STORE_KEY),revision=getEvidenceCacheRevision();
+ const pending=settle(api.get('/reviews/'+review.review_id+'/completion-guide'));
+ await ready;if(!active)return;
+ expect(decodeError).toBeUndefined();
+ expect(contractInput).toMatchObject({template_id:'custom'});
+ expect(Array.isArray(contractInput.steps)).toBe(true);
+ expect(contractInput).not.toHaveProperty('payload');
+ if(mode==='saved-bytes')sessionStorage.setItem(STORE_KEY,before+' ');
+ if(mode==='session'){
+  await api.post('/auth/logout');if(!active)return;
+  await api.post('/demo/enter');if(!active)return;
+ }
+ if(mode==='role'){
+  const authority=readStore();authority.user={...authority.user,role:'client_readonly',client_ids:[cid],all_clients:false};saveStore(authority);
+ }
+ if(mode==='evidence-revision'){
+  clearFileCache();
+  expect(getEvidenceCacheRevision()).not.toBe(revision);
+  expect(sessionStorage.getItem(STORE_KEY)).toBe(before);
+ }
+ const external=sessionStorage.getItem(STORE_KEY);release();
+ const result=await pending;if(!active)return;
+ expect(result.error?.response?.status).toBe(mode==='session'?401:409);
+ expect(result.value).toBeUndefined();
+ expect(sessionStorage.getItem(STORE_KEY)).toBe(external);
 });
