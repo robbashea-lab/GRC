@@ -14,7 +14,7 @@ import security_runtime
 COLUMNS = ['Review', 'Type', 'Origin', 'Period', 'Due date', 'Completed on', 'Completed by',
            'Outcome', 'Recurring ticket', "This cycle's ticket", 'Checklist', 'Exceptions',
            'Evidence files', 'Evidence count', 'Notes', 'Occurrence ID', 'Record source',
-           'Supporting result reference', 'Support to record']
+           'Supporting result reference', 'Support to record', 'Evidence IDs']
 
 
 def interval(from_date, to_date):
@@ -74,7 +74,8 @@ def completed_rows(reviews, start, end):
                            len(evidence), occurrence.get('notes') or '', occurrence.get('occurrence_id') or '',
                            'Retained legacy record' if occurrence.get('legacy') else 'Completed in GoverNara',
                            evaluation.get('supporting_reference') or checklist.get('supporting_reference') or '',
-                           '; '.join(checklist.get('required_support') or [])])
+                           '; '.join(checklist.get('required_support') or []),
+                           '; '.join(str(item.get('evidence_id') or '') for item in evidence)])
     return sorted(result, key=lambda row: (str(row[0] or '').casefold(), row[5], row[15]))
 
 

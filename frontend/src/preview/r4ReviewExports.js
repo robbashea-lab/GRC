@@ -2,7 +2,7 @@ import {occurrenceId} from '../lib/reviewOccurrences';
 
 export const completionColumns=['Review','Type','Origin','Period','Due date','Completed on','Completed by','Outcome',
   'Recurring ticket',"This cycle's ticket",'Checklist','Exceptions','Evidence files','Evidence count','Notes',
-  'Occurrence ID','Record source','Supporting result reference','Support to record'];
+  'Occurrence ID','Record source','Supporting result reference','Support to record','Evidence IDs'];
 
 export function completionExport(reviews,fromDate,toDate) {
   const valid=value=>{
@@ -31,7 +31,7 @@ export function completionExport(reviews,fromDate,toDate) {
         steps.filter(step=>step.result==='Exception').map(step=>(step.text||step.t||'')+((step.reason||step.note)?` — ${step.reason||step.note}`:'')).join(' | '),
         evidence.map(item=>item.filename||item.evidence_id||'').join('; '),evidence.length,occurrence.notes||'',occurrence.occurrence_id||'',
         occurrence.legacy?'Retained legacy record':'Completed in GoverNara',evaluation.supporting_reference||checklist.supporting_reference||'',
-        (checklist.required_support||[]).join('; ')]);
+        (checklist.required_support||[]).join('; '),evidence.map(item=>item.evidence_id||'').join('; ')]);
     }
   }
   if(rows.length>100000)throw Object.assign(new Error('Narrow the completion period; no partial export was generated'),{status:413});

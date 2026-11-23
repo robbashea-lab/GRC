@@ -772,3 +772,13 @@ html[data-native-standard] .omni-workspace-window .omni-panel-header { border-ra
  .native-standard.native-standard.native-standard > .shell > .main { padding:18px 12px 36px; }
  .native-standard.native-standard.native-standard :is(.page-header h1,.bpage-head h1,.bd-header h1,.crr-root h1,.cia-page h1,.cis-risks-concept h1,.bdcal h1,.brawndo-additional h1,.airf-page h1) { font-size:29px; }
 }
+
+/* Semantic primary buttons share the approved CTA in the mounted shell and body portals. */
+html[data-native-standard] .ui-button.bg-primary,
+html[data-native-standard] .bae-btn.bae-primary {
+ background:var(--cta); border-color:var(--cta); color:var(--cta-fg);
+}
+html[data-native-standard] .ui-button.bg-primary:not(:disabled):hover,
+html[data-native-standard] .bae-btn.bae-primary:not(:disabled):hover {
+ background:var(--cta-hover); border-color:var(--cta-hover);
+}
