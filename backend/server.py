@@ -2894,6 +2894,8 @@ async def create_entity(kind: str = Path(..., pattern=KIND_REGEX), body: Dict[st
         raise HTTPException(403, "Read-only role")
     if not _can_access_client(user, (body or {}).get("client_id")):
         raise HTTPException(403, "Forbidden for this client")
+    if kind == "tasks":
+        await action_items.require_settled_dependencies(db, body or {})
     async def execute(identity):
         return await _create_entity(kind=kind, body=body, user=user, identity=identity)
     return await create_requests.run(db, idempotency_key, user["user_id"], (body or {}).get("client_id"),
@@ -2920,8 +2922,11 @@ async def _create_entity(kind, body, user, identity=None, creation_metadata=None
     for related_kind, (_related_type, _related_model, related_key, _related_prefix) in ENTITY_MAP.items():
         if related_key == id_field or not parsed.get(related_key):
             continue
-        if not await db[_coll_for(related_kind)].find_one({related_key: parsed[related_key], "client_id": parsed["client_id"]}):
+        related = await db[_coll_for(related_kind)].find_one({related_key: parsed[related_key], "client_id": parsed["client_id"]})
+        if not related:
             raise HTTPException(422, "Related record must belong to the same client")
+        if kind == "tasks":
+            r4_services.assert_settled(related)
     if kind == "risks":
         parsed = _apply_risk_scoring(parsed)
         parsed["display_id"] = await risk_ids.allocate(db, parsed["client_id"])

@@ -3,6 +3,7 @@ from copy import deepcopy
 
 from fastapi import HTTPException
 import assignment_eligibility
+import r4_services
 
 SOURCES = {"review": ("reviews", "review_id"), "finding": ("findings", "finding_id"),
            "risk": ("risks", "risk_id"), "vendor": ("vendors", "vendor_id"), "policy": ("policies", "policy_id"), "audit": ("assessments", "assessment_id")}
@@ -45,6 +46,30 @@ def view(row):
         return {**row, 'title': row['title'][11:]}
     return row
 
+async def require_settled_dependencies(db, row):
+    """Check only this Action's current client and consumed provenance chain."""
+    cid = row.get("client_id")
+    if not isinstance(cid, str):
+        return  # The existing model validation owns malformed input.
+    r4_services.assert_settled(await db.clients.find_one({"client_id": cid}, {"_id": 0}))
+    parents = [(kind, key, row.get(key)) for kind, key in SOURCES.values()]
+    selected = row.get("source_type")
+    if isinstance(selected, str) and selected in SOURCES:
+        kind, key = SOURCES[selected]
+        parents.append((kind, key, row.get("source_id") or row.get(key)))
+    seen = set()
+    for kind, key, ident in parents:
+        if not isinstance(ident, str) or not ident or (kind, ident) in seen:
+            continue
+        seen.add((kind, ident))
+        parent = await db[kind].find_one({key: ident, "client_id": cid}, {"_id": 0})
+        r4_services.assert_settled(parent)
+        if parent and kind == "findings":
+            parents.extend((name, field, parent.get(field)) for name, field in
+                           (("reviews", "review_id"), ("vendors", "vendor_id")))
+        elif parent and kind == "reviews":
+            parents.append(("vendors", "vendor_id", parent.get("vendor_id")))
+
 async def prepare(db, row, can_access, previous=None):
     cid = row["client_id"]
     if row.get("priority") not in ("critical", "high", "medium", "low") and not (previous and row.get("priority") == previous.get("priority")):
@@ -58,6 +83,7 @@ async def prepare(db, row, can_access, previous=None):
         return row
     if row.get("status", "open") != "open":
         raise HTTPException(422, "New Action Items start Open")
+    r4_services.assert_settled(await db.clients.find_one({"client_id": cid}, {"_id": 0}))
     source_type = row.get("source_type") or next((t for t, (_, key) in SOURCES.items() if row.get(key)), "manual")
     if source_type not in {*SOURCES, "manual", "audit", "incident", "other"}:
         raise HTTPException(422, "Invalid source")
@@ -72,6 +98,7 @@ async def prepare(db, row, can_access, previous=None):
         source = await db[kind].find_one({key: ident, "client_id": cid}, {"_id": 0}) if ident else None
         if not source:
             raise HTTPException(422, "Select a source record from this client")
+        r4_services.assert_settled(source)
         if row.get(key) and row[key] != ident:
             raise HTTPException(422, "Conflicting source relationship")
         row.update({key: ident, "source_id": ident})
@@ -79,6 +106,7 @@ async def prepare(db, row, can_access, previous=None):
             source_finding = await db.findings.find_one({"finding_id": row["finding_id"], "client_id": cid}, {"_id": 0})
             if not source_finding:
                 raise HTTPException(422, "Finding must belong to this client")
+            r4_services.assert_settled(source_finding)
             for field in ("review_id", "occurrence_id", "vendor_id"):
                 if source_finding.get(field):
                     if row.get(field) and row[field] != source_finding[field]:
@@ -88,6 +116,7 @@ async def prepare(db, row, can_access, previous=None):
             review = await db.reviews.find_one({"review_id": row["review_id"], "client_id": cid}, {"_id": 0})
             if not review:
                 raise HTTPException(422, "Review must belong to this client")
+            r4_services.assert_settled(review)
             if review.get("vendor_id"):
                 if row.get("vendor_id") and row["vendor_id"] != review["vendor_id"]:
                     raise HTTPException(422, "Conflicting Vendor provenance")
