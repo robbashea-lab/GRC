@@ -43,7 +43,7 @@ export default function NativeStandardShell({children}) {
   const [activeWork, setActiveWork] = useState({items:[], loading:false, error:''});
   const [badges, setBadges] = useState(null);
   const badgeRequest = useRef(0);
-  const root = useRef(null), trigger = useRef(null), input = useRef(null), results = useRef(null);
+  const root = useRef(null), navigationTrigger = useRef(null), trigger = useRef(null), input = useRef(null), results = useRef(null);
   const platform = internal && (pathname === '/clients' || pathname === '/account' || pathname.startsWith('/admin/'));
   const client = platform ? null : org.currentClient;
   const clientId = client?.client_id;
@@ -94,6 +94,18 @@ export default function NativeStandardShell({children}) {
   }, [theme]);
   useEffect(() => {setNavigation(false); setMenu(null);}, [pathname]);
   useEffect(() => {
+    if (!navigation) return;
+    const closeNavigation = event => {
+      if (event.key !== 'Escape' || event.defaultPrevented || !navigationTrigger.current?.getClientRects().length ||
+          document.querySelector('[role="dialog"][data-state="open"],[role="alertdialog"][data-state="open"],[role="menu"][data-state="open"],[role="listbox"][data-state="open"]')) return;
+      event.preventDefault();
+      setNavigation(false);
+      navigationTrigger.current.focus();
+    };
+    window.addEventListener('keydown', closeNavigation);
+    return () => window.removeEventListener('keydown', closeNavigation);
+  }, [navigation]);
+  useEffect(() => {
     const shortcut = event => {
       if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'k' && !document.querySelector('[role="dialog"][data-state="open"]')) {
         event.preventDefault(); setMenu(null); setQuery(''); setSelected(0); setSearchOpen(true);
@@ -126,7 +138,7 @@ export default function NativeStandardShell({children}) {
 
   return <div ref={root} className="native-standard portfolio-reference brawndo-workspace-pilot app-shell" data-theme={theme} data-native-navigation={navigation ? 'open' : 'closed'}>
     <header className="topbar">
-      <button type="button" className="icon-btn native-mobile-nav" aria-label="Toggle client navigation" aria-expanded={navigation} onClick={() => setNavigation(value => !value)}><MenuIcon size={20}/></button>
+      <button ref={navigationTrigger} type="button" className="icon-btn native-mobile-nav" aria-label="Toggle client navigation" aria-expanded={navigation} onClick={() => setNavigation(value => !value)}><MenuIcon size={20}/></button>
       <Link className="brand" to={internal ? '/clients' : '/dashboard'}>
         <svg aria-hidden="true" width="30" height="30" viewBox="0 0 32 32" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" style={{color:'var(--accent)'}}><path d="M27 4C16 5 8 12 6 25M27 4c-1 9-7 16-17 18M12 19l6-6M15 21l7-7M10 16l5-5M6 25l-2 3"/></svg>
         <span><span className="brand-name">GoverNara</span><br/><span className="brand-tag">Turn complexity into clarity.</span></span>

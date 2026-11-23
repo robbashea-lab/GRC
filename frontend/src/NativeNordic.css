@@ -775,10 +775,13 @@ html[data-native-standard] .omni-workspace-window .omni-panel-header { border-ra
 
 /* Semantic primary buttons share the approved CTA in the mounted shell and body portals. */
 html[data-native-standard] .ui-button.bg-primary,
-html[data-native-standard] .bae-btn.bae-primary {
+html[data-native-standard] .bae-btn.bae-primary,
+html[data-native-standard] .native-standard .admin-surface[data-theme] .bpage-head .ui-button.bg-primary {
  background:var(--cta); border-color:var(--cta); color:var(--cta-fg);
 }
 html[data-native-standard] .ui-button.bg-primary:not(:disabled):hover,
-html[data-native-standard] .bae-btn.bae-primary:not(:disabled):hover {
+html[data-native-standard] .bae-btn.bae-primary:not(:disabled):hover,
+html[data-native-standard] .native-standard .admin-surface[data-theme] .bpage-head .ui-button.bg-primary:not(:disabled):hover {
  background:var(--cta-hover); border-color:var(--cta-hover);
 }
+html[data-native-standard] .ui-button:disabled { opacity:.5; }

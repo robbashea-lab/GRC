@@ -116,3 +116,45 @@ test('unmount removes the protected theme marker so public login retains its own
   await render(); expect(document.documentElement.hasAttribute('data-native-standard')).toBe(true);
   await act(async () => root.render(null)); expect(document.documentElement.hasAttribute('data-native-standard')).toBe(false);
 });
+
+test('mobile navigation Escape closes and returns focus without dismissing foreground work or stealing desktop focus', async () => {
+  mockPath = '/dashboard'; await render();
+  const toggle = host.querySelector('[aria-label="Toggle client navigation"]');
+  const reviewLink = host.querySelector('[data-testid="nav-reviews"]');
+  // JSDOM has no layout; only the toggle's rendered visibility is supplied.
+  const visible = jest.spyOn(toggle,'getClientRects').mockReturnValue([{width:32,height:32}]);
+  try {
+    await click(toggle);
+    expect(toggle.getAttribute('aria-expanded')).toBe('true');
+    expect(host.querySelector('.native-nav-scrim')).not.toBeNull();
+    await act(async () => reviewLink.focus());
+    reviewLink.addEventListener('keydown',event => event.preventDefault(),{once:true});
+    await key(reviewLink,'Escape');
+    expect(toggle.getAttribute('aria-expanded')).toBe('true');
+    expect(document.activeElement).toBe(reviewLink);
+
+    await click(host.querySelector('.search-btn'));
+    await key(host.querySelector('.palette input'),'Escape');
+    await act(async () => jest.runOnlyPendingTimers());
+    expect(host.querySelector('.palette')).toBeNull();
+    expect(toggle.getAttribute('aria-expanded')).toBe('true');
+    expect(document.activeElement).toBe(host.querySelector('.search-btn'));
+
+    await act(async () => reviewLink.focus());
+    await key(reviewLink,'Escape');
+    expect(toggle.getAttribute('aria-expanded')).toBe('false');
+    expect(host.querySelector('.native-standard').dataset.nativeNavigation).toBe('closed');
+    expect(host.querySelector('.native-nav-scrim')).toBeNull();
+    expect(document.activeElement).toBe(toggle);
+    expect(mockNavigate).not.toHaveBeenCalled();
+
+    await click(toggle);
+    visible.mockReturnValue([]); // A desktop resize can hide an already-open toggle.
+    const desktopFocus = host.querySelector('.search-btn');
+    await act(async () => desktopFocus.focus());
+    await key(desktopFocus,'Escape');
+    expect(toggle.getAttribute('aria-expanded')).toBe('true');
+    expect(document.activeElement).toBe(desktopFocus);
+    expect(mockNavigate).not.toHaveBeenCalled();
+  } finally {visible.mockRestore();}
+});
