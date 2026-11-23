@@ -93,3 +93,36 @@ html:has(#login-governara) { color-scheme:normal; }
 #login-governara .demo-link { font-family:inherit; line-height:inherit; cursor:pointer; }
 #login-governara button:disabled { cursor:not-allowed; }
 #login-governara .auth-notice { color:var(--ink2); font-size:13px; margin-top:12px; }
+
+/* Midnight Blue palette for the Twilight sign-in. */
+#login-governara {
+  --navy: #101c2d;
+  --ink: #eef4ff;
+  --ink2: #b9cbe2;
+  --muted: #9bafca;
+  --line: #50678499;
+  --field: #142238d9;
+  --sky: #9bc1ff;
+  --peri: #91b3ef;
+  --lav: #9eaff6;
+  --lilac: #b8c6ff;
+}
+#login-governara .scene::after {
+  background: linear-gradient(90deg, #101c2dcc 0%, #101c2d99 24%, #101c2d33 40%, #101c2d00 50%, #101c2d00 66%, #101c2d66 80%, #101c2db3 100%),
+    linear-gradient(180deg, #101a3299 0%, #101a3200 18%, #101a3200 70%, #101a32e6 100%);
+}
+#login-governara .card {
+  background: linear-gradient(180deg, #223752e8, #19283bf2);
+  border-color: #7893bb8c;
+  box-shadow: 0 0 0 1px #ffffff08 inset, 0 30px 80px -20px #070e20cc, 0 0 60px -20px #9bc1ff42;
+}
+#login-governara .inp input::placeholder { color: var(--muted); }
+#login-governara .inp input:focus { box-shadow: 0 0 0 3px #9bc1ff38; }
+#login-governara .go { color: var(--navy); box-shadow: 0 10px 30px -10px #9bc1ff85; }
+#login-governara .spin { border-color: #101c2d55; border-top-color: var(--navy); }
+#login-governara footer { border-top-color: var(--line); }
+@media (max-width:900px) {
+  #login-governara .scene::after {
+    background: linear-gradient(180deg, #101c2d66 0%, #101c2d00 30%, var(--navy) 100%);
+  }
+}
