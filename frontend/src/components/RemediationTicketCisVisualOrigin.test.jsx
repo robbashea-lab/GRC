@@ -17,7 +17,7 @@ jest.mock('react-router-dom',()=>({Link:({children,to})=><a href={to}>{children}
 jest.mock('sonner',()=>({toast:{error:jest.fn(),success:jest.fn()}}));
 
 const clientId='demo_brawndo';
-let root,host,record,task,finding,base,putSpy,patchSpy,postSpy;
+let root,host,record,task,finding,base,putSpy,patchSpy,postSpy,currentCase;
 const assessments=()=>[...document.querySelectorAll('[data-testid="brawndo-cis-assessment"]')];
 const ticket=()=>document.querySelector('[data-testid="remediation-ticket-drawer"]');
 const button=(scope,label)=>[...scope.querySelectorAll('button')].find(node=>node.textContent.trim()===label);
@@ -33,8 +33,36 @@ async function openTicket(outer){
   const opener=outer.querySelector('[data-ticket-id="finding:'+finding.finding_id+'"] button');
   expect(opener).toBeTruthy();await act(async()=>opener.click());expect(ticket()).toBeTruthy();
 }
+function ensureActive(owner){
+  if(!owner?.active||currentCase!==owner)throw new Error('Legacy source-appearance case has ended');
+}
+async function sourceReadAction(owner,action){
+  ensureActive(owner);
+  const ownsSpy=!jest.isMockFunction(api.get),reads=ownsSpy?jest.spyOn(api,'get'):api.get;
+  let offset=reads.mock.results.length;
+  try{
+    await act(async()=>{ensureActive(owner);action();});
+    ensureActive(owner);
+    while(true){
+      ensureActive(owner);
+      const pending=reads.mock.results.slice(offset).map(result=>result.type==='throw'?Promise.reject(result.value):result.value);
+      offset=reads.mock.results.length;
+      if(!pending.length)break;
+      let settled;
+      await act(async()=>{settled=await Promise.allSettled(pending);});
+      ensureActive(owner);
+      const rejected=settled.find(result=>result.status==='rejected');
+      if(rejected)throw rejected.reason;
+    }
+  }finally{
+    if(ownsSpy&&api.get===reads)reads.mockRestore();
+  }
+}
 async function openSource(fixtureState){
-  const prior=assessments();await click(ticket(),'CIS Controls v8.1 Assessment → Safeguard 1.1');
+  const owner=currentCase,prior=assessments();ensureActive(owner);
+  const sourceOpener=button(ticket(),'CIS Controls v8.1 Assessment → Safeguard 1.1');
+  expect(sourceOpener).toBeTruthy();expect(sourceOpener.disabled).toBe(false);
+  await sourceReadAction(owner,()=>sourceOpener.click());
   const added=assessments().filter(node=>!prior.includes(node));expect(added).toHaveLength(1);
   expect(added[0].classList.contains('brawndo-assessment-pilot')).toBe(false);
   expect(['saved-result','live-question']).toContain(fixtureState);
@@ -92,6 +120,7 @@ async function submitWorkAsDistinctWorker(){
 beforeAll(()=>Object.defineProperty(global,'crypto',{configurable:true,value:require('crypto').webcrypto}));
 describe('legacy source-appearance compatibility (rollout presentation disabled)',()=>{
 beforeEach(async()=>{
+  currentCase={active:true};
   // This file characterizes the old source-appearance/inline-guide contract.
   // The unpatched rollout replacements use the real adapter in CisRolloutSourceAccessNative.test.jsx.
   jest.spyOn(rolloutPresentation,'assessmentRolloutEligible').mockReturnValue(false);
@@ -107,7 +136,7 @@ beforeEach(async()=>{
   expect(record).toMatchObject({client_id:clientId,framework_key:'cis-ig1',definition_id:'1.1'});
   host=document.createElement('div');document.body.appendChild(host);root=createRoot(host);
 });
-afterEach(async()=>{await act(async()=>root.unmount());host.remove();jest.restoreAllMocks();jest.clearAllMocks();});
+afterEach(async()=>{currentCase.active=false;currentCase=null;await act(async()=>root.unmount());host.remove();jest.restoreAllMocks();jest.clearAllMocks();});
 
 test.each(['Close','Escape'])('legacy source appearance: the completed ticket opens its exact native CIS source and %s restores its source opener without changing saved progress',async closeMethod=>{
   // jsdom has no layout; keep real portals, focus scopes and hidden/aria attributes.
