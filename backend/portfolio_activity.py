@@ -447,6 +447,12 @@ async def _acknowledge_pending(db, kind, row, identity, event, *, allow_owned=Fa
         return inserted
     # Remove only this exact durable envelope. A concurrent write may already
     # have added a newer envelope, and the durable last-event identity stays.
+    acknowledged = await db[kind].update_one(
+        {key: row[key], 'client_id': row['client_id'],
+         '_portfolio_activity_pending': {identity: event}},
+        {'$unset': {'_portfolio_activity_pending': ''}})
+    if acknowledged.matched_count:
+        return inserted
     await db[kind].update_one({key: row[key], 'client_id': row['client_id'],
         '_portfolio_activity_pending.' + identity: event},
         {'$unset': {'_portfolio_activity_pending.' + identity: ''}})

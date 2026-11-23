@@ -386,6 +386,72 @@ class PortfolioActivityTests(unittest.IsolatedAsyncioTestCase):
         self.assertTrue(await activity.acknowledge_committed(self.db, 'risks', 'concurrent', 'a', later['event_id']))
         self.assertEqual(await self.db.portfolio_events.count_documents({}), 2)
 
+    async def test_single_envelope_ack_preserves_later_source_write_after_removal(self):
+        pending = '_portfolio_activity_pending'
+        source = {'risk_id': 'after-ack', 'client_id': 'a', 'status': 'assessed',
+                  'updated_at': self.as_of, 'history': [{'status': 'assessed', 'at': self.as_of}]}
+        first = activity.project_committed_change('risk', source['risk_id'], 'a', self.user,
+            {'status': 'identified'}, source, self.as_of)
+        first = {'title': first['title'], **{key: value for key, value in first.items() if key != 'title'}}
+        first['actor'] = {'name': first['actor']['name'], 'id': first['actor']['id']}
+        source.update({pending: {first['event_id']: first},
+                       '_portfolio_activity_last_event_id': first['event_id']})
+        await self.db.risks.insert_one(copy.deepcopy(source))
+        stored = await self.db.risks.find_one({'risk_id': source['risk_id']}, {'_id': 0})
+        self.assertNotEqual(list(first), sorted(first))
+        self.assertNotEqual(list(first['actor']), sorted(first['actor']))
+        self.assertEqual(list(stored[pending][first['event_id']]), list(first))
+        self.assertEqual(list(stored[pending][first['event_id']]['actor']), list(first['actor']))
+        later_at = (self.now + timedelta(seconds=1)).isoformat()
+        later_history = {'status': 'closed', 'at': later_at}
+        later_state = {**source, 'status': 'closed', 'updated_at': later_at,
+                       'history': [*source['history'], later_history]}
+        later = activity.project_committed_change('risk', source['risk_id'], 'a', self.user,
+            source, later_state, later_at)
+        expected = {**later_state, pending: {later['event_id']: later},
+                    '_portfolio_activity_last_event_id': later['event_id']}
+        original = type(self.db.risks).update_one
+        matched = []
+
+        async def remove_then_write(collection, query, update, *args, **kwargs):
+            result = await original(collection, query, update, *args, **kwargs)
+            if (collection.name == 'risks' and collection.database.name == self.db.name
+                    and query.get('risk_id') == source['risk_id']
+                    and query.get(pending) == {first['event_id']: first}):
+                self.assertEqual(query['client_id'], 'a')
+                self.assertEqual(update, {'$unset': {pending: ''}})
+                self.assertEqual(result.matched_count, 1)
+                self.assertEqual(list(query[pending][first['event_id']]),
+                                 list(stored[pending][first['event_id']]))
+                self.assertEqual(list(query[pending][first['event_id']]['actor']),
+                                 list(stored[pending][first['event_id']]['actor']))
+                matched.append(result.matched_count)
+                removed = await collection.find_one({'risk_id': source['risk_id']}, {'_id': 0})
+                self.assertNotIn(pending, removed)
+                await original(collection, {'risk_id': source['risk_id'], 'client_id': 'a'},
+                    {'$set': {'status': 'closed', 'updated_at': later_at,
+                              pending + '.' + later['event_id']: later,
+                              '_portfolio_activity_last_event_id': later['event_id']},
+                     '$push': {'history': later_history}})
+            return result
+
+        with patch.object(type(self.db.risks), 'update_one', remove_then_write):
+            self.assertTrue(await activity.acknowledge_committed(
+                self.db, 'risk', source['risk_id'], 'a', first['event_id']))
+        self.assertEqual(matched, [1])
+        self.assertEqual(await self.db.risks.find_one({'risk_id': source['risk_id']}, {'_id': 0}), expected)
+        self.assertEqual(await self.db.portfolio_events.count_documents({}), 1)
+        self.assertEqual(await self.db.portfolio_events.find_one({'_id': first['event_id']}),
+                         {'_id': first['event_id'], **first})
+        expected = {key: value for key, value in expected.items() if key != pending}
+        for result in ({'processed': 1, 'inserted': 1}, {'processed': 0, 'inserted': 0}):
+            self.assertEqual(await activity.reconcile_pending(self.db), result)
+            self.assertEqual(await self.db.risks.find_one({'risk_id': source['risk_id']}, {'_id': 0}), expected)
+            events = await self.db.portfolio_events.find({}, {'_id': 0}).to_list(None)
+            self.assertEqual(len(events), 2)
+            self.assertEqual({event['event_id']: event for event in events},
+                             {first['event_id']: first, later['event_id']: later})
+
     async def test_committed_acknowledgement_failure_replay_and_tenant_linkage(self):
         event = activity.project_committed_change('finding', 'interrupted', 'a', self.user,
             {'status': 'open'}, {'status': 'validated'}, self.as_of)
