@@ -1,12 +1,10 @@
-import AssessmentMetrics from './AssessmentMetrics';
+import FrameworkStatusRings from './FrameworkStatusRings';
 import {AlertTriangle,Clock3,FileX2,FlagOff,ListChecks,SearchCheck,CircleDashed,PlayCircle} from 'lucide-react';
 import {Link} from 'react-router-dom';
 import {clientDestination} from '@/lib/clientSelection';
 import {Button} from './ui/button';
-import {CIS_ORDER,implementationTone,CisStatusBar} from './CisStatus';
 import {operatorVocabulary} from '@/lib/frameworkOperator';
 
-const FIELD={addressed:'addressed',in_progress:'partial',needs_attention:'gap',not_assessed:'notAssessed',not_applicable:'na'};
 
 const SIGNALS=v=>[
   ['needs_attention',v.statuses.needs_attention,'gap',AlertTriangle,'critical'],
@@ -19,7 +17,7 @@ const SIGNALS=v=>[
 ];
 
 // Operational summary: what has been evaluated, what it concluded, and what needs work.
-export default function CisWorkspaceSummary({clientId,summary:s,filter,onFilter,resume,onContinue,framework='cis-ig1',scopeLabel,children}){
+export default function CisWorkspaceSummary({clientId,summary:s,filter,onFilter,resume,onContinue,framework='cis-ig1',scopeLabel,rows,onOpen,mapName,children}){
   const pick=key=>onFilter(filter===key?'all':key),v=operatorVocabulary(framework);
   return <section className="cis-summary" aria-labelledby="cis-summary-heading">
     <div className="cis-summary-head">
@@ -27,15 +25,11 @@ export default function CisWorkspaceSummary({clientId,summary:s,filter,onFilter,
       <Link className="cis-config-link" to={clientId?clientDestination(clientId,'/client-profile?tab=program'):'/client-profile?tab=program'}>Program configuration</Link>
       {resume&&<Button size="sm" onClick={onContinue} aria-label={`Continue assessment: ${resume.definition_id} ${resume.title}`}><PlayCircle className="h-4 w-4 mr-1.5" aria-hidden="true"/>Continue with {resume.definition_id}</Button>}
     </div>
+    <FrameworkStatusRings summary={s} {...{rows,onOpen,filter,onFilter}} statusLabels={v.statuses} noun={v.items} mapName={mapName||v.item} subtitle={scopeLabel||v.scope}
+      footer={<>{scopeLabel?'Coverage is limited to the '+scopeLabel+' view.':'Coverage shows how much of '+v.scope+' has been evaluated.'} Neither measure is a compliance percentage, certification or audit opinion.{' '}
+        <button className="text-link" type="button" aria-pressed={filter==='not_applicable'} onClick={()=>pick('not_applicable')}>{v.statuses.not_applicable} · {s.available===false?'—':s.na}</button></>}/>
     <div className="cis-summary-grid">
       <div className="cis-summary-measures">
-        <AssessmentMetrics summary={s} implementedLabel={v.statuses.addressed}/>
-        {s.available!==false?<CisStatusBar counts={Object.fromEntries(CIS_ORDER.map(k=>[k,s[FIELD[k]]]))} className="h-2.5" framework={framework}/>:<p role="status">{s.reason||'Implementation counts are unavailable.'}</p>}
-        <div className="cis-legend" role="group" aria-label="Filter by assessment status">
-          {CIS_ORDER.map(status=>{const n=s[FIELD[status]];
-            return <button key={status} type="button" aria-pressed={filter===status} onClick={()=>pick(status)} className={`cis-legend-item cis-tone-${implementationTone(status,framework)}`}><span className="cis-dot" aria-hidden="true"/>{v.statuses[status]}<strong>{s.available===false?'—':n}</strong></button>;})}
-        </div>
-        <p className="cis-footnote">{scopeLabel ? `Coverage is limited to the ${scopeLabel} view, not the whole program.` : `Coverage shows how much of ${v.scope} has been evaluated.`} Neither measure is a compliance percentage, certification or audit opinion.</p>
         {children}
       </div>
       <div className="cis-signals" role="group" aria-label="Requires attention">

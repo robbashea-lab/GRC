@@ -180,10 +180,10 @@ test('N/A stays in its native group and is excluded from implementation and asse
   expect(container.querySelector('[data-testid="requirement-1.1"] .st').textContent).toBe('Not applicable');
   const summary = cisSummary(source.rows, new Date(), source.data.implementation_position);
   await act(async () => root.render(<CisVisualSnapshot summary={summary} filter="all" onFilter={jest.fn()}/>));
-  expect(container.querySelector('.now-value').textContent).toBe('58.2%');
-  expect(container.querySelector('.now-head p').textContent).toBe('32 of 55 safeguards implemented');
-  expect(container.querySelector('.bd-head').textContent).toContain('Assessed 48 of 55');
-  expect(container.querySelector('.card-foot').textContent).toContain('1 not applicable');
+  expect(container.querySelector('.gn-ring-value').textContent).toBe('58.2%');
+  expect(container.querySelector('.gn-ring-copy').textContent).toBe('32 of 55 safeguards');
+  expect(container.querySelector('.gn-map-metrics').textContent).toContain('48 of 55 assessed');
+  expect(container.querySelector('.gn-cis-snapshot .note').textContent).toContain('1 not applicable');
 });
 
 test('empty intersections offer the native clear callback without fake results', async () => {
@@ -217,18 +217,18 @@ test('unavailable and zero-applicable snapshots do not fabricate a percentage or
   const source = fixture(), onFilter = jest.fn();
   const unavailable = {...cisSummary(source.rows), available: false, reason: 'Native source is incomplete.'};
   await act(async () => root.render(<CisVisualSnapshot summary={unavailable} filter="all" onFilter={onFilter}/>));
-  expect(container.querySelector('.now-value').textContent).toBe('—');
-  expect(container.querySelector('.now-head').textContent).toContain('Implementation source unavailable');
-  expect(container.querySelector('.now-head small').textContent).toBe('Assessment date unavailable');
-  expect(container.querySelector('.sbar').getAttribute('aria-label')).toBe('Status mix unavailable');
-  expect(container.querySelector('.card-foot').textContent).toContain('Native source is incomplete.');
+  expect(container.querySelector('.gn-ring-value').textContent).toBe('—');
+  expect(container.querySelector('.gn-ring-copy').textContent).toContain('Unavailable');
+  expect(container.querySelector('.sgmap-asof').textContent).toBe('Assessment date unavailable');
+  expect(container.querySelector('.gn-ring-cards').getAttribute('aria-label')).toBe('Status mix unavailable');
+  expect(container.querySelector('.gn-cis-snapshot .note').textContent).toContain('Native source is incomplete.');
   expect(container.textContent).not.toMatch(/undefined|NaN|Infinity|100\.0%|Oct 15, 2026/);
   const allExcluded = fixture(Object.fromEntries(source.rows.map(row => [row.definition_id, 'not_applicable'])));
   const summary = cisSummary(allExcluded.rows, new Date(), allExcluded.data.implementation_position);
   await act(async () => root.render(<CisVisualSnapshot summary={summary} filter="all" onFilter={onFilter}/>));
-  expect(container.querySelector('.now-value').textContent).toBe('—');
-  expect(container.querySelector('.now-head p').textContent).toBe('0 of 0 safeguards implemented');
-  expect(container.querySelector('.now-value .unit')).toBeNull();
+  expect(container.querySelector('.gn-ring-value').textContent).toBe('—');
+  expect(container.querySelector('.gn-ring-copy').textContent).toBe('0 of 0 safeguards');
+  expect(container.querySelector('.gn-ring-value .unit')).toBeNull();
 });
 
 test('snapshot status selection remains a read-only filter and native Continue preserves its destination', async () => {
@@ -240,10 +240,10 @@ test('snapshot status selection remains a read-only filter and native Continue p
   expect(container.querySelector('.page-head p').textContent).toContain('15 controls · 56 safeguards · As of Native saved date');
   await click(container.querySelector('.head-actions .primary')); expect(onContinue).toHaveBeenCalledTimes(1);
   await click(container.querySelector('.head-actions .ghost')); expect(onTheme).toHaveBeenCalledTimes(1);
-  await click(container.querySelector('.lg-cell')); expect(onFilter).toHaveBeenLastCalledWith('addressed');
+  await click(container.querySelector('.gn-ring-card')); expect(onFilter).toHaveBeenLastCalledWith('addressed');
   await act(async () => root.render(view('addressed')));
-  expect(container.querySelector('.lg-cell').getAttribute('aria-pressed')).toBe('true');
-  await click(container.querySelector('.lg-cell')); expect(onFilter).toHaveBeenLastCalledWith('all');
+  expect(container.querySelector('.gn-ring-card').getAttribute('aria-pressed')).toBe('true');
+  await click(container.querySelector('.gn-ring-card')); expect(onFilter).toHaveBeenLastCalledWith('all');
   Object.values(api).forEach(method => expect(method).not.toHaveBeenCalled());
 });
 

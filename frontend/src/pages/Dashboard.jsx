@@ -14,6 +14,7 @@ import ClientWorkDashboard from '@/components/ClientWorkDashboard';
 import BrawndoDemoDashboard,{CisDashboardPending} from '@/components/BrawndoDemoDashboard';
 import BrawndoDemoProgram from '@/components/BrawndoDemoProgram';
 import FrameworkProgramCard from '@/components/FrameworkProgramCard';
+import CisDashboardRiskMatrix from '@/components/CisDashboardRiskMatrix';
 import {BRAWNDO_DEMO_DASHBOARD_ENABLED,brawndoDemoDashboard} from '@/lib/brawndoDemoDashboard';
 import {loadCompleteDemoWork} from '@/lib/brawndoDemoWork';
 import {usePortfolioRefresh} from '@/lib/usePortfolioRefresh';
@@ -105,14 +106,23 @@ export default function Dashboard(){
     ||data.programs.some(value=>['cis-ig1','iso-27001','soc-2'].includes(value.key));
   const trackedProgramUnavailable=!programs.length&&trackedProgramConfigured;
   const noFrameworksConfigured=!data.programs.length&&Array.isArray(currentClient.shared_programs)&&!currentClient.shared_programs.length&&!configuredCis;
-  const program=programs.find(value=>value.framework_key===params.get('program'))||programs[0];
+  const programOptions = [...programs, ...otherPrograms.map(value => ({
+    framework_key:value.key, program_id:value.id || currentClientId + ':' + value.key,
+    program_label:value.label || value.name || value.key,
+  }))];
+  const selectedProgram = programOptions.find(value => value.framework_key === params.get('program')) || programOptions[0];
+  const program = programs.find(value => value.framework_key === selectedProgram?.framework_key);
+  const otherProgram = otherPrograms.find(value => value.key === selectedProgram?.framework_key);
   const chooseProgram=key=>{const next=new URLSearchParams(params);next.set('program',key);setParams(next);};
   return <>{demoPresentation?<BrawndoDemoDashboard key={requestKey} queue={data.queue} programs={data.programs} client={currentClient} members={data.members}
-    filter={filter} onFilter={onFilter} onOpen={openItem} loadDetail={loadDetail} refreshVersion={refreshVersion} concept programOptions={programs} selectedProgram={program} onProgramSelect={chooseProgram}>
-      {program?<BrawndoDemoProgram key={program.program_id} client={currentClient} program={program} members={data.members} refreshToken={refreshVersion} cisDashboardProfile concept domainSource={data.programSources?.[program.framework_key]||data.cisDomainSource} contextKey={requestKey}/>:trackedProgramUnavailable?<section className="bdd-card" aria-label={configuredCis?`CIS IG${configuredCis.implementationGroup} Status`:'Program Status'}><header><h2>{configuredCis?`CIS IG${configuredCis.implementationGroup} Status`:'Program Status'}</h2></header><p className="bdd-empty" role="status">The configured {currentClient.name} {configuredCis?`CIS v8.1 IG${configuredCis.implementationGroup} program`:'program'} is unavailable. Review its native configuration.</p></section>:null}
-      {otherPrograms.map(value=>data.programRows?.[value.key]
-        ? <div key={value.key} className="bdash" style={{padding:0,minHeight:0}}><FrameworkProgramCard clientId={currentClientId} program={value} rows={data.programRows[value.key]} workspacePilot={pilot}/></div>
-        : <section key={value.key} className="bdd-card"><header><h2>{value.label}</h2></header><p className="bdd-empty">{value.explanation} <Link to={clientDestination(currentClientId,value.to)}>Open workspace</Link></p></section>)}
+    filter={filter} onFilter={onFilter} onOpen={openItem} loadDetail={loadDetail} refreshVersion={refreshVersion} concept programOptions={programOptions} selectedProgram={selectedProgram} onProgramSelect={chooseProgram}>
+      {program?<BrawndoDemoProgram key={program.program_id} client={currentClient} program={program} members={data.members} refreshToken={refreshVersion} cisDashboardProfile concept domainSource={data.programSources?.[program.framework_key]||data.cisDomainSource} contextKey={requestKey}/>:!otherProgram&&trackedProgramUnavailable?<section className="bdd-card" aria-label={configuredCis?`CIS IG${configuredCis.implementationGroup} Status`:'Program Status'}><header><h2>{configuredCis?`CIS IG${configuredCis.implementationGroup} Status`:'Program Status'}</h2></header><p className="bdd-empty" role="status">The configured {currentClient.name} {configuredCis?`CIS v8.1 IG${configuredCis.implementationGroup} program`:'program'} is unavailable. Review its native configuration.</p></section>:null}
+      {otherProgram && <>
+        {data.programRows?.[otherProgram.key]
+          ? <div className="bdash" style={{padding:0,minHeight:0}}><FrameworkProgramCard clientId={currentClientId} program={otherProgram} rows={data.programRows[otherProgram.key]} workspacePilot={pilot}/></div>
+          : <section className="bdd-card"><header><h2>{otherProgram.label}</h2></header><p className="bdd-empty">{otherProgram.explanation} <Link to={clientDestination(currentClientId,otherProgram.to)}>Open workspace</Link></p></section>}
+        <CisDashboardRiskMatrix clientId={currentClientId} clientName={currentClient.name} members={data.members} contextKey={recordContextKey} refreshToken={refreshVersion} concept/>
+      </>}
       {noFrameworksConfigured&&<section className="bdd-card"><p className="bdd-empty">No frameworks configured. <Link to={clientDestination(currentClientId,'/client-profile')}>Review client configuration</Link></p></section>}
     </BrawndoDemoDashboard>:<ClientWorkDashboard clientId={currentClientId} key={requestKey} queue={data.queue} programs={data.programs} programRows={data.programRows} clientName={currentClient?.name||'Client'}
     filter={filter} onFilter={onFilter} onOpen={openItem} loadDetail={loadDetail} refreshVersion={refreshVersion} workspacePilot={pilot}/>}

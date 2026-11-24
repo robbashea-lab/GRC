@@ -9,6 +9,7 @@ import {namedDemoClient} from '@/lib/demoClients';
 import {cisClientProgram} from '@/lib/cisExperience';
 import {applicableCounts, calendarRangeStart, canConnectHistoryPositions, currentPercentage, forecastImplementation, historyWindow, periodChange, programIdentity, snapshotTime, validImplementationPosition} from '@/lib/portfolioProgress';
 import './PortfolioReports.css';
+import DashboardStatusComparison from './DashboardStatusComparison';
 
 const DAY = 86400000;
 const RANGES = [['1m', '1 month', 1], ['3m', '3 months', 3], ['6m', '6 months', 6], ['12m', '12 months', 12]];
@@ -340,10 +341,10 @@ export default function PortfolioHistoryDialog({client, programs, selected, onSe
   const historyHeading = <div className="ph-chart-top"><div><h4>Implementation history</h4><p>{historyView === 'mix' ? `Share of applicable ${language.unit} in each status at each saved position` : `${counts[0]?.label || 'Implemented'} ${language.unit} as a share of applicable scope`}</p></div><div className="ph-chart-tools">{!referenceHistory && !dashboardProfile && <details className="ph-chart-options"><summary>Chart view</summary><div className="ph-segmented" role="group" aria-label="Chart view">{[['line', 'Implemented'], ['mix', 'Status mix']].map(([key, label]) => <button key={key} type="button" aria-pressed={key === chartView} onClick={() => onChartViewChange(key)}>{label}</button>)}</div></details>}{(scopedScenario || dashboardProfile) && <button type="button" className="ph-link" aria-pressed={referenceView === 'mix'} onClick={() => setReferenceView(value => value === 'line' ? 'mix' : 'line')}>{referenceView === 'line' ? 'View status history' : 'Implemented history'}</button>}<button type="button" className="ph-link" aria-expanded={showData} aria-controls="portfolio-history-data" onClick={() => setShowData(value => !value)}>{showData ? 'Hide data' : 'View data'}</button></div></div>;
   const status = <>
     <div className="ph-program-head"><div><h3>{`${program.program_label} Status`}</h3><span className="sr-only">{program.scope_label}</span></div><button type="button" className="ph-link" onClick={() => onNavigate(program.to)}>Open {program.program_label} workspace →</button></div>
-    <div className="ph-current-overview">
+    {dashboardProfile && onStatusNavigate && validImplementationPosition(current) ? <DashboardStatusComparison counts={counts} total={current.denominator} unit={language.unit} verb={language.verb} asOf={dateTime(current.effective_at || current.captured_at || asOf)} onStatusNavigate={onStatusNavigate}/> : <div className="ph-current-overview">
       <div className="ph-current-value"><span>{nativeDashboard && program.framework_key === 'soc-2' ? 'Current readiness' : 'Current implementation'}</span><strong className={percentage == null || current.not_started ? 'is-text' : ''}>{percentage != null ? current.not_started ? 'Not started' : <>{percentage.toFixed(1)}<span className="ph-unit">%</span></> : noScope ? 'No applicable scope' : 'Unavailable'}</strong><p>{percentage != null ? current.not_started ? `0 of ${current.denominator} ${language.unit} assessed` : `${current.implemented} of ${current.denominator} ${language.unit} ${language.verb}` : current.reason || current.notice || 'No applicable implementation units.'}</p><small>As of {dateTime(current.effective_at || current.captured_at || asOf)}</small></div>
       <CurrentStatusBreakdown key={selected} current={current} onStatusNavigate={onStatusNavigate} inline={inline} unit={nativeDashboard ? language.unit : undefined}/>
-    </div>
+    </div>}
     {nativeDashboard && <p className="ph-scope-notes">{Number.isInteger(current.excluded)?current.excluded:'Unavailable'} excluded / not applicable{program.framework_key === 'iso-27001' ? ` · ${Number.isInteger(current.scope_undetermined)?current.scope_undetermined:'Unavailable'} SoA applicability undetermined. ISMS requirements and included Annex A implementation remain distinct from SoA decisions and audit completion.` : '. Internal readiness, not an auditor opinion.'}</p>}
   </>;
   const details = <>

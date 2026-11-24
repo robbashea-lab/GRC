@@ -104,7 +104,7 @@ const workspace = () => container.querySelector('[data-testid="prestige-soc-work
 const heading = () => container.querySelector('.soc-program-heading h1').textContent;
 const editor = () => container.querySelector('[data-testid="soc-editor-boundary"]');
 const summary = () => container.querySelector('[aria-labelledby="bcis-summary-heading"]');
-const percentage = () => summary().querySelector('.now-value').textContent;
+const percentage = () => summary().querySelector('.gn-ring-value').textContent;
 const currentUrl = () => container.querySelector('[aria-label="Current workspace URL"]').textContent;
 const params = () => new URL(currentUrl(), 'https://local.invalid').searchParams;
 const rows = () => [...container.querySelectorAll('.soc-criteria-register .sg[data-testid^="requirement-"]')]
@@ -117,7 +117,7 @@ const backToOverview = () => click(overviewButton());
 const continueButton = id => [...container.querySelectorAll('.soc-program-heading button')].find(element => element.textContent.startsWith(`Continue: ${id} `));
 const searchInput = () => container.querySelector('.soc-criteria-register input[type="search"]');
 const clearFilter = () => click(container.querySelector('.soc-criteria-register [aria-label="Clear search and filters"]'));
-const legend = label => [...summary().querySelectorAll('.lg-cell')].find(element => element.querySelector('.lg-label').textContent === label);
+const legend = label => [...summary().querySelectorAll('.gn-ring-card')].find(element => element.querySelector('.gn-ring-label').textContent === label);
 const chip = label => [...container.querySelectorAll('[aria-label="Show criteria"] button')].find(element => element.textContent.startsWith(label));
 async function search(value) {
   await act(async () => {
@@ -165,9 +165,9 @@ test.each([
   expect(workspace().querySelectorAll('[data-testid^="soc-category-"]')).toHaveLength(categories.length);
   expect(container.querySelector('.soc-register-result-count').textContent)
     .toBe(`${count} criteria across ${categories.length} Trust Services ${categories.length === 1 ? 'Category' : 'Categories'}`);
-  expect(summary().textContent).toContain(`0 of ${count} criteria implemented`);
-  expect(percentage()).toBe('0.0%');
-  expect([...summary().querySelectorAll('.lg-label')].map(element => element.textContent))
+  expect(summary().textContent).toContain(`0 of ${count} criteria`);
+  expect(percentage()).toBe('0%');
+  expect([...summary().querySelectorAll('.gn-ring-label')].map(element => element.textContent))
     .toEqual(['Implemented', 'Partially implemented', 'Implementation not established', 'Not assessed']);
   for (const category of Object.keys(CATEGORY_LABELS)) {
     expect(!!container.querySelector(`[data-testid="soc-category-${category}"]`)).toBe(categories.includes(category));
@@ -178,7 +178,7 @@ test.each([
   const categoryDefinitions = result.source.definitions.filter(definition => definition.category === category);
   expect(container.querySelectorAll('[data-testid^="soc-group-"]'))
     .toHaveLength(new Set(categoryDefinitions.map(definition => definition.control)).size);
-  expect(summary().textContent).toContain(`0 of ${categoryDefinitions.length} criteria implemented`);
+  expect(summary().textContent).toContain(`0 of ${categoryDefinitions.length} criteria`);
   expect(api.get.mock.calls.filter(([path]) => path.startsWith('/frameworks/')).every(([path]) => path === '/frameworks/soc-2')).toBe(true);
   expect(JSON.stringify(result.db)).toBe(before);
 });
@@ -237,8 +237,8 @@ test.each([
 
 test('overview and category counts exclude justified N/A and use criterion totals rather than average group percentages', async () => {
   const result = unequalFixture(); serve(result); await mount(result.client.client_id);
-  expect(summary().textContent).toContain('6 of 37 criteria implemented');
-  expect(summary().textContent).toContain('Assessed 6 of 37');
+  expect(summary().textContent).toContain('6 of 37 criteria');
+  expect(summary().textContent).toContain('6 of 37 assessed');
   expect(percentage()).toBe('16.2%');
   const security = container.querySelector('[data-testid="soc-category-security"]');
   expect(security.querySelector('.g-impl b').textContent).toBe('1 of 32');
@@ -249,17 +249,17 @@ test('overview and category counts exclude justified N/A and use criterion total
   expect(availability.querySelector('.g-impl > span').textContent).toBe('100.0%');
   await openCategory('security');
   expect(container.querySelector('.soc-program-heading p').textContent).toContain('33 criteria in this category');
-  expect(summary().textContent).toContain('1 of 32 criteria implemented');
-  expect(legend('Not assessed').querySelector('.lg-val > span').textContent).toBe('31 of 32');
+  expect(summary().textContent).toContain('1 of 32 criteria');
+  expect(legend('Not assessed').querySelector('.gn-ring-copy strong').textContent).toBe('31 of 32');
   expect(percentage()).toBe('3.1%');
   const group = container.querySelector('[data-testid="soc-group-CC1"]');
   expect(group.querySelector('.g-impl b').textContent).toBe('1 of 4');
   expect(group.querySelector('.g-impl > span').textContent).toBe('25.0%');
   expect(group.querySelector('.g-ass b').textContent).toBe('1 of 4');
-  await click(summary().querySelector('.card-foot button.link'));
+  await click(summary().querySelector('.gn-cis-snapshot .note button.link'));
   expect(rows().map(row => row.dataset.testid)).toEqual(['requirement-CC1.2']);
-  expect(summary().textContent).toContain('1 of 32 criteria implemented');
-  expect(summary().querySelector('.card-foot button.link').textContent).toBe('1 not applicable, excluded from implementation totals.');
+  expect(summary().textContent).toContain('1 of 32 criteria');
+  expect(summary().querySelector('.gn-cis-snapshot .note button.link').textContent).toBe('1 not applicable, excluded from implementation totals.');
 });
 
 test('category filters confine hits while keeping the full category summary and native group totals', async () => {
@@ -271,10 +271,10 @@ test('category filters confine hits while keeping the full category summary and 
   const group = container.querySelector('[data-testid="soc-group-CC1"]');
   expect(group.disabled).toBe(true); expect(group.textContent).toContain('5 criteria');
   expect(container.querySelector('[data-testid="requirement-CC1.1"]')).toBeNull();
-  expect(summary().textContent).toContain('1 of 32 criteria implemented');
+  expect(summary().textContent).toContain('1 of 32 criteria');
   await search('A1.');
   expect(rows()).toHaveLength(0); expect(container.querySelector('.soc-register-result-count').textContent).toBe('0 matching criteria');
-  expect(summary().textContent).toContain('1 of 32 criteria implemented');
+  expect(summary().textContent).toContain('1 of 32 criteria');
   await clearFilter();
   expect(params().has('view')).toBe(false); expect(params().get('soc_category')).toBe('security');
   expect(container.querySelectorAll('[data-testid^="soc-group-"]')).toHaveLength(9);
@@ -286,7 +286,7 @@ test('a root dashboard filter remains a flat result view and returns there after
   expect(heading()).toBe('SOC 2'); expect(rows()).toHaveLength(31);
   expect(container.querySelectorAll('[data-testid^="soc-group-"]')).toHaveLength(0);
   expect(container.querySelectorAll('[data-testid^="soc-category-"]')).toHaveLength(0);
-  expect(summary().textContent).toContain('6 of 37 criteria implemented');
+  expect(summary().textContent).toContain('6 of 37 criteria');
   await click(rows()[0]); expect(heading()).toBe(CATEGORY_LABELS.security);
   await click(button('Close criterion'));
   expect(heading()).toBe('SOC 2'); expect(params().get('view')).toBe('not_assessed'); expect(rows()).toHaveLength(31);
@@ -296,17 +296,17 @@ test('a root dashboard filter remains a flat result view and returns there after
 
 test('summary segments and legend share native status filters without changing counts or records', async () => {
   const result = unequalFixture('qa-segments-soc'), before = JSON.stringify(result.source); serve(result); await mount(result.client.client_id);
-  const segment = summary().querySelector('.sbar button.s-none');
-  expect(segment.title).toBe('Not assessed: 31 of 37');
-  expect(segment.getAttribute('aria-label')).toBe('Not assessed: 31 of 37');
+  const segment = summary().querySelector('.gn-ring-card[data-status=A]');
+  expect(segment.title).toBe('Not assessed: 31 of 37 criteria');
+  expect(segment.getAttribute('aria-label')).toBe('Not assessed: 31 of 37 criteria, 83.8%');
   await click(segment);
-  expect(rows()).toHaveLength(31); expect(summary().querySelector('.sbar button.s-none').getAttribute('aria-pressed')).toBe('true');
+  expect(rows()).toHaveLength(31); expect(summary().querySelector('.gn-ring-card[data-status=A]').getAttribute('aria-pressed')).toBe('true');
   expect(legend('Not assessed').getAttribute('aria-pressed')).toBe('true');
-  expect(summary().textContent).toContain('6 of 37 criteria implemented'); expect(percentage()).toBe('16.2%');
+  expect(summary().textContent).toContain('6 of 37 criteria'); expect(percentage()).toBe('16.2%');
   await click(legend('Not assessed'));
   expect(rows()).toHaveLength(0); expect(container.querySelectorAll('[data-testid^="soc-category-"]')).toHaveLength(3);
   expect(legend('Not assessed').getAttribute('aria-pressed')).toBe('false');
-  await click(summary().querySelector('.sbar button.s-impl'));
+  await click(summary().querySelector('.gn-ring-card[data-status=I]'));
   expect(rows()).toHaveLength(6); expect(rows().every(element => element.querySelector('.st').textContent === 'Implemented')).toBe(true);
   expect(legend('Implemented').getAttribute('aria-pressed')).toBe('true');
   expect(JSON.stringify(result.source)).toBe(before);
@@ -327,7 +327,7 @@ test('program reassessment and As of use judgment dates without renewing them fr
   const formattedJudgment = new Intl.DateTimeFormat(undefined, {dateStyle: 'medium', timeStyle: 'short'}).format(new Date(fresh.assessment_recorded_at));
   const formattedSave = new Intl.DateTimeFormat(undefined, {dateStyle: 'medium', timeStyle: 'short'}).format(new Date(recentSave));
   serve(result); await mount(result.client.client_id);
-  expect(summary().querySelector('.now-head small').textContent).toBe('As of ' + formattedJudgment);
+  expect(summary().querySelector('.sgmap-asof').textContent).toBe('As of ' + formattedJudgment);
   expect(container.querySelector('.soc-program-heading p').textContent).toContain('As of ' + formattedJudgment);
   expect(container.querySelector('.soc-program-heading p').textContent).not.toContain(formattedSave);
   expect(chip('Needs reassessment').querySelector('.n').textContent).toBe('1');
@@ -346,9 +346,9 @@ test('program reassessment and As of use judgment dates without renewing them fr
   expect(chip('Needs reassessment').querySelector('.n').textContent).toBe('1');
   await click(chip('Needs reassessment'));
   expect(rows().map(element => element.dataset.testid)).toEqual(['requirement-CC1.1']);
-  expect(summary().textContent).toContain('1 of 33 criteria implemented');
-  expect(summary().textContent).toContain('Assessed 3 of 33');
-  expect(summary().querySelector('.now-head small').textContent).toBe('As of ' + formattedJudgment);
+  expect(summary().textContent).toContain('1 of 33 criteria');
+  expect(summary().textContent).toContain('3 of 33 assessed');
+  expect(summary().querySelector('.sgmap-asof').textContent).toBe('As of ' + formattedJudgment);
   await click(rows()[0]);
   expect(mockDrawerProps.record).toMatchObject(stale);
   expect(mockDrawerProps.record.last_assessed).toBe(recentSave);
@@ -401,16 +401,16 @@ test('retained out-of-scope criteria stay separate and never alter active catego
   const retainedSection = () => container.querySelector('section[aria-label="Retained out-of-scope criteria"]');
   expect(retainedSection().querySelectorAll('.sg')).toHaveLength(23);
   expect(workspace().querySelectorAll('[data-testid^="soc-category-"]')).toHaveLength(3);
-  expect(summary().textContent).toContain('6 of 37 criteria implemented');
+  expect(summary().textContent).toContain('6 of 37 criteria');
   await search('PI1.1'); expect(rows()).toHaveLength(0); expect(retainedSection().querySelectorAll('.sg')).toHaveLength(1);
   await click(retainedSection().querySelector('[data-testid="requirement-PI1.1"]'));
   expect(editor().dataset.definition).toBe('PI1.1'); expect(mockDrawerProps.record.implementation).toBe('Retained native wording.');
   expect(heading()).toBe('SOC 2'); expect(workspace().textContent).toContain('Retained out-of-scope criterion');
-  expect(summary().textContent).toContain('6 of 37 criteria implemented');
+  expect(summary().textContent).toContain('6 of 37 criteria');
   await mount(result.client.client_id, ROOT + '?soc_category=security&assessment=' + encodeURIComponent(result.client.client_id + ':PI1.1'), true);
   expect(heading()).toBe('SOC 2'); expect(editor().dataset.definition).toBe('PI1.1');
   expect(workspace().textContent).toContain('Retained out-of-scope criterion');
-  expect(summary().textContent).toContain('6 of 37 criteria implemented');
+  expect(summary().textContent).toContain('6 of 37 criteria');
   expect(JSON.stringify(result.source)).toBe(before);
 });
 
@@ -421,7 +421,7 @@ test('failed source reads expose retry without stale category figures or assessm
   expect(container.querySelector('[role="alert"]').textContent).toContain('Authorized SOC source unavailable.');
   expect(workspace()).toBeNull(); expect(editor()).toBeNull(); expect(summary()).toBeNull();
   serve(result); await click(button('Retry workspace'));
-  expect(heading()).toBe(CATEGORY_LABELS.availability); expect(summary().textContent).toContain('0 of 3 criteria implemented');
+  expect(heading()).toBe(CATEGORY_LABELS.availability); expect(summary().textContent).toContain('0 of 3 criteria');
 });
 
 test.each(['foreign-records', 'foreign-framework', 'foreign-position'])('%s cannot open a client category or editor', async fault => {
@@ -438,13 +438,13 @@ test('unavailable canonical counts remain unavailable in both overview and categ
   const result = fixture('qa-partial-soc');
   result.source.implementation_position = {...result.source.implementation_position, availability: 'partial', reason: 'Native records are incomplete.'};
   serve(result); await mount(result.client.client_id);
-  expect(summary().textContent).toContain('Implementation source unavailable');
+  expect(summary().textContent).toContain('Unavailable');
   expect(percentage()).toBe('—');
   const category = container.querySelector('[data-testid="soc-category-security"]');
   expect(category.querySelector('.g-impl b').textContent).toBe('Unavailable');
   expect(category.querySelector('.sbar').getAttribute('aria-label')).toBe('Status mix unavailable');
   await openCategory('security');
-  expect(heading()).toBe(CATEGORY_LABELS.security); expect(summary().textContent).toContain('Implementation source unavailable');
+  expect(heading()).toBe(CATEGORY_LABELS.security); expect(summary().textContent).toContain('Unavailable');
   expect(percentage()).toBe('—');
   const group = container.querySelector('[data-testid="soc-group-CC1"]');
   expect(group.querySelector('.g-impl b').textContent).toBe('Unavailable');
@@ -464,7 +464,7 @@ test('switching clients withdraws the old editor and rejects its stale category 
   expect(heading()).toBe('SOC 2'); expect(editor()).toBeNull();
   expect(container.querySelectorAll('[data-testid^="soc-category-"]')).toHaveLength(1);
   expect(container.querySelector('[data-testid="soc-category-privacy"]')).toBeNull();
-  expect(summary().textContent).toContain('0 of 33 criteria implemented');
+  expect(summary().textContent).toContain('0 of 33 criteria');
   expect(container.textContent).toContain('This assessment is not available in the current client workspace.');
   await openCategory('security'); expect(params().get('soc_category')).toBe('security'); expect(params().has('assessment')).toBe(false);
   expect(api.get.mock.calls.filter(([path]) => path === '/frameworks/soc-2').map(([, options]) => options.params.client_id))

@@ -18,7 +18,7 @@ const fixture=()=>frameworkDashboardFixture('iso-27001',undefined,'synthetic-iso
 const render=async children=>act(async()=>root.render(<div className="bcis iso-cis-program-visual" data-theme="light">{children}</div>));
 const click=node=>act(async()=>node.click());
 const button=label=>[...container.querySelectorAll('button')].find(node=>node.textContent===label);
-const statusButton=label=>[...container.querySelectorAll('.lg button')].find(node=>node.querySelector('.lg-label').textContent===label);
+const statusButton=label=>[...container.querySelectorAll('.gn-ring-cards button, .iso-soa-legend button')].find(node=>node.querySelector('.gn-ring-label, .lg-label').textContent===label);
 
 test.each([
   ['overview','ISO 27001','123 requirements and controls'],
@@ -79,31 +79,31 @@ test('header and snapshot show only the actual source-state timestamp, never tod
   const view=()=> <><IsoProgramHeader view="overview" presentation={presentation} theme="light" onTheme={()=>{}}/><IsoProgramSnapshot summary={presentation.overall} {...{presentation}} filter="all" onFilter={()=>{}}/></>;
   await render(view());
   expect(container.querySelector('.page-head p').textContent).toContain(`As of ${date}`);
-  expect(container.querySelector('.now-head small').textContent).toBe(`As of ${date}`);
+  expect(container.querySelector('.sgmap-asof').textContent).toBe(`As of ${date}`);
   expect(container.textContent).not.toContain('Record state as of');
   expect(container.textContent).not.toContain('Assessed today');
   source.source.implementation_position.provenance.source_as_of=null;presentation=present(source);
   await render(view());
   expect(container.querySelector('.page-head p').textContent).not.toMatch(/as of/i);
-  expect(container.querySelector('.now-head small').textContent).toBe('Assessment date unavailable');
+  expect(container.querySelector('.sgmap-asof').textContent).toBe('Assessment date unavailable');
 });
 
 test('implementation snapshot keeps native composite wording, independent assessment counts and functioning status filters',async()=>{
   const source=fixture(),presentation=present(source),records=source.source.assessments,before=JSON.stringify(source.source),onFilter=jest.fn();
   const implemented=records.filter(row=>row.status==='addressed').length,assessed=records.filter(row=>row.status!=='not_assessed').length;
   await render(<IsoProgramSnapshot summary={presentation.overall} {...{presentation,onFilter}} filter="all"/>);
-  expect(container.querySelector('.now-label').textContent).toBe('Current implementation');
-  expect(container.querySelector('.now-value').textContent).toBe(`${(implemented/records.length*100).toFixed(1)}%`);
-  expect(container.querySelector('.now-head p').textContent).toBe(`${implemented} of ${records.length} requirements and controls implemented`);
-  expect(container.querySelector('.bd-head').textContent).toContain(`Assessed ${assessed} of ${records.length}`);
+  expect(container.querySelector('.gn-ring-label').textContent).toBe('Implemented');
+  expect(container.querySelector('.gn-ring-value').textContent).toBe(`${(implemented/records.length*100).toFixed(1)}%`);
+  expect(container.querySelector('.gn-ring-copy').textContent).toBe(`${implemented} of ${records.length} requirements and controls`);
+  expect(container.querySelector('.gn-map-metrics').textContent).toContain(`${assessed} of ${records.length} assessed`);
   expect(ISO_PROGRAM_STATUS_LABELS.needs_attention).toBe('Not implemented / needs validation');
   const negative=statusButton('Not implemented / needs validation');expect(negative).toBeDefined();
   await click(negative);expect(onFilter).toHaveBeenLastCalledWith('needs_attention');
-  const partial=container.querySelector('.sbar button.s-part');await click(partial);expect(onFilter).toHaveBeenLastCalledWith('in_progress');
+  const partial=container.querySelector('.gn-ring-card[data-status=P]');await click(partial);expect(onFilter).toHaveBeenLastCalledWith('in_progress');
   await render(<IsoProgramSnapshot summary={presentation.overall} {...{presentation,onFilter}} filter="needs_attention"/>);
   expect(statusButton('Not implemented / needs validation').getAttribute('aria-pressed')).toBe('true');
   await click(statusButton('Not implemented / needs validation'));expect(onFilter).toHaveBeenLastCalledWith('all');
-  expect(container.querySelector('.ver')).toBeNull();expect(container.querySelector('.card-foot').textContent).toBe('Assessment progress, not a compliance percentage or certification. Freshness is separate from saved verification.');
+  expect(container.querySelector('.ver')).toBeNull();expect(container.querySelector('.gn-cis-snapshot .note').textContent).toBe('Assessment progress, not a compliance percentage or certification. Freshness is separate from saved verification.');
   expect(JSON.stringify(source.source)).toBe(before);
 });
 
@@ -115,9 +115,9 @@ test('Annex snapshot excludes saved excluded/undetermined implementation claims 
   Object.assign(controls[2],{status:'addressed',verification:'not_verified'});
   source.refresh();const presentation=present(source),before=JSON.stringify(source.source);
   await render(<IsoProgramSnapshot summary={presentation.annex} {...{presentation}} noun="controls" filter="addressed" onFilter={()=>{}}/>);
-  expect(container.querySelector('.now-head p').textContent).toBe('1 of 91 controls implemented');
-  expect(container.querySelector('.now-value').textContent).toBe('1.1%');
-  expect(container.querySelector('.card-foot').textContent).toBe('Assessment progress, not a compliance percentage or certification. Freshness is separate from saved verification.');
+  expect(container.querySelector('.gn-ring-copy').textContent).toBe('1 of 91 controls');
+  expect(container.querySelector('.gn-ring-value').textContent).toBe('1.1%');
+  expect(container.querySelector('.gn-cis-snapshot .note').textContent).toBe('Assessment progress, not a compliance percentage or certification. Freshness is separate from saved verification.');
   expect(presentation.soa).toMatchObject({undetermined:1,excluded:1});
   expect(statusButton('Implemented').getAttribute('aria-pressed')).toBe('true');
   expect(container.querySelector('.ver')).toBeNull();expect(JSON.stringify(source.source)).toBe(before);
@@ -128,11 +128,11 @@ test('mandatory legacy N/A cannot become an invented valid snapshot, and its sav
   Object.assign(legacy,{status:'not_applicable',na_rationale:'Retained legacy answer',assessment_history:[{status:'not_applicable',at:'2026-10-01T00:00:00Z'}]});
   source.refresh();const presentation=present(source),before=JSON.stringify(source.source);
   await render(<IsoProgramSnapshot summary={presentation.requirements} {...{presentation}} noun="ISMS requirements" filter="all" onFilter={()=>{}}/>);
-  expect(container.querySelector('.now-value').textContent).toBe('—');
-  expect(container.querySelector('.now-head p').textContent).toBe('Implementation source unavailable');
-  expect(container.querySelector('.sbar').getAttribute('aria-label')).toBe('Status mix unavailable');
-  expect(container.querySelectorAll('.sbar button')).toHaveLength(0);
-  expect([...container.querySelectorAll('.lg-val')].every(node=>node.textContent==='—Unavailable')).toBe(true);
+  expect(container.querySelector('.gn-ring-value').textContent).toBe('—');
+  expect(container.querySelector('.gn-ring-copy strong').textContent).toBe('Unavailable');
+  expect(container.querySelector('.gn-ring-cards').getAttribute('aria-label')).toBe('Status mix unavailable');
+  expect(container.querySelectorAll('.gn-ring-card:enabled')).toHaveLength(0);
+  expect([...container.querySelectorAll('.gn-ring-card')].map(node=>[node.disabled,node.querySelector('.gn-ring-value').textContent])).toEqual(Array(4).fill([true,'—']));
   expect(JSON.stringify(source.source)).toBe(before);
 });
 

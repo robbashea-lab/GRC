@@ -4,8 +4,8 @@ import useOmniModalVisibility from '@/lib/useOmniModalVisibility';
 import {useSurfaceRef} from '@/lib/useSurfaceRef';
 import {useAssessmentSurfaceSuspension} from '@/lib/assessmentSurfaceAvailability';
 
-export function fitOmniRect(rect,width=window.innerWidth,height=window.innerHeight,minWidth=490,minHeight=470){
-  const pad=8,top=height>350?82:8,maxW=Math.max(1,width-pad*2),maxH=Math.max(1,height-top-pad);
+export function fitOmniRect(rect,width=window.innerWidth,height=window.innerHeight,minWidth=490,minHeight=470,top=height>350?82:8){
+  const pad=8,maxW=Math.max(1,width-pad*2),maxH=Math.max(1,height-top-pad);
   const w=Math.min(maxW,Math.max(Math.min(minWidth,maxW),rect.w)),h=Math.min(maxH,Math.max(Math.min(minHeight,maxH),rect.h));
   return {x:Math.max(pad,Math.min(width-w-pad,rect.x)),y:Math.max(top,Math.min(height-h-pad,rect.y)),w,h};
 }
@@ -35,8 +35,20 @@ export function cisOmniProgramRect(anchor,width=window.innerWidth,height=window.
 // Presentation only: interview answers, saves and replacement protection stay in GuidedAssessor.
 export default function OmniWindow({id,children,onOpenAutoFocus,onCloseAutoFocus,onMinimize,onClose,anchor,name='Omni',refined=false,program=false}){
   const visualProgram=program;
-  const fit=rect=>fitOmniRect(rect,undefined,undefined,visualProgram?Math.min(380,window.innerWidth-32):490,visualProgram?Math.min(470,cisOmniProgramRect(anchor?.()).h):470);
-  const initialRect=()=>visualProgram?cisOmniProgramRect(anchor?.()):anchor?besideOmniRect(anchor(),undefined,undefined,refined?{w:620,h:program?520:755}:undefined):defaultRect();
+  const centeredAssessment=()=>!program&&window.innerWidth>=760&&document.documentElement.hasAttribute('data-native-standard');
+  function fit(rect){
+    if(centeredAssessment())return fitOmniRect(rect,undefined,undefined,490,Math.min(470,window.innerHeight*.8),8);
+    return fitOmniRect(rect,undefined,undefined,visualProgram?Math.min(380,window.innerWidth-32):490,visualProgram?Math.min(470,cisOmniProgramRect(anchor?.()).h):470);
+  }
+  function initialRect(){
+    if(visualProgram)return cisOmniProgramRect(anchor?.());
+    const {innerWidth:width,innerHeight:height}=window;
+    if(centeredAssessment()){
+      const w=Math.min(900,width*.88),h=Math.min(700,height*.8,width*.72);
+      return {x:(width-w)/2,y:(height-h)/2,w,h};
+    }
+    return anchor?besideOmniRect(anchor(),undefined,undefined,refined?{w:620,h:755}:undefined):defaultRect();
+  }
   const [rect,setRect]=useState(initialRect),[maximized,setMaximized]=useState(false);
   const rectRef=useRef(rect),restore=useRef(null),drag=useRef(null),focusHandlers=useRef({onOpenAutoFocus,onCloseAutoFocus});rectRef.current=rect;
   const surface=useRef(null),closeHandler=useRef(onClose);closeHandler.current=onClose;

@@ -104,7 +104,7 @@ beforeEach(() => {
   current = program;
   currentWork = {past_due: [item], due_30d: [], due_31_90d: []};
   mockAuth={user:{user_id:'u',role:'super_admin',workspace_mode:'demo'},workspaceMode:'demo'};
-  mockLocation={pathname:'/clients',search:''};
+  mockLocation={pathname:'/clients',search:'?view=ledger'};
   sessionStorage.clear();
   localStorage.clear();
   host = document.createElement('div');
@@ -157,6 +157,62 @@ const workDisclosure = (title, dialog = document.querySelector('[data-testid="en
   return button;
 };
 const workDetails = button => document.getElementById(button.getAttribute('aria-controls'));
+
+test.each(['standard', 'demo'])('v3 landing lists only saved client information and opens the selected framework in %s mode', async mode => {
+  mockAuth = {user: {user_id:'operator', role:'platform_admin', workspace_mode:mode}, workspaceMode:mode};
+  mockLocation = {pathname:mode === 'demo' ? '/clients/' : '/clients', search:''};
+  const newClient = {...client, client_id:'new', name:'Alpha', industry:null, assigned_owner_id:null, grc_lead_id:null, grc_lead:null};
+  const clients = [client, newClient];
+  const soc = {...program, program_id:CID+':soc-2', program_key:'soc-2', framework_key:'soc-2', program_label:'SOC 2', to:'/compliance/soc-2'};
+  const read = api.get.getMockImplementation();
+  api.get.mockImplementation((path, options) => {
+    if (path.endsWith('/overview')) return Promise.resolve({data:{as_of:AT, clients, programs:[program,soc]}});
+    if (path === '/clients/directory') return Promise.resolve({data:{clients:clients.map(row => ({...row, metric_items:currentWork}))}});
+    return read(path, options);
+  });
+  await act(async () => root.render(<EnhancedPortfolioBoundary />));
+  const rows = () => [...host.querySelectorAll('tbody tr[data-client-id]')];
+  const select = async (name, value) => act(async () => {
+    const field = host.querySelector(`select[aria-label="${name}"]`);
+    field.value = value;
+    field.dispatchEvent(new Event('change',{bubbles:true}));
+  });
+  expect([...host.querySelectorAll('thead th')].map(cell => cell.textContent)).toEqual(['Client', 'Frameworks', 'GRC lead', 'Industry']);
+  expect(rows().map(row => row.dataset.clientId)).toEqual(['new', CID]);
+  expect(rows()[0].textContent).toContain('No framework assigned');
+  expect(rows()[0].textContent).toContain('Industry not set');
+  expect(rows()[1].cells[2].textContent).toContain('Morgan Ellis');
+  expect(rows()[1].cells[3].textContent).toContain('Beverage');
+  await select('Sort clients','name-desc');
+  expect(rows().map(row => row.dataset.clientId)).toEqual([CID,'new']);
+  await select('Framework','soc-2');
+  expect(host.querySelector('.page-sub').textContent).toBe('1 of 2 clients');
+  expect([...rows()[0].querySelectorAll('.portfolio-framework')].map(chip => chip.textContent)).toEqual(['CIS IG1','SOC 2']);
+  await act(async () => rows()[0].querySelector('button').click());
+  const dialog = document.querySelector('[role="dialog"]');
+  expect(dialog.querySelector('.ep-program-switch [aria-pressed="true"]').textContent).toBe('SOC 2');
+  expect(dialog.querySelector('.ep-directory-status header').textContent).toContain('4 of 10 assessed');
+  expect([...dialog.querySelectorAll('.ep-directory-status-cell meter')].map(meter => [meter.value, meter.max])).toEqual([[2,10],[1,10],[1,10],[6,10]]);
+  expect(dialog.querySelector('[role="tab"][aria-selected="true"]').textContent).toBe('Overview');
+  await click('Reviews & actions');
+  expect(dialog.querySelector('[role="tabpanel"]').dataset.overviewTab).toBe('work');
+  expect(workDisclosure('Overdue',dialog).textContent).toContain('1');
+  await click('Program status ledger →');
+  expect(mockNavigate).toHaveBeenLastCalledWith('/clients?view=ledger');
+  expect(api.post).not.toHaveBeenCalled();
+});
+
+test('an authorized client without a program opens its own profile from the v3 directory', async () => {
+  mockLocation = {pathname:'/clients', search:''};
+  const row = {...client, client_id:'new-client', name:'Not onboarded'};
+  api.get.mockImplementation(async path => ({data:path.endsWith('/overview')
+    ? {as_of:AT,clients:[row],programs:[]} : {clients:[{...row,metric_items:currentWork}]}}));
+  await act(async () => root.render(<EnhancedPortfolioBoundary />));
+  await act(async () => host.querySelector('.portfolio-client-open').click());
+  await click('Open client portal');
+  expect(mockSwitch).toHaveBeenCalledWith('new-client');
+  expect(mockNavigate).toHaveBeenLastCalledWith('/client-profile?client_id=new-client');
+});
 
 test.each(['demo','standard'])('%s Portfolio uses actual native finalized onboarding without a monitoring fixture',async mode=>{
   mockAuth={user:{user_id:'u',role:'super_admin',workspace_mode:mode},workspaceMode:mode};

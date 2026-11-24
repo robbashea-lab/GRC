@@ -7,7 +7,8 @@ import {useAuth} from '@/context/AuthContext';
 import {useOrg} from '@/context/OrgContext';
 import {useCompliance} from '@/context/ComplianceContext';
 import api, {formatError} from '@/lib/api';
-import {useBrawndoTheme} from '@/lib/brawndoTheme';
+import {useAppearance} from '@/lib/nativeAppearance';
+import NativeAppearance from './NativeAppearance';
 import {clientDestination} from '@/lib/clientSelection';
 import {dashboardRecordHref} from '@/lib/dashboardItemSummary';
 import {canExportReports, isInternal} from '@/lib/permissions';
@@ -37,7 +38,7 @@ export default function NativeStandardShell({children}) {
   const auth = useAuth(), org = useOrg(), {items:frameworks} = useCompliance();
   const {pathname} = useLocation(), navigate = useNavigate();
   const {user} = auth, internal = isInternal(user);
-  const [theme, setTheme] = useBrawndoTheme('dark');
+  const {choice, mode:theme} = useAppearance();
   const [menu, setMenu] = useState(null), [navigation, setNavigation] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false), [query, setQuery] = useState(''), [selected, setSelected] = useState(0);
   const [activeWork, setActiveWork] = useState({items:[], loading:false, error:''});
@@ -90,8 +91,14 @@ export default function NativeStandardShell({children}) {
     const html = document.documentElement;
     html.dataset.nativeStandard = theme;
     html.dataset.brawndoWorkspace = theme;
-    return () => {delete html.dataset.nativeStandard; delete html.dataset.brawndoWorkspace;};
-  }, [theme]);
+    html.dataset.previewTheme = choice.id;
+    html.dataset.mode = theme;
+    html.toggleAttribute('data-theme-fixed-mode', !!choice.fixed);
+    return () => {
+      delete html.dataset.nativeStandard; delete html.dataset.brawndoWorkspace;
+      delete html.dataset.previewTheme; delete html.dataset.mode; html.removeAttribute('data-theme-fixed-mode');
+    };
+  }, [choice, theme]);
   useEffect(() => {setNavigation(false); setMenu(null);}, [pathname]);
   useEffect(() => {
     if (!navigation) return;
@@ -145,6 +152,7 @@ export default function NativeStandardShell({children}) {
       </Link>
       <button ref={trigger} type="button" className="search-btn" aria-label="Search pages and active work" onClick={openSearch}><Search size={16}/><span className="lbl">Search pages and active work…</span><span className="kbd">Ctrl K</span></button>
       <div className="top-actions">
+        <NativeAppearance choice={choice} mode={theme}/>
         <Menu.Root open={menu === 'workspace'} onOpenChange={open => setMenu(open ? 'workspace' : null)}>
           <Menu.Trigger asChild><button type="button" className="ws-btn" aria-label="Switch workspace"><span className="lbl">{client?.name || 'Portfolio'}</span><ChevronDown size={14}/></button></Menu.Trigger>
           <Menu.Portal container={root.current}><Menu.Content className="pop native-menu" align="end" sideOffset={10}>
@@ -154,7 +162,6 @@ export default function NativeStandardShell({children}) {
             {clientState || clients.map(next => <Menu.Item key={next.client_id} asChild><button type="button" className="pop-item" onClick={() => openClient(next)}><ClientMark client={next}/>{next.name}</button></Menu.Item>)}
           </Menu.Content></Menu.Portal>
         </Menu.Root>
-        <button type="button" className="icon-btn native-theme" onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')} aria-label={theme === 'dark' ? 'Use light workspace theme' : 'Use dark workspace theme'}>{theme === 'dark' ? '☀' : '☾'}</button>
         <NotificationBell/>
         <DemoNotice renderTrigger={(openStorage, storageOpener) => <Menu.Root open={menu === 'account'} onOpenChange={open => setMenu(open ? 'account' : null)}>
           <Menu.Trigger asChild><button ref={storageOpener} type="button" className="avatar-btn" data-testid="profile-menu-trigger" aria-label={`Account menu for ${user?.name || user?.email}`}>{initials}</button></Menu.Trigger>

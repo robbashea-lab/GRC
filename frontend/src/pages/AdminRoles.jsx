@@ -2,7 +2,8 @@ import PageHeader from "@/components/PageHeader";
 import { Building2, ChevronDown, FileText, KeyRound, Lock, ShieldCheck, Users } from "lucide-react";
 
 import { PLANNED_ROLES as ROLES, PLANNED_CAPABILITIES as CAPS, nativeRoleDefinition } from "@/lib/plannedRoleModel";
-import {useEffect, useState} from 'react';
+import {Fragment, useEffect, useState} from 'react';
+import './AdminRoleFamilies.css';
 import api from '@/lib/api';
 
 const ROLE_ICONS = {
@@ -13,6 +14,17 @@ const ROLE_ICONS = {
   client_read_only: Lock,
 };
 const PERMISSION_CLASSES = {Yes: "admin-permission-yes", No: "admin-permission-no", Limited: "admin-permission-limited"};
+
+const roleFamilies = [
+  {label:'iVenture team', roles:ROLES.filter(role => ['platform_owner','platform_administrator'].includes(role.key))},
+  {label:'Client users', roles:ROLES.filter(role => !['platform_owner','platform_administrator'].includes(role.key))},
+];
+
+function capabilityGroup(row) {
+  if (row.capabilities.some(key => ['manage_platform_users','view_audit_log'].includes(key))) return 'Platform';
+  if (row.capabilities.some(key => ['configure','create_clients','manage_client_users'].includes(key))) return 'Client setup and access';
+  return 'Client work';
+}
 
 export default function AdminRoles() {
   const [highlight, setHighlight] = useState(null);
@@ -33,7 +45,7 @@ export default function AdminRoles() {
           <div><strong>Server-enforced role contract.</strong> This page explains permissions; it does not edit grants. Every operation also requires authorized client scope and the applicable record/workflow checks.</div>
         </div>
         <section data-testid="admin-roles-grid" className="admin-role-grid" aria-label="Role families">
-          {ROLES.map((r) => {
+          {roleFamilies.map(family => <Fragment key={family.label}><h2 className="admin-role-family">{family.label}</h2>{family.roles.map((r) => {
             const Icon = ROLE_ICONS[r.key] || ShieldCheck;
             const count = users?.filter(user => nativeRoleDefinition(user.role)?.legacyKey === r.legacyKey && user.status === 'active').length;
             return <button type="button" key={r.key} className="admin-role-card" aria-pressed={highlight === r.key} onClick={() => select(r.key)}>
@@ -45,7 +57,7 @@ export default function AdminRoles() {
                 <span className="sub">{count == null ? 'Active user count unavailable' : `${count} active user${count === 1 ? '' : 's'}`}</span>
               </div>
             </button>;
-          })}
+          })}</Fragment>)}
         </section>
         <section data-testid="admin-roles-matrix" className="admin-panel">
           <div className="admin-panel-head">
@@ -55,10 +67,13 @@ export default function AdminRoles() {
           <div className="admin-table-wrap">
             <table className="admin-table admin-matrix">
               <thead>
+                <tr className="admin-matrix-families"><td/>{roleFamilies.map(family => <th scope="colgroup" colSpan={family.roles.length} key={family.label}>{family.label}</th>)}</tr>
                 <tr><th scope="col">Capability</th>{ROLES.map((r) => <th key={r.key} scope="col" className={highlight === r.key ? 'hl' : ''}><button type="button" aria-pressed={highlight === r.key} onClick={() => select(r.key)}>{r.label}</button></th>)}</tr>
               </thead>
-              <tbody>
-                {CAPS.map(({ label, roles }) => (
+              {Array.from(new Set(CAPS.map(capabilityGroup))).map(group => <tbody key={group}>
+                <tr className="admin-matrix-group"><th scope="rowgroup" colSpan={ROLES.length + 1}>{group}</th></tr>
+                {CAPS.filter(row => capabilityGroup(row) === group).map(({ label, roles }) => (
+
                   <tr key={label}>
                     <td>{label}</td>
                     {ROLES.map((r) => (
@@ -68,7 +83,7 @@ export default function AdminRoles() {
                     ))}
                   </tr>
                 ))}
-              </tbody>
+              </tbody>)}
             </table>
           </div>
         </section>

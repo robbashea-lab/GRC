@@ -1,0 +1,105 @@
+.portfolio-reference.v3-portfolio-directory .page-head { margin-bottom: 14px; }
+.portfolio-reference.v3-portfolio-directory .page-sub { color: var(--muted); }
+.portfolio-reference.v3-portfolio-directory .ep-toolbar {
+  padding: 8px 10px;
+  margin-bottom: 9px;
+  gap: 10px;
+}
+.portfolio-reference.v3-portfolio-directory .ep-toolbar .field { flex: 1 1 235px; max-width: 325px; }
+.portfolio-reference.v3-portfolio-directory .ep-toolbar :is(.field,.select,.seg) { min-height: 36px; }
+.portfolio-reference.v3-portfolio-directory .ep-toolbar .directory-sort { margin-left: auto; }
+.portfolio-reference .v3-directory-panel { border: 1px solid var(--border); border-radius: 8px; background: var(--surface-solid); container: portfolio-directory / inline-size; overflow: hidden; }
+.portfolio-directory { width: 100%; border-collapse: separate; border-spacing: 0; table-layout: fixed; text-align: left; }
+.portfolio-directory col:nth-child(1) { width: 30%; }
+.portfolio-directory col:nth-child(2) { width: 25%; }
+.portfolio-directory col:nth-child(3) { width: 22%; }
+.portfolio-directory th {
+  color: var(--label); background: var(--surface-header); border-bottom: 1px solid var(--divider);
+  padding: 11px 20px; font-size: 10.5px; font-weight: 600; letter-spacing: .085em; text-transform: uppercase;
+}
+.portfolio-directory-row { position: relative; background: var(--surface-solid); }
+.portfolio-directory-row td { padding: 9px 20px; vertical-align: middle; }
+.portfolio-directory-row + .portfolio-directory-row td { border-top: 1px solid var(--divider); }
+.portfolio-directory-row:is(:hover,:focus-within) { background: var(--hover); }
+.portfolio-directory-row:has(.portfolio-client-open:focus-visible) {
+  outline: 2px solid var(--accent); outline-offset: -2px;
+}
+.portfolio-client-open {
+  display: inline-flex; align-items: center; gap: 13px; text-align: left;
+  color: var(--text);
+}
+.portfolio-client-open .client-name { line-height: 1.35; white-space: normal; overflow-wrap: anywhere; }
+.portfolio-client-open::after { content: ""; position: absolute; inset: 0; z-index: 1; cursor: pointer; }
+.portfolio-client-open:focus-visible { outline-offset: 3px; }
+.portfolio-client-open :is(.client-art,.tile) { flex-shrink: 0; }
+.portfolio-frameworks { display: flex; flex-wrap: wrap; align-items: center; gap: 5px; }
+.portfolio-framework {
+  display: inline-block; line-height: 1.35; white-space: normal; overflow-wrap: anywhere; max-width: 100%;
+}
+.portfolio-client-lead { display: inline-flex; align-items: center; gap: 8px; font-size: 13px; line-height: 1.35; }
+.portfolio-client-lead .av { width: 24px; height: 24px; font-size: 10px; }
+.portfolio-client-lead .av.none { background: var(--surface-2); color: var(--muted); }
+.portfolio-client-industry { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.portfolio-industry-text { min-width: 0; line-height: 1.4; overflow-wrap: anywhere; }
+.portfolio-directory-chevron { color: var(--accent); flex: none; display: inline-flex; }
+.portfolio-directory-empty { margin: 0; }
+@container portfolio-directory (max-width: 845px) {
+  .portfolio-directory :is(th,td) { padding-inline: 13px; }
+  .portfolio-client-open { gap: 9px; }
+}
+@container portfolio-directory (max-width: 615px) {
+  .portfolio-directory :is(colgroup,thead) { display: none; }
+  .portfolio-directory, .portfolio-directory tbody { display: block; }
+  .portfolio-directory-row {
+    display: grid; grid-template-columns: minmax(0,1fr) minmax(0,.8fr) 16px;
+    grid-template-areas: "name name arrow" "framework lead arrow" "industry industry arrow";
+    padding: 11px 13px; gap: 7px 10px;
+  }
+  .portfolio-directory-row + .portfolio-directory-row { border-top: 1px solid var(--divider); }
+  .portfolio-directory-row :is(td,td:first-child) { display: block; border: 0; padding: 0; }
+  .portfolio-directory-row td:nth-child(1) { grid-area: name; }
+  .portfolio-directory-row td:nth-child(2) { grid-area: framework; }
+  .portfolio-directory-row td:nth-child(3) { grid-area: lead; }
+  .portfolio-directory-row td:nth-child(4) { display: contents; }
+  .portfolio-client-industry { display: contents; }
+  .portfolio-industry-text { grid-area: industry; }
+  .portfolio-directory-chevron { grid-area: arrow; align-self: center; }
+}
+@media (max-width: 750px) {
+  .portfolio-reference.v3-portfolio-directory .ep-toolbar .field { max-width: none; }
+  .portfolio-reference.v3-portfolio-directory .ep-toolbar .directory-sort { margin-left: 0; }
+}
+
+.portfolio-reference.v3-portfolio-directory .portfolio-client-open .ep-avatar { width: 34px; height: 34px; border-radius: 8px; }
+.portfolio-reference .ep-overview-tabs { display: flex; gap: 16px; padding: 0 24px; border-bottom: 1px solid var(--divider); }
+.ep-overview-tabs [role="tab"] { padding: 9px 1px; font-weight: 600; color: var(--muted); border-bottom: 2px solid transparent; }
+.ep-overview-tabs [aria-selected="true"] { border-color: var(--accent); color: var(--accent); }
+.ep-history-body[data-overview-tab="overview"] :is(.ep-periods,.est,.ep-history-card),
+.ep-history-body[data-overview-tab="history"] :is(.ep-glance,.ep-current,.ep-directory-status),
+.ep-history-body[data-overview-tab="work"] > :not(.ep-glance) { display: none; }
+.ep-history-body[data-overview-tab="overview"] .ep-glance { order: 1; }
+.portfolio-reference .m-foot .ep-link { margin-left: auto; }
+.portfolio-reference.portfolio-history-dialog.ep-history[data-directory-overview] {
+  inset: 50% auto auto 50%; transform: translate(-50%, -50%); width: clamp(710px, 68vw, 900px);
+  min-height: min(550px, calc(100dvh - 56px)); max-height: min(720px, calc(100dvh - 32px));
+  border-radius: 12px;
+}
+[data-directory-overview] .ep-dialog-heading { background: var(--surface-header); padding: 14px 20px; }
+[data-directory-overview] .ep-dialog-heading .eyebrow { color: var(--muted); font-size: 10px; text-transform: uppercase; letter-spacing: .085em; }
+.ep-directory-status { border: 1px solid var(--border); border-radius: 10px; padding: 14px; }
+.ep-directory-status header { display: flex; gap: 12px; justify-content: space-between; align-items: baseline; margin-bottom: 12px; }
+.ep-directory-status h3 { font-size: 15px; font-weight: 650; }
+.ep-directory-status small { color: var(--muted); font-size: 12px; }
+.ep-directory-status-grid { display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); gap: 10px; }
+.ep-directory-status-cell { display: grid; gap: 6px; padding: 10px; border: 1px solid var(--divider); border-radius: 6px; background: var(--surface-2); }
+.ep-directory-status-cell > span { color: var(--muted); font-size: 12px; font-weight: 600; }
+.ep-directory-status-cell > div { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px; }
+.ep-directory-status-cell strong { font-variant-numeric: tabular-nums; font-size: 22px; }
+.ep-directory-status-cell meter { appearance: none; width: 100%; height: 5px; border: 0; border-radius: 4px; background: var(--track); }
+.ep-directory-status-cell meter::-webkit-meter-bar { height: 5px; border: none; border-radius: 4px; background: var(--track); }
+.ep-directory-status-cell meter::-webkit-meter-optimum-value { background: var(--meter-ink); }
+.ep-directory-status-cell meter::-moz-meter-bar { background: var(--meter-ink); }
+@media (max-width: 640px) {
+  .ep-directory-status-grid { grid-template-columns: repeat(2,minmax(0,1fr)); }
+  .portfolio-reference .ep-overview-tabs { padding-inline: 12px; gap: 10px; }
+}

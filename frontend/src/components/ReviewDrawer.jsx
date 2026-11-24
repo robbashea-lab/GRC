@@ -393,7 +393,7 @@ export default function ReviewDrawer({open,onOpenChange,record,clientId,onSaved,
   const evidenceUpload=!frozen&&writable?<Input className={workflowPresentation?'review-workflow-file-input':'mt-2'} aria-label="Choose files" type="file" multiple disabled={busy} data-testid="drawer-evidence-input" onChange={e=>uploadEvidence(Array.from(e.target.files||[]))}/>:null;
   const evidenceHeader=linkButton=>evidenceUpload?<div className="review-workflow-upload"><span className="review-workflow-upload-icon" aria-hidden="true"><Upload size={20}/></span><strong>Attach evidence to {shown?.period||derived.period||'this occurrence'}</strong><p className="review-workflow-help">Choose files. Exports, screenshots, sign-off emails.</p><div className="review-workflow-upload-controls"><label className="review-workflow-file-choice"><span>Choose files</span>{evidenceUpload}</label>{linkButton}</div></div>:linkButton;
   return <Dialog open={open} onOpenChange={close}>
-    <DialogContent ref={detailSurface} aria-modal="true" {...{
+    <DialogContent data-record-surface ref={detailSurface} aria-modal="true" {...{
       onPointerDownOutside:e=>e.preventDefault(),
       onOpenAutoFocus:e=>{opener.current=document.activeElement;e.preventDefault();heading.current?.focus();},
       onCloseAutoFocus:e=>{e.preventDefault();const target=opener.current?.isConnected?opener.current:document.querySelector('[data-testid="reviews-search"]');target?.focus({preventScroll:true});}

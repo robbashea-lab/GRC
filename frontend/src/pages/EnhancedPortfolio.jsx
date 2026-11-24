@@ -15,21 +15,24 @@ import { enhancedPortfolioEligible, filterPortfolio, operationalItems, PORTFOLIO
 import {calendarDay, managementDay} from '@/lib/managementDates';
 import { formatPortfolioDate, programLanguage } from '@/components/PortfolioReports';
 import EnhancedPortfolioHistory from '@/components/EnhancedPortfolioHistory';
+import PortfolioDirectoryTable from './PortfolioDirectoryTable';
 import './PortfolioReference.css';
 import './EnhancedPortfolio.css';
+import './PortfolioDirectoryTable.css';
 
 // Portfolio appearance is independent of the currently selected operational client.
 export default function EnhancedPortfolioBoundary({
   children
 }) {
   const auth = useAuth(), location = useLocation();
+  const pathname = location.pathname === '/clients/' ? '/clients' : location.pathname;
   const eligible = enhancedPortfolioEligible({
     user: auth.user,
-    pathname: location.pathname,
+    pathname,
     authLoading: auth.loading,
     authError: auth.error
   });
-  if (location.pathname === '/clients' && (auth.loading || auth.error)) {
+  if (pathname === '/clients' && (auth.loading || auth.error)) {
     return <section className="enhanced-portfolio"><p className="ep-empty" role={auth.error ? 'alert' : 'status'}>{auth.error ? 'Portfolio unavailable' : 'Loading client portfolio.'}</p></section>;
   }
   const identity = JSON.stringify([auth.user?.user_id, auth.user?.role, auth.user?.workspace_mode, !!auth.user?.all_clients, [...(auth.user?.client_ids || [])].sort()]);
@@ -38,6 +41,7 @@ export default function EnhancedPortfolioBoundary({
 export function EnhancedPortfolio({
   user
 }) {
+  const ledger = new URLSearchParams(useLocation().search).get('view') === 'ledger';
   const navigate = useNavigate(),
     {
       switchClient
@@ -124,10 +128,13 @@ export function EnhancedPortfolio({
     asOf = data?.as_of;
   const authorized = new Set(clients.map(client => client.client_id));
   const programs = (data?.programs || []).filter(program => authorized.has(program.client_id));
-  const frameworks = [...new Map(programs.map(program => [program.program_key, program.program_label]))];
+  const frameworks = [...new Map(programs.map(program => [program.program_key, program.program_label]))]
+    .sort((a, b) => a[1].localeCompare(b[1]));
   const demoContext = {trustedDemo: PREVIEW_MODE, workspaceMode: useAuth().workspaceMode, user};
-  const base = data ? filterPortfolio(clients, programs, state, user.user_id, asOf, false, demoContext) : [];
-  const visible = data ? filterPortfolio(clients, programs, state, user.user_id, asOf, true, demoContext) : [];
+  const directorySort = preferences.sort === 'name-desc' ? 'name-desc' : 'name';
+  const filters = ledger ? state : {...state, sort: directorySort, kpi: null};
+  const base = data ? filterPortfolio(clients, programs, filters, user.user_id, asOf, false, demoContext) : [];
+  const visible = ledger && state.kpi ? filterPortfolio(clients, programs, state, user.user_id, asOf, true, demoContext) : base;
   const selected = clients.find(client => client.client_id === selection?.clientId);
   const selectedPrograms = programs.filter(program => program.client_id === selected?.client_id);
   const selectionAvailable = selected && !selected.archived && !selected.archived_at
@@ -170,20 +177,26 @@ export function EnhancedPortfolio({
     map.get(id).clients.push(client);
     return map;
   }, new Map()).entries()];
-  return <section className="enhanced-portfolio portfolio-reference wrap" data-theme={theme}>
+  const empty = state.mine && !state.search.trim() && !state.framework && (!ledger || !state.kpi)
+    ? <>No clients are currently assigned to you. <button type="button" className="ep-button ghost" onClick={() => update({mine:false})}>Show all clients</button></>
+    : <>No clients match these filters. <button type="button" className="ep-button ghost" onClick={clear}>Clear filters</button></>;
+  const count = `${clients.length} ${clients.length === 1 ? 'client' : 'clients'}`;
+  return <section className={`enhanced-portfolio portfolio-reference wrap${ledger ? '' : ' v3-portfolio-directory'}`} data-theme={theme}>
     <header className="ep-heading page-head">
-      <div style={{flex:'1 1 360px'}}><h1 className="page-title">Client portfolio</h1><p className="page-sub grad">{report.loading ? 'Loading client portfolio.' : report.error ? 'Portfolio unavailable' : <>{clients.length} clients · {programs.length} programs · as of {formatPortfolioDate(asOf)}</>}</p></div>
+      <div style={{flex:'1 1 360px'}}><h1 className="page-title">Client portfolio</h1><p className="page-sub" aria-live="polite">{report.loading ? 'Loading client portfolio.' : report.error ? 'Portfolio unavailable' : ledger ? <>{clients.length} clients · {programs.length} programs · as of {formatPortfolioDate(asOf)}</> : visible.length === clients.length ? count : `${visible.length} of ${count}`}</p></div>
+      {ledger && <button type="button" className="ep-link" onClick={() => navigate('/clients')}>Client directory</button>}
       <div className="ep-segment seg" role="group" aria-label="Theme">{['light', 'dark'].map(value => <button key={value} type="button" aria-pressed={theme === value} aria-checked={theme === value} onClick={() => setTheme(value)}>{value === 'light' ? 'Light' : 'Dark'}</button>)}</div>
     </header>
     <div className="ep-box">
       <div className="ep-toolbar toolbar">
-        <label className="field ep-search"><Search size={15} aria-hidden="true" /><input ref={search} type="search" placeholder="Search client, lead or framework…" aria-label="Search clients" value={state.search} onChange={event => update({search:event.target.value})} /></label>
+        <label className="field ep-search"><Search size={15} aria-hidden="true" /><input ref={search} type="search" placeholder={ledger ? 'Search client, lead or framework…' : 'Search clients, frameworks, or leads…'} aria-label="Search clients" value={state.search} onChange={event => update({search:event.target.value})} /></label>
         <div className="ep-segment seg" role="group" aria-label="Scope">{[[false, 'All clients'], [true, 'Assigned to me']].map(([value, label]) => <button key={label} type="button" aria-pressed={state.mine === value} aria-checked={state.mine === value} onClick={() => update({mine:value})}>{label}</button>)}</div>
         <select className="select" aria-label="Framework" value={state.framework} onChange={event => update({framework:event.target.value})}><option value="">All frameworks</option>{frameworks.map(([key, label]) => <option key={key} value={key}>{label}</option>)}</select>
-        <label className="sort-label">Sort <select className="select" aria-label="Sort clients" value={state.sort} onChange={event => update({sort:event.target.value})}><option value="attention">Needs attention first</option><option value="name">Client name A–Z</option><option value="next">Next key date</option></select></label>
-        <div className="ep-segment seg" role="group" aria-label="View">{[['clients', 'Clients'], ['leads', 'By lead']].map(([value, label]) => <button key={value} type="button" aria-pressed={state.view === value} aria-checked={state.view === value} onClick={() => update({view:value})}>{label}</button>)}</div>
+        {ledger ? <><label className="sort-label">Sort <select className="select" aria-label="Sort clients" value={state.sort} onChange={event => update({sort:event.target.value})}><option value="attention">Needs attention first</option><option value="name">Client name A–Z</option><option value="next">Next key date</option></select></label>
+        <div className="ep-segment seg" role="group" aria-label="View">{[['clients', 'Clients'], ['leads', 'By lead']].map(([value, label]) => <button key={value} type="button" aria-pressed={state.view === value} aria-checked={state.view === value} onClick={() => update({view:value})}>{label}</button>)}</div></> :
+        <select className="select directory-sort" aria-label="Sort clients" value={directorySort} onChange={event => updatePreferences({sort:event.target.value})}><option value="name">Client name A–Z</option><option value="name-desc">Client name Z–A</option></select>}
       </div>
-      <div className="pf-kstrip">
+      {ledger && <div className="pf-kstrip">
     <div className="kstrip" role="group" aria-label="Portfolio summary">{PORTFOLIO_KPIS.map(([key, label, help]) => {
       const value = data ? portfolioKpiValue(key, base, asOf) : null;
       return <button key={key} type="button" className="kchip" aria-pressed={state.kpi === key} disabled={!data || key === 'notstarted' && value == null} onClick={() => update({kpi:state.kpi === key ? null : key})}>
@@ -191,8 +204,8 @@ export function EnhancedPortfolio({
         <span className="kc">{key === 'notstarted' ? value == null ? 'Onboarding state unavailable' : 'Clients awaiting program onboarding' : help}</span>
       </button>;
     })}</div>
-      </div>
-      {report.loading ? <p className="ep-empty empty" role="status">Loading client portfolio.</p> : report.error ? <div className="ep-empty empty" role="alert"><p>{report.error}</p><button type="button" className="ep-button ghost" onClick={load}>Retry</button></div> : state.view === 'clients' ? <section className="ep-register ss-panel"><div className="ss-intro"><h2 id="portfolio-ledger-title">Program status ledger</h2><p>Implementation status and assessment coverage for the selected framework.</p></div><div className="ss-table-wrap" tabIndex="0" role="region" aria-label="Program status ledger"><div className="ep-table ss-ledger" role="table" aria-label="Client portfolio" aria-colcount="7">
+      </div>}
+      {report.loading ? <p className="ep-empty empty" role="status">Loading client portfolio.</p> : report.error ? <div className="ep-empty empty" role="alert"><p>{report.error}</p><button type="button" className="ep-button ghost" onClick={load}>Retry</button></div> : !ledger ? <PortfolioDirectoryTable clients={visible} programs={programs} onOpen={(client,event) => preview(client,programFor(client),event)} empty={empty} /> : state.view === 'clients' ? <section className="ep-register ss-panel"><div className="ss-intro"><h2 id="portfolio-ledger-title">Program status ledger</h2><p>Implementation status and assessment coverage for the selected framework.</p></div><div className="ss-table-wrap" tabIndex="0" role="region" aria-label="Program status ledger"><div className="ep-table ss-ledger" role="table" aria-label="Client portfolio" aria-colcount="7">
         <div className="ep-columns ss-head" role="row">{['Client / framework', 'Implemented / addressed', 'Partial implementation', 'With gaps', 'Not assessed', 'Assessed'].map(label => <span role="columnheader" key={label}>{label}</span>)}<span className="sr-only" role="columnheader">Open client</span></div>
         <div role="rowgroup">{visible.map(client => {
           const visiblePrograms = programs.filter(program => program.client_id === client.client_id && (!state.framework || program.program_key === state.framework));
@@ -214,12 +227,10 @@ export function EnhancedPortfolio({
         <dl className="ep-lead-numbers lead-stats">{[['overdue', 'Overdue'], ['attention', 'Need attention'], ['due30', 'Due in 30 days']].map(([key, label]) => <div key={key}><dt>{label}</dt><dd className="num">{portfolioKpiValue(key, group.clients, asOf)}</dd></div>)}</dl>
         <div className="ep-tags">{group.clients.map(client => <button className="pill-btn" key={client.client_id} type="button" onClick={event => preview(client, programFor(client), event)}><ClientMark client={client}/>{client.name}</button>)}</div>
       </div>)}</div>}
-      {!report.loading && !report.error && !visible.length && <div className="ep-empty empty">{state.mine && !state.search.trim() && !state.framework && !state.kpi
-        ? <>No clients are currently assigned to you. <button type="button" className="ep-button ghost" onClick={() => update({mine:false})}>Show all clients</button></>
-        : <>No clients match the selected filters. <button type="button" className="ep-button ghost" onClick={clear}>Clear filters</button></>}</div>}
-      <footer className="gt-foot"><span>Showing {visible.length} of {base.length} matching clients</span><span style={{marginLeft:'auto'}}>Assessment progress, not a compliance determination. Percentages aren't comparable across frameworks, so there's no portfolio-wide ranking by %.</span></footer>
+      {ledger && !report.loading && !report.error && !visible.length && <div className="ep-empty empty">{empty}</div>}
+      {ledger && <footer className="gt-foot"><span>Showing {visible.length} of {base.length} matching clients</span><span style={{marginLeft:'auto'}}>Assessment progress, not a compliance determination. Percentages aren't comparable across frameworks, so there's no portfolio-wide ranking by %.</span></footer>}
     </div>
-    {selectionAvailable && <EnhancedPortfolioHistory client={selected} programs={selectedPrograms} selected={selection.programId} onSelect={programId => {chooseProgram(selected.client_id, programId); setSelection(previous => ({...previous, programId}));}} asOf={asOf} refreshToken={report.revision} onClose={() => setSelection(null)} onCloseAutoFocus={restoreFocus} onNavigate={path => enter(selected, path)} theme={theme} />}
+    {selectionAvailable && <EnhancedPortfolioHistory client={selected} programs={selectedPrograms} selected={selection.programId} onSelect={programId => {chooseProgram(selected.client_id, programId); setSelection(previous => ({...previous, programId}));}} asOf={asOf} refreshToken={report.revision} onClose={() => setSelection(null)} onCloseAutoFocus={restoreFocus} onLedger={ledger ? undefined : () => { setSelection(null); navigate('/clients?view=ledger'); }} onNavigate={path => enter(selected, path)} theme={theme} />}
   </section>;
 }
 

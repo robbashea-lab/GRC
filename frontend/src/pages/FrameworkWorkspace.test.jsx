@@ -59,7 +59,7 @@ test.each([null,{framework_assessment_id:' '},{definition_id:'unknown'},{framewo
 
 test('SOC presentation withdraws previous actor data while the same client is reauthorized',async()=>{
  const response=await prestige({clientId:'existing-auth-soc'});
- expect(container.querySelector('.soc-cis-program-visual .now-value')).toBeTruthy();
+ expect(container.querySelector('.soc-cis-program-visual .gn-ring-value')).toBeTruthy();
  let resolveCurrent;
  api.get.mockImplementation(path=>path.endsWith('/members')?Promise.resolve({data:[]}):new Promise(resolve=>{resolveCurrent=resolve;}));
  mockUser={user_id:'reader',role:'client_viewer'};
@@ -116,17 +116,17 @@ test.each(['demo_prestige','new-soc-client'])('SOC workspace has no configuratio
 test('Brawndo summary, bar tooltips, and removed sections; Controls follow the summary',async()=>{
  await brawndo();
  const summary=container.querySelector('[aria-labelledby="bcis-summary-heading"]').textContent;
- expect(container.querySelector('.bd-donut-value').textContent).toBe('98.2%');
- expect(summary).toContain('Implemented55 of 56');expect(summary).toContain('Assessed55 of 56');expect(summary).not.toContain('still to assess');expect(summary).not.toContain('Continue with safeguard');
- expect(container.querySelector('.bd-seg-addressed').getAttribute('aria-label')).toBe('Implemented · 98.2% · 55 of 56 safeguards');
- expect(summary).toContain('not a compliance percentage, certification or audit opinion');
+ expect(container.querySelector('.gn-ring-value').textContent).toBe('98.2%');
+ expect(summary).toContain('55 of 56 safeguards');expect(summary).toContain('55 of 56 assessed');expect(summary).not.toContain('still to assess');expect(summary).not.toContain('Continue with safeguard');
+ expect(container.querySelector('.gn-ring-card[data-status=I]').getAttribute('aria-label')).toBe('Implemented: 55 of 56 safeguards, 98.2%');
+ expect(summary).toContain('not a compliance percentage or certification');
  expect(container.querySelector('h1').textContent).toBe('CIS IG1');
- const seg=container.querySelector('[data-testid="bcis-seg-addressed"]');
- expect(seg.getAttribute('tabindex')).toBe('0');expect(seg.getAttribute('aria-label')).toBe('Implemented: 55 of 56 safeguards, 98%');
- expect(seg.querySelector('.bcis-tip').textContent).toBe('Implemented55 of 56 safeguards98%');
- expect(container.querySelector('[data-testid="bcis-seg-notAssessed"]').getAttribute('aria-label')).toBe('Not assessed: 1 of 56 safeguards, 2%');
+ const seg=container.querySelector('.gn-ring-card[data-status=I]');
+ expect(seg.tabIndex).toBe(0);expect(seg.title).toBe('Implemented: 55 of 56 safeguards');
+ expect(seg.querySelector('.gn-ring-arc').getAttribute('stroke-dasharray').split(' ').map(Number)[0]).toBeCloseTo(100*55/56);
+ expect(container.querySelector('.gn-ring-card[data-status=A]').getAttribute('aria-label')).toBe('Not assessed: 1 of 56 safeguards, 1.8%');
  for(const gone of ['What to do next','Client organizational Controls','Return to last opened','All requirements'])expect(container.textContent).not.toContain(gone);
- expect(container.querySelector('.bcis-summary').nextElementSibling.classList.contains('bcis-controls')).toBe(true);
+ expect(container.querySelector('.gn-cis-snapshot').compareDocumentPosition(container.querySelector('.bcis-controls')) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
  expect(buttons('Open ›')).toHaveLength(0);
  expect(container.querySelectorAll('[data-testid^="control-row-"]')).toHaveLength(15);
  expect(container.querySelector('[data-testid="control-row-1"]').textContent).toContain('1 of 2');
@@ -150,7 +150,7 @@ test('Brawndo rows are whole-row links; breadcrumb round-trips control and safeg
 });
 test('Brawndo filters are separate from navigation and clear back to controls',async()=>{
  await brawndo();
- await act(async()=>[...container.querySelectorAll('.bcis-legend button')].find(b=>b.textContent.startsWith('Not assessed')).click());
+ await act(async()=>[...container.querySelectorAll('.gn-ring-cards button')].find(b=>b.textContent.startsWith('Not assessed')).click());
  expect(container.querySelectorAll('[data-testid^="requirement-"]')).toHaveLength(1);expect(crumbs()[0]).toBe('CIS IG1');expect(crumbs()).toHaveLength(2);
  await act(async()=>buttons('Clear filter')[0].click());expect(buttons('Clear filter')).toHaveLength(0);expect(crumbs()).toEqual([]);
  const controlSearch=container.querySelector('[aria-label="Search controls"]');
@@ -166,14 +166,14 @@ test('Prestige SOC 2 uses scoped progress and category-first hierarchy without p
  await prestige();const workspace=container.querySelector('[data-testid="prestige-soc-workspace"]');expect(workspace).toBeTruthy();
  expect(workspace.querySelector('h1').textContent).toBe('SOC 2');expect(workspace.textContent).not.toContain('Client organizational Controls');expect(workspace.textContent).toContain('Include retained out-of-scope criteria');expect(socSettings()).toBeUndefined();
  const summary=workspace.querySelector('[aria-labelledby="bcis-summary-heading"]').textContent;
- expect(summary).toContain('Current implementation');expect(summary).toContain('28 of 38 criteria implemented');expect(summary).toContain('Assessed 35 of 38');expect(workspace.querySelector('.now-value').textContent).toBe('73.7%');expect(workspace.querySelector('[aria-label="Show criteria"]').textContent).toContain('Not assessed3');
- const partial=workspace.querySelector('.snap .sbar button[aria-label="Partially implemented: 5 of 38"]');expect(partial.tabIndex).toBe(0);expect(partial.tagName).toBe('BUTTON');expect(partial.title).toBe('Partially implemented: 5 of 38');expect(partial.style.flex).toBe('5');
- const addressed=workspace.querySelector('.snap .sbar button[aria-label="Implemented: 28 of 38"]');expect(addressed.title).toBe('Implemented: 28 of 38');expect(addressed.style.flex).toBe('28');
+ expect(summary).toContain('Implemented');expect(summary).toContain('28 of 38 criteria');expect(summary).toContain('35 of 38 assessed');expect(workspace.querySelector('.gn-ring-value').textContent).toBe('73.7%');expect(workspace.querySelector('[aria-label="Show criteria"]').textContent).toContain('Not assessed3');
+ const partial=workspace.querySelector('.gn-ring-card[data-status=P]');expect(partial.tabIndex).toBe(0);expect(partial.tagName).toBe('BUTTON');expect(partial.title).toBe('Partially implemented: 5 of 38 criteria');expect(parseFloat(partial.querySelector('.gn-ring-arc').getAttribute('stroke-dasharray'))).toBeCloseTo(100*5/38);
+ const addressed=workspace.querySelector('.gn-ring-card[data-status=I]');expect(addressed.title).toBe('Implemented: 28 of 38 criteria');expect(parseFloat(addressed.querySelector('.gn-ring-arc').getAttribute('stroke-dasharray'))).toBeCloseTo(100*28/38);
  expect(workspace.querySelector('.lg').textContent).toContain('13.2%5 of 38');
  expect(workspace.querySelectorAll('[data-testid^="soc-category-"]')).toHaveLength(3);expect(workspace.querySelector('[data-testid="soc-category-security"]').textContent).toContain('Security — Common Criteria33');
  expect(workspace.querySelector('.soc-criteria-register').textContent).not.toMatch(/Processing Integrity|Privacy/);
  expect(workspace.dataset.theme).toBe('dark');await act(async()=>buttons('Light')[0].click());expect(workspace.dataset.theme).toBe('light');await act(async()=>buttons('Dark')[0].click());expect(workspace.dataset.theme).toBe('dark');
- await act(async()=>[...workspace.querySelectorAll('.lg button')].find(b=>b.textContent.startsWith('Not assessed')).click());
+ await act(async()=>[...workspace.querySelectorAll('.gn-ring-cards button')].find(b=>b.textContent.startsWith('Not assessed')).click());
  expect(workspace.querySelectorAll('[data-testid^="requirement-"]')).toHaveLength(3);expect(crumbs()).toEqual(['SOC 2','Not assessed']);
  await act(async()=>container.querySelector('[aria-label="Clear search and filters"]').click());expect(crumbs()).toEqual(['SOC 2']);
 });
@@ -272,7 +272,7 @@ test.each(['demo_dunder','new-iso-client','later-enabled-iso'])('ISO keeps appro
  expect(container.textContent).not.toContain('Connected program records');
  await act(async()=>buttons('ISMS Requirements')[0].click());
  expect(container.querySelector('[aria-labelledby="bcis-summary-heading"]').textContent).toContain('30 of 30');
- expect(container.querySelector('.now-head p').textContent).toContain('30 of 30');
+ expect(container.querySelector('.gn-ring-copy').textContent).toContain('30 of 30');
  expect(container.querySelector('.bcis-explain')).toBeNull();
  const panel=container.querySelector('[role="tabpanel"]');
  expect(panel.getAttribute('aria-labelledby')).toBe('iso-tab-isms_clause');
@@ -310,7 +310,7 @@ test('ISO grouped presentation preserves SoA scope and native expansion with gua
  expect(mockHistory.at(-1).search).toBe('iso_view=soa');
  await act(async()=>buttons('Annex A Controls')[0].click());
  expect(container.querySelector('[aria-labelledby="bcis-summary-heading"]').textContent).toContain('91 of 92');
- await act(async()=>[...container.querySelectorAll('.lg button')].find(button=>button.querySelector('.lg-label').textContent==='Implemented').click());
+ await act(async()=>[...container.querySelectorAll('.gn-ring-cards button')].find(button=>button.querySelector('.gn-ring-label').textContent==='Implemented').click());
  expect(container.querySelectorAll('[data-testid^="requirement-"]')).toHaveLength(91);
  expect(container.querySelector(`[data-testid="requirement-${annex[1].id}"]`)).toBeNull();
 });
@@ -319,11 +319,9 @@ test.each(['cis-ig1','hipaa'])('%s with all records N/A keeps undefined progress
  const definitions=frameworkCatalog(frameworkKey).requirements;
  api.get.mockImplementation(async path=>({data:path.endsWith('/members')?[]:{configured:true,selected:true,definitions,assessments:definitions.map((d,i)=>({framework_assessment_id:'na'+i,definition_id:d.id,client_id:'a',status:'not_applicable'})),work:{}}}));
  await act(async()=>root.render(<FrameworkWorkspace frameworkKey={frameworkKey} clientId="a"/>));
- const figures=[...container.querySelectorAll('.assessment-metric strong')].slice(0,2);
- if(frameworkKey==='cis-ig1'){
-   expect(container.querySelector('.bd-donut-value').textContent).toBe('—');
-   expect(container.querySelector('.bwp-program-counts').textContent).toContain('0 of 0');
- }else expect(figures.map(n=>n.textContent)).toEqual(['—','—']);
+ const figures=[...container.querySelectorAll('.gn-ring-value')];
+ expect(figures.map(n=>n.textContent)).toEqual(['—','—','—','—']);
+ expect(container.querySelector('.gn-map-metrics').textContent).toContain('0 of 0');
  expect(container.textContent).not.toMatch(/How is this calculated|excluded from progress denominators/);
  expect(container.querySelector('.bcis-explain')).toBeNull();
 });

@@ -1,5 +1,11 @@
 # GoverNara v3.0 native workflow handoff
 
+## Signed-in staging update, November 24
+
+The signed-in release on `codex/staging-signed-in-v3-20261124` combines the native workflows below with the design from `GoverNara-v3-Workflow-Parity (3).html`. Its SHA-256 is `5bb03e1219276a01459f2a44be6da44dce71271feb8a17c15a2083e6db397db9`. The exact HTML is available in `frontend/public/visual-preview.html` for visual comparison. The authenticated application uses its own React components, existing API and database.
+
+Regular sign-in continues through the existing role and client selection rules. The portfolio opens the four-column client directory, and the client overview links to the status ledger and underlying work. Client dashboards and framework workspaces display status using the selected client's native assessments. The Appearance menu is part of the signed-in shell. The release uses the existing Render staging service. Full workflow QA and owner acceptance are deferred.
+
 ## Scope and design reference
 
 Work lives on `codex/v3-workflow-parity-20261124`, based on `fac1a1f1a617d34a31d348ab0885a29a4813e567`. The approved reference is `GoverNara-v3-Workflow-Parity.html`, SHA-256 `59053eb33db4dabc8f90561f3bd2b32854a1de33748cb252192f5f3e5b5d2843`. Its companion `STAGING-PARITY-NOTES.md` describes the standalone mockup observations and the staging baseline. The local verification folder beside this checkout is `governara-v3-qa`.

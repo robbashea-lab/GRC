@@ -1,3 +1,4 @@
+import FrameworkStatusRings from './FrameworkStatusRings';
 import {ChevronRight,Search,ShieldCheck,ShieldAlert,Clock,Minus} from 'lucide-react';
 import {freshness as assessmentFreshness} from '@/lib/cisVerification';
 import {VERIFICATION_LABELS,verificationOf} from './BrawndoCisControls';
@@ -32,16 +33,10 @@ export function ProgramVisualSummary({id,label='Program snapshot',children,foote
   return <section className="pcard" aria-labelledby={id}><h2 id={id} className="sr-only">{label}</h2><div className="snap">{children}</div><div className="card-foot">{footer}</div></section>;
 }
 
-export function ProgramVisualSnapshot({summary:s,filter,onFilter,asOf,asOfLabel='As of',missingAsOfLabel='Assessment date unavailable',noun='safeguards',id='cis-visual-snapshot',statusLabels=PROGRAM_IMPLEMENTATION_LABELS,qualification='Assessment progress, not a compliance percentage or certification. Freshness is separate from saved verification.',onSegmentFilter,onNotApplicable,showExcludedNote=true}){
-  const available=s.available!==false,pick=key=>onFilter(filter===key?'all':key);
-  return <ProgramVisualSummary id={id} footer={<>{qualification}{showExcludedNote&&s.na>0&&(onNotApplicable?available&&<><span> </span><button type="button" className="link" aria-pressed={filter==='not_applicable'} onClick={()=>onNotApplicable(filter==='not_applicable'?'all':'not_applicable')}>{s.na} not applicable, excluded from implementation totals.</button></>:<> {s.na} not applicable, excluded from implementation totals.</>)}{!available&&<> {s.reason||'Refresh the program to retrieve implementation counts.'}</>}</>}>
-    <div className="now-head"><span className="now-label">Current implementation</span>
-      <strong className="now-value">{available&&s.applicable>0?percent(s.addressed,s.applicable):'—'}{available&&s.applicable>0&&<span className="unit">%</span>}</strong>
-      <p>{available?`${s.addressed} of ${s.applicable} ${noun} implemented`:'Implementation source unavailable'}</p><small>{asOf?`${asOfLabel} ${asOf}`:missingAsOfLabel}</small></div>
-      <div className="now-detail"><div className="bd-head"><span className="bd-title">Status of {available?s.applicable:'—'} applicable {noun}</span><span>Assessed {available?s.assessed:'—'} of {available?s.applicable:'—'} · {available&&s.applicable>0?`${percent(s.assessed,s.applicable)}%`:'—'}</span></div>
-        <ProgramStatusBar summary={s} filter={filter} statusLabels={statusLabels} onSegmentFilter={onSegmentFilter}/><div className="lg" role="group" aria-label="Filter by status">{SEGMENTS.map(([key,tone,count])=><button type="button" key={key} className="lg-cell" aria-pressed={filter===key} onClick={()=>pick(key)}>
-          <span className="lg-label"><i className={`key s-${tone}${tone==='none'?' k-none':''}`}/>{statusLabels[key]??PROGRAM_IMPLEMENTATION_LABELS[key]}</span><span className="lg-val"><b>{available&&s.applicable>0?`${percent(s[count],s.applicable)}%`:'—'}</b><span>{available?`${s[count]} of ${s.applicable}`:'Unavailable'}</span></span></button>)}</div></div>
-    </ProgramVisualSummary>;
+export function ProgramVisualSnapshot({id='cis-visual-snapshot',summary,filter,onFilter,rows,onOpen,subtitle,asOf,asOfLabel='As of',missingAsOfLabel='Assessment date unavailable',noun='safeguards',mapName='safeguard',statusLabels=PROGRAM_IMPLEMENTATION_LABELS,qualification='Assessment progress, not a compliance percentage or certification. Freshness is separate from saved verification.',onNotApplicable,showExcludedNote=true}){
+  const excluded=showExcludedNote&&summary.na>0&&summary.available!==false;
+  return <FrameworkStatusRings {...{id,summary,rows,onOpen,filter,onFilter,noun,mapName,subtitle}} statusLabels={{...PROGRAM_IMPLEMENTATION_LABELS,...statusLabels}} asOf={asOf?asOfLabel+' '+asOf:missingAsOfLabel}
+    footer={<>{qualification}{excluded&&(onNotApplicable?<button type="button" className="link ml-1" aria-pressed={filter==='not_applicable'} onClick={()=>onNotApplicable(filter==='not_applicable'?'all':'not_applicable')}>{summary.na} not applicable, excluded from implementation totals.</button>:<> {summary.na} not applicable, excluded from implementation totals.</>)}</>}/>;
 }
 
 export function ProgramVisualToolbar({id,title,description,grouping,search,onSearch,searchLabel='Search safeguards',filter,onFilter,counts,order,onOrder,expand,summary,breadcrumb,onClear,filterLabels=FILTER_LABELS,filterControls,orderOptions=[['program','Program order'],['gaps','Least implemented first']],isFiltering,activeFilterLabel}){

@@ -73,7 +73,8 @@ test('one protected shell serves unfamiliar clients and every configured framewo
   expect(nav.querySelector('[data-testid="nav-iv-setup"]').getAttribute('href')).toBe('/iv-setup?client_id=unfamiliar-native-id');
   expect(nav.querySelector('[data-testid="nav-reviews"]').textContent).toContain('2');
   expect(nav.querySelector('[data-testid="nav-iv-setup"]').textContent).toContain('3');
-  expect(document.documentElement.dataset.nativeStandard).toBe('dark');
+  expect(document.documentElement.dataset.nativeStandard).toBe('light');
+  expect(document.documentElement.dataset.previewTheme).toBe('glass07');
   expect(api.get.mock.calls.every(([, options]) => !options?.params?.client_id || options.params.client_id === client.client_id)).toBe(true);
 });
 
@@ -115,6 +116,8 @@ test('client users see their native workspaces without administration and unavai
 test('unmount removes the protected theme marker so public login retains its own styling', async () => {
   await render(); expect(document.documentElement.hasAttribute('data-native-standard')).toBe(true);
   await act(async () => root.render(null)); expect(document.documentElement.hasAttribute('data-native-standard')).toBe(false);
+  expect(document.documentElement.hasAttribute('data-preview-theme')).toBe(false);
+  expect(document.documentElement.hasAttribute('data-theme-fixed-mode')).toBe(false);
 });
 
 test('mobile navigation Escape closes and returns focus without dismissing foreground work or stealing desktop focus', async () => {

@@ -25,9 +25,9 @@ export function IsoProgramHeader({view,presentation,auditSummary,resume,onContin
     beforeTitle={beforeTitle} className="iso-program-heading" focusHeading {...{resume,onContinue,theme,onTheme}}/>;
 }
 
-export function IsoProgramSnapshot({summary,presentation,filter,onFilter,noun='requirements and controls',id='bcis-summary-heading'}){
-  return <ProgramVisualSnapshot {...{summary,filter,onFilter,noun,id}} asOf={isoSourceDate(presentation.sourceAsOf)}
-    statusLabels={ISO_PROGRAM_STATUS_LABELS} onSegmentFilter={onFilter} showExcludedNote={false}/>;
+export function IsoProgramSnapshot({summary,presentation,filter,onFilter,rows,onOpen,subtitle,mapName,noun='requirements and controls',id='bcis-summary-heading'}){
+  return <ProgramVisualSnapshot {...{summary,filter,onFilter,noun,id,rows,onOpen,subtitle,mapName}} asOf={isoSourceDate(presentation.sourceAsOf)}
+    statusLabels={ISO_PROGRAM_STATUS_LABELS} showExcludedNote={false}/>;
 }
 
 const APPLICABILITY=[['included','Necessary','impl','applicable'],['excluded','Not necessary','part','excluded'],['undetermined','Decision needed','none','undetermined']];

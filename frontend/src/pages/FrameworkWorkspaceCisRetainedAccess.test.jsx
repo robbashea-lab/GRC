@@ -66,8 +66,8 @@ const toggle=()=>[...host.querySelectorAll('label')].find(label=>label.textConte
 const retained=()=>host.querySelector('[aria-labelledby="cis-retained-heading"]');
 function expectActiveScope(){
   expect(host.querySelector('.brawndo-cis-visual')).toBeTruthy();
-  expect(host.querySelector('.now-head p').textContent).toBe('0 of 56 safeguards implemented');
-  expect(host.querySelector('.bd-head').textContent).toContain('Assessed 0 of 56');
+  expect(host.querySelector('.gn-ring-copy').textContent).toBe('0 of 56 safeguards');
+  expect(host.querySelector('.gn-map-metrics').textContent).toContain('0 of 56 assessed');
   expect(host.querySelector('.page-head p').textContent).toContain('15 controls · 56 safeguards');
   expect([...host.querySelectorAll('[aria-label="Show safeguards"] button')].find(element=>element.textContent.startsWith('All')).querySelector('.n').textContent).toBe('56');
   expect(host.querySelector('.head-actions .primary').textContent).toContain('Continue: 1.1 ');
@@ -115,7 +115,7 @@ test.each([1,2,3])('legacy breadcrumb compatibility: native IG%s assessment brea
   await click(button(assessment(),'Close'));
   expect(assessment()).toBeNull();
   expect(host.querySelector('[data-testid="location"]').textContent).toBe('/compliance/cis-ig1?client_id='+client.client_id);
-  expect(host.querySelector('.now-head p').textContent).toBe(`0 of ${data.active_definition_ids.length} safeguards implemented`);
+  expect(host.querySelector('.gn-ring-copy').textContent).toBe(`0 of ${data.active_definition_ids.length} safeguards`);
   await click(host.querySelector('.head-actions .primary'));
   expect(assessment()).toBeTruthy();
   const location=new URL(host.querySelector('[data-testid="location"]').textContent,'http://localhost');
@@ -142,7 +142,7 @@ test.each([1,2,3])('current rollout IG%s client-first breadcrumb retains program
   await click(button(assessment(),'Close'));
   expect(assessment()).toBeNull();
   expect(host.querySelector('[data-testid="location"]').textContent).toBe('/compliance/cis-ig1?client_id='+client.client_id);
-  expect(host.querySelector('.now-head p').textContent).toBe(`0 of ${data.active_definition_ids.length} safeguards implemented`);
+  expect(host.querySelector('.gn-ring-copy').textContent).toBe(`0 of ${data.active_definition_ids.length} safeguards`);
   await click(host.querySelector('.head-actions .primary'));
   expect(assessment()).toBeTruthy();
   const location=new URL(host.querySelector('[data-testid="location"]').textContent,'http://localhost');
@@ -165,7 +165,7 @@ test.each([1,2])('native IG%s retained caption names current scope without inclu
   expect(retained().textContent).toContain(`These records are outside the current IG${group} scope and excluded from active program totals.`);
   expect(retained().querySelectorAll('tbody tr')).toHaveLength(1);
   expect(retained().querySelector(`[data-testid="requirement-${definition.id}"]`)).toBeTruthy();
-  expect(host.querySelector('.now-head p').textContent).toBe(`0 of ${activeCount} safeguards implemented`);
+  expect(host.querySelector('.gn-ring-copy').textContent).toBe(`0 of ${activeCount} safeguards`);
   expect(JSON.stringify(data)).toBe(before);
   ['patch','put','post','delete'].forEach(method=>expect(api[method]).not.toHaveBeenCalled());
 });
@@ -192,15 +192,15 @@ test('retained toggle, search and filter open exact native records and managemen
   expect(activeRegister.querySelector('.summary').textContent).toContain('56 safeguards in 15 controls');
 
   await search('Utilize an Active Discovery Tool');
-  await click([...host.querySelectorAll('.lg-cell')].find(element=>element.textContent.startsWith('Implemented')));
+  await click([...host.querySelectorAll('.gn-ring-card')].find(element=>element.textContent.startsWith('Implemented')));
   expect(retained().querySelectorAll('tbody tr')).toHaveLength(1);
   expect(retained().querySelector('tr[data-testid="requirement-1.3"]')).toBeTruthy();expectActiveScope();
   await click(retained().querySelector('.cis-results-open'));
   expect(host.querySelector('[data-testid="location"]').textContent).toContain('assessment=native-1.3');
   const assessment=host.querySelector('[data-testid="brawndo-cis-assessment"]');
   expect(assessment).toBeTruthy();expect(assessment.classList.contains('brawndo-cis-visual-safeguard')).toBe(false);
-  expect(assessment.querySelector('[aria-label="Current implementation"]').value).toBe('Retained implementation 1.3');
-  expect(assessment.querySelector('[aria-label="Current implementation"]').disabled).toBe(false);
+  expect(assessment.querySelector('[aria-label="Implemented"]').value).toBe('Retained implementation 1.3');
+  expect(assessment.querySelector('[aria-label="Implemented"]').disabled).toBe(false);
   expect(assessment.querySelector('[aria-label="Saved verification"]').textContent).toBe('Verified');
   expect(host.textContent).toContain('Retained out-of-scope safeguard · history and linked work remain available.');
   expect(api.get).toHaveBeenCalledWith('/framework_assessments/native-1.3/related',expect.any(Object));
@@ -229,8 +229,8 @@ test('a retained deep link keeps its native notice and actor-based read-only per
   mockAuth={...mockAuth,user:{...mockAuth.user,role:'client_viewer'}};
   await render('/compliance/cis-ig1?assessment=native-1.5');
   const assessment=host.querySelector('[data-testid="brawndo-cis-assessment"]');
-  expect(assessment).toBeTruthy();expect(assessment.querySelector('[aria-label="Current implementation"]').value).toBe('Retained implementation 1.5');
-  expect(assessment.querySelector('[aria-label="Current implementation"]').disabled).toBe(true);
+  expect(assessment).toBeTruthy();expect(assessment.querySelector('[aria-label="Implemented"]').value).toBe('Retained implementation 1.5');
+  expect(assessment.querySelector('[aria-label="Implemented"]').disabled).toBe(true);
   expect(button(assessment,'Save assessment')).toBeUndefined();
   expect(assessment.textContent).toContain('Retained assessment');expect(assessment.textContent).toContain('Read-only assessment');
   expect(host.textContent).toContain('Retained out-of-scope safeguard · history and linked work remain available.');

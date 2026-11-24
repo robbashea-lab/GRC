@@ -14,8 +14,8 @@ export function SocProgramHeader({categories,summary,resume,onContinue,theme,onT
     {...{resume,onContinue,theme,onTheme}}/>;
 }
 
-export function SocProgramSnapshot({summary,filter,onFilter,asOf}){
-  return <ProgramVisualSnapshot summary={summary} filter={filter} onFilter={onFilter} asOf={asOf} noun="criteria" id="bcis-summary-heading"
-    statusLabels={SOC_PROGRAM_STATUS_LABELS} onSegmentFilter={onFilter} onNotApplicable={onFilter}
+export function SocProgramSnapshot({summary,filter,onFilter,asOf,rows,onOpen,subtitle}){
+  return <ProgramVisualSnapshot {...{rows,onOpen,subtitle}} mapName="criterion" summary={summary} filter={filter} onFilter={onFilter} asOf={asOf} noun="criteria" id="bcis-summary-heading"
+    statusLabels={SOC_PROGRAM_STATUS_LABELS} onNotApplicable={onFilter}
     qualification="Assessment progress, not a compliance percentage, certification or audit opinion. Freshness is separate from saved verification."/>;
 }

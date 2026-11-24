@@ -161,17 +161,17 @@ test('overview uses the native weighted 123-record population once and section s
   controls.forEach(record=>{record.status='not_assessed';});
   Object.assign(controls[0],{status:'addressed'});Object.assign(controls[1],{status:'addressed',soa_applicability:'excluded'});Object.assign(controls[2],{status:'addressed',soa_applicability:'',soa_justification:''});
   result.refresh();const before=JSON.stringify(result.source);serve(result.source);await mount(clientId);
-  expect(result.source.assessments).toHaveLength(123);expect(summary().querySelector('.now-head p').textContent).toBe('31 of 121 requirements and controls implemented');
-  expect(summary().querySelector('.now-value').textContent).toBe('25.6%');expect(summary().querySelector('.bd-head').textContent).toContain('Assessed 31 of 121');
+  expect(result.source.assessments).toHaveLength(123);expect(summary().querySelector('.gn-ring-copy').textContent).toBe('31 of 121 requirements and controls');
+  expect(summary().querySelector('.gn-ring-value').textContent).toBe('25.6%');expect(summary().querySelector('.gn-map-metrics').textContent).toContain('31 of 121 assessed');
   expect(card('Internal Audit').querySelector('.iso-program-metric').textContent).toBe('Not scheduled · 2026');
-  await click(card('ISMS Requirements'));expect(summary().querySelector('.now-head p').textContent).toBe('30 of 30 ISMS requirements implemented');
+  await click(card('ISMS Requirements'));expect(summary().querySelector('.gn-ring-copy').textContent).toBe('30 of 30 ISMS requirements');
   await click(button('Expand all'));expect(ids()).toEqual(clauses.map(record=>record.definition_id));expect(new Set(ids()).size).toBe(clauses.length);
-  await click(button('Back to ISO overview'));expect(summary().querySelector('.now-value').textContent).toBe('25.6%');
-  await click(card('Annex A Controls'));expect(summary().querySelector('.now-head p').textContent).toBe('1 of 91 controls implemented');
-  expect(summary().querySelector('.bd-title').textContent).toBe('Status of 91 applicable controls');
+  await click(button('Back to ISO overview'));expect(summary().querySelector('.gn-ring-value').textContent).toBe('25.6%');
+  await click(card('Annex A Controls'));expect(summary().querySelector('.gn-ring-copy').textContent).toBe('1 of 91 controls');
+  expect(summary().querySelector('.sgmap-scope').textContent).toBe('91 applicable controls');
   expect(summary().textContent).not.toContain('applicable applicable');
   await click(button('Expand all'));expect(ids()).toEqual(controls.map(record=>record.definition_id));expect(new Set(ids()).size).toBe(controls.length);
-  expect(summary().querySelector('.card-foot').textContent).toBe('Assessment progress, not a compliance percentage or certification. Freshness is separate from saved verification.');
+  expect(summary().querySelector('.gn-cis-snapshot .note').textContent).toBe('Assessment progress, not a compliance percentage or certification. Freshness is separate from saved verification.');
   expect(group('annex_control/A.5').textContent).toContain('1 excluded');
   expect(group('annex_control/A.5').textContent).toContain('1 applicability not determined');
   expect(JSON.stringify(result.source)).toBe(before);noWrites();
@@ -184,8 +184,8 @@ test('overview Continue safely opens the existing SoA record when its retained j
   // Preserve the canonical position, then model a malformed retained field without normalizing it.
   control.soa_justification=42;
   const before=JSON.stringify(result.source);serve(result.source);await mount(clientId);
-  expect(summary().querySelector('.now-head p').textContent).toBe('Implementation source unavailable');
-  expect(summary().querySelector('.now-value').textContent).toBe('—');expect(editor()).toBeNull();
+  expect(summary().querySelector('.gn-ring-copy strong').textContent).toBe('Unavailable');
+  expect(summary().querySelector('.gn-ring-value').textContent).toBe('—');expect(editor()).toBeNull();
   await click([...container.querySelectorAll('.head-actions button')].find(node=>node.textContent.startsWith('Continue: A.5.1 ')));
   expect(params().get('iso_view')).toBe('soa');expect(container.querySelector('.page-head h1').textContent).toBe('Statement of Applicability');
   expect(editor().dataset.assessment).toBe(control.framework_assessment_id);expect(editor().dataset.client).toBe(clientId);
@@ -201,11 +201,11 @@ test('retained duplicated grouping fields cannot remap an Annex record away from
   Object.assign(control,staleGrouping);
   const before=JSON.stringify(result.source),themeTotal=result.source.definitions.filter(definition=>definition.control==='A.5').length;
   serve(result.source);await mount(clientId);
-  expect(summary().querySelector('.now-head p').textContent).toBe('122 of 123 requirements and controls implemented');
+  expect(summary().querySelector('.gn-ring-copy').textContent).toBe('122 of 123 requirements and controls');
   expect(card('ISMS Requirements').textContent).toContain('30 of 30 requirements implemented');
   await click(card('Annex A Controls'));
-  expect(summary().querySelector('.now-head p').textContent).toBe('92 of 93 controls implemented');
-  expect(summary().querySelector('.bd-title').textContent).toBe('Status of 93 applicable controls');
+  expect(summary().querySelector('.gn-ring-copy').textContent).toBe('92 of 93 controls');
+  expect(summary().querySelector('.sgmap-scope').textContent).toBe('93 applicable controls');
   const nativeTheme=group('annex_control/A.5');expect(nativeTheme).toBeTruthy();
   expect(nativeTheme.querySelector('.g-impl b').textContent).toBe(`${themeTotal-1} of ${themeTotal}`);
   expect(group('isms_clause/legacy-unknown-group')).toBeNull();await click(nativeTheme);
@@ -274,8 +274,8 @@ test.each([
   ['foreign-only response',result=>{result.source.assessments=result.source.assessments.map(record=>({...record,client_id:'foreign-only'}));}],
 ])('%s withholds certified counts while preserving the native section destinations',async(_name,change)=>{
   const result=fixture('qa-invalid-source');change(result);const before=JSON.stringify(result.source);serve(result.source);await mount(result.client.client_id);
-  expect(summary().querySelector('.now-head p').textContent).toBe('Implementation source unavailable');
-  expect(summary().querySelector('.now-value').textContent).toBe('—');
+  expect(summary().querySelector('.gn-ring-copy strong').textContent).toBe('Unavailable');
+  expect(summary().querySelector('.gn-ring-value').textContent).toBe('—');
   expect(card('Statement of Applicability').textContent).toContain('Applicability source unavailable');expect(editor()).toBeNull();
   expect(container.querySelectorAll('button.iso-program-card')).toHaveLength(4);
   await click(card('Internal Audit'));expect(params().get('iso_view')).toBe('audit');expect(editor()).toBeNull();
@@ -284,7 +284,7 @@ test.each([
 
 test('later ISO enrollment preserves other native CIS and SOC records while the shared ISO views use only their own source',async()=>{
   const result=fixture('qa-later-mixed-iso'),others=addOtherPrograms(result),before=JSON.stringify(others),isoBefore=JSON.stringify(result.source);
-  serve(result.source);await mount(result.client.client_id);expect(summary().querySelector('.now-head p').textContent).toBe('123 of 123 requirements and controls implemented');
+  serve(result.source);await mount(result.client.client_id);expect(summary().querySelector('.gn-ring-copy').textContent).toBe('123 of 123 requirements and controls');
   await click(card('ISMS Requirements'));await click(button('Expand all'));await click(row('4.1'));
   expect(editor().dataset.assessment).toBe(result.client.client_id+':4.1');expect(editor().dataset.framework).toBe('iso-27001');
   expect(JSON.stringify(others)).toBe(before);expect(JSON.stringify(result.source)).toBe(isoBefore);noWrites();

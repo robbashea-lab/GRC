@@ -40,75 +40,91 @@ test.each([[1,56,15],[2,130,18],[3,153,18]])('CIS IG%s header defaults retain ex
   expect(container.querySelectorAll('.head-actions svg .ic')).toHaveLength(2);
 });
 
-test('CIS snapshot defaults keep the approved structure, noninteractive segments and legend filter callbacks',async()=>{
+test('CIS snapshot defaults keep the approved structure, accessible ring graphics and status filter callbacks',async()=>{
   const onFilter=jest.fn(),s=summary();
   await render(<CisVisualSnapshot summary={s} filter="all" onFilter={onFilter} asOf="Native assessment date"/>);
-  expect(container.querySelector('section').className).toBe('pcard');
+  expect(container.querySelector('section').classList.contains('gn-cis-snapshot')).toBe(true);
   expect(container.querySelector('section').getAttribute('aria-labelledby')).toBe('cis-visual-snapshot');
-  expect(container.querySelector('.now-label').textContent).toBe('Current implementation');
-  expect(container.querySelector('.now-value').textContent).toBe('25.0%');
-  expect(container.querySelector('.now-head p').textContent).toBe('1 of 4 safeguards implemented');
-  expect(container.querySelector('.now-head small').textContent).toBe('As of Native assessment date');
-  expect(container.querySelector('.bd-head').textContent).toBe('Status of 4 applicable safeguardsAssessed 3 of 4 · 75.0%');
-  expect(container.querySelector('.sbar').getAttribute('role')).toBe('img');
-  expect([...container.querySelectorAll('.lg-label')].map(element=>element.textContent)).toEqual(['Implemented','Partially implemented','Not implemented','Not assessed']);
-  for(const segment of container.querySelectorAll('.sbar i')){
-    expect(segment.hasAttribute('tabindex')).toBe(false);expect(segment.hasAttribute('role')).toBe(false);
-    await click(segment);await key(segment,'Enter');
+  expect(container.querySelector('.gn-ring-label').textContent).toBe('Implemented');
+  expect(container.querySelector('.gn-ring-value').textContent).toBe('25%');
+  expect(container.querySelector('.gn-ring-copy').textContent).toBe('1 of 4 safeguards');
+  expect(container.querySelector('.sgmap-asof').textContent).toBe('As of Native assessment date');
+  expect(container.querySelector('.gn-map-metrics').textContent).toBe('Assessment coverage3 of 4 assessed75%');
+  expect(container.querySelector('.gn-ring-cards').getAttribute('role')).toBe('group');
+  expect([...container.querySelectorAll('.gn-ring-label')].map(element=>element.textContent)).toEqual(['Implemented','Partially implemented','Not implemented','Not assessed']);
+  expect(container.querySelectorAll('.gn-ring-arc')).toHaveLength(4);
+  for(const graphic of container.querySelectorAll('.gn-ring-figure svg')){
+    expect(graphic.getAttribute('aria-hidden')).toBe('true');expect(graphic.getAttribute('focusable')).toBe('false');
   }
   expect(onFilter).not.toHaveBeenCalled();
-  await click(container.querySelector('.lg-cell'));expect(onFilter).toHaveBeenLastCalledWith('addressed');
+  await click(container.querySelector('.gn-ring-card'));expect(onFilter).toHaveBeenLastCalledWith('addressed');
   await render(<CisVisualSnapshot summary={s} filter="addressed" onFilter={onFilter}/>);
-  await click(container.querySelector('.lg-cell'));expect(onFilter).toHaveBeenLastCalledWith('all');
-  expect(container.querySelector('.card-foot').textContent).toBe('Assessment progress, not a compliance percentage or certification. Freshness is separate from saved verification. 1 not applicable, excluded from implementation totals.');
-  expect(container.querySelector('.card-foot button')).toBeNull();
+  await click(container.querySelector('.gn-ring-card'));expect(onFilter).toHaveBeenLastCalledWith('all');
+  expect(container.querySelector('.gn-cis-snapshot .note').textContent).toBe('Assessment progress, not a compliance percentage or certification. Freshness is separate from saved verification. 1 not applicable, excluded from implementation totals.');
+  expect(container.querySelector('.gn-cis-snapshot .note button')).toBeNull();
 });
 
 test('SOC snapshot extensions reuse the same structure and explicit labels without changing native counts',async()=>{
-  const s=Object.freeze(summary()),before=JSON.stringify(s),onFilter=jest.fn(),onSegmentFilter=jest.fn(),onNotApplicable=jest.fn();
+  const s=Object.freeze(summary()),before=JSON.stringify(s),onFilter=jest.fn(),onNotApplicable=jest.fn();
   const statusLabels={needs_attention:'Implementation not established'};
-  const view=filter=><ProgramVisualSnapshot summary={s} noun="criteria" id="soc-native-summary" {...{filter,onFilter,onSegmentFilter,onNotApplicable,statusLabels}}/>;
+  const view=filter=><ProgramVisualSnapshot summary={s} noun="criteria" id="soc-native-summary" {...{filter,onFilter,onNotApplicable,statusLabels}}/>;
   await render(view('all'));
   expect(container.querySelector('section').getAttribute('aria-labelledby')).toBe('soc-native-summary');
-  expect(container.querySelector('.now-head p').textContent).toBe('1 of 4 criteria implemented');
-  expect(container.querySelector('.sbar').getAttribute('role')).toBe('group');
-  const negative=container.querySelector('.sbar .s-not');
-  expect(negative.getAttribute('aria-label')).toBe('Implementation not established: 1 of 4');
+  expect(container.querySelector('.gn-ring-copy').textContent).toBe('1 of 4 criteria');
+  expect(container.querySelector('.gn-ring-cards').getAttribute('role')).toBe('group');
+  const negative=container.querySelector('.gn-ring-card[data-status=N]');
+  expect(negative.getAttribute('aria-label')).toBe('Implementation not established: 1 of 4 criteria, 25%');
   expect(negative.tagName).toBe('BUTTON');expect(negative.type).toBe('button');expect(negative.tabIndex).toBe(0);
   negative.focus();expect(document.activeElement).toBe(negative);
-  await click(negative);expect(onSegmentFilter).toHaveBeenLastCalledWith('needs_attention');expect(onFilter).not.toHaveBeenCalled();
+  await click(negative);expect(onFilter).toHaveBeenLastCalledWith('needs_attention');
   await render(view('needs_attention'));
-  await click(container.querySelector('.sbar .s-not'));expect(onSegmentFilter).toHaveBeenLastCalledWith('all');
-  await click(container.querySelector('.sbar .s-impl'));expect(onSegmentFilter).toHaveBeenLastCalledWith('addressed');
-  await click(container.querySelector('.lg-cell'));expect(onFilter).toHaveBeenLastCalledWith('addressed');
-  await click(container.querySelector('.card-foot button'));expect(onNotApplicable).toHaveBeenLastCalledWith('not_applicable');
+  await click(container.querySelector('.gn-ring-card[data-status=N]'));expect(onFilter).toHaveBeenLastCalledWith('all');
+  await click(container.querySelector('.gn-ring-card[data-status=I]'));expect(onFilter).toHaveBeenLastCalledWith('addressed');
+  await click(container.querySelector('.gn-ring-card'));expect(onFilter).toHaveBeenLastCalledWith('addressed');
+  await click(container.querySelector('.gn-cis-snapshot .note button'));expect(onNotApplicable).toHaveBeenLastCalledWith('not_applicable');
   expect(JSON.stringify(s)).toBe(before);
 });
 
 test('ISO may omit the exclusion footer without changing native totals or the default CIS and SOC presentation',async()=>{
   const s=Object.freeze(summary()),before=JSON.stringify(s);
   await render(<ProgramVisualSnapshot summary={s} filter="all" onFilter={()=>{}} showExcludedNote={false}/>);
-  expect(container.querySelector('.card-foot').textContent).toBe('Assessment progress, not a compliance percentage or certification. Freshness is separate from saved verification.');
-  expect(container.querySelector('.now-head p').textContent).toBe('1 of 4 safeguards implemented');
-  expect(container.querySelector('.bd-head').textContent).toContain('Assessed 3 of 4');
+  expect(container.querySelector('.gn-cis-snapshot .note').textContent).toBe('Assessment progress, not a compliance percentage or certification. Freshness is separate from saved verification.');
+  expect(container.querySelector('.gn-ring-copy').textContent).toBe('1 of 4 safeguards');
+  expect(container.querySelector('.gn-map-metrics').textContent).toContain('3 of 4 assessed');
   expect(s.na).toBe(1);expect(JSON.stringify(s)).toBe(before);
   await render(<ProgramVisualSnapshot summary={s} filter="all" onFilter={()=>{}}/>);
-  expect(container.querySelector('.card-foot').textContent).toContain('1 not applicable, excluded from implementation totals.');
+  expect(container.querySelector('.gn-cis-snapshot .note').textContent).toContain('1 not applicable, excluded from implementation totals.');
 });
 
-test('zero applicable and unavailable snapshots do not invent percentages, dates or interactive segments',async()=>{
-  const onSegmentFilter=jest.fn();
-  await render(<ProgramVisualSnapshot summary={cisSummary([{status:'not_applicable'}])} filter="all" onFilter={jest.fn()} onSegmentFilter={onSegmentFilter}/>);
-  expect(container.querySelector('.now-value').textContent).toBe('—');expect(container.querySelector('.now-value .unit')).toBeNull();
-  expect(container.querySelector('.now-head small').textContent).toBe('Assessment date unavailable');
-  await render(<ProgramVisualSnapshot summary={{...summary(),available:false,reason:'Native source incomplete'}} filter="all" onFilter={jest.fn()} onSegmentFilter={onSegmentFilter} onNotApplicable={jest.fn()}/>);
-  expect(container.querySelector('.sbar').getAttribute('aria-label')).toBe('Status mix unavailable');
-  expect(container.querySelectorAll('.sbar i')).toHaveLength(0);
-  expect(container.querySelectorAll('.sbar button')).toHaveLength(0);
-  expect(container.querySelector('.card-foot button')).toBeNull();
-  expect(container.querySelector('.card-foot').textContent).toContain('Native source incomplete');
+test('expanding the item map opens the saved applicable record and omits excluded records',async()=>{
+  const included=row({definition_id:'A.5.1',specification:'annex_control',soa_applicability:'included'}),onOpen=jest.fn();
+  const excluded=row({definition_id:'A.5.2',framework_assessment_id:'excluded-record',specification:'annex_control',soa_applicability:'excluded'});
+  const records=[included,excluded];
+  await render(<ProgramVisualSnapshot summary={cisSummary(records)} rows={records} filter="all" onFilter={jest.fn()} onOpen={onOpen} noun="controls" mapName="control"/>);
+  const toggle=container.querySelector('.gn-map-toggle'),snapshot=container.querySelector('.gn-cis-heading');
+  expect(container.querySelectorAll('.sgmap-cell')).toHaveLength(0);
+  await click(toggle);
+  expect(toggle.getAttribute('aria-expanded')).toBe('true');
+  expect(container.querySelectorAll('.sgmap-cell')).toHaveLength(1);
+  const control=container.querySelector('.sgmap-cell');
+  expect(control.getAttribute('aria-label')).toContain('A.5.1');
+  await click(control);expect(onOpen).toHaveBeenCalledWith(included);
+  await click(snapshot);expect(document.getElementById(snapshot.getAttribute('aria-controls')).hidden).toBe(true);
+});
+
+test('zero applicable and unavailable snapshots do not invent percentages or dates and unavailable cards disable filtering',async()=>{
+  const onFilter=jest.fn();
+  await render(<ProgramVisualSnapshot summary={cisSummary([{status:'not_applicable'}])} filter="all" onFilter={onFilter}/>);
+  expect(container.querySelector('.gn-ring-value').textContent).toBe('—');expect(container.querySelector('.gn-ring-value .unit')).toBeNull();
+  expect(container.querySelector('.sgmap-asof').textContent).toBe('Assessment date unavailable');
+  await render(<ProgramVisualSnapshot summary={{...summary(),available:false,reason:'Native source incomplete'}} filter="all" onFilter={onFilter} onNotApplicable={jest.fn()}/>);
+  expect(container.querySelector('.gn-ring-cards').getAttribute('aria-label')).toBe('Status mix unavailable');
+  expect(container.querySelectorAll('.gn-ring-arc')).toHaveLength(0);
+  expect(container.querySelectorAll('.gn-ring-card:enabled')).toHaveLength(0);
+  expect(container.querySelector('.gn-cis-snapshot .note button')).toBeNull();
+  expect(container.querySelector('.gn-cis-snapshot .note').textContent).toContain('Native source incomplete');
   expect(container.textContent).not.toMatch(/NaN|Infinity|undefined/);
-  expect(onSegmentFilter).not.toHaveBeenCalled();
+  expect(onFilter).not.toHaveBeenCalled();
 });
 
 test('SOC header can supply native category metadata, focus and a back action without another header layout',async()=>{

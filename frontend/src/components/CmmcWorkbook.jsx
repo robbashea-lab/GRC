@@ -9,6 +9,7 @@ import {downloadCmmcExport} from '../lib/cmmcExports';
 import {recordReferences} from '../lib/cmmcFiles/snapshot';
 import {Button} from './ui/button';
 import WorkspaceTabs from './WorkspaceTabs';
+import './CmmcWorkbook.css';
 
 const endpoint='/frameworks/cmmc/workbook';
 const tabs=[['requirements','Requirements'],['ssp','System Security Plan'],['poam','POA&M'],['sprs','SPRS Score']];
@@ -25,7 +26,7 @@ const postingFields=[field('score','Submitted score','number'),field('date','Ass
   field('cage','Associated CAGE codes'),field('reference','SPRS reference')];
 const decisionFields=[field('outcome','Recorded decision','select',[['pending','Pending review'],['approved','Approval recorded'],['adjudicated','Favorable DoD CIO adjudication recorded']]),
   field('authority','Decision authority'),field('date','Decision date','date'),field('reference','Decision reference'),field('notes','Scope and evidence','textarea')];
-const card='rounded-lg border border-line bg-surface-card p-4 space-y-3';
+const card='cmmc-paper rounded-lg border border-line bg-surface-card p-4 space-y-3';
 const table='w-full text-left text-sm';
 const control='ui-control block w-full';
 
@@ -148,7 +149,7 @@ export default function CmmcWorkbook({clientId,level,user,revision,onOpen,childr
     return statusMatches && (tier==='all' || tier===pointTier)
       && (row.practice+' '+row.title+' '+row.family).toLowerCase().includes(search.toLowerCase().trim());
   });
-  return <div className="space-y-4">
+  return <div className="native-cmmc-workbook space-y-4">
     <WorkspaceTabs label="CMMC workspace sections" tabs={level===1?tabs.slice(0,2):tabs} selected={tab} onSelect={switchTab} idPrefix="cmmc-tab" panelId="cmmc-panel"/>
     <div id="cmmc-panel" role="tabpanel" aria-labelledby={'cmmc-tab-'+tab} className="space-y-4">
     {tab==='requirements'?children:<>
@@ -190,13 +191,21 @@ export default function CmmcWorkbook({clientId,level,user,revision,onOpen,childr
         </details>
       </>}
       {model&&tab==='sprs'&&<>
-        <section className={card}><p>NIST SP 800-171 Rev. 2 · CMMC Level 2</p><h3 className="font-semibold">Working score estimate</h3>
-          <p className="text-3xl font-semibold">{model.score.available?model.score.value+' / 110':'Awaiting assessment'}</p>
-          <Metrics items={[['Starting score',110],['Saved gaps',model.score.knownDeduction],['Withheld pending review',model.score.withheld],['Assessed',model.score.assessed+' / 110']]}/>
-          <p>Internal readiness estimate. {model.score.sspReady?'SSP requirement verified.':'The SSP prerequisite needs verification.'}</p>
+        <section className={card + ' cmmc-score-grid'}>
+          <div><p className="cmmc-score-label">NIST SP 800-171 Rev. 2 · CMMC Level 2</p>
+            <h3 className="font-semibold">Working score estimate</h3>
+            <p className={model.score.available ? 'cmmc-score-number' : 'cmmc-score-pending'}>{model.score.available ? <>{model.score.value}<small> / 110</small></> : 'Awaiting assessment'}</p>
+            <p className="cmmc-score-caption">Internal readiness estimate. {model.score.sspReady?'SSP requirement verified.':'The SSP prerequisite needs verification.'}</p>
+            <p>{model.score.assessed} of 110 assessed</p>
+          </div>
+          <dl className="cmmc-score-equation">
+            <div><dt>Starting score</dt><dd>110</dd></div>
+            <div><dt>Saved gaps</dt><dd>{model.score.knownDeduction}</dd></div>
+            <div><dt>Withheld pending review</dt><dd>{model.score.withheld}</dd></div>
+          </dl>
         </section>
         <section className={card}><h3 className="font-semibold">Recorded SPRS submission</h3>
-          <p>{Object.hasOwn(model.posting,'score')?[model.posting.score,model.posting.date,model.posting.scope,model.posting.cage,model.posting.reference].filter(Boolean).join(' · '):'No submitted score recorded.'}</p>
+          <p>{Object.hasOwn(model.posting,'score')?[model.posting.score,model.posting.date,model.posting.scope,model.posting.cage,model.posting.reference].filter(value=>value!==null && value!==undefined && value!=='').join(' · '):'No submitted score recorded.'}</p>
           {allowed()&&<Button variant="outline" onClick={()=>edit('posting','Record SPRS submission',postingFields,model.posting)}>Record SPRS submission</Button>}
         </section>
       </>}
