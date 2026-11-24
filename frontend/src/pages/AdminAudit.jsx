@@ -106,15 +106,10 @@ function computeRange(preset, customStart, customEnd) {
 
 export default function AdminAudit() {
   const [params, setParams] = useSearchParams();
-  const initialClient = params.get("client") || "__all__";
-  const [clientFilter, setClientFilter] = useState(initialClient);
-  const [userFilter, setUserFilter] = useState(params.get("user") || "__all__");
-  const [actionFilter, setActionFilter] = useState(params.get("action") || "__all__");
-  const [entityFilter, setEntityFilter] = useState(params.get("entity") || "__all__");
-  const [datePreset, setDatePreset] = useState(params.get("date") || "30");
-  const [customStart, setCustomStart] = useState(params.get("start") || "");
-  const [customEnd, setCustomEnd] = useState(params.get("end") || "");
-  const [q, setQ] = useState(params.get("q") || "");
+  const clientFilter=params.get('client') || '__all__', userFilter=params.get('user') || '__all__';
+  const actionFilter=params.get('action') || '__all__', entityFilter=params.get('entity') || '__all__';
+  const datePreset=params.get('date') || '30', customStart=params.get('start') || '', customEnd=params.get('end') || '';
+  const q=params.get('q') || '';
   const [debouncedQ, setDebouncedQ] = useState(q);
   const [page, setPage] = useState(1);
   const pageSize = 50;
@@ -134,12 +129,14 @@ export default function AdminAudit() {
 
   // Load filter facets once
   useEffect(() => {
+    const request=new AbortController();
     (async () => {
       try {
-        const { data } = await api.get("/audit-logs/facets");
-        setFacets(data || {});
-      } catch (e) { toast.error(formatError(e)); }
+        const { data } = await api.get("/audit-logs/facets",{signal:request.signal});
+        if(!request.signal.aborted)setFacets(data || {});
+      } catch (e) { if(!request.signal.aborted)toast.error(formatError(e)); }
     })();
+    return ()=>request.abort();
   }, []);
 
   const buildQuery = useCallback(() => {
@@ -155,35 +152,32 @@ export default function AdminAudit() {
     return query;
   }, [clientFilter, userFilter, actionFilter, entityFilter, datePreset, customStart, customEnd, debouncedQ, page]);
 
-  const fetchRows = useCallback(async () => {
+  useEffect(() => {
+    const request=new AbortController();
     setLoading(true);
-    try {
-      const { data } = await api.get("/audit-logs", { params: buildQuery() });
-      setRows(data.items || []);
-      setTotal(data.total || 0);
-    } catch (e) { toast.error(formatError(e)); setRows([]); setTotal(0); }
-    finally { setLoading(false); }
+    api.get("/audit-logs", { params: buildQuery(),signal:request.signal }).then(({data})=>{
+      if(!request.signal.aborted){setRows(data.items || []);setTotal(data.total || 0);}
+    }).catch(e=>{
+      if(!request.signal.aborted){toast.error(formatError(e));setRows([]);setTotal(0);}
+    }).finally(()=>{if(!request.signal.aborted)setLoading(false);});
+    return ()=>request.abort();
   }, [buildQuery]);
-
-  useEffect(() => { fetchRows(); }, [fetchRows]);
 
   // Reset to page 1 whenever filters change.
   useEffect(() => { setPage(1); },
     [clientFilter, userFilter, actionFilter, entityFilter, datePreset, customStart, customEnd, debouncedQ]);
 
-  // Persist filters in URL for shareable/back-nav parity.
-  useEffect(() => {
-    const next = new URLSearchParams();
-    if (clientFilter !== "__all__") next.set("client", clientFilter);
-    if (userFilter !== "__all__") next.set("user", userFilter);
-    if (actionFilter !== "__all__") next.set("action", actionFilter);
-    if (entityFilter !== "__all__") next.set("entity", entityFilter);
-    if (datePreset !== "30") next.set("date", datePreset);
-    if (datePreset === "custom" && customStart) next.set("start", customStart);
-    if (datePreset === "custom" && customEnd) next.set("end", customEnd);
-    if (debouncedQ) next.set("q", debouncedQ);
-    setParams(next, { replace: true });
-  }, [clientFilter, userFilter, actionFilter, entityFilter, datePreset, customStart, customEnd, debouncedQ, setParams]);
+  // Only a filter interaction may change the URL. Loading the register must leave
+  // an in-progress sidebar navigation in control of the destination.
+  function changeFilters(changes) {
+    const next=new URLSearchParams(params);
+    for(const [key,value] of Object.entries(changes)) {
+      if(!value || (key!=='q' && value==='__all__') || (key==='date' && value==='30'))next.delete(key);
+      else next.set(key,value);
+    }
+    if(next.get('date')!=='custom'){next.delete('start');next.delete('end');}
+    if(next.toString()!==params.toString())setParams(next,{replace:true});
+  }
 
   const totalPages = Math.max(1, Math.ceil(total / pageSize));
 
@@ -202,26 +196,24 @@ export default function AdminAudit() {
     finally { setExporting(false); }
   }
 
-  function resetFilters() {
-    setClientFilter("__all__"); setUserFilter("__all__");
-    setActionFilter("__all__"); setEntityFilter("__all__");
-    setDatePreset("30"); setCustomStart(""); setCustomEnd(""); setQ("");
+  function resetFilters(date='30') {
+    changeFilters({client:'',user:'',action:'',entity:'',date,start:'',end:'',q:''});
   }
 
   // Controlled adapter: column menus and toolbar share the existing server query.
   const columnBindings = [
-    ['date', 'Date / Time', datePreset, setDatePreset, '__any__', DATE_PRESETS.filter(o => o.value !== '__any__')],
-    ['client', 'Client', clientFilter, setClientFilter, '__all__', [{value:'platform',label:'Platform Activity'}, ...(facets.clients || []).map(c => ({value:c.client_id,label:c.name}))]],
-    ['user', 'User', userFilter, setUserFilter, '__all__', (facets.users || []).map(u => ({value:u.user_id,label:u.name || u.email}))],
-    ['action', 'Action', actionFilter, setActionFilter, '__all__', ACTION_OPTIONS.filter(o => o.value !== '__all__')],
-    ['entity', 'Entity', entityFilter, setEntityFilter, '__all__', (facets.entity_types || []).map(e => ({value:e,label:humanEntity(e)}))],
+    ['date', 'Date / Time', datePreset, '__any__', DATE_PRESETS.filter(o => o.value !== '__any__')],
+    ['client', 'Client', clientFilter, '__all__', [{value:'platform',label:'Platform Activity'}, ...(facets.clients || []).map(c => ({value:c.client_id,label:c.name}))]],
+    ['user', 'User', userFilter, '__all__', (facets.users || []).map(u => ({value:u.user_id,label:u.name || u.email}))],
+    ['action', 'Action', actionFilter, '__all__', ACTION_OPTIONS.filter(o => o.value !== '__all__')],
+    ['entity', 'Entity', entityFilter, '__all__', (facets.entity_types || []).map(e => ({value:e,label:humanEntity(e)}))],
   ];
   const table = {
-    columns: columnBindings.map(([key,label,,,,options]) => ({key,label,options,filter:true,sortable:false,single:true})),
-    state: {filters:Object.fromEntries(columnBindings.filter(([, ,value,,empty]) => value !== empty).map(([key,,value]) => [key,[value]]))},
+    columns: columnBindings.map(([key,label,,,options]) => ({key,label,options,filter:true,sortable:false,single:true})),
+    state: {filters:Object.fromEntries(columnBindings.filter(([, ,value,empty]) => value !== empty).map(([key,,value]) => [key,[value]]))},
     options:c => c.options,
-    setFilter:(key,values) => { const binding = columnBindings.find(b => b[0] === key); binding[3](values.at(-1) || binding[4]); },
-    clear:() => { resetFilters(); setDatePreset('__any__'); },
+    setFilter:(key,values) => { const binding = columnBindings.find(b => b[0] === key); changeFilters({[key]:values.at(-1) || binding[3]}); },
+    clear:() => resetFilters('__any__'),
   };
 
   const activeFilterCount = useMemo(() => {
@@ -250,13 +242,13 @@ export default function AdminAudit() {
       <div className="admin-toolbar" data-testid="audit-filters">
         <div className="admin-search relative">
           <Search className="h-3.5 w-3.5 text-ink-help" />
-          <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search action, entity, user, record…"
+          <Input value={q} onChange={(e) => changeFilters({q:e.target.value})} placeholder="Search action, entity, user, record…"
             aria-label="Search audit events" className="pl-8 h-9 text-sm" data-testid="audit-search" />
         </div>
         <span className="admin-record-meta">Displayed in your local time zone</span>
         <div className="admin-filter-grid">
         <label><span>Client</span>
-        <Select value={clientFilter} onValueChange={setClientFilter}>
+        <Select value={clientFilter} onValueChange={value=>changeFilters({client:value})}>
           <SelectTrigger className="h-9 w-56 text-sm" aria-label="Client filter" data-testid="audit-filter-client">
             <SelectValue placeholder="All clients" />
           </SelectTrigger>
@@ -271,7 +263,7 @@ export default function AdminAudit() {
         </label>
 
         <label><span>User</span>
-        <Select value={userFilter} onValueChange={setUserFilter}>
+        <Select value={userFilter} onValueChange={value=>changeFilters({user:value})}>
           <SelectTrigger className="h-9 w-56 text-sm" aria-label="User filter" data-testid="audit-filter-user">
             <SelectValue placeholder="All users" />
           </SelectTrigger>
@@ -285,7 +277,7 @@ export default function AdminAudit() {
         </label>
 
         <label><span>Action</span>
-        <Select value={actionFilter} onValueChange={setActionFilter}>
+        <Select value={actionFilter} onValueChange={value=>changeFilters({action:value})}>
           <SelectTrigger className="h-9 w-44 text-sm" aria-label="Action filter" data-testid="audit-filter-action">
             <SelectValue placeholder="All actions" />
           </SelectTrigger>
@@ -298,7 +290,7 @@ export default function AdminAudit() {
         </label>
 
         <label><span>Entity</span>
-        <Select value={entityFilter} onValueChange={setEntityFilter}>
+        <Select value={entityFilter} onValueChange={value=>changeFilters({entity:value})}>
           <SelectTrigger className="h-9 w-44 text-sm" aria-label="Object or event type filter" data-testid="audit-filter-entity">
             <SelectValue placeholder="All entities" />
           </SelectTrigger>
@@ -312,7 +304,7 @@ export default function AdminAudit() {
         </label>
 
         <label><span>Date range</span>
-        <Select value={datePreset} onValueChange={setDatePreset}>
+        <Select value={datePreset} onValueChange={value=>changeFilters({date:value})}>
           <SelectTrigger className="h-9 w-40 text-sm" aria-label="Date range filter" data-testid="audit-filter-date">
             <SelectValue placeholder="Last 30 days" />
           </SelectTrigger>
@@ -327,17 +319,17 @@ export default function AdminAudit() {
         {datePreset === "custom" && (
           <>
             <label><span>Range start</span><Input type="date" value={customStart ? customStart.slice(0, 10) : ""}
-              onChange={(e) => setCustomStart(e.target.value ? new Date(e.target.value).toISOString() : "")}
+              onChange={(e) => changeFilters({start:e.target.value ? new Date(e.target.value).toISOString() : ""})}
               aria-label="Audit range start" className="h-9 w-40 text-sm" data-testid="audit-filter-start" /></label>
             <label><span>Range end</span><Input type="date" value={customEnd ? customEnd.slice(0, 10) : ""}
-              onChange={(e) => setCustomEnd(e.target.value ? new Date(new Date(e.target.value).setHours(23, 59, 59, 999)).toISOString() : "")}
+              onChange={(e) => changeFilters({end:e.target.value ? new Date(new Date(e.target.value).setHours(23, 59, 59, 999)).toISOString() : ""})}
               aria-label="Audit range end" className="h-9 w-40 text-sm" data-testid="audit-filter-end" /></label>
           </>
         )}
         </div>
 
         {activeFilterCount > 0 && (
-          <Button variant="ghost" size="sm" onClick={resetFilters} className="h-9 text-xs" data-testid="audit-reset">
+          <Button variant="ghost" size="sm" onClick={()=>resetFilters()} className="h-9 text-xs" data-testid="audit-reset">
             <X className="h-3.5 w-3.5 mr-1" /> Clear filters
           </Button>
         )}
