@@ -1,5 +1,7 @@
 import React, {useId, useState} from 'react';
 import {Textarea} from './ui/textarea';
+import {useAssessmentClientContext} from './AssessmentClientContext';
+import {configuredAssessmentTools} from '@/lib/assessmentClientContext';
 
 const TOOL_GROUPS = [
   {
@@ -29,7 +31,10 @@ const OTHER_OPTION = '__other__';
 
 export default function BrawndoInventoryToolField({value = '', onChange, disabled = false, label = 'Tool or location', descriptionId}) {
   const fieldId = useId();
-  const selectedTool = TOOLS.find(tool => tool.value === value);
+  const configured = configuredAssessmentTools(useAssessmentClientContext()?.services?.data)
+    .filter(tool => !tool.retired && !TOOLS.some(option => option.value === tool.name));
+  const selectedTool = TOOLS.find(tool => tool.value === value)
+    || (configured.some(tool => tool.name === value) ? {help: 'Configured for this client.'} : null);
   const unlisted = value !== '' && !selectedTool && value !== 'Not sure';
   const [customAnswer, setCustomAnswer] = useState(() => unlisted ? value : '');
   // Other is presentation state; the native answer remains the exact string.
@@ -65,6 +70,8 @@ export default function BrawndoInventoryToolField({value = '', onChange, disable
       value={showOther ? OTHER_OPTION : value} onChange={selectTool}
       disabled={disabled} aria-describedby={describedBy}>
       <option value="">Choose a tool or location</option>
+      {!!configured.length && <optgroup label="Configured client tools">{configured.map(tool =>
+        <option key={tool.tool_id} value={tool.name}>{tool.name}</option>)}</optgroup>}
       {TOOL_GROUPS.map(group => <optgroup key={group.label} label={group.label}>
         {group.tools.map(tool => <option key={tool.value} value={tool.value}>{tool.label}</option>)}
       </optgroup>)}

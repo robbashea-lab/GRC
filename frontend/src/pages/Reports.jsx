@@ -1,5 +1,7 @@
 import {useEffect,useRef,useState} from 'react';
 import {Download} from 'lucide-react';
+import {Link} from 'react-router-dom';
+import {clientDestination} from '@/lib/clientSelection';
 import {useOrg} from '@/context/OrgContext';
 import {useAuth} from '@/context/AuthContext';
 import api,{formatError,PREVIEW_MODE} from '@/lib/api';
@@ -71,6 +73,10 @@ function ReportForm({clientId,scopeKey,activeScope,clientTimeZone}){
       <Button type="submit" disabled={PREVIEW_MODE||generating||!selected} data-testid="generate-framework-report"><Download aria-hidden="true"/>{generating?'Generating PDF…':'Generate/download PDF'}</Button>
       {(generating||message)&&<p role="status">{generating?'Preparing the saved assessment snapshot…':message}</p>}
     </form>}
+    {selected?.key==='cmmc'&&<nav className="reports-fields" aria-label="CMMC working documents">
+      {(selected.unit_name==='mapped checks'?[['ssp','System Security Plan']]:[['ssp','System Security Plan'],['poam','POA&M'],['sprs','SPRS Score']]).map(([key,label])=>
+        <Link key={key} className="text-link underline" to={clientDestination(clientId,'/compliance/cmmc?cmmc_tab='+key)}>{label}</Link>)}
+    </nav>}
     {selected&&<NativeReportCatalog key={frameworkKey+':'+clientTimeZone} clientId={clientId} framework={selected} scopeKey={scopeKey} activeScope={activeScope} clientTimeZone={clientTimeZone}/>}
   </div>;
 }

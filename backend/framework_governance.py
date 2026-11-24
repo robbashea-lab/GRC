@@ -17,6 +17,7 @@ import assignment_eligibility
 import create_requests
 import authorization
 import shared_review_plans
+from framework_work_links import action_applies_to, finding_applies_to, finding_scopes
 import guided_assessment
 import assessment_items
 import assessment_item_tasks
@@ -241,17 +242,9 @@ class ReviewSetup(BaseModel):
 
 async def explicit_finding_scopes(s,cid):
     rows=await s.db.framework_assessments.find({'client_id':cid},{'_id':0,'framework_assessment_id':1,'related_links':1,'_r4_context_pending':1}).to_list(None)
-    scopes={}
-    for a in rows:
-        r4_services.assert_settled(a)
-        for link in a.get('related_links',[]):
-            if link['kind']=='findings':scopes.setdefault(link['id'],set()).add(a['framework_assessment_id'])
-    return scopes
-
-def finding_applies(row,f,rids,scopes):
-    explicit=set(scopes.get(f['finding_id'],set()))
-    if f.get('framework_assessment_id'):explicit.add(f['framework_assessment_id'])
-    return row['framework_assessment_id'] in explicit if explicit else f.get('review_id') in rids
+    for assessment in rows:
+        r4_services.assert_settled(assessment)
+    return finding_scopes(rows)
 
 async def workspace_work(s,cid,rows,*,upgraded=False):
     """Tenant-scoped scalar reads, no occurrence/evidence/history payloads or per-row queries."""
@@ -264,16 +257,14 @@ async def workspace_work(s,cid,rows,*,upgraded=False):
         saved=await s._bounded(cursor,10000,what) if upgraded else await cursor.to_list(None)
         for record in saved:r4_services.assert_settled(record)
         return saved
-    reviews=await read(s.db.reviews.find({'client_id':cid},projection),'workspace reviews')
+    review_projection = {**projection, **dict.fromkeys(shared_review_plans.MAPPING_FIELDS, 1)}
+    reviews=await read(s.db.reviews.find({'client_id':cid},review_projection),'workspace reviews')
     findings=await read(s.db.findings.find({'client_id':cid},projection),'workspace findings')
     risks=await read(s.db.risks.find({'client_id':cid,'risk_id':{'$in':list({finding['risk_id'] for finding in findings if finding.get('risk_id')})}},
         {'_id':0,'client_id':1,'risk_id':1,'status':1,'likelihood_score':1,'impact_score':1,'next_review':1,'acceptance_expires_at':1}),'workspace linked risks') if upgraded else []
     if upgraded:
         scope_rows=await read(s.db.framework_assessments.find({'client_id':cid},{'_id':0,'framework_assessment_id':1,'related_links':1,'_r4_context_pending':1}),'workspace finding scopes')
-        scopes={}
-        for assessment in scope_rows:
-            for link in assessment.get('related_links',[]):
-                if link['kind']=='findings':scopes.setdefault(link['id'],set()).add(assessment['framework_assessment_id'])
+        scopes=finding_scopes(scope_rows)
     else:
         scopes=await explicit_finding_scopes(s,cid)
     tasks=await read(s.db.tasks.find({'client_id':cid,'status':{'$nin':['done','cancelled']}},projection),'workspace actions')
@@ -285,14 +276,14 @@ async def workspace_work(s,cid,rows,*,upgraded=False):
     for row in rows:
         links=row.get('related_links') or [];aid=row['framework_assessment_id']
         def linked(kind,ident):return {'kind':kind,'id':ident} in links
-        rs=[r for r in reviews if linked('reviews',r['review_id']) or (r.get('framework_key')==row['framework_key'] and row['definition_id'] in r.get('framework_safeguards',[]))]
+        rs=[r for r in reviews if linked('reviews',r['review_id']) or r.get('framework_assessment_id') == aid
+            or shared_review_plans.maps_to(r, row['framework_key'], row['definition_id'])]
         rids={r['review_id'] for r in rs}
-        relevant={f['finding_id'] for f in findings if finding_applies(row,f,rids,scopes)}
+        relevant={f['finding_id'] for f in findings if finding_applies_to(aid,f,rids,scopes)}
         fs=[f for f in findings if f['finding_id'] in relevant and f.get('status') not in ('closed','accepted')]
         fids={f['finding_id'] for f in fs}
         def overdue(r):return bool(r.get('due_date')) and r['due_date'][:10]<today
-        ts=[t for t in tasks if linked('tasks',t['task_id']) or t.get('framework_assessment_id')==aid or
-            (t.get('finding_id') in relevant if t.get('finding_id') else not t.get('framework_assessment_id') and t.get('review_id') in rids)]
+        ts=[t for t in tasks if linked('tasks',t['task_id']) or action_applies_to(aid,t,rids,relevant)]
         unlinked=set(row.get('unlinked_evidence_ids') or [])
         # Evidence the operator unlinked from this assessment no longer supports it.
         es=[e for e in evidence if e['evidence_id'] not in unlinked and (linked('evidence',e['evidence_id']) or (e.get('linked_type') in ('framework_assessment','framework_assessments') and e.get('linked_id')==aid))]
@@ -329,6 +320,7 @@ class FindingInput(BaseModel):
     severity:Literal['low','medium','high','critical']='medium'
     request_id:str=Field(min_length=1,max_length=128)
     item_id:Optional[str]=Field(default=None,max_length=100)
+    cmmc_gap_version:Optional[str]=Field(default=None,max_length=120)
     # Optional at creation; omitted, the Finding inherits the safeguard owner and has no target date.
     owner_id:Optional[str]=Field(default=None,max_length=200)
     due_date:Optional[str]=Field(default=None,max_length=40)
@@ -339,12 +331,14 @@ async def related(s,row):
     for kind,key in {'reviews':'review_id','findings':'finding_id','tasks':'task_id','risks':'risk_id','policies':'policy_id','requirements':'requirement_id','evidence':'evidence_id','vendors':'vendor_id'}.items():
         links=[l['id'] for l in row.get('related_links',[]) if l['kind']==kind]
         clauses=[{key:{'$in':links}},{'framework_assessment_id':aid}]
-        if kind=='reviews':clauses.append({'framework_key':row['framework_key'],'framework_safeguards':did})
+        if kind=='reviews':clauses.append(shared_review_plans.mapping_query(row['framework_key'], [did]))
         if kind=='policies':
             clauses.append({'baseline_key':{'$in':[p['policy_key'] for p in CATALOGS.get(row['framework_key'],{}).get('policy_mappings',[]) if did in p['safeguards']]}})
             if 'policy_link_ids' in row:
                 clauses=[{'policy_id':{'$in':row['policy_link_ids'] if isinstance(row['policy_link_ids'],list) else []}}]
-        if kind=='evidence':clauses.append({'linked_type':{'$in':['framework_assessment','framework_assessments']},'linked_id':aid})
+        if kind=='evidence':
+            clauses.extend([{'linked_type': {'$in': ['framework_assessment','framework_assessments']}, 'linked_id': aid},
+                            {'relationships': {'$elemMatch': {'kind': 'framework_assessments', 'id': aid}}}])
         out[kind]=await s.db[kind].find({'client_id':cid,'$or':clauses},{'_id':0,'content_base64':0}).to_list(None)
         for record in out[kind]:r4_services.assert_settled(record)
     for kind,field in (('risks','risk_id'),('vendors','vendor_id'),('ai_systems','ai_system_id')):
@@ -355,16 +349,15 @@ async def related(s,row):
     rids=[r['review_id'] for r in out['reviews']]
     findings=await s.db.findings.find({'client_id':cid,'review_id':{'$in':rids}},{'_id':0}).to_list(None)
     scopes=await explicit_finding_scopes(s,cid)
-    findings=[f for f in findings if finding_applies(row,f,rids,scopes)]
+    findings=[f for f in findings if finding_applies_to(aid,f,rids,scopes)]
     out['findings']=list({r['finding_id']:r for r in out['findings']+findings}.values())
     tasks=await s.db.tasks.find({'client_id':cid,'$or':[{'finding_id':{'$in':[f['finding_id'] for f in out['findings']]}},{'review_id':{'$in':rids}}]},{'_id':0}).to_list(None)
-    tasks=[t for t in tasks if t.get('framework_assessment_id')==aid or
-        (t.get('finding_id') in {f['finding_id'] for f in out['findings']} if t.get('finding_id') else not t.get('framework_assessment_id'))]
+    finding_ids={f['finding_id'] for f in out['findings']}
+    tasks=[t for t in tasks if action_applies_to(aid,t,rids,finding_ids)]
     out['tasks']=list({r['task_id']:r for r in out['tasks']+tasks}.values())
-    review_evidence_query={'client_id':cid,'linked_type':{'$in':['review','reviews']},'linked_id':{'$in':rids}}
-    if row['framework_key']=='cis-ig1':
-        review_evidence_query={'client_id':cid,'$or':[{'linked_type':{'$in':['review','reviews']},'linked_id':{'$in':rids}},
-            {'relationships':{'$elemMatch':{'kind':'reviews','id':{'$in':rids}}}}]}
+    review_evidence_query={'client_id':cid,'archived_at':None,'$or':[
+        {'linked_type':{'$in':['review','reviews']},'linked_id':{'$in':rids}},
+        {'relationships':{'$elemMatch':{'kind':'reviews','id':{'$in':rids}}}}]}
     review_evidence=await s.db.evidence.find(review_evidence_query,{'_id':0,'content_base64':0}).to_list(None)
     out['evidence']=list({e['evidence_id']:e for e in out['evidence']+review_evidence}.values())
     excluded=set(row.get('unlinked_evidence_ids',[]))
@@ -1095,6 +1088,10 @@ def router_for(s):
     @router.post('/framework_assessments/{aid}/findings')
     async def finding(aid:str,body:FindingInput,user=Depends(s.get_current_user)):
         row=await parent(aid,user,True)
+        if body.cmmc_gap_version is not None:
+            await r4_services.assessment_writer(s,row,user)
+            if row['framework_key']!='cmmc' or client_configuration('cmmc',await scoped(row['client_id'],user))['level']!=2:
+                raise HTTPException(409,'Open the current CMMC Level 2 workbook before creating remediation')
         item=next((item for item in row.get('items_to_address',[]) if item['item_id']==body.item_id),None) if body.item_id else None
         if body.item_id and item is None:raise HTTPException(404,'Item not found for this assessment')
         async def execute(identity):
@@ -1110,6 +1107,11 @@ def router_for(s):
                     origin=assessment_items.current_item(current,body.item_id)
                     if not assessment_items.with_item_controls(current)['item_controls'][body.item_id]['can_create_finding']:
                         raise HTTPException(409,'Only an unlinked open Gap Item can create a Finding')
+                if body.cmmc_gap_version is not None:
+                    current=await parent(aid,user,True)
+                    stamp=current.get('last_saved') or current.get('last_assessed') or current.get('updated_at') or ''
+                    if stamp!=body.cmmc_gap_version or current.get('status') not in {'in_progress','needs_attention'}:
+                        raise HTTPException(409,'The saved gap changed; reopen the workbook')
                 if not body.title.strip() or not body.remediation_title.strip():raise HTTPException(422,'Finding and Action titles are required')
                 owner=row.get('owner_id')
                 if owner and not await assignment_eligibility.eligible(s.db,owner,row['client_id'],s._can_access_client):owner=None

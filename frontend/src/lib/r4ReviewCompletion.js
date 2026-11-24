@@ -89,7 +89,7 @@ export function validateCompletionGuide(guide) {
   }
   return true;
 }
-export function templateId(review, planCatalogs = {}) {
+export function templateId(review, planCatalogs = {}, {required=true}={}) {
   if (review.review_template_id) return review.review_template_id;
   if (review.risk_id) return 'risk_rec';
   if (review.policy_id) return 'policy_rec';
@@ -108,16 +108,21 @@ export function templateId(review, planCatalogs = {}) {
     if (key) {
       const id = templates.plan_templates[key] || planCatalogs[driver.framework_key]?.review_plans?.find(p => p.key === key)?.review_template_id;
       if (id) return id;
-      throw new Error('This native Review plan needs a completion-template mapping');
+      if (required) throw new Error('This native Review plan needs a completion-template mapping');
+      continue;
     }
   }
   if (review.baseline_key) {
     const id = templates.baseline_templates[review.baseline_key];
     if (id) return id;
-    throw new Error('This native Review baseline needs a completion-template mapping');
+    if (required) throw new Error('This native Review baseline needs a completion-template mapping');
+    return null;
   }
   if (review.iso_audit) return 'native_only';
-  if (review.framework_key) throw new Error('This framework Review needs its native plan association reconciled');
+  if (review.framework_key || review.framework_drivers?.length) {
+    if (required && review.framework_key) throw new Error('This framework Review needs its native plan association reconciled');
+    if (!required) return null;
+  }
   return 'custom';
 }
 export function buildReviewContract(review, services = {}, planCatalogs = {}) {

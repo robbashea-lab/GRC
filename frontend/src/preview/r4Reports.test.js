@@ -123,6 +123,32 @@ function pauseNextHash() {
   return {ready, release};
 }
 
+test('a completed shared Review retains open work in the gap report and respects narrower assignments',async()=>{
+  installFramework('cmmc');
+  edit(db=>{
+    const cid=CID, source='shared-review', cis=db.framework_assessments.find(row=>row.framework_key==='cis-ig1');
+    const cmmc=db.framework_assessments.find(row=>row.framework_key==='cmmc');
+    db.reviews.push({client_id:cid,review_id:source,title:'Finished review',status:'completed',
+      framework_drivers:[{framework_key:'cis-ig1',framework_safeguards:[cis.definition_id]}]});
+    cmmc.related_links=[{kind:'findings',id:'narrowed'}];
+    db.framework_assessments.push({client_id:'elsewhere',framework_assessment_id:'outside',related_links:[{kind:'findings',id:'open-finding'}]});
+    for(const [fid,status] of [['open-finding','open'],['closed-finding','closed'],['narrowed','open']])
+      db.findings.push({client_id:cid,review_id:source,finding_id:fid,title:fid,status});
+    for(const [tid,fid] of [['corrective','closed-finding'],['other-program-action','narrowed'],['review-followup',null]])
+      db.tasks.push({client_id:cid,review_id:source,task_id:tid,finding_id:fid,title:tid,status:'open'});
+  });
+  const report=await preview('scope'), rows=report.sections[0].rows;
+  const linked=rows.find(row=>row[0]==='1.1')[4];
+  for(const text of ['Finding open-finding:','Action item corrective:','Action item review-followup:']){
+    expect(linked).toContain(text);
+    expect(rows.filter(row=>row[0]!=='1.1').some(row=>row[4]?.includes(text))).toBe(false);
+  }
+  for(const text of ['closed-finding','other-program-action','narrowed','Finished review'])expect(linked).not.toContain(text);
+  const metadata=(await exportReport('scope','xlsx')).data;
+  const sheet=strFromU8(unzipSync(await downloadBytes(metadata))['xl/worksheets/sheet1.xml']);
+  expect(sheet).toContain(linked);
+});
+
 test('all six previews use native identities and GETs leave saved state unchanged', async () => {
   readStore();
   const before = sessionStorage.getItem(STORE_KEY);

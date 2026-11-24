@@ -16,6 +16,7 @@ from pymongo.read_concern import ReadConcern
 from starlette.concurrency import run_in_threadpool
 
 import authorization
+import shared_review_plans
 from r4_services import assert_settled
 from framework_catalog import CATALOGS, FRAMEWORKS, active_definitions, client_configuration
 from framework_governance import STATUSES
@@ -301,12 +302,12 @@ def build_snapshot(client, key, saved, evidence, findings, now, period, read_win
         linked_reviews = {r['id'] for r in row.get('related_links') or [] if r.get('kind') == 'reviews'}
         rids = {r['review_id'] for r in reviews if r.get('client_id') == client['client_id'] and (
             r['review_id'] in linked_reviews or r.get('framework_assessment_id') == aid or
-            r.get('framework_key') == key and row['definition_id'] in (r.get('framework_safeguards') or []))}
+            shared_review_plans.maps_to(r, key, row['definition_id']))}
         refs = [e for e in evidence if e.get('client_id') == client['client_id'] and (
             e['evidence_id'] in direct or e.get('linked_type') in ('framework_assessment', 'framework_assessments') and e.get('linked_id') == aid or
             any(r.get('kind') == 'framework_assessments' and r.get('id') == aid for r in e.get('relationships') or []) or
             e.get('linked_type') in ('review', 'reviews') and e.get('linked_id') in rids or
-            key == 'cis-ig1' and any(r.get('kind') == 'reviews' and r.get('id') in rids for r in e.get('relationships') or [])) and e['evidence_id'] not in unlinked]
+            any(r.get('kind') == 'reviews' and r.get('id') in rids for r in e.get('relationships') or [])) and e['evidence_id'] not in unlinked]
         refs = [{'id': e['evidence_id'], 'title': e.get('display_name') or e.get('filename') or 'Evidence reference'} for e in refs if e['evidence_id'] in ev_by_id]
         items = [{**{k: item.get(k) for k in ('item_id', 'question_id', 'kind', 'text', 'state', 'resolution', 'notes', 'created_at', 'updated_at')},
                   'finding_id': item.get('finding_id') if item.get('finding_id') in finding_ids else None}
@@ -394,8 +395,8 @@ async def read_snapshot(s, cid, key, actor, period):
                 rids = list({r['id'] for row in saved for r in row.get('related_links') or [] if r.get('kind') == 'reviews'})
                 reviews = await s.db.reviews.find({'client_id': cid, '$or': [
                     {'review_id': {'$in': rids}}, {'framework_assessment_id': {'$in': aids}},
-                    {'framework_key': key, 'framework_safeguards': {'$in': definitions}}]},
-                    projection(('review_id', 'client_id', 'framework_assessment_id', 'framework_key', 'framework_safeguards', '_r4_context_pending')), session=session).to_list(20001)
+                    shared_review_plans.mapping_query(key, definitions)]},
+                    projection(('review_id', 'client_id', 'framework_assessment_id', *shared_review_plans.MAPPING_FIELDS, '_r4_context_pending')), session=session).to_list(20001)
                 if len(reviews) > 20000:
                     raise HTTPException(413, 'Framework evidence relationships exceed the supported report size')
                 for row in reviews:
@@ -406,9 +407,8 @@ async def read_snapshot(s, cid, key, actor, period):
                     {'evidence_id': {'$in': evidence_ids}},
                     {'linked_type': {'$in': ['framework_assessment', 'framework_assessments']}, 'linked_id': {'$in': aids}},
                     {'relationships': {'$elemMatch': {'kind': 'framework_assessments', 'id': {'$in': aids}}}},
-                    {'linked_type': {'$in': ['review', 'reviews']}, 'linked_id': {'$in': rids}}]
-                if key == 'cis-ig1':
-                    clauses.append({'relationships': {'$elemMatch': {'kind': 'reviews', 'id': {'$in': rids}}}})
+                    {'linked_type': {'$in': ['review', 'reviews']}, 'linked_id': {'$in': rids}},
+                    {'relationships': {'$elemMatch': {'kind': 'reviews', 'id': {'$in': rids}}}}]
                 evidence = await s.db.evidence.find({'client_id': cid, 'archived_at': None, '$or': clauses},
                     projection(('evidence_id', 'client_id', 'display_name', 'filename', 'linked_type', 'linked_id', 'relationships', 'archived_at')), session=session).to_list(20001)
                 if len(evidence) > 20000:

@@ -30,3 +30,15 @@ test('read-only items and linked findings cannot issue another write',async()=>{
   record.items_to_address[0].finding_id='finding-a';await render(true);
   expect(container.querySelector('textarea').disabled).toBe(true);expect(button('Create finding').disabled).toBe(true);await act(async()=>container.querySelector('input[type=checkbox]').click());expect(api.patch).not.toHaveBeenCalled();expect(create).not.toHaveBeenCalled();
 });
+test('the originating item reflects submission and independent closure without awarding assessment credit',async()=>{
+  record.items_to_address[0].finding_id='finding-a';
+  const related={findings:[{client_id:'client-a',finding_id:'finding-a',title:'Inventory gap',status:'remediated'}],
+    tasks:[{client_id:'client-a',task_id:'action-a',finding_id:'finding-a',status:'done'}]};
+  async function refresh(){await act(async()=>root.render(<AssessmentItems record={record} ctx={{current:record,related}} disabled/>));}
+  await refresh();expect(container.textContent).toContain('Linked work · pending validation');
+  related.findings[0].status='closed';
+  await refresh();expect(container.textContent).toContain('Linked work · completed');
+  expect(record.status).toBe('in_progress');expect(api.patch).not.toHaveBeenCalled();
+  related.findings[0].client_id='foreign';
+  await refresh();expect(container.textContent).not.toContain('Inventory gap');
+});

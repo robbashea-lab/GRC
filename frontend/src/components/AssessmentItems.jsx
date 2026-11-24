@@ -7,6 +7,7 @@ import AssessmentItemCommands from './AssessmentItemCommands';
 import {itemType,projectItemDraft,removableItem} from '@/lib/assessmentItemDraft';
 import {Textarea} from './ui/textarea';
 import {safeguard11ItemGroups,safeguard11ItemKind} from '@/lib/brawndoSafeguard11';
+import {ticketRecords,ticketStage} from '@/lib/remediationTickets';
 
 export default function AssessmentItems(props){
   return <AssessmentItemCommands {...props} onDraftChange={undefined}>{commands=><ItemView {...props} commands={commands}/>}</AssessmentItemCommands>;
@@ -93,14 +94,18 @@ function ItemView({record,ctx,disabled,onCreateFinding,onDraftChange,safeguard11
     } catch (failure) {if(accepts())setError(formatError(failure));}
     finally {if(accepts())setBusy(false);}
   }
+  const linkedTickets=ctx?.current?.framework_assessment_id===record.framework_assessment_id &&
+    ctx.current.client_id===record.client_id && ctx.related ? ticketRecords(ctx.related,record.client_id) : [];
   function renderItem(item,historical=false) {
     const blocked=disabled||busy||commands.busy||historical,resolution=currentNotes[item.view_key]??item.resolution;
     const resolutionBlocked=blocked||!commands.canResolve;
     const formalBlocked=blocked||workDisabled||proposedItems!==null||commands.unconfirmed;
     const action=<>{itemType(item)==='gap'?<Button variant="outline" disabled={formalBlocked||!onCreateFinding||!item.controls?.can_create_finding} onClick={()=>{if(!latest.current.disabled&&!latest.current.workDisabled)onCreateFinding({...record.items_to_address.find(saved=>saved.item_id===item.item_id),resolution});}}>{safeguard11||standard?'Raise finding':'Create finding'}</Button>:["confirmation","evidence"].includes(itemType(item))?<Button variant="outline" disabled={formalBlocked||!item.controls?.can_create_action} onClick={()=>commands.openTask(item)}>{standard?'Create action item':'Create Action Item'}</Button>:null}
       {removableItem(item)&&<Button variant={standard?"ghost":"outline"} className={standard?"icon-btn sm":undefined} aria-label="Remove item" disabled={blocked||commands.unconfirmed} onClick={()=>commands.remove(item)}>{standard?<X size={14} aria-hidden="true"/>:"Remove item"}</Button>}</>;
-    const linked=ctx?.related?.findings?.find(finding=>finding.finding_id===item.finding_id);
-    const linkedWork=(item.task_id||item.finding_id)&&<Button variant="link" onClick={()=>commands.openWork(item)} disabled={busy||commands.busy}>{item.task_id?'Open Action Item':linked?.title||'Open Finding'}</Button>;
+    const ticket=item.finding_id ? linkedTickets.find(t=>t.finding?.finding_id===item.finding_id) :
+      item.task_id && linkedTickets.find(t=>t.actions.some(task=>task.task_id===item.task_id));
+    const linkedWork=(item.task_id||item.finding_id)&&<><Button variant="link" onClick={()=>commands.openWork(item)} disabled={busy||commands.busy}>{item.task_id?'Open Action Item':ticket?.finding?.title||'Open Finding'}</Button>
+      {ticket&&<small>Linked work · {ticketStage(ticket).replaceAll('_',' ')}</small>}</>;
     const kind=itemType(item)==='unknown'?{label:'Recorded item',tone:'neutral'}:itemType(item)==='evidence'?{label:'Evidence to link',tone:'confirm'}:safeguard11ItemKind(item);
     const resolutionFields=<>
       <label>Resolution<Textarea ref={resolutionRef(item.item_id||item.view_key)} aria-label={`Resolution: ${item.text}`} maxLength={4000} disabled={blocked} value={resolution||''} onChange={event=>setNotes(previous=>({...previous,[item.view_key]:event.target.value}))}/></label>

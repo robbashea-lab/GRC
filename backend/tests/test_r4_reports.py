@@ -551,6 +551,38 @@ class R4ReportRouteTests(unittest.IsolatedAsyncioTestCase):
         response = await self.client.get('/api/reports/preview', params=self.params('scope'))
         self.assertEqual(response.json()['sections'][0]['rows'], [])
 
+    async def test_review_followups_remain_scoped_after_review_closes_and_in_download(self):
+        _, rows = await self.prepare()
+        first = rows[0]['definition_id']
+        await server.db.framework_assessments.insert_many([
+            {'client_id': 'a', 'framework_key': 'cmmc', 'framework_assessment_id': 'other-program',
+             'related_links': [{'kind': 'findings', 'id': 'narrowed'}]},
+            {'client_id': 'b', 'framework_key': 'cmmc', 'framework_assessment_id': 'other-client',
+             'related_links': [{'kind': 'findings', 'id': 'open-finding'}]}])
+        await server.db.reviews.insert_one({'client_id': 'a', 'review_id': 'source', 'title': 'Finished review',
+            'status': 'completed', 'framework_drivers': [{'framework_key': 'cis-ig1', 'framework_safeguards': [first]}]})
+        findings = [('open-finding', 'open'), ('closed-finding', 'closed'), ('narrowed', 'open')]
+        await server.db.findings.insert_many([{'client_id':'a','review_id':'source','finding_id':fid,
+            'title':fid,'status':status} for fid,status in findings])
+        tasks = [('corrective', 'closed-finding'), ('other-program-action', 'narrowed'), ('review-followup', None)]
+        await server.db.tasks.insert_many([{'client_id':'a','review_id':'source','task_id':tid,
+            'finding_id':fid,'title':tid,'status':'open'} for tid,fid in tasks])
+        response = await self.client.get('/api/reports/preview', params=self.params('scope'))
+        self.assertEqual(response.status_code, 200, response.text)
+        details = {row[0]:row[4] for row in response.json()['sections'][0]['rows']}
+        for text in ('Finding open-finding:', 'Action item corrective:', 'Action item review-followup:'):
+            self.assertIn(text, details[first])
+            self.assertFalse(any(text in (linked or '') for ident,linked in details.items() if ident != first))
+        for text in ('closed-finding','narrowed','other-program-action','Finished review'):
+            self.assertNotIn(text, details[first])
+        saved = await self.export('scope','xlsx')
+        self.assertEqual(saved.status_code, 200, saved.text)
+        file = await self.client.get(saved.json()['download_url'])
+        with zipfile.ZipFile(io.BytesIO(file.content)) as archive:
+            sheet = ET.fromstring(archive.read('xl/worksheets/sheet1.xml'))
+            cells = [element.text for element in sheet.findall('.//{*}t')]
+        self.assertIn(details[first], cells)
+
     async def test_partial_audit_recovery_and_exact_replay_preserve_original_bytes(self):
         await self.prepare()
         await server.db.risks.insert_one({'risk_id': 'risk-a', 'client_id': 'a', 'title': 'Original exported value', 'status': 'open'})

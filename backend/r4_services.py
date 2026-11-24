@@ -91,6 +91,7 @@ class CoordinationIn(StrictInput):
     expected_updated_at: str | None = Field(default=None, max_length=100)
     expected_client_updated_at: str | None = Field(max_length=100)
     area_id: str | None = Field(default=None, max_length=64)
+    responsibility: Literal['iv', 'co', 'cl', 'tp', 'no'] | None = None
     tool_ids: list[str] = Field(default_factory=list, max_length=100)
     custom_tools: list[ToolIn] = Field(default_factory=list, max_length=100)
     recurring_ticket_number: str = Field(default='', max_length=33)
@@ -137,7 +138,7 @@ class CoordinationIn(StrictInput):
 
 
 class SetupIn(CoordinationIn):
-    responsibility: Literal['iv', 'co', 'cl', 'tp', 'no'] | None = None
+    """iVenture Setup shares the coordinated assessment fields."""
 
 
 class ExclusionIn(StrictInput):
@@ -518,6 +519,8 @@ async def prepare_context_plan(s, assessment, user, coordination):
             services.setdefault('custom_tools', []).append(tool)
             known[tool['tool_id']] = tool
     area = data.get('area_id') or (candidate or {}).get('area_id')
+    if not area and (data.get('responsibility') or data.get('tool_ids') or data.get('custom_tools')):
+        raise HTTPException(422, 'Choose a service area for the selected tools or responsibility')
     if area and area not in AREA_IDS:
         raise HTTPException(422, 'Choose a known service area')
     for ident in data.get('tool_ids', []):
@@ -525,6 +528,8 @@ async def prepare_context_plan(s, assessment, user, coordination):
             raise HTTPException(422, 'A selected tool is unavailable; reload its catalog')
     if area:
         current = services.setdefault('areas', {}).setdefault(area, {'responsibility': 'un', 'tool_ids': []})
+        if data.get('responsibility'):
+            current['responsibility'] = data['responsibility']
         if any(known[t].get('retired') and t not in current.get('tool_ids', []) for t in data.get('tool_ids', [])):
             raise HTTPException(422, 'A retired tool cannot be newly selected')
         current['tool_ids'] = list(dict.fromkeys(current.get('tool_ids', []) + data.get('tool_ids', [])))

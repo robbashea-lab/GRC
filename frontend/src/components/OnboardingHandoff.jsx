@@ -16,6 +16,10 @@ export default function OnboardingHandoff({snapshot, state, catalog, clientId, c
     {!embedded&&<PageHeader title="Onboarding complete" subtitle={`${data.client.name} · Current operational setup`} action={<Button asChild><Link to={clientDestination(clientId,'/dashboard')}>Open Dashboard</Link></Button>}/>}
     <div className={presentation?"handoff-content":"page-content max-w-7xl space-y-5"}>
       <p className="text-sm text-ink-secondary">Your baseline is configured. Complete the remaining setup in the operational modules; onboarding does not need to be repeated.</p>
+      {canManage && <div className="flex flex-wrap gap-3 text-sm">
+        <Link className="text-link underline" to={clientDestination(clientId,'/client-profile?tab=services')}>Set up services &amp; tools</Link>
+        <Link className="text-link underline" to={clientDestination(clientId,'/iv-setup')}>Open iVenture Setup</Link>
+      </div>}
       <div className={presentation?"handoff-grid":"grid md:grid-cols-2 gap-4"}>
         {['reviews','policies'].map(kind => <section key={kind} className="rounded-lg border border-line bg-surface-card p-5 space-y-3">
           <h2 className="font-semibold text-base">{kind === 'reviews' ? 'Reviews' : 'Policies'}</h2>

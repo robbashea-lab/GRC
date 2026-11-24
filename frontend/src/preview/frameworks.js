@@ -11,6 +11,7 @@ import isoCriteria from '@catalogs/operatorGuidance/isoAssessmentCriteria.json';
 import {calendarDay} from '../lib/managementDates';
 import { validateAssignment, eligible, clientAccess } from './assignmentEligibility';
 import {policySupportsAssessment} from '../lib/frameworkPolicyLinks';
+import {reviewMapsTo} from '../lib/frameworkReviewLinks';
 import {CATALOGS,frameworkCatalog,frameworkDefinition,frameworkCapabilities,activeDefinitions,FRAMEWORKS,ASSESSMENT_STATUSES,CADENCES,reviewConfig} from '../lib/frameworks';
 import {cisConfiguration,validateCisSettings,validateCisConfiguration} from '../lib/cisScope';
 import {activePlans} from '../lib/frameworks';
@@ -240,7 +241,7 @@ export function frameworkRelated(db,row){
   for(const kind of ['reviews','findings','tasks','risks','policies','requirements','evidence','vendors']){
     const direct=(row.related_links||[]).filter(l=>l.kind===kind).map(l=>l.id);
     result[kind]=(db[kind]||[]).filter(r=>r.client_id===cid&&(kind==='policies'?policySupportsAssessment(row,r):(direct.includes(r[ids[kind]])||r.framework_assessment_id===aid||
-      (kind==='reviews'&&r.framework_key===row.framework_key&&r.framework_safeguards?.includes(did))||
+      (kind==='reviews'&&reviewMapsTo(r,row.framework_key,did))||
       (kind==='policies'&&frameworkCatalog(row.framework_key)?.policy_mappings.some(p=>p.policy_key===r.baseline_key&&p.safeguards.includes(did)))||
       (kind==='evidence'&&['framework_assessment','framework_assessments'].includes(r.linked_type)&&r.linked_id===aid))));
   }
@@ -253,15 +254,18 @@ export function frameworkRelated(db,row){
   result.findings=[...new Map([...result.findings,...db.findings.filter(f=>f.client_id===cid&&findingApplies(row,f,new Set(rids),db.framework_assessments))].map(r=>[r.finding_id,r])).values()];
   const fids=result.findings.map(f=>f.finding_id);
   result.tasks=[...new Map([...result.tasks,...db.tasks.filter(t=>t.client_id===cid&&(t.finding_id?fids.includes(t.finding_id):!t.framework_assessment_id&&rids.includes(t.review_id)))].map(r=>[r.task_id,r])).values()];
-  result.evidence=[...new Map([...result.evidence,...db.evidence.filter(e=>e.client_id===cid&&['review','reviews'].includes(e.linked_type)&&rids.includes(e.linked_id))].map(r=>[r.evidence_id,r])).values()];
-  if(row.framework_key==='cis-ig1')result.evidence=[...new Map([...result.evidence,...db.evidence.filter(e=>e.client_id===cid&&e.relationships?.some(l=>l.kind==='reviews'&&rids.includes(l.id)))].map(e=>[e.evidence_id,e])).values()];
+  const mappedFiles=db.evidence.filter(file=>file.client_id===cid && (
+    ['review','reviews'].includes(file.linked_type) && rids.includes(file.linked_id) ||
+    file.relationships?.some(link=>link.kind==='reviews' && rids.includes(link.id) ||
+      link.kind==='framework_assessments' && link.id===aid)));
+  result.evidence=[...new Map([...result.evidence,...mappedFiles].map(file=>[file.evidence_id,file])).values()];
   result.evidence=result.evidence.filter(e=>!e.archived_at&&!row.unlinked_evidence_ids?.includes(e.evidence_id));
   return result;
 }
 export function frameworkReverse(db,kind,source,result){
   if(kind==='framework_assessments')return frameworkRelated(db,source);
   const fid=source.finding_id,aid=source.framework_assessment_id||(kind==='evidence'&&['framework_assessment','framework_assessments'].includes(source.linked_type)?source.linked_id:null)||db.findings.find(f=>f.client_id===source.client_id&&f.finding_id===fid)?.framework_assessment_id;
-  result.framework_assessments=(db.framework_assessments||[]).filter(a=>a.client_id===source.client_id&&(kind==='policies'?policySupportsAssessment(a,source):(a.framework_assessment_id===aid||a.related_links?.some(l=>l.kind===kind&&l.id===source[ids[kind]])||(kind==='reviews'&&a.framework_key===source.framework_key&&source.framework_safeguards?.includes(a.definition_id))||(kind==='policies'&&frameworkCatalog(a.framework_key)?.policy_mappings.some(m=>m.policy_key===source.baseline_key&&m.safeguards.includes(a.definition_id))))))
+  result.framework_assessments=(db.framework_assessments||[]).filter(a=>a.client_id===source.client_id&&(kind==='policies'?policySupportsAssessment(a,source):(a.framework_assessment_id===aid||a.related_links?.some(l=>l.kind===kind&&l.id===source[ids[kind]])||(kind==='reviews'&&reviewMapsTo(source,a.framework_key,a.definition_id))||(kind==='policies'&&frameworkCatalog(a.framework_key)?.policy_mappings.some(m=>m.policy_key===source.baseline_key&&m.safeguards.includes(a.definition_id))))))
     .filter(a=>kind!=='evidence'||!a.unlinked_evidence_ids?.includes(source.evidence_id)).map(a=>({...a,title:assessmentTitle(a)}));
   const finding=kind==='tasks'?db.findings.find(f=>f.client_id===source.client_id&&f.finding_id===source.finding_id):source;
   const explicitFinding=(db.framework_assessments||[]).filter(a=>a.client_id===source.client_id&&(a.framework_assessment_id===finding?.framework_assessment_id||a.related_links?.some(l=>l.kind==='findings'&&l.id===finding?.finding_id)));
@@ -690,6 +694,11 @@ export function frameworkRequest(db,path,method,params,body,context=null){
     if(!body.title?.trim()||!body.remediation_title?.trim()||!body.request_id||!['low','medium','high','critical'].includes(body.severity||'medium'))throw new Error('Finding and Action titles, valid severity and request ID are required');
     const item=body.item_id?currentItem(row,body.item_id):null;
     const fid=stable(row.client_id,'finding',id+':'+(item?'item:'+body.item_id:body.request_id));let f=db.findings.find(f=>f.finding_id===fid);
+    if (body.cmmc_gap_version!=null) {
+      const client=record(db,'clients',row.client_id);
+      if (row.framework_key!=='cmmc' || cmmcConfiguration(client).level!==2 || !db.requirements.some(r=>r.client_id===row.client_id && r.baseline_key==='cmmc' && r.baseline_response==='applies')) fail('Open the current CMMC Level 2 workbook before creating remediation',409);
+      if (!f && ((row.last_saved || row.last_assessed || row.updated_at || '')!==body.cmmc_gap_version || !['needs_attention','in_progress'].includes(row.status))) fail('The saved gap changed; reopen the workbook',409);
+    }
     // A departed or out-of-scope safeguard owner is never copied onto new work; the Finding starts unassigned.
     let owner=row.owner_id&&eligible(db.users.find(u=>u.user_id===row.owner_id),row.client_id)?row.owner_id:null;
     // Optional at creation, as in the backend: an explicit owner must be eligible; a target date must be valid.

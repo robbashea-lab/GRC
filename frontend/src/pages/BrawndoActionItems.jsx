@@ -73,14 +73,17 @@ export default function BrawndoActionItems(){
     onFilterChange:(key,values)=>{const next=new URLSearchParams(params);if(['status','due_date'].includes(key)&&values.length)next.set('view','all');if(key==='owner_id'||key===null){next.delete('owner');next.delete('unassigned');}if(next.toString()!==params.toString())setParams(next,{replace:true});}});
   function selectView(value){table.replaceState({...table.state,filters:{...table.state.filters,status:[],due_date:[],owner_id:[]}});const next=new URLSearchParams(params);next.set('view',value);next.delete('owner');next.delete('unassigned');setParams(next,{replace:true});}
   function open(row){setDrawer({kind:row.kind,record:row.raw});}
-  const deepId=params.get('finding_id')||params.get('id');
+  const ticketKind=params.has('finding_id')?'findings':params.has('task_id')?'tasks':'';
+  const deepId=params.get('finding_id') || params.get('task_id') || params.get('id');
   useEffect(()=>{
-    if(loading||error||!deepId||opened.current===deepId)return;
-    const finding=data.findings?.find(f=>f.finding_id===deepId&&f.client_id===currentClientId);
-    opened.current=deepId;
-    const task=data.tasks?.find(t=>t.task_id===deepId&&t.client_id===currentClientId);
+    if(!deepId){opened.current='';return;}
+    const target=ticketKind+':'+deepId;
+    if(loading||error||opened.current===target)return;
+    const finding=ticketKind!=='tasks' && data.findings?.find(f=>f.finding_id===deepId&&f.client_id===currentClientId);
+    const task=ticketKind!=='findings' && data.tasks?.find(t=>t.task_id===deepId&&t.client_id===currentClientId);
+    opened.current=target;
     if(finding||task){setDeepLinkError('');setDrawer({kind:finding?'findings':'tasks',record:finding||task});}else setDeepLinkError('The requested ticket is unavailable for this client.');
-  },[deepId,loading,error,data.findings,data.tasks,currentClientId]);
+  },[deepId,ticketKind,loading,error,data.findings,data.tasks,currentClientId]);
   const applied=table.apply(rows.filter(r=>pilotActionMatches(r,view)&&(!params.get('owner')||r.owner_id===(params.get('owner')==='__me__'?user.user_id:params.get('owner')))&&(params.get('unassigned')!=='1'||!r.owner_id)&&[r.title,r.raw.description,r.actionSearchText,r.finding?.title,r.finding?.description,r.source.label,users.find(u=>u.user_id===r.owner_id)?.name].filter(Boolean).join(' ').toLowerCase().includes(q.trim().toLowerCase())));
   const userSort=!!table.state.sort,filtered=userSort?applied:[...applied].sort(soonest),viewCount=rows.filter(r=>pilotActionMatches(r,view)).length;
   const clientName=currentClient?.name||'Client';
@@ -112,6 +115,6 @@ export default function BrawndoActionItems(){
       </tbody></table><p className="bpage-foot" data-testid="ai-foot">Showing {filtered.length} of {plural(viewCount,`${nouns[view]||''} action item`.trim())}{!userSort&&filtered.length>1?' · soonest due first':''}</p></div>
     </div>
     </ActionRegisterContainer>
-    {drawer&&<RecordDrawer open kind={drawer.kind} record={drawer.record} initialValues={drawer.initialValues} onReturnFocus={drawer.onReturnFocus} clientId={currentClientId} users={users} onSaved={load} onOpenChange={v=>{if(!v){setDrawer(null);const next=new URLSearchParams(params);next.delete('finding_id');next.delete('id');setParams(next,{replace:true});}}}/>}
+    {drawer&&<RecordDrawer open kind={drawer.kind} record={drawer.record} initialValues={drawer.initialValues} onReturnFocus={drawer.onReturnFocus} clientId={currentClientId} users={users} onSaved={load} onOpenChange={v=>{if(!v){setDrawer(null);const next=new URLSearchParams(params);next.delete('finding_id');next.delete('task_id');next.delete('id');setParams(next,{replace:true});}}}/>}
   </BrawndoSurface>;
 }

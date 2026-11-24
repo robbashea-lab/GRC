@@ -26,6 +26,8 @@ import framework_policy_links
 from framework_catalog import CATALOGS
 from grc_rules import assessed_risk, is_open
 import review_occurrences
+import shared_review_plans
+from framework_work_links import action_applies_to, finding_applies_to, finding_scopes
 from r4_services import assert_settled
 from security_runtime import csv_cell
 import vendor_governance
@@ -50,10 +52,10 @@ FIELDS = {
                  'approver_id', 'approved_at', 'approval_history', 'last_reviewed_at', 'next_review_date'),
     'reviews': ('review_id', 'title', 'status', 'due_date', 'owner_id', 'reviewer_id',
                 'recurrence', 'custom_recurrence_days', 'schedule_anchor', 'recurrence_due_date',
-                'framework_key', 'framework_assessment_id', 'framework_safeguards',
+                'framework_assessment_id', *shared_review_plans.MAPPING_FIELDS,
                 'vendor_id', 'vendor_purpose', 'completion_date', 'occurrences.completed_at'),
-    'tasks': ('task_id', 'title', 'status', 'due_date', 'assignee_id', 'owner_id', 'finding_id', 'framework_assessment_id'),
-    'findings': ('finding_id', 'title', 'status', 'framework_assessment_id'),
+    'tasks': ('task_id', 'title', 'status', 'due_date', 'assignee_id', 'owner_id', 'finding_id', 'framework_assessment_id', 'review_id'),
+    'findings': ('finding_id', 'title', 'status', 'framework_assessment_id', 'review_id'),
 }
 
 
@@ -122,14 +124,18 @@ async def read_operational(s, cid, key, actor, session=None):
         for row in rows:
             assert_settled(row)
         result[kind] = sorted(rows, key=lambda row: str(row.get(kind[:-1] + '_id') or row.get('policy_id') or row))
-    owners = await s.db.framework_assessments.find({'client_id': cid, 'framework_key': key},
+    # Explicit assignments to a different program take precedence over a shared Review.
+    assignments = await s.db.framework_assessments.find({'client_id': cid, '$or': [
+        {'framework_key': key}, {'related_links.kind': 'findings'}]},
         framework_reports.projection(('framework_assessment_id', 'definition_id', 'framework_key', 'client_id', 'owner_id', 'related_links', 'policy_link_ids', 'last_saved', 'updated_at', '_r4_context_pending')),
         **kwargs).to_list(10001)
-    if len(owners) > 10000:
+    if len(assignments) > 10000:
         raise HTTPException(413, 'Assessment ownership exceeds the supported report size')
-    for row in owners:
+    for row in assignments:
         assert_settled(row)
-    result['assessment_owners'] = sorted(owners, key=lambda row: row['framework_assessment_id'])
+    result['finding_scopes'] = {fid: sorted(ids) for fid, ids in finding_scopes(assignments).items()}
+    result['assessment_owners'] = sorted((row for row in assignments if row['framework_key'] == key),
+                                         key=lambda row: row['framework_assessment_id'])
     identities = {actor['user_id'], client.get('assigned_owner_id')}
     for rows in (result['risks'], result['policies'], result['reviews'], result['tasks'], result['assessment_owners']):
         for row in rows:
@@ -169,27 +175,25 @@ def policy_alignment(policy, key, assessments=()):
 
 
 def linked_work(row, data, key):
-    saved = next((item for item in data['assessment_owners'] if item['framework_assessment_id'] == row['assessment_id']), {})
+    aid = row['assessment_id']
+    saved = next((item for item in data['assessment_owners'] if item['framework_assessment_id'] == aid), {})
     references = saved.get('related_links') or []
+    direct_reviews = {link['id'] for link in references if link.get('kind') == 'reviews'}
+    reviews = [review for review in data['reviews'] if review['review_id'] in direct_reviews
+               or review.get('framework_assessment_id') == aid or shared_review_plans.maps_to(review, key, row['id'])]
+    # A completed Review or Finding can still own an open corrective action.
+    review_ids = {review['review_id'] for review in reviews}
     finding_ids = {item['finding_id'] for item in row['items_to_address'] if item.get('finding_id')}
-    finding_ids.update(link['id'] for link in references if link.get('kind') == 'findings' and link.get('id'))
-    result = []
-    for kind in ('findings', 'tasks', 'reviews'):
-        field = kind[:-1] + '_id'
-        direct = {link['id'] for link in references if link.get('kind') == kind and link.get('id')}
-        for item in data[kind]:
-            if not is_open(kind, item):
-                continue
-            matches = item[field] in direct or item.get('framework_assessment_id') == row['assessment_id']
-            if kind == 'findings':
-                matches = matches or item[field] in finding_ids
-            elif kind == 'tasks':
-                matches = matches or item.get('finding_id') in finding_ids
-            else:
-                matches = matches or item.get('framework_key') == key and row['id'] in (item.get('framework_safeguards') or [])
-            if matches:
-                result.append({'type': kind, 'id': item[field], 'title': item.get('title'), 'status': item.get('status')})
-    return result
+    finding_ids.update(link['id'] for link in references if link.get('kind') == 'findings')
+    findings = [finding for finding in data['findings'] if finding['finding_id'] in finding_ids
+                or finding_applies_to(aid, finding, review_ids, data.get('finding_scopes', {}))]
+    finding_ids.update(finding['finding_id'] for finding in findings)
+    direct_tasks = {link['id'] for link in references if link.get('kind') == 'tasks'}
+    tasks = [task for task in data['tasks'] if task['task_id'] in direct_tasks
+             or action_applies_to(aid, task, review_ids, finding_ids)]
+    return [{'type': kind, 'id': item[field], 'title': item.get('title'), 'status': item.get('status')}
+            for kind, field, records in (('findings', 'finding_id', findings), ('tasks', 'task_id', tasks),
+                                         ('reviews', 'review_id', reviews)) for item in records if is_open(kind, item)]
 
 
 def criticality_text(vendor, names):

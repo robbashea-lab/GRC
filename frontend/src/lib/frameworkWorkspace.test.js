@@ -1,6 +1,18 @@
 import {CATALOGS,activeDefinitions} from './frameworks';
 import {groupRequirements,nextAssessment,matchesAssessment,sectionSummary,sourcePresentation,recurrencePresentation,assessmentWork} from './frameworkWorkspace';
 
+test('Review drivers use the same active framework and unit and preserve explicit history', () => {
+  const row={client_id:'a',framework_assessment_id:'asset',framework_key:'cis-ig1',definition_id:'1.1',related_links:[{kind:'reviews',id:'explicit'}]};
+  const cis={framework_key:'cis-ig1',framework_safeguards:['1.1']};
+  const reviews=Object.entries({
+    active:{framework_drivers:[cis]},legacy:cis,empty:{...cis,framework_drivers:[]},
+    retired:{...cis,framework_drivers:[{...cis,framework_driver_active:false}]},
+    wrongPair:{framework_drivers:[{...cis,framework_safeguards:['1.2']},{...cis,framework_key:'iso-27001'}]},
+    explicit:{framework_drivers:[]}
+  }).map(([review_id,fields])=>({review_id,client_id:'a',status:'upcoming',...fields}));
+  expect(assessmentWork(row,{reviews}).review_ids.sort()).toEqual(['active','explicit','legacy']);
+});
+
 test('native catalog order and hierarchy survive grouping without losing requirements',()=>{
   const addedHipaaIds=['164.308(b)(2)','164.314(a)(2)(i)','164.314(a)(2)(ii)','164.314(a)(2)(iii)','164.314(b)(2)'];
   for(const [key,catalog] of Object.entries(CATALOGS)){

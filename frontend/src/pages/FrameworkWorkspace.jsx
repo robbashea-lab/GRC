@@ -24,6 +24,7 @@ import api,{formatError,PREVIEW_MODE} from '@/lib/api';
 import {FRAMEWORKS,frameworkCatalog,frameworkWorkspace} from '@/lib/frameworks';
 import {cmmcRequirementPresentation} from '@/lib/cmmcScope';
 import GenericProgramGuide from '@/components/GenericProgramGuide';
+import CmmcWorkbook from '@/components/CmmcWorkbook';
 import '@/components/R4Framework.css';
 import {useSocWorkspaceNavigation} from '@/lib/useSocWorkspaceNavigation';
 import {SOC_PROGRAM_STATUS_LABELS,socProgramMatches,socProgramAsOf} from '@/lib/socProgramPresentation';
@@ -329,7 +330,13 @@ export default function FrameworkWorkspace({frameworkKey,clientId}){
         onPrevious={index>0?()=>openRecord(navigationRows[index-1]):null} onNext={index>=0&&index<navigationRows.length-1?()=>openRecord(navigationRows[index+1]):null} position={index>=0?`${index+1} of ${navigationRows.length} in framework order`:'Retained assessment'} breadcrumb={visualBreadcrumb}/>}
     </div>;
   }
+  const programBody = content => frameworkKey === 'cmmc' && data.selected
+    ? <CmmcWorkbook key={[clientId,user?.user_id,user?.role,user?.workspace_mode,auth.workspaceMode,data.configuration?.level].join(':')}
+        clientId={clientId} level={data.configuration?.level} user={user} revision={revision}
+        onOpen={id=>{const row=rows.find(item=>item.definition_id===id);if(row)openRecord(row);}}>{content}</CmmcWorkbook>
+    : content;
   return <div ref={workspaceRef} className={iso?'bcis iso-cis-program-visual':prestigeSoc?'bcis soc-cis-program-visual':referenceAssessment?'bcis':'space-y-4'} data-theme={referenceAssessment||iso?theme:undefined} data-testid={frameworkKey==='cis-ig1'?'cis-workspace':prestigeSoc?'prestige-soc-workspace':'framework-workspace'}>
+    {programBody(<>
     {!selected&&!managed&&prestigeSoc&&data.selected&&data.configured&&<SocGuidedAssessor clientId={clientId} configuration={data.configuration} rows={activeRows} contextComplete={!!data.active_definition_ids?.length&&activeRows.length===data.active_definition_ids.length} draftSummaries={data.guided_assessment_drafts} onSelect={row=>openRecord(row,true)} onViewAll={()=>chooseSocCategory('')}/>}
     {!selected&&!managed&&(!controlKey||focusedOmniEnabled(clientId,user,frameworkKey,data.configuration))&&<GuidedAssessor invitationContext={controlKey?'control-'+controlKey:'program'} clientId={clientId} framework={frameworkKey} configuration={data.configuration} rows={activeRows.filter(row=>!controlKey||row.definition_id.split('.')[0]===String(controlKey))} contextComplete={!!data.active_definition_ids?.length&&activeRows.length===data.active_definition_ids.length} draftSummaries={data.guided_assessment_drafts} onSelect={row=>openRecord(row,!focusedOmniEnabled(clientId,user,frameworkKey,data.configuration,row.definition_id))} onViewAll={()=>{dropLinkedView();setSearch('');setFilter('all');setAdditionsGroup(0);}}/>}
     {iso&&<IsoProgramHeader view={isoView} presentation={isoPresentation} auditSummary={auditSummary?.key===auditPresentationKey?auditSummary:undefined} resume={isoResume} onContinue={()=>openRecord(isoResume)} onOverview={()=>chooseIsoView('overview')} theme={theme} onTheme={()=>setCisVisualTheme(theme==='dark'?'light':'dark')}/>}
@@ -366,6 +373,7 @@ export default function FrameworkWorkspace({frameworkKey,clientId}){
     </>}
     </IsoPanel>
     {['hipaa','nist-csf-2','cmmc'].includes(frameworkKey)&&!selected&&!managed&&<GenericProgramGuide {...{clientId,rows:rows.filter(row=>workspaceScope(frameworkKey,data,row)),onOpen:openRecord}} framework={frameworkKey}/>}
+    </>)}
     {managed&&<FrameworkDrawer key={clientId+':'+managed.framework_assessment_id+':manage'} open recordManagement record={managed} clientId={clientId} isoView={iso?isoView:undefined} onReviews={navigate} onSaved={()=>setRevision(n=>n+1)} onOpenChange={v=>{if(!v)closeManagement();}}/>}
     {selected&&<FrameworkDrawer key={clientId+':'+selected.framework_assessment_id} open record={selected} clientId={clientId}
       isoView={iso?isoView:undefined}

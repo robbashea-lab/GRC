@@ -74,6 +74,7 @@ CLIENT_OPERATIONS = {
     ('POST', '/api/reviews/{review_id}/complete'),
     ('POST', '/api/reviews/{review_id}/create-finding'),
     ('PUT', '/api/reviews/{review_id}/completion-guide'),
+    ('PUT', '/api/frameworks/cmmc/workbook'),
     ('PATCH', '/api/reviews/{review_id}/iso-audit'),
     ('PATCH', '/api/reviews/{review_id}/iso-audit/{item_key}'),
     ('PATCH', '/api/framework_assessments/{aid}'),
@@ -128,7 +129,7 @@ async def authorize_request(request, user, db):
         ('POST','/api/auth/logout'),
     }:
         return
-    if method == 'POST' and path == '/api/reports/exports':
+    if method == 'POST' and path in ('/api/reports/exports','/api/frameworks/cmmc/workbook/export'):
         # Export is the existing authorized read capability even though an
         # immutable export receipt/file is now retained. The route rechecks the
         # actual account and tenant before rendering, retaining and delivery.

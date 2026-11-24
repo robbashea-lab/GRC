@@ -1,4 +1,5 @@
 import {calendarDay} from './managementDates';
+import {activeReviewMappings} from './frameworkReviewLinks';
 import {actionTitle, taskSource} from './actionItems';
 import definitions from '@catalogs/frameworkDefinitions.json';
 import {BUSINESS_BASIS} from './requirementBasis';
@@ -24,7 +25,8 @@ export function filterDashboardQueue(groups,records,assessments=[],controls=[],f
   const byAssessment=new Map(assessments.map(a=>[a.framework_assessment_id,a.framework_key]));
   const assessmentRows=new Map(assessments.map(a=>[a.framework_assessment_id,a]));
   const known=new Map([...nodes].map(([key,r])=>[key,!r.framework_assessment_id||assessmentRows.has(r.framework_assessment_id)]));
-  const safeguardKeys=new Map([...nodes].map(([key,r])=>[key,new Set((r.framework_safeguards||[]).map(id=>`${r.framework_key}|${id}`))]));
+  const safeguardKeys=new Map([...nodes].map(([key,r])=>[key,new Set(activeReviewMappings(r)
+    .flatMap(driver=>driver.framework_safeguards.map(id=>`${driver.framework_key}|${id}`)))]));
   const addAssessment=(key,id)=>{const a=assessmentRows.get(id);if(id&&!a&&known.has(key))known.set(key,false);if(a?.definition_id&&a.framework_key)safeguardKeys.get(key)?.add(`${a.framework_key}|${a.definition_id}`);};
   for(const [key,r] of nodes){
     if(key.startsWith('requirements:')&&frameworkNames.has(r.baseline_key))keys.get(key).add(r.baseline_key);

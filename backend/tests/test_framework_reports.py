@@ -42,6 +42,26 @@ def native_position(client, key, rows):
 
 
 class FrameworkReportUnitTests(unittest.TestCase):
+    def test_review_library_links_follow_the_mapped_requirement_in_every_program(self):
+        for key in ('cis-ig1', 'iso-27001', 'soc-2', 'hipaa', 'nist-csf-2', 'cmmc'):
+            with self.subTest(program=key):
+                client, rows = fixture(key)
+                rows[0]['related_links'] = [{'kind': 'reviews', 'id': 'mapped'}]
+                review = {'client_id': 'a', 'review_id': 'mapped'}
+                relationship = {'kind': 'reviews', 'id': 'mapped', 'occurrence_id': 'recorded-occurrence'}
+                file = {'client_id': 'a', 'evidence_id': 'saved-file', 'filename': 'Inventory.pdf',
+                        'relationships': [relationship]}
+                files = [file, {**file, 'client_id': 'b', 'evidence_id': 'other-tenant'},
+                         {**file, 'archived_at': '2026-11-01', 'evidence_id': 'archived'}]
+                report = snapshot(client, key, rows, evidence=files, reviews=[review])
+                def refs(index):
+                    return [ref['id'] for ref in report['assessments'][index]['evidence']]
+                self.assertEqual(refs(0), ['saved-file'])
+                self.assertEqual(refs(1), [])
+                rows[0]['unlinked_evidence_ids'] = ['saved-file']
+                report = snapshot(client, key, rows, evidence=files, reviews=[review])
+                self.assertEqual(refs(0), [])
+
     def test_native_position_iso_undetermined_annex_never_supplies_implementation_credit(self):
         client, rows = fixture('iso-27001')
         for row in rows:

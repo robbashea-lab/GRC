@@ -198,12 +198,12 @@ export function record(db, kind, id) {
   if (!found) throw new Error('Record not found.');
   return found;
 }
-export function audit(db, action, kind, row, meta = {}) {
+export function audit(db, action, kind, row, meta = {}, entityId=row[ids[kind]]) {
   db.logs.unshift({
     audit_id: uid('audit'),
     action,
     entity_type: kind,
-    entity_id: row[ids[kind]],
+    entity_id: entityId,
     client_id: row.client_id,
     at: now(),
     user_id: db.user.user_id,
