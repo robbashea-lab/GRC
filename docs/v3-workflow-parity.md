@@ -6,7 +6,15 @@ The signed-in release on `codex/staging-signed-in-v3-20261124` combines the nati
 
 Regular sign-in continues through the existing role and client selection rules. The portfolio opens the four-column client directory, and the client overview links to the status ledger and underlying work. Client dashboards and framework workspaces display status using the selected client's native assessments. The Appearance menu is part of the signed-in shell. The release uses the existing Render staging service. Full workflow QA and owner acceptance are deferred.
 
-## Scope and design reference
+## All-client visual update
+
+Glass ’07 is the initial appearance on upgrade. Choosing another theme saves it for later visits in the same browser. Calendar, quarter ledgers, policy cards, program and profile screens, administration, onboarding, setup and reports use the verified client context. The calendar and its agenda fill the workspace and the month scrolls within its panel on small screens. Chart entries open their saved record or occurrence.
+
+Scope confirmations use the existing version-checked client profile save. The audit package reads the selected client and program, includes saved report and register history for the selected period, and records the download. Current register rows reflect the saved state at generation. Reconstruction of a complete prior-period register would require historical snapshots.
+
+The branch is `codex/staging-signed-in-v3-20261124`. The deployment receipt and hosted verification are recorded separately after activation.
+
+## Earlier implementation baseline
 
 Work lives on `codex/v3-workflow-parity-20261124`, based on `fac1a1f1a617d34a31d348ab0885a29a4813e567`. The approved reference is `GoverNara-v3-Workflow-Parity.html`, SHA-256 `59053eb33db4dabc8f90561f3bd2b32854a1de33748cb252192f5f3e5b5d2843`. Its companion `STAGING-PARITY-NOTES.md` describes the standalone mockup observations and the staging baseline. The local verification folder beside this checkout is `governara-v3-qa`.
 

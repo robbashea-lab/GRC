@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import api, { formatError } from "@/lib/api";
 import { useAuth } from "@/context/AuthContext";
-import PageHeader from "@/components/PageHeader";
+import PlatformPageHeading from "@/components/PlatformPageHeading";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -72,7 +72,7 @@ export default function MyAccount() {
 
   return (
     <div className="native-account wrap">
-      <PageHeader
+      <PlatformPageHeading
         eyebrow="Account"
         title="My Account"
         subtitle="Manage your personal profile, security and notification preferences."

@@ -15,7 +15,7 @@ export default function WorkspaceTabs({label,tabs,selected,onSelect,idPrefix,pan
     if(next===undefined)return;
     e.preventDefault();refs.current[keys[next]]?.focus();onSelect(keys[next]);
   };
-  return <div role="tablist" aria-label={label} className="framework-tabs">{tabs.map(([key,text])=>{const on=key===selected;
+  return <div role="tablist" aria-label={label} className="page-tabs framework-tabs">{tabs.map(([key,text])=>{const on=key===selected;
     return <Button key={key} ref={el=>{refs.current[key]=el;}} id={`${idPrefix}-${key}`} role="tab" type="button" aria-selected={on} aria-controls={panelId} tabIndex={on?0:-1}
       variant={on?'default':'outline'} onClick={()=>onSelect(key)} onKeyDown={e=>move(e,key)}>{text}</Button>;})}</div>;
 }

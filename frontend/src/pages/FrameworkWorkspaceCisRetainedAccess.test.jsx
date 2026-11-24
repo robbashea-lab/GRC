@@ -70,7 +70,7 @@ function expectActiveScope(){
   expect(host.querySelector('.gn-map-metrics').textContent).toContain('0 of 56 assessed');
   expect(host.querySelector('.page-head p').textContent).toContain('15 controls · 56 safeguards');
   expect([...host.querySelectorAll('[aria-label="Show safeguards"] button')].find(element=>element.textContent.startsWith('All')).querySelector('.n').textContent).toBe('56');
-  expect(host.querySelector('.head-actions .primary').textContent).toContain('Continue: 1.1 ');
+  expect(host.querySelector('.head-actions .primary').textContent).toContain('Continue with 1.1 ');
   expect(mockOmniProps.rows).toHaveLength(56);
   expect(mockOmniProps.rows.every(row=>row.implementation_group===1)).toBe(true);
 }

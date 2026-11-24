@@ -70,7 +70,7 @@ export default function PrestigeSocNavigator({clientId,rows=[],visible=[],filter
   const renderRow=row=><ProgramVisualRow key={row.framework_assessment_id} row={row} onOpen={onOpen} statusLabels={SOC_PROGRAM_STATUS_LABELS}
     ariaLabel={`Open criterion ${row.definition_id} ${row.title}`} freshness={socProgramFreshness(row)} secondaryInfo={`Owner: ${owner(row.owner_id)}`}
     management={onManage?<FrameworkRecordButton record={row} onManage={onManage}/>:undefined}/>;
-  return <section ref={register} className="pcard soc-criteria-register" aria-labelledby={`${panelPrefix}-register`}>
+  return <section ref={register} className="panel pcard soc-criteria-register" aria-labelledby={`${panelPrefix}-register`}>
     <ProgramVisualToolbar id={`${panelPrefix}-register`} title="SOC 2 criteria" description={description}
       search={search} onSearch={onSearch} searchLabel="Search criteria" filter={filter} onFilter={onFilter} counts={counts} order={order} onOrder={setOrder}
       expand={category?{allOpen:allExpanded,onToggle:()=>{setExpandedGroups(allExpanded?[]:shown.map(item=>item.key));if(allExpanded)onPath([categoryId]);}}:undefined}

@@ -4,6 +4,7 @@ import { useOrg } from '@/context/OrgContext';
 import { useCompliance } from '@/context/ComplianceContext';
 import { COMPLIANCE_SECTIONS } from '@/lib/complianceNavigation';
 import PageHeader from '@/components/PageHeader';
+import V3WorkspaceHeading from '@/components/V3WorkspaceHeading';
 import FrameworkWorkspace from './FrameworkWorkspace';
 import { useAuth } from '@/context/AuthContext';
 import { isWorkspacePresentation } from '@/lib/reference';
@@ -61,7 +62,9 @@ export default function ComplianceWorkspace() {
   const subtitle = !currentClientId ? 'Select a client organization from the sidebar first.'
     : !section ? undefined : section.implemented ? `Assessment workspace · ${edition}` : `${edition} · Applicability only; no assessment catalog`;
   const content=<div>
-    {!ownHeader && <PageHeader title={section?.label || 'Requirement unavailable'} subtitle={subtitle} />}
+    {!ownHeader && (currentClientId&&section?.implemented
+      ? <V3WorkspaceHeading title={section.label} subtitle={subtitle}/>
+      : <PageHeader title={section?.label || 'Requirement unavailable'} subtitle={subtitle}/>)}
     <div className="section-body">
       {loading ? loadingProgram ? <CisWorkspaceLoading program={loadingProgram}/> : <p role="status" className="text-sm text-ink-muted">Loading client requirement…</p>
         : error ? <p role="alert" className="text-sm text-ink-muted">Unable to load this client requirement. {error}</p>

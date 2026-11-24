@@ -111,7 +111,7 @@ test.each([false,true])('deadline classes preserve queue dates, counts, text and
     await act(async()=>root.render(<BrawndoDemoDashboard concept={concept} queue={queue} client={{client_id:'synthetic-new-client',name:'QA newly enrolled client'}} programs={[]} filter="all" onFilter={jest.fn()} onOpen={onOpen} loadDetail={async(key,offset,signal,{limit})=>({items:rows.slice(offset,offset+limit),offset,limit,total:rows.length,has_more:offset+limit<rows.length})}/>));
     const tableRows=[...fixture.querySelectorAll('tbody tr')],byTitle=new Map(tableRows.map(row=>[row.querySelector('.bdd-item').textContent,row]));
     expect(tableRows).toHaveLength(8);
-    expect([...fixture.querySelectorAll('.bdd-summary strong')].map(node=>node.textContent)).toEqual(['8','1','5','0']);
+    expect([...fixture.querySelectorAll('.bdd-filters button span')].map(node=>node.textContent)).toEqual(['8','1','5','0']);
     const relative=['1 day overdue','Due today','In 1 day','In 7 days','In 15 days','In 30 days','In 40 days','No known due date'];
     for(let index=0;index<rows.length;index++){
       const row=byTitle.get(rows[index].title),due=row.querySelector('.bdd-cell-due');

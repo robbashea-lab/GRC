@@ -74,7 +74,7 @@ export default function ClientWorkDashboard({clientId,queue,programs,programRows
   const toggleTheme=()=>setTheme(theme==='dark'?'light':'dark');
   return <div className="bdash" data-theme={theme}>
     <header className="bd-header">
-      <div className="bd-heading-group"><span className="bd-client-mark"><Building2 size={22} aria-hidden="true"/></span><div><p className="bd-eyebrow">{primary?`${shortName(primary)} program`:'GRC program'}</p><h1>{clientName} Dashboard</h1></div></div>
+      <div className="bd-heading-group"><span className="bd-client-mark"><Building2 size={22} aria-hidden="true"/></span><div><p className="bd-eyebrow">{primary?`${shortName(primary)} program`:'GRC program'}</p><h1>{clientName}</h1></div></div>
       <div className="bd-header-side">{queue.as_of&&<span className="bd-muted bd-small">As of {displayDay(queue.as_of)}</span>}
         <button type="button" className="bd-theme" onClick={toggleTheme} aria-pressed={theme==='dark'} aria-label={theme==='dark'?'Switch to light mode':'Switch to dark mode'}>{theme==='dark'?<Sun size={16} aria-hidden="true"/>:<Moon size={16} aria-hidden="true"/>}<span>{theme==='dark'?'Light':'Dark'}</span></button></div>
     </header>

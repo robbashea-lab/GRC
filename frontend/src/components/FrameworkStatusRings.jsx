@@ -21,7 +21,7 @@ export default function FrameworkStatusRings({id:headingId,summary,rows=[],onOpe
   const longest=items.reduce((length,row)=>Math.max(length,itemId(row)?.length||0),0);
   const scroll=items.length>56||(longest>6&&items.length>24);
   const cis=mapName==='safeguard';
-  return <section className={'pcard sgmap-panel gn-cis-snapshot'+(cis?'':' gn-framework-snapshot')} aria-labelledby={id}>
+  return <section className={'panel pcard sgmap-panel gn-cis-snapshot'+(cis?'':' gn-framework-snapshot')} aria-labelledby={id}>
     <h2 className="gn-cis-heading-wrap">
       <button type="button" className="gn-cis-heading" aria-expanded={expanded} aria-controls={id+'-body'} onClick={()=>setExpanded(!expanded)}>
         <span className="gn-cis-head-text"><span id={id} className="panel-title">Program snapshot</span><span className="panel-desc">{subtitle}</span></span>

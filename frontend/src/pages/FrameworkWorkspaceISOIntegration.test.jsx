@@ -186,7 +186,7 @@ test('overview Continue safely opens the existing SoA record when its retained j
   const before=JSON.stringify(result.source);serve(result.source);await mount(clientId);
   expect(summary().querySelector('.gn-ring-copy strong').textContent).toBe('Unavailable');
   expect(summary().querySelector('.gn-ring-value').textContent).toBe('—');expect(editor()).toBeNull();
-  await click([...container.querySelectorAll('.head-actions button')].find(node=>node.textContent.startsWith('Continue: A.5.1 ')));
+  await click([...container.querySelectorAll('.head-actions button')].find(node=>node.textContent.startsWith('Continue with A.5.1 ')));
   expect(params().get('iso_view')).toBe('soa');expect(container.querySelector('.page-head h1').textContent).toBe('Statement of Applicability');
   expect(editor().dataset.assessment).toBe(control.framework_assessment_id);expect(editor().dataset.client).toBe(clientId);
   expect(JSON.parse(container.querySelector('[data-testid="iso-native-history"]').textContent)).toEqual(control.assessment_history);
@@ -229,7 +229,7 @@ test('SoA and Annex open the same native control, Continue, history, owner and m
   Object.assign(control,{status:'in_progress',owner_id:'qa-native-owner',implementation:'Retained native control narrative',assessment_history:[{status:'in_progress',at:'2026-10-01T12:00:00Z',soa_applicability:'included'}]});
   result.refresh();const before=JSON.stringify(result.source);serve(result.source);await mount(clientId);await click(card('Statement of Applicability'));
   expect(container.textContent).not.toContain('Necessary organization-specific Controls');
-  await click([...container.querySelectorAll('.head-actions button')].find(node=>node.textContent.startsWith('Continue: A.5.1 ')));
+  await click([...container.querySelectorAll('.head-actions button')].find(node=>node.textContent.startsWith('Continue with A.5.1 ')));
   expect(editor().dataset.assessment).toBe(control.framework_assessment_id);expect(editor().dataset.framework).toBe('iso-27001');expect(editor().dataset.version).toBe(result.source.framework.version);
   expect(editor().dataset.clientProp).toBe(clientId);expect(editor().dataset.owner).toBe(control.owner_id);expect(editor().dataset.management).toBe('false');
   expect(JSON.parse(container.querySelector('[data-testid="iso-native-history"]').textContent)).toEqual(control.assessment_history);

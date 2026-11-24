@@ -23,12 +23,35 @@ afterEach(async () => {
   localStorage.clear();
 });
 
-test('new profiles start with Glass ’07, existing native mode and saved preview choices are retained', () => {
+test('Glass ’07 opens by default even with previous native or preview preferences', () => {
   expect(readAppearance()).toEqual({theme:'glass07', mode:'light'});
   localStorage.setItem(MODE_KEY, 'dark');
+  expect(readAppearance()).toEqual({theme:'glass07', mode:'light'});
+  localStorage.setItem('governara.appearance.v1', JSON.stringify({theme:'aubergine', mode:'dark'}));
+  expect(readAppearance()).toEqual({theme:'glass07', mode:'light'});
+  localStorage.setItem('governara.appearance.v2', JSON.stringify({theme:'teal', mode:'dark'}));
+  expect(readAppearance()).toEqual({theme:'glass07', mode:'light'});
+});
+
+test('choosing Nordic Teal after the upgrade persists when the signed-in app reopens', async () => {
+  const previewKey = 'governara.appearance.v2';
+  localStorage.setItem(previewKey, JSON.stringify({theme:'teal', mode:'dark'}));
+  await act(async () => root.render(<Picker/>));
+  const trigger = host.querySelector('#theme-gallery-trigger');
+  expect(trigger.getAttribute('aria-label')).toBe('Appearance. Current theme Glass ’07');
+  await act(async () => trigger.click());
+  await act(async () => document.querySelector('[data-gallery-theme="teal"]').click());
+  await act(async () => document.querySelector('[data-gallery-mode="dark"]').click());
+  expect(JSON.parse(localStorage.getItem(APPEARANCE_KEY))).toEqual({theme:'teal', mode:'dark'});
+
+  await act(async () => root.render(null));
+  localStorage.setItem(previewKey, JSON.stringify({theme:'graphite', mode:'light'}));
+  await act(async () => root.render(<Picker/>));
+  expect(host.querySelector('#theme-gallery-trigger').getAttribute('aria-label')).toBe('Appearance. Current theme Nordic Teal');
   expect(readAppearance()).toEqual({theme:'teal', mode:'dark'});
-  localStorage.setItem(APPEARANCE_KEY, JSON.stringify({theme:'aubergine', mode:'dark'}));
-  expect(readAppearance()).toEqual({theme:'aubergine', mode:'dark'});
+});
+
+test('fixed themes keep native portals in their supported light mode', () => {
   setAppearance('tiles12', 'dark');
   document.documentElement.dataset.previewTheme = 'tiles12';
   expect(readTheme()).toBe('light');

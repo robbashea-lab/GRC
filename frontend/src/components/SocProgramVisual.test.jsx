@@ -69,12 +69,12 @@ test('one shared overall header keeps exact native edition, actual as-of and sco
   const onContinue=jest.fn(),onTheme=jest.fn(),edition=frameworkCatalog('soc-2').version,asOf='Oct 12, 2026, 6:00 PM';
   await render(<SocProgramHeader categories={groupRequirements('soc-2',rows)} {...{summary,resume,onContinue,onTheme,edition,asOf}} theme="light" sourceLabel="SOC 2 Type 2"/>);
   expect(container.querySelectorAll('h1')).toHaveLength(1);expect(container.querySelector('h1').textContent).toBe('SOC 2');
-  expect(container.querySelector('header').className).toBe('page-head soc-program-heading');
+  expect(container.querySelector('header').className).toBe('dash-head v3-workspace-head page-head soc-program-heading');
   const captions=container.querySelectorAll('.page-head p');expect(captions).toHaveLength(1);
   expect(captions[0].textContent).toBe(`SOC 2 Type 2 · ${edition} · 5 selected Trust Services Categories · ${rows.length} criteria in scope · As of ${asOf}`);
   expect(captions[0].textContent).not.toContain('Privacy');expect(captions[0].textContent).not.toContain('Processing Integrity');
   expect([...container.querySelectorAll('button')].find(element=>element.textContent==='Back to SOC 2')).toBeUndefined();
-  const next=container.querySelector('.head-actions .primary');expect(next.textContent).toBe('Continue: P1.1 Native privacy criterion');
+  const next=container.querySelector('.head-actions .primary');expect(next.textContent).toBe('Continue with P1.1 Native privacy criterion');
   await click(next);expect(onContinue).toHaveBeenCalledTimes(1);
   await click(container.querySelector('[aria-label="Switch to dark theme"]'));expect(onTheme).toHaveBeenCalledTimes(1);
 });

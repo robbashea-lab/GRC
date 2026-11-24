@@ -57,7 +57,7 @@ export default function IsoProgramNavigator({clientId,view,rows,visible,filtered
     }
     return details.join(' · ');
   };
-  return <section ref={register} className="pcard iso-program-register" aria-labelledby={`${panelPrefix}-register`}>
+  return <section ref={register} className="panel pcard iso-program-register" aria-labelledby={`${panelPrefix}-register`}>
     <ProgramVisualToolbar id={`${panelPrefix}-register`} title={REGISTER_TITLES[view]||'Requirements and controls'}
       description={soa?'Record which controls apply and document the reasons for inclusion or exclusion.':view==='isms_clause'?'Grouped by clause.':view==='annex_control'?'Grouped by theme.':'ISMS requirements and Annex A controls, grouped by clause and theme.'}
       search={search} onSearch={onSearch} searchLabel="Search requirements" filter={filter} onFilter={onFilter} counts={counts} filterLabels={FILTER_LABELS}

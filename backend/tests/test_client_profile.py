@@ -18,6 +18,21 @@ class ClientProfileTests(unittest.IsolatedAsyncioTestCase):
         p=await self.profile()
         return await self.client.patch('/api/clients/a/profile',json={'section':section,'values':values,'expected_updated_at':p['updated_at'],**kwargs})
 
+    async def test_scope_confirmation_is_client_owned_and_independent_of_other_edits(self):
+        self.sign_in('admin')
+        self.assertIsNone((await self.profile())['scope_confirmation'])
+        response = await self.save('scope', {'statement': 'Billing', 'systems': 'Accounts receivable'})
+        self.assertEqual(response.status_code, 200, response.text)
+        first = await self.profile()
+        self.assertEqual(first['scope_confirmation']['at'], first['updated_at'])
+        self.assertTrue(first['scope_confirmation']['by'])
+        self.assertEqual(first['history'][0]['meta']['section'], 'scope')
+        self.assertEqual((await self.save('organization', {'employees': 24})).status_code, 200)
+        self.assertEqual((await self.profile())['scope_confirmation'], first['scope_confirmation'])
+        self.assertEqual((await self.save('scope', {'confirmed_by': 'other'})).status_code, 422)
+        self.assertEqual((await self.save('scope', {'statement': None, 'systems': None})).status_code, 200)
+        self.assertIsNone((await self.profile())['scope_confirmation'])
+
     async def test_typed_context_concurrency_and_audit(self):
         self.sign_in('admin')
         self.assertEqual((await self.profile())['profile'],{})

@@ -375,6 +375,60 @@ class R4ReportRouteTests(unittest.IsolatedAsyncioTestCase):
     def params(self, report_type='assessment', key='cis-ig1'):
         return {'client_id': 'a', 'framework_key': key, 'type': report_type}
 
+    async def test_materials_limit_saved_register_events_to_the_selected_workspace(self):
+        await self.prepare()
+        at = '2026-11-18T03:00:00Z'
+        await server.db.policies.insert_many([
+            {'client_id': 'a', 'policy_id': 'package-a', 'title': 'Access policy', 'status': 'approved',
+             'decision_history': [{'action': 'external_approval_recorded', 'recorded_at': at,
+                                   'subject': {'private': 'Confidential approval attachment'}}]},
+            {'client_id': 'b', 'policy_id': 'package-b', 'title': 'Foreign policy', 'status': 'approved',
+             'approved_at': at}])
+        await server.db.reviews.insert_many([
+            {'client_id': 'a', 'review_id': 'package-cis', 'title': 'Selected review', 'framework_key': 'cis-ig1',
+             'occurrences': [{'completed_at': at}], 'completion_date': at[:10]},
+            {'client_id': 'a', 'review_id': 'package-soc', 'title': 'Other program review',
+             'framework_drivers': [{'framework_key': 'soc-2'}], 'completion_date': at}])
+        path = '/api/reports/materials'
+        params = {'client_id': 'a', 'framework_key': 'cis-ig1'}
+        response = await self.client.get(path, params=params)
+        self.assertEqual(response.status_code, 200, response.text)
+        bundle = response.json()
+        self.assertEqual(set(bundle['reports']), {'assessment','executive','scope','risks','vendors','policies'})
+        self.assertEqual(bundle['framework_key'], params['framework_key'])
+        self.assertEqual(bundle['client_id'], params['client_id'])
+        self.assertEqual([row['event'] for row in bundle['register_history'] if row['record'] == 'Access policy'],
+                         ['External approval recorded'])
+        self.assertEqual([row['event'] for row in bundle['register_history'] if row['record'] == 'Selected review'],
+                         ['Review completed'])
+        self.assertNotIn('Confidential approval attachment', response.text)
+        self.assertNotIn('Foreign policy', response.text)
+        self.assertFalse(any(row['record'] == 'Other program review' for row in bundle['register_history']))
+        await server.db.requirements.update_one({'client_id':'a','baseline_key':'cis-ig1'},{'$set':{'baseline_response':'excluded'}})
+        self.assertEqual((await self.client.get(path, params=params)).status_code, 403)
+
+    async def test_browser_delivery_audits_metadata_once_and_reauthorizes_retries(self):
+        await self.prepare()
+        body = {'client_id': 'a', 'framework_key': 'cis-ig1', 'kind': 'audit-package',
+                'sha256': 'f' * 64, 'bytes': 812, 'period_start': '2026-01-01', 'period_end': '2026-11-24'}
+        headers = {'Idempotency-Key': 'report-browser-delivery-synthetic'}
+        path = '/api/reports/deliveries'
+        first = await self.client.post(path, json=body, headers=headers)
+        self.assertEqual(first.status_code, 200, first.text)
+        self.assertEqual((await self.client.post(path, json=body, headers=headers)).json(), first.json())
+        rows = await server.db.audit_logs.find({'entity_type': 'report-delivery'}).to_list(None)
+        self.assertEqual(len(rows), 1)
+        self.assertEqual(rows[0]['entity_id'], first.json()['delivery_id'])
+        self.assertEqual(rows[0]['meta']['browser_reported_sha256'], body['sha256'])
+        self.assertEqual(rows[0]['meta']['event'], 'browser_download_requested')
+        self.assertEqual((await self.client.post(path, json={**body,'bytes':813}, headers=headers)).status_code, 409)
+        self.assertEqual((await self.client.post(path, json={**body,'bytes':0}, headers=headers)).status_code, 422)
+        self.assertEqual((await self.client.post(path, json={**body,'kind':'delete'}, headers=headers)).status_code, 422)
+        self.assertEqual((await self.client.post(path, json={**body,'period_end':'2025-12-30'}, headers=headers)).status_code, 422)
+        await server.db.requirements.update_one({'client_id':'a','baseline_key':'cis-ig1'},{'$set':{'baseline_response':'excluded'}})
+        self.assertEqual((await self.client.post(path, json=body, headers=headers)).status_code, 403)
+        self.assertEqual(await server.db.audit_logs.count_documents({'entity_type':'report-delivery'}), 1)
+
     async def export(self, report_type='risks', output_format='csv', intent='r4-report-export-intent'):
         return await self.client.post('/api/reports/exports',
             json={**self.params(report_type), 'format': output_format}, headers={'Idempotency-Key': intent})

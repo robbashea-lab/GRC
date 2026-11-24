@@ -1,4 +1,5 @@
 import FrameworkStatusRings from './FrameworkStatusRings';
+import V3WorkspaceHeading from './V3WorkspaceHeading';
 import {ChevronRight,Search,ShieldCheck,ShieldAlert,Clock,Minus} from 'lucide-react';
 import {freshness as assessmentFreshness} from '@/lib/cisVerification';
 import {VERIFICATION_LABELS,verificationOf} from './BrawndoCisControls';
@@ -24,13 +25,14 @@ export function ProgramStatusBar({summary,filter,statusLabels=PROGRAM_IMPLEMENTA
 }
 
 export function ProgramVisualHeader({title,metadata,resume,onContinue,theme,onTheme,beforeTitle,className='',focusHeading=false}){
-  return <header className={`page-head${className?` ${className}`:''}`}><div>{beforeTitle}<h1 tabIndex={focusHeading?-1:undefined}>{title}</h1><p>{metadata}</p></div>
-    <div className="head-actions"><button type="button" className="ghost" aria-label={`Switch to ${theme==='dark'?'light':'dark'} theme`} onClick={onTheme}><svg viewBox="0 0 16 16" aria-hidden="true"><circle className="ic" cx="8" cy="8" r="3"/><path className="ic" d="M8 1v1.5M8 13.5V15M1 8h1.5M13.5 8H15"/></svg>{theme==='dark'?'Light':'Dark'}</button>
-      {resume&&<button type="button" className="btn primary" onClick={onContinue}>Continue: {resume.definition_id} {resume.title}</button>}</div></header>;
+  return <V3WorkspaceHeading title={title} beforeTitle={beforeTitle} focusHeading={focusHeading} subtitle={<p>{metadata}</p>} className={["page-head",className].filter(Boolean).join(" ")} actionsClass="head-actions">
+    {resume&&<button type="button" className="btn primary cta" onClick={onContinue} title={resume.title}>Continue with {resume.definition_id}<span className="sr-only"> {resume.title}</span></button>}
+    <button type="button" className="ghost" aria-label={`Switch to ${theme==='dark'?'light':'dark'} theme`} onClick={onTheme}><svg viewBox="0 0 16 16" aria-hidden="true"><circle className="ic" cx="8" cy="8" r="3"/><path className="ic" d="M8 1v1.5M8 13.5V15M1 8h1.5M13.5 8H15"/></svg>{theme==='dark'?'Light':'Dark'}</button>
+  </V3WorkspaceHeading>;
 }
 
 export function ProgramVisualSummary({id,label='Program snapshot',children,footer}){
-  return <section className="pcard" aria-labelledby={id}><h2 id={id} className="sr-only">{label}</h2><div className="snap">{children}</div><div className="card-foot">{footer}</div></section>;
+  return <section className="panel pcard" aria-labelledby={id}><h2 id={id} className="sr-only">{label}</h2><div className="snap">{children}</div><div className="card-foot">{footer}</div></section>;
 }
 
 export function ProgramVisualSnapshot({id='cis-visual-snapshot',summary,filter,onFilter,rows,onOpen,subtitle,asOf,asOfLabel='As of',missingAsOfLabel='Assessment date unavailable',noun='safeguards',mapName='safeguard',statusLabels=PROGRAM_IMPLEMENTATION_LABELS,qualification='Assessment progress, not a compliance percentage or certification. Freshness is separate from saved verification.',onNotApplicable,showExcludedNote=true}){
@@ -41,7 +43,7 @@ export function ProgramVisualSnapshot({id='cis-visual-snapshot',summary,filter,o
 
 export function ProgramVisualToolbar({id,title,description,grouping,search,onSearch,searchLabel='Search safeguards',filter,onFilter,counts,order,onOrder,expand,summary,breadcrumb,onClear,filterLabels=FILTER_LABELS,filterControls,orderOptions=[['program','Program order'],['gaps','Least implemented first']],isFiltering,activeFilterLabel}){
   const filtering=isFiltering??(filter!=='all'||!!search.trim());
-  return <><div className="card-head"><div><h2 id={id} tabIndex={-1}>{title}</h2><p>{description}</p></div>
+  return <><div className="panel-head card-head"><div><h2 className="panel-title" id={id} tabIndex={-1}>{title}</h2><p className="panel-desc">{description}</p></div>
     {grouping&&<div className="seg" role="group" aria-label="Group by">{grouping.options.map(([key,label])=><button type="button" key={key} aria-pressed={grouping.value===key} onClick={()=>grouping.onChange(key)}>{label}</button>)}</div>}</div>
     <div className="filters"><label className="f-search"><span className="sr-only">{searchLabel}</span><Search aria-hidden="true"/><input type="search" placeholder={`${searchLabel}…`} value={search} onChange={event=>onSearch(event.target.value)}/></label>
       {filterControls===undefined?<div className="seg" role="group" aria-label={`Show ${searchLabel.replace(/^Search /,'')}`}>{['all','attention','not_assessed','stale'].map(key=><button type="button" key={key} aria-pressed={filter===key} onClick={()=>onFilter(key)}>{filterLabels[key]}<span className="n">{counts[key]}</span></button>)}</div>:filterControls}

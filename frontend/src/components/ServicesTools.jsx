@@ -1,4 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
+import {Link} from 'react-router-dom';
+import {clientDestination} from '@/lib/clientSelection';
 import api, { formatError } from '@/lib/api';
 import { useAuth } from '@/context/AuthContext';
 import { useCreateIntent } from '@/lib/createIntent';
@@ -20,6 +22,7 @@ export function ToolDetails({
 }
 export default function ServicesTools({
   clientId,
+  programs,
   canEdit = false,
   recoveryOnly = false,
   onSaved
@@ -29,6 +32,7 @@ export default function ServicesTools({
       workspaceMode
     } = useAuth(),
     [saved, setSaved] = useState(null),
+    [support,setSupport] = useState(null),
     [draft, setDraft] = useState(null),
     [catalog, setCatalog] = useState([]),
     [error, setError] = useState(''),
@@ -77,6 +81,21 @@ export default function ServicesTools({
     window.addEventListener('beforeunload', guard);
     return () => window.removeEventListener('beforeunload', guard);
   }, [draft]);
+  const showSupport=Array.isArray(programs);
+  const programNames=(programs||[]).map(program=>program.name).join(' · ');
+  const currentServices=saved?.client_id===clientId,serviceVersion=saved?.updated_at;
+  useEffect(()=>{
+    setSupport(null);
+    if(!currentServices||!showSupport||!programNames||!clientId||recoveryOnly)return;
+    const controller=new AbortController();
+    api.get('/clients/'+clientId+'/iv-setup',{signal:controller.signal}).then(({data})=>{
+      if(controller.signal.aborted)return;
+      if(data?.client_id!==clientId||!Array.isArray(data.activities))throw Error('Program-support records could not be verified.');
+      setSupport({clientId,activities:data.activities});
+    }).catch(cause=>{if(!controller.signal.aborted)setSupport({clientId,error:formatError(cause)});});
+    return ()=>controller.abort();
+  },[clientId,currentServices,showSupport,programNames,recoveryOnly,serviceVersion]);
+  const activities=support?.clientId===clientId?support.activities:null;
   const services = draft || saved?.services || defaultServices(),
     tools = toolList(catalog, {
       ...services,
@@ -177,28 +196,36 @@ export default function ServicesTools({
   }
   if (!clientId) return <p>Select an authorized client to view Services &amp; Tools.</p>;
   if (recoveryOnly || !saved) return <section className="panel">{error ? <p role="alert">{error}</p> : <p>{recoveryOnly ? 'Client context is unavailable until the unfinished save is recovered.' : 'Loading Services & Tools…'}</p>}{canEdit&&command.unconfirmed()&&<button className="cta" type="button" disabled={busy} onClick={retryRecovery}>Retry unconfirmed save</button>}</section>;
-  return <form className="space-y-4" onSubmit={save}><div className="page-head"><div><h2 className="page-title">Services &amp; Tools</h2><p className="page-sub">Who runs each service area and which tools are in use. Guided assessments and review guides use this shared context.</p></div>{canEdit && !draft && <button className="ghost" type="button" onClick={() => setDraft(copy(saved.services))}>Edit services &amp; tools</button>}</div>
-    {error && <p role="alert" className="callout">{error}</p>}
-    {draft && <div className="toolbar"><label>Start from an engagement type <select className="select" disabled={busy || command.unconfirmed()} value={draft.preset || ''} onChange={e => e.target.value && setDraft(applyServicePreset(draft, e.target.value))}><option value="">Choose…</option>{Object.entries(serviceCatalog.presets).map(([id, p]) => <option value={id} key={id}>{p.name}</option>)}</select></label><p className="sub">Adjust the proposed responsibilities and tools before saving.</p></div>}
-    <div className="svc-sum">{serviceCatalog.responsibilities.map(r => {
-        const count = serviceCatalog.areas.filter(a => serviceArea(services, a.id).responsibility === r.id).length;
-        return count ? <span key={r.id}><b className="num">{count}</b> {r.label}</span> : null;
-      })}</div>
-    <section className="panel scroll-x"><div style={{
-        minWidth: 720
-      }}><div className="gt-head" style={{
-          gridTemplateColumns: '1.2fr 180px 1.5fr'
-        }}><span>Service area</span><span>Who runs it</span><span>Tools in use</span></div>{serviceCatalog.areas.map(area => {
-          const value = serviceArea(services, area.id);
-          return <div className="gt-row" key={area.id} style={{
-            gridTemplateColumns: '1.2fr 180px 1.5fr'
-          }}><div><b>{area.name}</b><p className="sub">{area.description}</p><p className="sub">When iVenture runs it: {area.team}</p></div><div>{draft ? <select className="select" aria-label={'Who runs ' + area.name} value={value.responsibility} disabled={busy || command.unconfirmed()} onChange={e => areaChange(area.id, {
+  const primary=area=>activities?.filter(a=>a.area_ids?.[0]===area.id)||[];
+  const primaryAreas=serviceCatalog.areas.filter(area=>primary(area).length);
+  const renderSupport=area=>{
+    if(!programNames)return <span className="sub">No framework selected</span>;
+    if(!activities)return <span className="sub">{support?.error?'Unavailable':'Loading…'}</span>;
+    const related=activities.filter(a=>a.area_ids?.includes(area.id));
+    if(!related.length)return <span className="sub">No primary topic association for {programNames}</span>;
+    const lead=primary(area),tickets=lead.filter(a=>!a.internal&&a.provider_relevant&&a.state!=='removed');
+    return <><div className="svc-why"><span className={lead.length?'svc-need':'svc-sup'}>{lead.length?'Primary support':'Supports'}</span> {related.length>2?<details><summary>{related[0].title} and {related.length-1} more</summary>{related.slice(1).map(a=><p key={a.activity_id} className="sub">{a.title}</p>)}</details>:related.map(a=>a.title).join(' · ')}</div>{tickets.length>0&&<Link className="svc-setup" to={clientDestination(clientId,'/iv-setup')}>{tickets.filter(a=>a.state==='done').length} of {tickets.length} recurring tickets set up ›</Link>}</>;
+  };
+  const table=rows=><div className="scroll-x"><div className="svc-table"><div className="svc-row p16-row svc-head"><span>Service area</span><span>Who runs it</span><span>Tools</span>{showSupport&&<span>Program support · iVenture Setup</span>}</div>{rows.map(area=>{
+    const value=serviceArea(services,area.id);
+    return <div key={area.id} className="svc-row p16-row"><div><b>{area.name}</b><p className="sub">{area.description}</p><p className="sub">When iVenture runs it: {area.team}</p></div><div>{draft ? <select className="select" aria-label={'Who runs ' + area.name} value={value.responsibility} disabled={busy || command.unconfirmed()} onChange={e => areaChange(area.id, {
                 responsibility: e.target.value
               })}>{serviceCatalog.responsibilities.map(r => <option key={r.id} value={r.id}>{r.label}</option>)}</select> : serviceCatalog.responsibilities.find(r => r.id === value.responsibility)?.label}</div><div className="chip-row">{value.tool_ids.map(id => {
                 const tool = tools.find(t => t.tool_id === id);
                 return <button className="mini-chip" type="button" key={id} onClick={() => setDetail(tool)}>{tool?.name || id}{tool?.retired ? ' · Retired' : ''}</button>;
-              })}{!value.tool_ids.length && <span className="sub">No tools recorded</span>}{draft && <button className="link-btn" type="button" disabled={busy || command.unconfirmed()} onClick={() => chooseTools(area.id)}>Choose tools</button>}</div></div>;
-        })}</div></section>
+              })}{!value.tool_ids.length && <span className="sub">No tools recorded</span>}{draft && <button className="link-btn" type="button" disabled={busy || command.unconfirmed()} onClick={() => chooseTools(area.id)}>Choose tools</button>}</div>{showSupport&&<div className="svc-wcell">{renderSupport(area)}</div>}</div>;
+
+  })}</div></div>;
+  return <form className="baprof-services space-y-4" onSubmit={save}><div className="pf-sh"><div className="flex-1"><h2 className="panel-title">Services &amp; Tools</h2><p className="sub">Who runs each service area and which tools are in use. Guided assessments and review guides use this shared context.</p></div>{canEdit && !draft && <button className="ghost" type="button" onClick={() => setDraft(copy(saved.services))}>Edit services &amp; tools</button>}</div>
+    {error && <p role="alert" className="callout">{error}</p>}
+    <div className="occ-l">Start from an engagement type</div><div className="svc-presets">{Object.entries(serviceCatalog.presets).map(([id,preset])=><button type="button" key={id} className={'svc-preset'+(services.preset===id?' on':'')} aria-pressed={services.preset===id} disabled={!canEdit||busy||command.unconfirmed()} onClick={()=>setDraft(applyServicePreset(draft||saved.services,id))}><b>{preset.name}</b><span className="sub">{preset.desc}</span></button>)}</div>
+    {showSupport&&support?.clientId===clientId&&support.error&&<p role="alert" className="callout">{support.error}</p>}
+    <div className="svc-sum">{serviceCatalog.responsibilities.map(r => {
+        const count = serviceCatalog.areas.filter(a => serviceArea(services, a.id).responsibility === r.id).length;
+        return count ? <span key={r.id}><b className="num">{count}</b> {r.label}</span> : null;
+      })}</div>
+    {primaryAreas.length?<><div className="svc-gh"><h4>Program-support context for {programNames} <span className="num">{primaryAreas.length}</span></h4></div>{table(primaryAreas)}{primaryAreas.length<serviceCatalog.areas.length&&<details className="svc-more"><summary><b>Other service areas · no primary topic association for {programNames}</b> <span className="num">{serviceCatalog.areas.length-primaryAreas.length}</span></summary>{table(serviceCatalog.areas.filter(area=>!primary(area).length))}</details>}</>:table(serviceCatalog.areas)}
+
     {draft && <div className="flex gap-2"><button className="cta" type={command.unconfirmed() ? 'button' : 'submit'} onClick={command.unconfirmed() ? retryRecovery : undefined} disabled={busy}>{busy ? 'Saving…' : command.unconfirmed() ? 'Retry unconfirmed save' : 'Save services & tools'}</button><button className="ghost" type="button" disabled={busy || command.unconfirmed()} onClick={() => {
         setDraft(null);
         setError('');

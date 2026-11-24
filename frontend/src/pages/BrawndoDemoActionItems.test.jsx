@@ -29,7 +29,7 @@ const click=node=>act(async()=>node.click());
 const button=text=>[...container.querySelectorAll('button')].find(node=>node.textContent===text);
 const search=value=>act(async()=>{const node=container.querySelector('[data-testid="ai-search"]');Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,'value').set.call(node,value);node.dispatchEvent(new Event('input',{bubbles:true}));});
 const change=(node,value)=>act(async()=>{node.value=value;node.dispatchEvent(new Event('change',{bubbles:true}));});
-const tickets=()=>[...container.querySelectorAll('tbody tr')];
+const tickets=()=>[...container.querySelectorAll('.bda-register tbody tr[data-ticket-id]')];
 const summary=key=>container.querySelector('[data-summary="'+key+'"] strong').textContent;
 
 beforeEach(()=>{
@@ -45,12 +45,12 @@ afterEach(async()=>{await act(async()=>root.unmount());container.remove();jest.c
 test('concept native close owns late focus after reload replaces its opener; register opens retain native fallback',async()=>{
   const day=new Date(),due=[day.getFullYear(),String(day.getMonth()+1).padStart(2,'0'),String(day.getDate()).padStart(2,'0')].join('-');
   records.tasks=[task('focus',{due_date:due})];await render();
-  const origin=container.querySelector('.agenda-entry');await click(origin);
+  const origin=container.querySelector('.v3-quarter-ledger .tl-item');await click(origin);
   const returnFocus=mockDrawer.onReturnFocus;expect(typeof returnFocus).toBe('function');
   records.tasks=[];await act(async()=>mockDrawer.onSaved());
   await act(async()=>mockDrawer.onOpenChange(false));
   expect(origin.isConnected).toBe(false);expect(returnFocus()).toBe(true);
-  expect(document.activeElement.textContent).toBe('View data');
+  expect(document.activeElement).toBe(container.querySelector('.v3-quarter-ledger .panel-title'));
   records.tasks=[task('focus',{due_date:due})];await act(async()=>mockDrawer.onSaved());
   await click(container.querySelector('.bda-title'));
   expect(mockDrawer.onReturnFocus).toBeUndefined();
@@ -258,17 +258,17 @@ test('quarter browsing preserves native overdue filters, cards and register whil
   try{
     records={tasks:[task('late',{due_date:'2026-10-01',priority:'low'}),task('later',{due_date:'2027-01-01',priority:'high'}),task('unscheduled')],findings:[]};
     await render('/action-items?view=active&quick=overdue');
-    await click(button('This quarter'));
-    expect(container.querySelector('.bda-runway')).toBeNull();expect([...container.querySelectorAll('.review-dot')].map(node=>node.dataset.actionId)).toEqual(['late']);
+    expect(container.querySelector('.v3-quarter-switch b').textContent).toBe('Q4 2026');
+    expect([...container.querySelectorAll('.v3-quarter-ledger [data-k]')].map(node=>node.dataset.k)).toEqual(['low|'+new Date(2026,9,1).getTime()]);
     expect(tickets()).toHaveLength(1);const before=location.search;
     const protectedBefore={cards:container.querySelector('.native-summary').outerHTML,register:container.querySelector('.bda-register').outerHTML};
-    const point=container.querySelector('.review-dot');expect(point.getAttribute('aria-label')).toContain('Low');
+    const point=container.querySelector('.v3-quarter-ledger [data-k]');expect(point.getAttribute('aria-label')).toContain('Low');
     await act(async()=>point.focus());expect(location.search).toBe(before);
     await click(container.querySelector('[aria-label="Next quarter"]'));
-    expect(container.querySelector('.quarter-controls').textContent).toContain('Q1 2027');
+    expect(container.querySelector('.v3-quarter-switch').textContent).toContain('Q1 2027');
     expect({cards:container.querySelector('.native-summary').outerHTML,register:container.querySelector('.bda-register').outerHTML}).toEqual(protectedBefore);
     expect(location.search).toBe(before);expect(tickets()[0].textContent).toContain('Action late');
-    await click(container.querySelector('.agenda-entry'));
+    await click([...container.querySelectorAll('.v3-quarter-ledger .tl-item')].find(node=>node.querySelector('b').textContent==='Action later'));
     expect(mockDrawer.kind).toBe('tasks');expect(mockDrawer.record.task_id).toBe('later');
     expect(api.post).not.toHaveBeenCalled();expect(api.patch).not.toHaveBeenCalled();
   }finally{geometry.mockRestore();jest.useRealTimers();}
@@ -284,10 +284,12 @@ test('a secondary Action marker opens that exact native Action rather than the l
       task('secondary',{finding_id:'issue',priority:'high',due_date:'2026-11-12'}),
     ]};
     await render();
-    await click(button('This quarter'));
-    await click(container.querySelector('[data-action-id="secondary"]'));
-    expect(mockDrawer).toBeNull();expect(document.querySelectorAll('.date-review')).toHaveLength(1);
-    await click(document.querySelector('.date-review'));
+    const point=container.querySelector('[data-k="high|'+new Date(2026,10,12).getTime()+'"]');
+    await act(async()=>point.dispatchEvent(new KeyboardEvent('keydown',{key:'Enter',bubbles:true})));
+    expect(mockDrawer).toBeNull();
+    const choices=container.querySelectorAll('.v3-ledger-tip[role="group"] button');
+    expect([...choices].map(node=>node.textContent)).toEqual(['Action secondary']);
+    await click(choices[0]);
     expect(mockDrawer.kind).toBe('tasks');expect(mockDrawer.record).toBe(records.tasks[1]);
     expect(new URLSearchParams(location.search).get('task_id')).toBe('secondary');
     expect(new URLSearchParams(location.search).has('finding_id')).toBe(false);

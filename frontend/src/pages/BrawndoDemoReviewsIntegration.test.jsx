@@ -119,11 +119,16 @@ test('historical quarter preserves cards and register while native History opens
     await act(async()=>root.render(<RecordListPage kind="reviews"/>));
     const protectedBefore={cards:one('.crr-root [data-native-summary]').outerHTML,register:one('.crr-root .register').outerHTML};
     await act(async()=>container.querySelector('[aria-label="Previous quarter"]').click());
-    expect(one('.crr-overview .quarter-controls > strong').textContent).toContain('Q3 2026');
+    expect(one('.v3-quarter-switch > b').textContent).toContain('Q3 2026');
     expect({cards:one('.crr-root [data-native-summary]').outerHTML,register:one('.crr-root .register').outerHTML}).toEqual(protectedBefore);
-    // Approved concept plots saved current unresolved occurrences; completed executions stay in native History.
-    expect(container.querySelectorAll('.crr-overview [data-date="2026-09-30"] .review-dot')).toHaveLength(0);
-    expect(container.querySelectorAll('.crr-overview .review-dot')).toHaveLength(0);
+    const completed=one('[data-k="quarterly|'+new Date(2026,8,30).getTime()+'"]');
+    expect(completed.dataset.state).toBe('completed');
+    await act(async()=>completed.dispatchEvent(new KeyboardEvent('keydown',{key:'Enter',bubbles:true})));
+    const choice=one('.v3-ledger-tip[role="group"] button');
+    expect(choice.textContent).toBe('Original saved quarterly Review');
+    await act(async()=>choice.click());
+    expect(mockNativeProps.record).toBe(mockRows[0]);expect(mockNativeProps.initialValues.occurrence).toBe(execution);
+    await act(async()=>mockNativeProps.onOpenChange(false));
     await act(async()=>historyButton().click());
     const historyRow=one('.crr-root .register .bdr-name');
     expect(historyRow.textContent).toBe('Original saved quarterly Review');
@@ -131,7 +136,7 @@ test('historical quarter preserves cards and register while native History opens
     expect(mockNativeProps.record).toBe(mockRows[0]);expect(mockNativeProps.initialValues.occurrence).toBe(execution);
     expect(mockNativeProps.initialValues.occurrence.evidence).toBe(execution.evidence);
     await act(async()=>mockNativeProps.onOpenChange(false));
-    expect(one('.crr-overview .quarter-controls > strong').textContent).toContain('Q3 2026');
+    expect(one('.v3-quarter-switch > b').textContent).toContain('Q3 2026');
     expect(JSON.stringify(mockRows)).toBe(before);
     for(const verb of ['post','patch','delete'])expect(api[verb]).not.toHaveBeenCalled();
   }finally{geometry.mockRestore();jest.useRealTimers();}
@@ -147,18 +152,20 @@ test('unresolved saved Q3 occurrence opens its exact native Review from the conc
     const before=JSON.stringify(mockRows);
     await act(async()=>root.render(<RecordListPage kind="reviews"/>));
     await act(async()=>one('[aria-label="Previous quarter"]').click());
-    expect(one('.crr-overview .quarter-controls > strong').textContent).toBe('Q3 2026');
-    const marker=one('.crr-overview [data-date="2026-09-30"] .review-dot');
-    expect(marker.getAttribute('aria-label')).toContain('Saved unresolved quarterly Review');
-    expect(marker.querySelectorAll('.dot')).toHaveLength(1);expect(marker.querySelector('b')).toBeNull();
-    await act(async()=>marker.click());
-    const choice=one('.crr-list .date-review',document);
+    expect(one('.v3-quarter-switch > b').textContent).toBe('Q3 2026');
+    const marker=one('[data-k="quarterly|'+new Date(2026,8,30).getTime()+'"]');
+    expect(marker.getAttribute('aria-label')).toContain('Quarterly, 1 event');
+    expect(marker.dataset.count).toBe('1');expect(marker.dataset.state).toBe('overdue');
+    await act(async()=>marker.dispatchEvent(new KeyboardEvent('keydown',{key:'Enter',bubbles:true})));
+    const choice=one('.v3-ledger-tip[role="group"] button');
     expect(choice.textContent).toContain('Saved unresolved quarterly Review');
     await act(async()=>choice.click());
     expect(mockNativeProps.record).toBe(mockRows[0]);
     expect(mockNativeProps.record).toMatchObject({review_id:'unresolved-q3-review',client_id:'demo_brawndo',current_occurrence_id:'unresolved-q3-occurrence'});
     await act(async()=>mockNativeProps.onOpenChange(false));
-    expect(one('.crr-overview .quarter-controls > strong').textContent).toBe('Q3 2026');
+    await act(async()=>jest.advanceTimersByTime(32));
+    expect(document.activeElement).toBe(marker.isConnected?marker:one('.v3-quarter-ledger .panel-title'));
+    expect(one('.v3-quarter-switch > b').textContent).toBe('Q3 2026');
     expect(JSON.stringify(mockRows)).toBe(before);
     for(const verb of ['post','patch','delete'])expect(api[verb]).not.toHaveBeenCalled();
   }finally{jest.useRealTimers();}

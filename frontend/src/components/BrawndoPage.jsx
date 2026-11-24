@@ -1,3 +1,4 @@
+import V3WorkspaceHeading from './V3WorkspaceHeading';
 import {Moon,Sun} from 'lucide-react';
 import {useBrawndoTheme,useBrawndoPortalTheme} from '@/lib/brawndoTheme';
 import './BrawndoPage.css';
@@ -7,13 +8,15 @@ export function BrawndoSurface({className='',children,...rest}){
   const [theme]=useBrawndoTheme();useBrawndoPortalTheme(true,theme);
   return <div className={`bpage ${className}`} data-theme={theme} {...rest}>{children}</div>;
 }
-export function BrawndoPageHeader({eyebrow,title,subtitle,children,renderThemeAction}){
+export function BrawndoPageHeader({eyebrow,title,subtitle,children,renderThemeAction,clientName}){
   const [theme,setTheme]=useBrawndoTheme();
   const onTheme=()=>setTheme(theme==='dark'?'light':'dark');
+  const modeControl = renderThemeAction?renderThemeAction({theme,onTheme}):<button type="button" className="bpage-btn" onClick={onTheme} aria-pressed={theme==='dark'} aria-label={theme==='dark'?'Switch to light mode':'Switch to dark mode'}>{theme==='dark'?<Sun size={16} aria-hidden="true"/>:<Moon size={16} aria-hidden="true"/>}<span>{theme==='dark'?'Light':'Dark'}</span></button>;
+  if (clientName) return <V3WorkspaceHeading clientName={clientName} title={title} subtitle={subtitle} actionsClass="bpage-actions">{children}{modeControl}</V3WorkspaceHeading>;
   return <header className="bpage-head">
     <div><p className="bpage-eyebrow">{eyebrow}</p><h1>{title}</h1>{subtitle&&<p className="bpage-subtitle">{subtitle}</p>}</div>
     <div className="bpage-actions">
-      {renderThemeAction?renderThemeAction({theme,onTheme}):<button type="button" className="bpage-btn" onClick={onTheme} aria-pressed={theme==='dark'} aria-label={theme==='dark'?'Switch to light mode':'Switch to dark mode'}>{theme==='dark'?<Sun size={16} aria-hidden="true"/>:<Moon size={16} aria-hidden="true"/>}<span>{theme==='dark'?'Light':'Dark'}</span></button>}
+      {modeControl}
       {children}
     </div>
   </header>;

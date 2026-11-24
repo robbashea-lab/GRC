@@ -3,20 +3,25 @@ import {createRoot} from 'react-dom/client';
 import CalendarView from './BrawndoDemoCalendar';
 import {calendarPeriod,localCalendarDate} from '@/lib/calendarView';
 import {THEME_KEY} from '@/lib/brawndoTheme';
-test('pilot filters are read-only and open native items; month overflow navigates to Day',async()=>{
+test('filters open native items and month overflow lists the selected day below the calendar',async()=>{
  global.IS_REACT_ACT_ENVIRONMENT=true;const container=document.createElement('div');document.body.appendChild(container);const root=createRoot(container);
  const anchor=new Date(2026,9,16),period=calendarPeriod(anchor),openSchedule=jest.fn(),setView=jest.fn(),setAnchor=jest.fn();
  const entries=Array.from({length:4},(_,n)=>({key:`t${n}`,id:`t${n}`,kind:'task',title:`Task ${n}`,owner_id:'u',date:'2026-10-16',client_id:'demo_brawndo',historical:false,can_reschedule:true,status:'open'}));
  const props={clientName:'Brawndo',anchor,setAnchor,view:'month',setView,period,days:period.days,today:'2026-10-16',entries,summaryEntries:entries,openSchedule,ymd:localCalendarDate,members:[{user_id:'u',name:'Dana Evans'}],setDragging:jest.fn(),setDragOverDay:jest.fn(),onDragStart:jest.fn(),onDrop:jest.fn()};
  const previousTheme=localStorage.getItem(THEME_KEY);localStorage.removeItem(THEME_KEY);
  try {
- await act(async()=>root.render(<CalendarView {...props}/>));expect(container.querySelectorAll('.kchip')).toHaveLength(4);expect(container.querySelector('h1').textContent).toBe('Brawndo Calendar');
+ await act(async()=>root.render(<CalendarView {...props}/>));expect(container.querySelectorAll('.kchip')).toHaveLength(4);expect(container.querySelector('h1').textContent).toBe('Calendar');
+ expect(container.querySelector('.eyebrow').textContent).toContain('Brawndo');
+ const panels=container.querySelectorAll('.cal-layout > section.panel');expect(panels).toHaveLength(2);
+ expect(panels[0].querySelector('.cal-grid')).not.toBeNull();expect(panels[1].querySelector('#bdcal-agenda')).not.toBeNull();
  const themeAction=container.querySelector('.surface-theme-action');expect(themeAction.textContent).toBe('Light');await act(async()=>themeAction.click());expect(container.querySelector('.bdcal').dataset.theme).toBe('light');expect(themeAction.textContent).toBe('Dark');
  const viewButtons=[...container.querySelectorAll('[aria-label="Calendar view"] button')];expect(viewButtons.map(button=>button.textContent)).toEqual(['Day','Week','Month']);await act(async()=>viewButtons[1].click());expect(setView).toHaveBeenLastCalledWith('week');
  const owner=container.querySelector('.f-right > label select');expect(owner.value).toBe('all');expect(owner.closest('label').nextElementSibling.getAttribute('aria-label')).toBe('Calendar state');
  await act(async()=>container.querySelector('[data-testid="cal-item-t0"]').click());expect(openSchedule.mock.calls[0][0]).toBe(entries[0]);
- expect(container.querySelectorAll('.wk .ev')).toHaveLength(2);expect(container.querySelector('.more').textContent).toBe('+2 more');
- await act(async()=>container.querySelector('.more').click());expect(setView).toHaveBeenCalledWith('day');expect(localCalendarDate(setAnchor.mock.calls[0][0])).toBe('2026-10-16');
+ expect(container.querySelectorAll('.wk .ev')).toHaveLength(3);expect(container.querySelector('.more').textContent).toBe('+1 more');
+ await act(async()=>container.querySelector('.more').click());expect(panels[1].querySelector('.panel-desc').textContent).toBe('4 items on this day');
+ expect(container.querySelectorAll('.wk')).toHaveLength(5);expect(panels[1].querySelectorAll('.ag-row')).toHaveLength(4);
+ await act(async()=>viewButtons[0].click());expect(setView).toHaveBeenCalledWith('day');expect(localCalendarDate(setAnchor.mock.calls[0][0])).toBe('2026-10-16');
  await act(async()=>root.render(<CalendarView {...props} view="day"/>));expect(container.querySelectorAll('.drow')).toHaveLength(4);
  for(const item of entries)expect(container.querySelector(`[data-testid="cal-item-${item.key}"]`)).not.toBeNull();
  await act(async()=>root.render(<CalendarView {...props}/>));
@@ -58,6 +63,8 @@ test('Completed summary excludes accepted/cancelled records and retains their hi
  const props={anchor,period,days:period.days,view:'month',today:'2026-10-16',entries,summaryEntries:[],ymd:localCalendarDate,openSchedule:jest.fn(),setAnchor:jest.fn(),setView:jest.fn()};
  try {await act(async()=>root.render(<CalendarView {...props}/>));
  const tiles=container.querySelectorAll('.kchip');expect(tiles[3].querySelector('strong').textContent).toBe('1');expect(tiles[0].querySelector('small').textContent).toContain('0 open · 1 completed · 2 other historical');
+ const scopes=container.querySelectorAll('[aria-label="Calendar state"] button');expect(scopes[0].getAttribute('aria-pressed')).toBe('true');
+ expect(container.querySelector('[data-testid="cal-attn-h1"]')).toBeNull();await act(async()=>scopes[2].click());
  expect(container.textContent).toContain('Other historical items');
  expect(container.querySelector('[data-testid="cal-attn-h1"]')).not.toBeNull();expect(container.querySelector('[data-testid="cal-attn-h2"]')).not.toBeNull();
  await act(async()=>tiles[3].click());expect(container.querySelector('[data-testid="cal-attn-h0"]')).not.toBeNull();expect(container.querySelector('[data-testid="cal-attn-h1"]')).toBeNull();
@@ -94,9 +101,9 @@ test.each([[2026,9,5],[2026,7,6],[2027,1,4]])('month grid uses complete in-month
  global.IS_REACT_ACT_ENVIRONMENT=true;const container=document.createElement('div');document.body.appendChild(container);const root=createRoot(container);
  const anchor=new Date(year,month,16),period=calendarPeriod(anchor),before=period.days.map(localCalendarDate);
  try {await act(async()=>root.render(<CalendarView anchor={anchor} period={period} days={period.days} view="month" today={localCalendarDate(anchor)} entries={[]} summaryEntries={[]} ymd={localCalendarDate}/>));
- expect(container.querySelectorAll('.wk')).toHaveLength(weeks);expect(container.querySelectorAll('.wk .day')).toHaveLength(weeks*7);
+ expect(container.querySelectorAll('.wk')).toHaveLength(weeks);expect(container.querySelectorAll('.wk .cal-cell')).toHaveLength(weeks*7);
  expect(period.days.map(localCalendarDate)).toEqual(before);expect(period.days).toHaveLength(42);
- const shown=[...container.querySelectorAll('.wk .day')].map(day=>day.dataset.testid.replace('cal-day-',''));
+ const shown=[...container.querySelectorAll('.wk .cal-cell')].map(day=>day.dataset.testid.replace('cal-day-',''));
  expect(shown.filter(date=>date.slice(0,7)===localCalendarDate(anchor).slice(0,7))).toHaveLength(new Date(year,month+1,0).getDate());
  } finally {await act(async()=>root.unmount());container.remove();}
 });

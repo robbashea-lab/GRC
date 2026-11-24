@@ -6,13 +6,19 @@ import {useOrg} from '@/context/OrgContext';
 import {useAuth} from '@/context/AuthContext';
 import api,{formatError,PREVIEW_MODE} from '@/lib/api';
 import {canExportReports} from '@/lib/permissions';
-import {BrawndoSurface,BrawndoPageHeader} from '@/components/BrawndoPage';
+import {BrawndoSurface} from '@/components/BrawndoPage';
+import V3WorkspaceHeading from '@/components/V3WorkspaceHeading';
+import ReportPackageWorkspace from '@/components/ReportPackageWorkspace';
 import {Button} from '@/components/ui/button';
 import RegisterLoadError from '@/components/RegisterLoadError';
 import NativeReportCatalog from '@/components/NativeReportCatalog';
 import './Reports.css';
 
 function ReportForm({clientId,scopeKey,activeScope,clientTimeZone}){
+  const [tab,setTab]=useState(()=>{
+    const target=new URLSearchParams(window.location.search).get('reports_tab');
+    return ['internal','details'].includes(target)?target:'audit';
+  });
   const [frameworks,setFrameworks]=useState(null),[frameworkKey,setFrameworkKey]=useState('');
   const [detail,setDetail]=useState('full'),[trendPeriod,setTrendPeriod]=useState('6m');
   const [loadError,setLoadError]=useState(''),[revision,setRevision]=useState(0);
@@ -61,10 +67,14 @@ function ReportForm({clientId,scopeKey,activeScope,clientTimeZone}){
     <RegisterLoadError error={loadError} onRetry={()=>setRevision(n=>n+1)} name="enabled frameworks"/>
     {!frameworks&&!loadError&&<p role="status">Loading enabled frameworks…</p>}
     {frameworks?.length===0&&<p role="status">No supported framework is enabled for this client.</p>}
-    {!!frameworks?.length&&<form onSubmit={generate} className="reports-form" aria-label="Generate framework report" aria-busy={generating}>
+    {!!frameworks?.length&&<div className="approved-reports"><div className="rp-tabs" role="tablist" aria-label="Reports views">{[['internal','Internal reports'],['audit','Audit packages'],['details','Detailed reports']].map(([key,label],index)=><button type="button" key={key} id={'rp-tab-'+key} aria-controls="rp-view" className="rp-tab" role="tab" tabIndex={tab===key?0:-1} aria-selected={tab===key} onKeyDown={event=>{
+      const keys={ArrowRight:(index+1)%3,ArrowLeft:(index+2)%3,Home:0,End:2};
+      if(Object.hasOwn(keys,event.key)){event.preventDefault();event.currentTarget.parentElement.children[keys[event.key]].focus();setTab(['internal','audit','details'][keys[event.key]]);}
+    }} onClick={()=>setTab(key)}>{label}{key==='audit'&&<small className="rp-chip">{selected?.name}</small>}</button>)}</div>
+    {frameworks.length>1&&<div className="rp-framework"><label htmlFor="reports-framework">Framework</label><select id="reports-framework" className="input" value={frameworkKey} onChange={event=>{setFrameworkKey(event.target.value);setGenerateError('');setMessage('');}}>{frameworks.map(f=><option key={f.key} value={f.key}>{f.name}</option>)}</select></div>}
+    <section id="rp-view" role="tabpanel" aria-labelledby={'rp-tab-'+tab}>{tab!=='details' ? <ReportPackageWorkspace key={frameworkKey} {...{clientId,scopeKey,activeScope,clientTimeZone,tab}} framework={selected}/> : <><form onSubmit={generate} className="reports-form" aria-label="Generate framework report" aria-busy={generating}>
       <fieldset disabled={generating} className="reports-fields">
-        {frameworks.length===1?<div><span className="reports-label">Framework/program</span><p className="reports-framework" data-testid="report-framework">{selected.name}</p></div>
-        :<label htmlFor="reports-framework">Framework/program<select id="reports-framework" className="ui-control" value={frameworkKey} onChange={e=>{setFrameworkKey(e.target.value);setGenerateError('');setMessage('');}}>{frameworks.map(f=><option key={f.key} value={f.key}>{f.name}</option>)}</select></label>}
+        {frameworks.length===1&&<div><span className="reports-label">Framework/program</span><p className="reports-framework" data-testid="report-framework">{selected.name}</p></div>}
         {selected&&(selected.version||selected.scope)&&<p className="reports-scope">{[selected.version&&`Version ${selected.version}`,selected.scope].filter(Boolean).join(' · ')}</p>}
         <label htmlFor="reports-detail">Report detail<select id="reports-detail" className="ui-control" value={detail} onChange={e=>{setDetail(e.target.value);setMessage('');}}><option value="executive">Executive summary</option><option value="full">Full assessment</option></select></label>
         <label htmlFor="reports-trend">Trend period<select id="reports-trend" className="ui-control" value={trendPeriod} onChange={e=>{setTrendPeriod(e.target.value);setMessage('');}}><option value="30d">30 days</option><option value="6m">6 months</option><option value="12m">12 months</option></select></label>
@@ -72,12 +82,12 @@ function ReportForm({clientId,scopeKey,activeScope,clientTimeZone}){
       {generateError&&<p role="alert" className="reports-error">{generateError}</p>}
       <Button type="submit" disabled={PREVIEW_MODE||generating||!selected} data-testid="generate-framework-report"><Download aria-hidden="true"/>{generating?'Generating PDF…':'Generate/download PDF'}</Button>
       {(generating||message)&&<p role="status">{generating?'Preparing the saved assessment snapshot…':message}</p>}
-    </form>}
+    </form>
     {selected?.key==='cmmc'&&<nav className="reports-fields" aria-label="CMMC working documents">
       {(selected.unit_name==='mapped checks'?[['ssp','System Security Plan']]:[['ssp','System Security Plan'],['poam','POA&M'],['sprs','SPRS Score']]).map(([key,label])=>
         <Link key={key} className="text-link underline" to={clientDestination(clientId,'/compliance/cmmc?cmmc_tab='+key)}>{label}</Link>)}
     </nav>}
-    {selected&&<NativeReportCatalog key={frameworkKey+':'+clientTimeZone} clientId={clientId} framework={selected} scopeKey={scopeKey} activeScope={activeScope} clientTimeZone={clientTimeZone}/>}
+    {selected&&<NativeReportCatalog key={frameworkKey+':'+clientTimeZone} clientId={clientId} framework={selected} scopeKey={scopeKey} activeScope={activeScope} clientTimeZone={clientTimeZone}/>}</>}</section></div>}
   </div>;
 }
 
@@ -86,7 +96,7 @@ export default function Reports(){
   const scopeKey=JSON.stringify([currentClientId,user?.user_id||user?.email,user?.role,!!user?.password_change_required,!!user?.all_clients,user?.client_ids||[],workspaceMode,user?.workspace_mode]);
   const activeScope=useRef(scopeKey);activeScope.current=scopeKey;
   return <BrawndoSurface className="reports-page">
-    <BrawndoPageHeader eyebrow={`${currentClient?.name||'Client'} · Framework reports`} title="Reports"/>
+    <V3WorkspaceHeading clientName={currentClient?.name} title="Reports" subtitle="Executive summaries for leadership and audit packages for auditors"/>
     {!canExportReports(user)?<p role="alert" className="reports-body">You do not have access to reports.</p>
       :!currentClientId?<p role="status" className="reports-body">Select a client to generate a report.</p>
       :<ReportForm key={scopeKey} clientId={currentClientId} scopeKey={scopeKey} activeScope={activeScope} clientTimeZone={currentClient?.timezone||currentClient?.time_zone||'UTC'}/>}

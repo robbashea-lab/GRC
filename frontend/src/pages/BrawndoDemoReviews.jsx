@@ -1,4 +1,6 @@
-import CisReviewsConcept from '@/components/CisReviewsConcept';
+import V3WorkspaceHeading from '@/components/V3WorkspaceHeading';
+import V3QuarterLedger from '@/components/V3QuarterLedger';
+import {quarterlyReviewEvents} from '@/lib/quarterlyProgramTimeline';
 import DeadlineClock from '@/components/DeadlineClock';
 import '@/components/CisReviewsConcept.css';
 import {useEffect,useRef,useState} from 'react';
@@ -22,9 +24,9 @@ export default function BrawndoDemoReviews({clientName='Client',children,rows=[]
   const dueToday=rows.some(row=>reviewMatches(row,'due30',now)&&reviewDaysUntil(row,now)===0);
   const contexts=[`${due90} due in the next 90 days`,summary.overdue?`Oldest ${Math.max(...overdueDays)} day${Math.max(...overdueDays)===1?'':'s'} past due`:'Nothing past due',dueToday?'Includes a review due today':nextDue?`Next due ${formatCisReviewDate(nextDue)}`:'Nothing due in 30 days',summary.completed90&&latestCompletion?`Latest ${formatCisReviewDate(latestCompletion)}`:'None in 90 days'];
   return <div {...props} className="crr-root" data-visual-surface="reviews" data-theme={theme}>
-    <header className="page-heading"><div><h1>{clientName} Reviews</h1><p>Recurring governance and compliance reviews</p></div><div className="page-actions">{actions}</div></header>
-    <CisReviewsConcept key={scopeKey} rows={rows} users={users} scopeKey={scopeKey} available={available} recordOpen={recordOpen} theme={theme} onOpenReview={onOpenReview}/>
-    <section className="panel register"><header className="register-heading"><h2>Reviews register</h2><div className="segmented" role="group" aria-label="Records"><button aria-pressed={view!=='history'} onClick={()=>onView('all')}>Active</button><button aria-pressed={view==='history'} onClick={()=>onView('history')}>History</button></div></header>    <div className="reg-kstrip native-summary" data-native-summary><div className="kstrip" role="group" aria-label="Review summary. Select a figure to filter the register.">
+    <V3WorkspaceHeading clientName={clientName} title="Reviews" subtitle={<>Recurring governance and compliance reviews</>} actionsClass="page-actions">{actions}</V3WorkspaceHeading>
+    <V3QuarterLedger key={scopeKey} kind="reviews" events={quarterlyReviewEvents(rows)} now={now} available={available} recordOpen={recordOpen} onOpen={event=>onOpenReview(event.record)}/>
+    <section className="panel register"><header className="panel-head register-heading"><h2 className="panel-title">Reviews register</h2><div className="segmented" role="group" aria-label="Records"><button aria-pressed={view!=='history'} onClick={()=>onView('all')}>Active</button><button aria-pressed={view==='history'} onClick={()=>onView('history')}>History</button></div></header>    <div className="reg-kstrip native-summary" data-native-summary><div className="kstrip" role="group" aria-label="Review summary. Select a figure to filter the register.">
       {[['all','Active reviews',summary.active],['overdue','Overdue',summary.overdue],['due30','Due in 30 days',summary.due30],['history','Completed · last 90 days',summary.completed90]].map(([key,label,value],index)=><button key={key} disabled={!available} onClick={()=>onView(key)} className={'kchip'+(key==='overdue'&&value?' is-overdue':'')} aria-pressed={view===key}><span className="klabel">{label}</span><strong className="kvalue">{available?value:'—'}</strong><small className="kdetail">{available?contexts[index]:'—'}</small></button>)}
     </div></div>
 {children}</section>

@@ -1,4 +1,4 @@
-import PageHeader from "@/components/PageHeader";
+import PlatformPageHeading from "@/components/PlatformPageHeading";
 import { Lock, KeyRound, ShieldAlert, Clock, Info } from "lucide-react";
 
 const ROWS = [
@@ -12,10 +12,10 @@ const ROWS = [
 
 export default function AdminSecurity() {
   return (
-    <div className="admin-page admin-security-page">
-      <PageHeader eyebrow="Administration" title="Security & Auth" subtitle="Platform-wide authentication and hardening posture." />
+    <div className="wrap admin-page admin-security-page">
+      <PlatformPageHeading eyebrow="Administration" title="Security & Auth" subtitle="Platform-wide authentication and hardening posture." />
       <div className="admin-body">
-        <div className="admin-notice" data-testid="admin-security-note">
+        <div className="callout admin-notice" data-testid="admin-security-note">
           <Info aria-hidden="true" />
           <div><strong>Configuration reference.</strong> This page describes the product configuration; it does not inspect or verify the live environment.</div>
         </div>

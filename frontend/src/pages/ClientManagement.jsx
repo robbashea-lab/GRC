@@ -6,7 +6,7 @@ import { useAuth } from "@/context/AuthContext";
 import { useOrg } from "@/context/OrgContext";
 import {clientDestination} from "@/lib/clientSelection";
 import api, { formatError } from "@/lib/api";
-import PageHeader from "@/components/PageHeader";
+import PlatformPageHeading from "@/components/PlatformPageHeading";
 import ClientDialog from "@/components/ClientDialog";
 import TablePagination from '@/components/TablePagination';
 import ClientRelationshipValue from '@/components/ClientRelationshipValue';
@@ -82,12 +82,12 @@ export default function ClientManagement() {
     finally { setBusy(null); }
   }
   if (!authorized) return <div role="alert" className="page-content">Client Management is available to platform administrators only.</div>;
-  return <div className="admin-page admin-clients-page">
-    <PageHeader title="Client Management" subtitle="Manage client organizations, ownership, and lifecycle."
+  return <div className="wrap admin-page admin-clients-page">
+    <PlatformPageHeading title="Client Management" subtitle="Manage client organizations, ownership, and lifecycle."
       action={canCreateClient && <Button ref={addClientButton} size="sm" onClick={event => {dialogOpener.current=event.currentTarget; setDialog({ client: null });}} data-testid="add-client-button" className="bg-primary hover:bg-primary/90"><Plus className="h-3.5 w-3.5 mr-1" /> Add Client</Button>} />
     <div className="admin-body">
-      <section className="admin-panel" aria-label="Client organizations">
-      <div className="admin-panel-head"><div><h2>Client organizations</h2><p>Ownership, program condition and client lifecycle.</p></div><span className="admin-record-meta">{clients.length} clients</span></div>
+      <section className="panel admin-panel" aria-label="Client organizations">
+      <div className="panel-head admin-panel-head"><div><h2>Client organizations</h2><p>Ownership, program condition and client lifecycle.</p></div><span className="admin-record-meta">{clients.length} clients</span></div>
       <div className="admin-toolbar">
         <div className="admin-search"><Search aria-hidden="true" /><Input value={query} onChange={e => setQuery(e.target.value)} placeholder="Search client, industry, GRC lead..." aria-label="Search client organizations" /></div>
         <select aria-label="Client status" value={status} onChange={e => setStatus(e.target.value)} className="rounded-md border border-line bg-surface-card p-2 text-sm">

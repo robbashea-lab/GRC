@@ -315,6 +315,41 @@ test('foreign preview, history and retained bytes remain inaccessible to a scope
   expect((await preview('risks')).header.client.id).toBe(CID);
 });
 
+test('report materials include only saved dated register events for this client and selected program',async()=>{
+  const at='2026-11-18T03:00:00Z';
+  edit(db=>{
+    db.policies.push({client_id:CID,policy_id:'p1',title:'Access policy',status:'approved',
+      decision_history:[{action:'external_approval_recorded',recorded_at:at,subject:{private:'Confidential approval attachment'}}]},
+    {client_id:'foreign',policy_id:'p2',title:'Foreign policy',status:'approved',approved_at:at});
+    db.reviews.push({client_id:CID,review_id:'r1',title:'Selected review',framework_key:'cis-ig1',
+      occurrences:[{completed_at:at}],completion_date:at.slice(0,10)},
+    {client_id:CID,review_id:'r2',title:'Other program review',framework_drivers:[{framework_key:'soc-2'}],completion_date:at});
+  });
+  const bundle=(await api.get('/reports/materials',{params:params()})).data;
+  expect(bundle).toMatchObject({client_id:CID,framework_key:'cis-ig1'});
+  expect(Object.keys(bundle.reports).sort()).toEqual(['assessment','executive','policies','risks','scope','vendors']);
+  expect(bundle.register_history.filter(row=>row.record==='Access policy').map(row=>row.event)).toEqual(['External approval recorded']);
+  expect(bundle.register_history.filter(row=>row.record==='Selected review').map(row=>row.event)).toEqual(['Review completed']);
+  expect(bundle.register_history.some(row=>row.record==='Other program review')).toBe(false);
+  expect(JSON.stringify(bundle)).not.toMatch(/Confidential approval attachment|Foreign policy/);
+  edit(db=>{db.requirements.find(row=>row.client_id===CID&&row.baseline_key==='cis-ig1').baseline_response='excluded';});
+  await expect(api.get('/reports/materials',{params:params()})).rejects.toMatchObject({response:{status:403}});
+});
+
+test('a browser-prepared file has one scoped audit receipt and rejects different bytes on replay',async()=>{
+  const body={client_id:CID,framework_key:'cis-ig1',kind:'executive-summary',sha256:'a'.repeat(64),bytes:1234,period_start:'2026-01-01',period_end:'2026-11-24'};
+  const options={headers:{'Idempotency-Key':'reports-browser-delivery-synthetic'}};
+  const first=(await api.post('/reports/deliveries',body,options)).data;
+  expect((await api.post('/reports/deliveries',body,options)).data).toEqual(first);
+  const logs=readStore().logs.filter(row=>row.entity_type==='report-delivery');
+  expect(logs).toHaveLength(1);
+  expect(logs[0]).toMatchObject({entity_id:first.delivery_id,meta:{type:'executive-summary',browser_reported_sha256:body.sha256,event:'browser_download_requested'}});
+  await expect(api.post('/reports/deliveries',{...body,bytes:3333},options)).rejects.toMatchObject({response:{status:409}});
+  await expect(api.post('/reports/deliveries',{...body,period_end:'2025-01-01'},options)).rejects.toMatchObject({response:{status:422}});
+  edit(db=>{Object.assign(db.user,{role:'client_readonly',client_ids:['other'],all_clients:false});});
+  await expect(api.post('/reports/deliveries',body,options)).rejects.toMatchObject({response:{status:403}});
+});
+
 test('malformed actor grants cannot preview, export, replay or download and leave all saved state unchanged', async () => {
   const intent = 'reports-malformed-grants-original';
   const retained = (await exportReport('risks', 'csv', 'cis-ig1', intent)).data;

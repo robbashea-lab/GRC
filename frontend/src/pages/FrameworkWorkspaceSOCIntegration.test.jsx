@@ -114,7 +114,7 @@ const click = element => act(async () => { expect(element).toBeTruthy(); element
 const openCategory = id => click(container.querySelector(`[data-testid="soc-category-${id}"]`));
 const overviewButton = () => [...container.querySelectorAll('.soc-program-heading button')].find(element => element.textContent === 'Back to SOC 2');
 const backToOverview = () => click(overviewButton());
-const continueButton = id => [...container.querySelectorAll('.soc-program-heading button')].find(element => element.textContent.startsWith(`Continue: ${id} `));
+const continueButton = id => [...container.querySelectorAll('.soc-program-heading button')].find(element => element.textContent.startsWith(`Continue with ${id} `));
 const searchInput = () => container.querySelector('.soc-criteria-register input[type="search"]');
 const clearFilter = () => click(container.querySelector('.soc-criteria-register [aria-label="Clear search and filters"]'));
 const legend = label => [...summary().querySelectorAll('.gn-ring-card')].find(element => element.querySelector('.gn-ring-label').textContent === label);

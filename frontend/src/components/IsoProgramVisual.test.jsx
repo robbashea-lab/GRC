@@ -62,8 +62,8 @@ test('Continue and theme actions retain their supplied native callbacks and crit
   const resume={...definition,...source.source.assessments.find(row=>row.definition_id===definition.id)};
   const onContinue=jest.fn(),onOverview=jest.fn(),onTheme=jest.fn(),before=JSON.stringify(source.source);
   await render(<IsoProgramHeader view="annex_control" presentation={present(source)} {...{resume,onContinue,onOverview,onTheme}} theme="dark"/>);
-  const next=button(`Continue: ${resume.definition_id} ${resume.title}`);
-  expect(next.parentElement.className).toBe('head-actions');await click(next);expect(onContinue).toHaveBeenCalledTimes(1);
+  const next=button(`Continue with ${resume.definition_id} ${resume.title}`);
+  expect(next.parentElement.className).toBe('v3-heading-actions head-actions');await click(next);expect(onContinue).toHaveBeenCalledTimes(1);
   await click(container.querySelector('[aria-label="Switch to light theme"]'));expect(onTheme).toHaveBeenCalledTimes(1);
   expect(JSON.stringify(source.source)).toBe(before);
 });

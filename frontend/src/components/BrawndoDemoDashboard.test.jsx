@@ -16,7 +16,7 @@ test('concept groups approved presentation while Priority work keeps its native 
  await act(async()=>root.render(<BrawndoDemoDashboard {...props} concept><section data-testid="program">Native CIS</section></BrawndoDemoDashboard>));
  const presentation=container.querySelector('.cis-dashboard-concept-presentation');
  expect(presentation.querySelector('[data-testid="program"]')).toBeTruthy();
- expect(presentation.querySelector('.bdd-summary')).toBeTruthy();
+ expect(presentation.querySelector('.dash-head + [data-testid="program"]')).toBeTruthy();
  expect(presentation.querySelector('#bdd-work-heading')).toBeNull();
  expect(container.querySelector('[aria-labelledby="bdd-work-heading"]').outerHTML).toBe(original);
  await act(async()=>container.querySelector('tbody button').click());
@@ -27,8 +27,8 @@ test('concept loading and error frame has no saved counts or queue requests and 
  localStorage.setItem('omnisciente:brawndo-dashboard-theme','dark');
  await act(async()=>root.render(<CisDashboardPending client={{name:'Owned CIS'}}><p role="status">Loading dashboard…</p></CisDashboardPending>));
  expect(container.querySelector('[data-cis-dashboard-concept=true]').dataset.theme).toBe('dark');
- expect(container.querySelector('h1').textContent).toBe('Owned CIS Dashboard');
- expect(container.querySelector('.bdd-summary')).toBeNull();
+ expect(container.querySelector('h1').textContent).toBe('Owned CIS');
+ expect(container.querySelector('[aria-label="Show work"]')).toBeNull();
  expect(container.querySelector('.bdd-table-scroll')).toBeNull();
  await act(async()=>container.querySelector('[aria-label="Switch to light theme"]').click());
  expect(localStorage.getItem('omnisciente:brawndo-dashboard-theme')).toBe('light');
@@ -37,11 +37,11 @@ test('concept loading and error frame has no saved counts or queue requests and 
 });
 test('renders eight rows from full work with native identity, full counts and page navigation',async()=>{
  await act(async()=>root.render(<BrawndoDemoDashboard {...props}><section>CIS IG1 Status</section></BrawndoDemoDashboard>));
- expect(container.querySelectorAll('tbody tr')).toHaveLength(8);expect(container.querySelector('.bdd-summary').textContent).toContain('32');expect(container.textContent).toContain('32 in progress');
+ expect(container.querySelectorAll('tbody tr')).toHaveLength(8);expect(container.querySelector('.bdd-filters').textContent).toContain('32');expect(container.querySelector('.bdd-filters button').title).toContain('32 in progress');
  await act(async()=>[...container.querySelectorAll('button')].find(button=>button.textContent==='Next').click());
  expect(container.querySelector('nav[aria-label="Priority work pages"]').textContent).toContain('9–16 of 32');
  await act(async()=>container.querySelector('tbody button').click());expect(props.onOpen).toHaveBeenCalledWith(rows[8],expect.any(HTMLElement));
- await act(async()=>container.querySelector('.bdd-summary button').click());expect(props.onFilter).toHaveBeenCalledWith('all');
+ await act(async()=>container.querySelector('.bdd-filters button').click());expect(props.onFilter).toHaveBeenCalledWith('all');
 });
 test('failed full queue never falls back to a partial preview',async()=>{
  await act(async()=>root.render(<BrawndoDemoDashboard {...props} loadDetail={async()=>{throw new Error('Network unavailable');}}/>));
@@ -92,22 +92,22 @@ test('unknown membership has no invented program-wide chip',async()=>{
 
 test('clean Dashboard copy, compact dates and pagination retain real metadata and accessible table naming',async()=>{
  await act(async()=>root.render(<BrawndoDemoDashboard {...props}/>));
- expect(container.querySelector('h1').textContent).toBe('Brawndo Dashboard');
- expect(container.querySelector('.bdd-heading p').textContent).toContain('As of Oct 15, 2026');
- expect(container.querySelector('.bdd-heading p').textContent).not.toContain('AM');
+ expect(container.querySelector('h1').textContent).toBe('Brawndo');
+ expect(container.querySelector('.bdd-heading .page-sub').textContent).toContain('As of Oct 15, 2026');
+ expect(container.querySelector('.bdd-heading .page-sub').textContent).not.toContain('AM');
  expect(container.querySelector('input[type=search]').placeholder).toBe('Search work…');
  expect(container.querySelector('caption').textContent).toBe('Priority work');expect(container.querySelector('caption').className).toBe('sr-only');
  expect(container.textContent).not.toContain('Authoritative active work');
  expect(container.querySelector('.bdd-cell-due time').textContent).toBe('Oct 15, 2026');
  expect(container.querySelector('.bdd-cell-due time').dateTime).toBe(rows[0].due_date);
- expect(container.querySelector('.bdd-summary button:nth-child(3) small').textContent).toBe('Next due Oct 15');
+ expect(container.querySelector('.bdd-filters button:nth-child(3)').title).toBe('Next due Oct 15');
  expect(container.querySelector('.bdd-results [role=status]').textContent).toBe('32 items');
  expect(container.querySelector('nav[aria-label="Priority work pages"]').textContent).toContain('1–8 of 32');
 });
 
 test('snapshot instants show the actual UTC time and filtered emptiness retains clear filters',async()=>{
  await act(async()=>root.render(<BrawndoDemoDashboard {...props} queue={{...queue,as_of:'2026-10-15T23:21:00Z'}}/>));
- expect(container.querySelector('.bdd-heading p').textContent).toContain('Oct 15, 2026, 11:21 PM UTC');
+ expect(container.querySelector('.bdd-heading .page-sub').textContent).toContain('Oct 15, 2026, 11:21 PM UTC');
  const input=container.querySelector('input[type=search]');
  await act(async()=>{Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,'value').set.call(input,'Nothing matches');input.dispatchEvent(new Event('input',{bubbles:true}));});
  expect(container.querySelectorAll('tbody tr')).toHaveLength(0);expect(container.querySelector('.bdd-empty h3').textContent).toBe('No work matches these filters');

@@ -4,6 +4,7 @@ import ServicesTools from './ServicesTools';
 import api from '@/lib/api';
 import {applyServicePreset, copy, defaultServices, serviceCatalog} from '@/lib/r4ServicesTools';
 
+jest.mock('react-router-dom',()=>({Link:({to,children,...props})=><a href={to} {...props}>{children}</a>}),{virtual:true});
 jest.mock('@/context/AuthContext', () => ({useAuth: () => ({
   user: {user_id: 'services-fixture-owner', role: 'platform_admin'}, workspaceMode: 'demo'
 })}));
@@ -14,15 +15,13 @@ jest.mock('@/lib/api', () => ({__esModule: true,
 const CLIENT = 'services-owned-fixture', PATH = '/clients/' + CLIENT + '/services';
 let host, root, current;
 const button = label => [...host.querySelectorAll('button')].find(node => node.textContent === label);
-const preset = () => host.querySelector('.toolbar select');
+const presetButtons=()=>[...host.querySelectorAll('.svc-preset')];
+const selectedPreset=()=>Object.keys(serviceCatalog.presets)[presetButtons().findIndex(node=>node.getAttribute('aria-pressed')==='true')];
 const click = async node => {expect(node).toBeTruthy(); await act(async () => node.click());};
-const select = async (node, value) => act(async () => {
-  Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype, 'value').set.call(node, value);
-  node.dispatchEvent(new Event('change', {bubbles: true}));
-});
+const selectPreset=async id=>click(presetButtons()[Object.keys(serviceCatalog.presets).indexOf(id)]);
 const render = async onSaved => act(async () => root.render(<ServicesTools clientId={CLIENT} canEdit onSaved={onSaved}/>));
 function expectBusinessInputsLocked(locked) {
-  expect(preset().disabled).toBe(locked);
+  expect(presetButtons()).toHaveLength(Object.keys(serviceCatalog.presets).length);for(const node of presetButtons())expect(node.disabled).toBe(locked);
   const responsibility = [...host.querySelectorAll('select[aria-label^="Who runs "]')];
   const pickers = [...host.querySelectorAll('button')].filter(node => node.textContent === 'Choose tools');
   expect(responsibility).toHaveLength(serviceCatalog.areas.length);
@@ -47,20 +46,20 @@ test('real retained Services save locks all business edit paths while busy or un
   const onSaved = jest.fn(), draftA = applyServicePreset(defaultServices(), 'full');
   await render(onSaved);await click(button('Edit services & tools'));
   expectBusinessInputsLocked(false);
-  await select(preset(), 'full');await click(button('Save services & tools'));
+  await selectPreset('full');await click(button('Save services & tools'));
   expect(api.post).toHaveBeenCalledTimes(1);
   const requestA = copy(api.post.mock.calls[0]);
   expect(requestA[0]).toBe(PATH);
   expect(requestA[1]).toEqual({expected_updated_at: 'original-client-version', areas: draftA.areas, custom_tools: [], preset: 'full'});
   expectBusinessInputsLocked(true);
   expect(button('Saving…').disabled).toBe(true);expect(button('Cancel').disabled).toBe(true);
-  expect(preset().value).toBe('full');
+  expect(selectedPreset()).toBe('full');
 
   await act(async () => failA(new Error('Synthetic unconfirmed response A')));
   expect(host.querySelector('[role="alert"]').textContent).toContain('Synthetic unconfirmed response A');
   expectBusinessInputsLocked(true);
   expect(button('Retry unconfirmed save').disabled).toBe(false);expect(button('Cancel').disabled).toBe(true);
-  expect(preset().value).toBe('full');expect(onSaved).not.toHaveBeenCalled();
+  expect(selectedPreset()).toBe('full');expect(onSaved).not.toHaveBeenCalled();
 
   current = {...current, updated_at: 'confirmed-version-A', services: draftA};
   api.post.mockResolvedValueOnce({data: copy(current)});
@@ -69,8 +68,8 @@ test('real retained Services save locks all business edit paths while busy or un
   expect(onSaved).toHaveBeenCalledTimes(1);
   expect(button('Edit services & tools').disabled).toBe(false);
   await click(button('Edit services & tools'));expectBusinessInputsLocked(false);
-  expect(preset().value).toBe('full');
-  await select(preset(), 'comanaged');expect(preset().value).toBe('comanaged');
+  expect(selectedPreset()).toBe('full');
+  await selectPreset('comanaged');expect(selectedPreset()).toBe('comanaged');
   await click(button('Cancel'));
   expect(button('Edit services & tools')).toBeTruthy();expect(api.post).toHaveBeenCalledTimes(2);
   expect(current.services).toEqual(draftA);
@@ -80,14 +79,14 @@ test('a remounted editor explicitly retries original A even when the loaded save
   const draftA = applyServicePreset(defaultServices(), 'security'), onSaved = jest.fn();
   api.post.mockRejectedValueOnce(new Error('Synthetic response A lost'));
   await render(onSaved);await click(button('Edit services & tools'));
-  await select(preset(), 'security');await click(button('Save services & tools'));
+  await selectPreset('security');await click(button('Save services & tools'));
   const requestA = copy(api.post.mock.calls[0]);
   await act(async () => root.render(null));
   // The first save may have committed despite the lost response. The retained
   // command must use its original revision, rather than reconstructing a new save.
   current = {...current, updated_at: 'confirmed-version-A', services: draftA};
   await render(onSaved);await click(button('Edit services & tools'));
-  expectBusinessInputsLocked(true);expect(preset().value).toBe('security');
+  expectBusinessInputsLocked(true);expect(selectedPreset()).toBe('security');
   api.post.mockResolvedValueOnce({data: copy(current)});
   await click(button('Retry unconfirmed save'));
   expect(api.post).toHaveBeenCalledTimes(2);expect(api.post.mock.calls[1]).toEqual(requestA);
@@ -95,4 +94,24 @@ test('a remounted editor explicitly retries original A even when the loaded save
   expect(onSaved).toHaveBeenCalledTimes(1);
   await click(button('Edit services & tools'));expectBusinessInputsLocked(false);
   await click(button('Cancel'));expect(api.post).toHaveBeenCalledTimes(2);
+});
+
+test('service support uses matching client activity and links to its setup; foreign activity is rejected',async()=>{
+  const setupPath='/clients/'+CLIENT+'/iv-setup';
+  const entry={activity_id:'inventory-check',title:'Inventory review',area_ids:['endpoint'],state:'done',provider_relevant:true};
+  const programs=[{key:'cis-ig1',name:'CIS IG1'}];
+  let data={client_id:CLIENT,activities:[entry]};
+  api.get.mockImplementation(async path=>({data:path===setupPath?data:copy(current)}));
+  const show=()=>act(async()=>root.render(<ServicesTools clientId={CLIENT} programs={programs} canEdit/>));
+  await show();
+  expect(host.querySelector('.svc-setup')?.getAttribute('href')).toBe('/iv-setup?client_id='+CLIENT);
+  expect(host.querySelector('.svc-setup')?.textContent).toContain('1 of 1');
+  expect(host.querySelector('.svc-gh')?.textContent).toContain('CIS IG1');
+  expect(host.querySelector('.svc-more')).toBeTruthy();
+  await act(async()=>root.render(null));
+  data={client_id:'different-client',activities:[{...entry,title:'Foreign activity'}]};
+  await show();
+  expect(host.querySelector('[role=alert]')?.textContent).toContain('could not be verified');
+  expect(host.textContent).not.toContain('Foreign activity');
+  expect(host.querySelector('.svc-setup')).toBeNull();
 });

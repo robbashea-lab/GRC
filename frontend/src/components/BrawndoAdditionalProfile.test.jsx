@@ -8,7 +8,7 @@ beforeEach(()=>{global.IS_REACT_ACT_ENVIRONMENT=true;container=document.createEl
 afterEach(async()=>{await act(async()=>root.unmount());container.remove();});
 test('identity uses eight-field optional completeness, native counts including zero and actual relationships',async()=>{
   await act(async()=>root.render(<AdditionalProfileIdentity client={{name:'Brawndo'}} relationships={{}} profile={{organization:{employees:0,technology_users:0,locations:0}}} programs={[]} onTab={()=>{}}/>));
-  expect([...container.querySelectorAll('.baprof-facts dd')].map(node=>node.textContent)).toEqual(['0','0','—','0','0']);
+  expect([...container.querySelectorAll('.prof-stats dd')].map(node=>node.textContent)).toEqual(['0','0','—','0','0']);
   expect(container.querySelector('[role=img]').getAttribute('aria-label')).toBe('13% of eight recommended context fields provided');
   expect(container.textContent).toContain('Not designated');expect(container.textContent).toContain('Unassigned');
 });
@@ -31,7 +31,7 @@ test('renewal read view formats a literal date and preserves native unknown, zer
 test('overview links use native destinations and section navigation; people retain unavailable relationships',async()=>{
   const onTab=jest.fn();await act(async()=>root.render(<><AdditionalProfileOverview clientId="profile-client" profile={{}} requirements={[]} programs={[{key:'cis-ig1',name:'CIS IG1'}]} onTab={onTab}/><AdditionalProfilePeople client={{client_id:'profile-client',primary_contact_id:'retained',assigned_owner_id:'missing'}}/></>));
   expect(container.querySelector('a[href="/compliance/cis-ig1?client_id=profile-client"]')).toBeTruthy();expect(container.querySelector('a[href="/contacts?open=retained&client_id=profile-client"]')).toBeTruthy();expect(container.textContent).toContain('relationship retained');
-  await act(async()=>container.querySelector('.baprof-link').click());expect(onTab).toHaveBeenCalledWith('organization');
+  await act(async()=>container.querySelector('.pf-ch button').click());expect(onTab).toHaveBeenCalledWith('organization');
 });
 test('optional read presentation retains the native edit validation, Save profile and Cancel boundaries',async()=>{
   const onSave=jest.fn().mockResolvedValue(undefined),values={employees:0,workforce:'Hybrid'};

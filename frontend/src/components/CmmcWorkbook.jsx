@@ -26,7 +26,7 @@ const postingFields=[field('score','Submitted score','number'),field('date','Ass
   field('cage','Associated CAGE codes'),field('reference','SPRS reference')];
 const decisionFields=[field('outcome','Recorded decision','select',[['pending','Pending review'],['approved','Approval recorded'],['adjudicated','Favorable DoD CIO adjudication recorded']]),
   field('authority','Decision authority'),field('date','Decision date','date'),field('reference','Decision reference'),field('notes','Scope and evidence','textarea')];
-const card='cmmc-paper rounded-lg border border-line bg-surface-card p-4 space-y-3';
+const card='panel cmmc-paper rounded-lg border border-line bg-surface-card p-4 space-y-3';
 const table='w-full text-left text-sm';
 const control='ui-control block w-full';
 
@@ -149,21 +149,24 @@ export default function CmmcWorkbook({clientId,level,user,revision,onOpen,childr
     return statusMatches && (tier==='all' || tier===pointTier)
       && (row.practice+' '+row.title+' '+row.family).toLowerCase().includes(search.toLowerCase().trim());
   });
+  const documentHeading=<div className="panel-head">
+    <div><h2 className="panel-title">{title}</h2><p className="panel-desc">{tab==='sprs'?'NIST SP 800-171 Rev. 2 · CMMC Level 2':[model?.clientName,`CMMC Level ${level}`].filter(Boolean).join(' · ')}</p></div>
+    <Button className="ghost sm" variant="outline" disabled={busy||!!draft||!model||!canExportReports(user)} onClick={download}>{({ssp:'Download professional draft',sprs:'Download score workbook',poam:'Download POA&M workbook'})[tab]}</Button>
+  </div>;
   return <div className="native-cmmc-workbook space-y-4">
     <WorkspaceTabs label="CMMC workspace sections" tabs={level===1?tabs.slice(0,2):tabs} selected={tab} onSelect={switchTab} idPrefix="cmmc-tab" panelId="cmmc-panel"/>
     <div id="cmmc-panel" role="tabpanel" aria-labelledby={'cmmc-tab-'+tab} className="space-y-4">
     {tab==='requirements'?children:<>
-      <div className="flex flex-wrap items-center justify-between gap-3"><h2 className="text-xl font-semibold">{title}</h2>
-        <Button variant="outline" disabled={busy||!!draft||!model||!canExportReports(user)} onClick={download}>{({ssp:'Download professional draft',sprs:'Download score workbook',poam:'Download POA&M workbook'})[tab]}</Button></div>
+      {!model&&<section className="panel cmmc-summary-panel">{documentHeading}</section>}
       {error&&<div role="alert">{error} <Button variant="outline" disabled={busy} onClick={()=>{if(draft&&!window.confirm('Discard your draft and reload the saved workbook?'))return;setDraft(null);setVersion(v=>v+1);}}>Reload saved workbook</Button></div>}
       {!model&&!error&&<p role="status">Loading saved workbook…</p>}
       {draft&&<Editor {...{draft,setDraft,busy}} onSave={save} onCancel={()=>{setDraft(null);setError('');}}/>}
       {model&&tab==='ssp'&&<>
-        <section className={card}><p>{model.clientName} · Working draft · CMMC Level {level}</p>
+        <section className="panel cmmc-summary-panel">{documentHeading}<div className="cmmc-summary-body"><h3 className="cmmc-breakdown-title">Draft status <span className="st warn">Working draft</span></h3>
           <Metrics items={[['Plan fields recorded',model.sspFields.filter(f=>model.ssp[f.id]).length+' / '+model.sspFields.length],
             ['Assets classified',model.assets.filter(a=>a.category).length+' / '+model.assets.length],
             ['Implementation notes',scoreRows.filter(row=>row.narrative).length+' / '+scoreRows.length]]}/>
-        </section>
+        </div></section>
         {cmmcSections.map(section=>{const fields=model.sspFields.filter(f=>f.section===section.id);return <details key={section.id} className={card}>
           <summary>{section.title}</summary><p className="text-sm text-ink-secondary">{section.description}</p>
           <dl>{fields.map(f=><div key={f.id}><dt className="font-semibold">{f.label}</dt><dd className="whitespace-pre-wrap">{model.ssp[f.id] || 'Needs input'}</dd></div>)}</dl>
@@ -191,8 +194,8 @@ export default function CmmcWorkbook({clientId,level,user,revision,onOpen,childr
         </details>
       </>}
       {model&&tab==='sprs'&&<>
-        <section className={card + ' cmmc-score-grid'}>
-          <div><p className="cmmc-score-label">NIST SP 800-171 Rev. 2 · CMMC Level 2</p>
+        <section className="panel cmmc-summary-panel">{documentHeading}<div className="cmmc-score-grid">
+          <div>
             <h3 className="font-semibold">Working score estimate</h3>
             <p className={model.score.available ? 'cmmc-score-number' : 'cmmc-score-pending'}>{model.score.available ? <>{model.score.value}<small> / 110</small></> : 'Awaiting assessment'}</p>
             <p className="cmmc-score-caption">Internal readiness estimate. {model.score.sspReady?'SSP requirement verified.':'The SSP prerequisite needs verification.'}</p>
@@ -203,18 +206,18 @@ export default function CmmcWorkbook({clientId,level,user,revision,onOpen,childr
             <div><dt>Saved gaps</dt><dd>{model.score.knownDeduction}</dd></div>
             <div><dt>Withheld pending review</dt><dd>{model.score.withheld}</dd></div>
           </dl>
-        </section>
+        </div></section>
         <section className={card}><h3 className="font-semibold">Recorded SPRS submission</h3>
           <p>{Object.hasOwn(model.posting,'score')?[model.posting.score,model.posting.date,model.posting.scope,model.posting.cage,model.posting.reference].filter(value=>value!==null && value!==undefined && value!=='').join(' · '):'No submitted score recorded.'}</p>
           {allowed()&&<Button variant="outline" onClick={()=>edit('posting','Record SPRS submission',postingFields,model.posting)}>Record SPRS submission</Button>}
         </section>
       </>}
-      {model&&tab==='poam'&&<section className={card}><h3 className="font-semibold">Remediation register</h3>
+      {model&&tab==='poam'&&<section className="panel cmmc-summary-panel">{documentHeading}<div className="cmmc-summary-body"><h3 className="font-semibold">Remediation register</h3>
         <Metrics items={[['Current gaps',plans.filter(row=>row.state==='gap').length],['Closed plans',plans.filter(row=>row.plan?.status==='Closed').length],
           ['Draft candidates',plans.filter(row=>row.eligibility==='candidate').length],['Conditional threshold',model.conditional.threshold+' / 110']]}/>
         <p>Conditional readiness · {model.conditional.state.replace(/-/g,' ')}. {model.conditional.closeoutDate?'Closeout date · '+model.conditional.closeoutDate:'Conditional status date not recorded.'}</p>
         {allowed()&&<Button variant="outline" onClick={()=>edit('conditional','Record conditional status date',[field('date','Conditional status date','date')],{date:model.conditional.statusDate})}>Record conditional status date</Button>}
-      </section>}
+      </div></section>}
       {model&&(tab==='poam'||tab==='sprs')&&<section className={card}>
         <div className="flex flex-wrap gap-3"><label>Search requirements<input className={control} value={search} onChange={e=>setSearch(e.target.value)}/></label>
           <label>Show<select className={control} value={filter} onChange={e=>setFilter(e.target.value)}>

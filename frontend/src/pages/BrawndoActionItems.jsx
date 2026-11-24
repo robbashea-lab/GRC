@@ -1,4 +1,5 @@
-import {CisActionItemsOverview,CisActionItemsSummary,ActionConceptPriority,ActionConceptDue,useActionConceptClock} from '@/components/CisActionItemsConcept';
+import ActionQuarterLedger from '@/components/ActionQuarterLedger';
+import {CisActionItemsSummary,ActionConceptPriority,ActionConceptDue,useActionConceptClock} from '@/components/CisActionItemsConcept';
 import {quarterlyChartScope} from '@/lib/quarterlyProgramTimeline';
 import {sharedAppearanceEligible,sharedClientPrograms} from '@/lib/sharedExperience';
 import {clientDestination,selectedClient} from '@/lib/clientSelection';
@@ -32,7 +33,7 @@ const soonest=(a,b)=>due(a)<due(b)?-1:due(a)>due(b)?1:0;
 const labels={open:'Open',in_progress:'In Progress',overdue:'Overdue',completed:'Completed',pending_validation:'Pending Validation'};
 
 function ActionRegisterContainer({eligible,children}){
-  return eligible?<section className="cia-register" aria-label="Action items register">{children}</section>:<>{children}</>;
+  return eligible?<section className="panel cia-register" aria-label="Action items register">{children}</section>:<>{children}</>;
 }
 
 export function FindingsRoute(){
@@ -92,10 +93,10 @@ export default function BrawndoActionItems(){
   metrics.ownerDetail=metrics.needsOwner.length?'Missing owner':'Every action has an assigned owner';
   const canWrite=['super_admin','platform_admin','client_grc_manager','client_contributor'].includes(user?.role);
   return <BrawndoSurface className={`register-surface brawndo-ai${compactOverview?' cia-root cia-page':''}`}>
-    <BrawndoPageHeader eyebrow={compactOverview?undefined:`${clientName} · Corrective actions`} title={compactOverview?`${clientName} Action Items`:'Action Items'} subtitle={compactOverview?'Corrective actions from findings, risks, reviews and manual entries':undefined}>{canWrite&&<>{['super_admin','platform_admin'].includes(user?.role)&&<Button variant="outline" onClick={()=>setDrawer({kind:'findings',record:null})}>{compactOverview?'New finding':'New Finding'}</Button>}<PrimaryAction label={compactOverview?'New action item':'New Action Item'} testid="new-action-item" onClick={()=>setDrawer({kind:'tasks',record:null})}/></>}</BrawndoPageHeader>
-    {compactOverview&&<><CisActionItemsOverview rows={rows} users={users} now={now} available={!loading&&!error} scopeKey={quarterlyChartScope(user,auth.workspaceMode,currentClient)} onOpen={(event,onReturnFocus)=>event.task?setDrawer({kind:'tasks',record:event.task,onReturnFocus}):open(event.record)} theme={theme} recordOpen={!!drawer}/></>}
+    <BrawndoPageHeader clientName={clientName} title="Action Items" subtitle={compactOverview?'Corrective actions from findings, risks, reviews and manual entries':undefined}>{canWrite&&<>{['super_admin','platform_admin'].includes(user?.role)&&<Button variant="outline" onClick={()=>setDrawer({kind:'findings',record:null})}>{compactOverview?'New finding':'New Finding'}</Button>}<PrimaryAction label={compactOverview?'New action item':'New Action Item'} testid="new-action-item" onClick={()=>setDrawer({kind:'tasks',record:null})}/></>}</BrawndoPageHeader>
+    {compactOverview&&<><ActionQuarterLedger rows={rows} now={now} available={!loading&&!error} scopeKey={quarterlyChartScope(user,auth.workspaceMode,currentClient)} onOpen={(event,onReturnFocus)=>event.task?setDrawer({kind:'tasks',record:event.task,onReturnFocus}):open(event.record)} theme={theme} recordOpen={!!drawer}/></>}
     <ActionRegisterContainer eligible={compactOverview}>
-    {compactOverview&&<div className="cia-register-head"><h2>Action items register</h2><div className="cia-tabs" aria-label="Action register history"><button type="button" aria-pressed={view!=='completed'} onClick={()=>selectView('active')}>Active</button><button type="button" aria-pressed={view==='completed'} onClick={()=>selectView('completed')}>Completed</button></div></div>}
+    {compactOverview&&<div className="panel-head cia-register-head"><h2 className="panel-title">Action items register</h2><div className="cia-tabs" aria-label="Action register history"><button type="button" aria-pressed={view!=='completed'} onClick={()=>selectView('active')}>Active</button><button type="button" aria-pressed={view==='completed'} onClick={()=>selectView('completed')}>Completed</button></div></div>}
     {compactOverview&&<CisActionItemsSummary metrics={metrics} ready={!loading&&!error} onSelect={selectView} activeKey={view}/>}
     <div className="register-toolbar"><SearchField label="Search action items" placeholder="Search action items…" testid="ai-search" value={q} onChange={changeSearch}/>
       <div data-testid="ai-views"><BrawndoChips label="Action Item views" chips={views.map(v=>({id:v.id,label:v.label,count:rows.filter(r=>pilotActionMatches(r,v.id)).length,pressed:view===v.id,testid:'ai-view-'+v.id,onClick:()=>selectView(view===v.id?'all':v.id)}))}/></div>

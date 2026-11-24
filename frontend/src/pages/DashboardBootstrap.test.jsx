@@ -71,7 +71,7 @@ test('a resolved unconfigured client receives common appearance with its native 
   expectNeutralPending();
   useOrg.mockReturnValue({...cisContext(), currentClient: client, clients: [client], loading: false});
   await act(async () => root.render(<Dashboard/>));
-  expect(container.querySelector('h1').textContent).toBe('Synthetic native client Dashboard');
+  expect(container.querySelector('h1').textContent).toBe('Synthetic native client');
   expect(container.textContent).toContain('Priority work');
   expect(container.textContent).toContain('No frameworks configured.');
   expect(container.querySelector('a[href="/client-profile?client_id='+client.client_id+'"]').textContent).toBe('Review client configuration');

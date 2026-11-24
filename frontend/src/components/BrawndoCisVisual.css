@@ -121,3 +121,5 @@ html[data-brawndo-cis-visual=true][data-brawndo-cis-theme=dark], .soc-cis-progra
 
 .soc-cis-program-visual .sbar button.sbar-segment, .iso-cis-program-visual .sbar button.sbar-segment { border:0; padding:0; appearance:none; }
 .soc-cis-program-visual .sbar button.sbar-segment:focus-visible, .iso-cis-program-visual .sbar button.sbar-segment:focus-visible { outline-offset:-2px; }
+
+.native-standard .brawndo-cis-visual > .v3-workspace-head {margin-bottom:0}

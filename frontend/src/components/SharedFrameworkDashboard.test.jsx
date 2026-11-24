@@ -36,8 +36,8 @@ test.each(['iso-27001','soc-2'])('%s uses current cards, exact domain/table/hove
   for(const [index,domain] of model.domains.entries()){
     expect([...rows[index].querySelectorAll('td')].map(node=>node.textContent)).toEqual([String(domain.implemented),String(domain.applicable),domain.rate.toFixed(1)+'%']);
   }
-  expect(host.querySelector('.ph-breakdown-head').textContent).toContain(program.unit_label);
-  expect(host.querySelector('.ph-current-value').textContent).toContain(framework==='soc-2'?'Current readiness':'Current implementation');
+  expect(host.querySelector('.bfb-hero p').textContent).toContain(program.unit_label);
+  expect(host.querySelector('.bfb-hero').textContent).toContain(framework==='soc-2'?'Current readiness':'Current implementation');
   const first=host.querySelector('.cdp-domain-name');
   await act(async()=>first.click());
   const popup=document.querySelector('.cdp-concept-tip');
@@ -51,7 +51,7 @@ test.each(['iso-27001','soc-2'])('%s uses current cards, exact domain/table/hove
   expect(popup.textContent).not.toContain('safeguard');
   await act(async()=>first.dispatchEvent(new KeyboardEvent('keydown',{key:'Escape',bubbles:true})));
   for(const [index,status] of ['addressed','in_progress','needs_attention','not_assessed'].entries()){
-    await act(async()=>host.querySelectorAll('.ph-breakdown-row')[index].click());
+    await act(async()=>host.querySelectorAll('.bfb-row')[index].click());
     const target=new URL(mockNavigate.mock.calls.at(-1)[0],'https://local.invalid');
     expect(target.pathname).toBe('/compliance/'+framework);expect(target.searchParams.get('client_id')).toBe(fixture.client.client_id);
     expect(target.searchParams.get('view')).toBe(status);
@@ -73,7 +73,7 @@ test('native mixed-framework tabs preserve a client-wide Priority work queue and
   expect(tabs.querySelectorAll('[role=tab]')).toHaveLength(2);
   await act(async()=>tabs.querySelectorAll('[role=tab]')[1].dispatchEvent(new MouseEvent('mousedown',{bubbles:true,button:0})));
   expect(onProgramSelect).toHaveBeenCalledWith('soc-2');
-  expect(host.querySelector('.bdd-heading p').textContent).toContain('ISO 27001 program');
+  expect(host.querySelector('.bdd-heading .page-sub').textContent).toContain('2 frameworks');
   expect(host.querySelector('#bdd-work-heading').textContent).toBe('Priority work');
 });
 
@@ -98,7 +98,7 @@ test.each(['iso-27001','soc-2'])('%s rejects a newer same-scope assessment state
   await act(async()=>root.render(<BrawndoDemoProgram client={fixture.client} program={program} domainSource={originalSource} cisDashboardProfile concept/>));
   expect(host.querySelector('.ph-chart-card [role=alert]').textContent).toContain('assessment state changed');
   expect(host.querySelector('.ph-chart-card svg')).toBeNull();
-  expect(host.querySelector('.ph-current-value p').textContent).toContain(String(selectedCurrent.implemented)+' of');
+  expect(host.querySelector('.bfb-hero p').textContent).toContain(String(selectedCurrent.implemented)+' of');
   expect(host.querySelector('.cdp-table-wrap tbody')).not.toBeNull();
 });
 
@@ -115,8 +115,8 @@ test('an unavailable native framework card never falls back to a CIS program lab
   const queue={as_of:'2026-10-26',groups:Object.fromEntries(['all','pastDue','due30','unassigned'].map(key=>[key,{total:0,items:[]}]))};
   await act(async()=>root.render(<BrawndoDemoDashboard client={{client_id:'synthetic',name:'Synthetic'}} queue={queue} programs={[{key:'iso-27001',label:'ISO 27001'}]}
     filter="all" onFilter={jest.fn()} loadDetail={async()=>({items:[],total:0,offset:0,limit:25,has_more:false})}/>));
-  expect(host.querySelector('.bdd-heading p').textContent).toContain('ISO 27001 program');
-  expect(host.querySelector('.bdd-heading p').textContent).not.toContain('CIS');
+  expect(host.querySelector('.bdd-heading .page-sub').textContent).toContain('ISO 27001 program');
+  expect(host.querySelector('.bdd-heading .page-sub').textContent).not.toContain('CIS');
 });
 
 test('SOC scope-change explanations retain readiness and validation meanings',()=>{

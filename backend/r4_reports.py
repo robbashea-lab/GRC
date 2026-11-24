@@ -49,7 +49,8 @@ FIELDS = {
                 'assurance_status', 'assurance_records', 'assurance_required', 'assurance_window_days', 'next_review', 'last_review',
                 'contract_renewal', 'contract_expiration', 'contract_end', 'review_frequency'),
     'policies': ('policy_id', 'title', 'status', 'version', 'owner_id', 'baseline_key', 'framework_assessment_id',
-                 'approver_id', 'approved_at', 'approval_history', 'last_reviewed_at', 'next_review_date'),
+                 'approver_id', 'approved_at', 'approval_history', 'decision_history.action', 'decision_history.recorded_at',
+                 'last_reviewed_at', 'next_review_date'),
     'reviews': ('review_id', 'title', 'status', 'due_date', 'owner_id', 'reviewer_id',
                 'recurrence', 'custom_recurrence_days', 'schedule_anchor', 'recurrence_due_date',
                 'framework_assessment_id', *shared_review_plans.MAPPING_FIELDS,
@@ -66,6 +67,44 @@ class ReportExportIn(BaseModel):
     type: ReportType
     format: ReportFormat
     as_of: date | None = None
+
+
+class ReportDeliveryIn(BaseModel):
+    model_config = ConfigDict(extra='forbid')
+    client_id: str = Field(min_length=1, max_length=160)
+    framework_key: FrameworkKey
+    kind: Literal['audit-package', 'executive-summary', 'prep-checklist']
+    sha256: str = Field(pattern=r'^[a-f0-9]{64}$')
+    bytes: int = Field(strict=True, gt=0, le=96 * 1024 * 1024)
+    period_start: date
+    period_end: date
+
+
+async def record_delivery(s, request, body, user, idempotency_key):
+    """Record a prepared browser file without claiming the browser saved it."""
+    await authority(s, request, body.client_id, body.framework_key, user)
+    if body.period_end < body.period_start:
+        raise HTTPException(422, 'The report period ends before it starts')
+    payload = body.model_dump(mode='json')
+    report_format = {'audit-package': 'zip', 'executive-summary': 'pdf', 'prep-checklist': 'csv'}[body.kind]
+
+    async def execute(identity):
+        actor = await authority(s, request, body.client_id, body.framework_key, user)
+        delivery_id = 'delivery_' + identity
+        await s.audit(actor, 'generate', 'report-delivery', delivery_id, body.client_id, meta={
+            'framework_key': body.framework_key, 'type': body.kind, 'format': report_format,
+            'title': {'audit-package': 'Audit package', 'executive-summary': 'Executive summary',
+                      'prep-checklist': 'Preparation checklist'}[body.kind],
+            'period_start': payload['period_start'], 'period_end': payload['period_end'],
+            'browser_reported_sha256': body.sha256, 'browser_reported_bytes': body.bytes,
+            'event': 'browser_download_requested'})
+        return {'delivery_id': delivery_id, 'client_id': body.client_id, 'framework_key': body.framework_key,
+                'kind': body.kind, 'sha256': body.sha256}
+
+    receipt = await create_requests.run(s.db, idempotency_key, user['user_id'], body.client_id,
+                                       'reports/deliveries', payload, execute)
+    await authority(s, request, body.client_id, body.framework_key, user)
+    return receipt
 
 
 def formats(key, report_type):
@@ -352,6 +391,76 @@ async def preview(s, request, cid, key, report_type, as_of, user):
     return dto
 
 
+def package_history(records, key):
+    """Project dated register events only; exclude private notes and document contents."""
+    rows = []
+
+    def record(group, title, when, event, version=None):
+        try:
+            date.fromisoformat(str(when)[:10])
+        except ValueError:
+            return
+        if len(rows) >= 10000:
+            raise HTTPException(413, 'The complete register history exceeds the supported package size')
+        rows.append({'register': group, 'record': title if isinstance(title, str) else '', 'at': str(when),
+                     'event': event if isinstance(event, str) else 'Decision recorded',
+                     'version': str(version) if isinstance(version, (str, int, float)) else None})
+
+    for policy in records['policies']:
+        for item in policy.get('approval_history') or []:
+            if isinstance(item, dict):
+                record('Policies', policy.get('title'), item.get('at') or item.get('approved_at'),
+                       item.get('action') or item.get('status') or 'Approval decision recorded', item.get('version'))
+        for item in policy.get('decision_history') or []:
+            if isinstance(item, dict) and item.get('action') == 'external_approval_recorded':
+                record('Policies', policy.get('title'), item.get('recorded_at'), 'External approval recorded')
+        if not policy.get('approval_history') and not policy.get('decision_history'):
+            record('Policies', policy.get('title'), policy.get('approved_at'), 'Approval recorded', policy.get('version'))
+    for risk in records['risks']:
+        for item in risk.get('decision_history') or []:
+            if isinstance(item, dict):
+                record('Risks', risk.get('title'), item.get('at') or item.get('decided_at') or item.get('date'),
+                       item.get('action') or item.get('decision') or 'Decision recorded')
+    for vendor in records['vendors']:
+        for item in vendor.get('assurance_records') or []:
+            if isinstance(item, dict):
+                name = item.get('document_name') or item.get('type')
+                label = name if isinstance(name, str) else 'Document'
+                record('Vendors', vendor.get('name'), item.get('received_at'), 'Assurance received: ' + label)
+                record('Vendors', vendor.get('name'), item.get('last_reviewed') or item.get('reviewed_at'),
+                       'Assurance reviewed: ' + label)
+        record('Vendors', vendor.get('name'), vendor.get('last_review'), 'Review recorded')
+    assessment_ids = {row['framework_assessment_id'] for row in records['assessment_owners']}
+    for review in records['reviews']:
+        if review.get('framework_assessment_id') and review['framework_assessment_id'] not in assessment_ids:
+            continue
+        drivers = review.get('framework_drivers')
+        if drivers is not None or review.get('framework_key'):
+            if not any(isinstance(driver, dict) and driver.get('framework_key') == key
+                       for driver in (drivers if isinstance(drivers, list) else [review])):
+                continue
+        completions = {str(item['completed_at']) for item in review.get('occurrences') or []
+                       if isinstance(item, dict) and item.get('completed_at')}
+        if review.get('completion_date'):
+            complete = str(review['completion_date'])
+            if not any(value[:10] == complete[:10] for value in completions):
+                completions.add(complete)
+        for when in completions:
+            record('Reviews', review.get('title'), when, 'Review completed')
+    return sorted(rows, key=lambda row: (row['at'], row['register'], row['record']))
+
+
+async def materials(s, request, cid, key, as_of, user):
+    actor = await authority(s, request, cid, key, user)
+    assessment, snapshot, client, operational = await current_report(s, cid, key, 'assessment', as_of, actor)
+    reports = {'assessment': assessment}
+    for report_type in ('scope', 'executive', 'risks', 'vendors', 'policies'):
+        reports[report_type] = build_preview(snapshot, operational, report_type, actor)
+    events = package_history(operational['records'], key)
+    await generation_guard(s, request, cid, key, actor, snapshot, client, operational)
+    return {'client_id': cid, 'framework_key': key, 'reports': reports, 'register_history': events}
+
+
 def table_rows(dto):
     header = dto['header']
     yield [header['title']]
@@ -514,6 +623,17 @@ def router_for(s):
     async def export_route(request: Request, body: ReportExportIn, idempotency_key: str | None = Header(None),
                            user=Depends(s.get_current_user)):
         return await create_export(s, request, body, user, idempotency_key)
+
+    @router.post('/deliveries')
+    async def delivery_route(request: Request, body: ReportDeliveryIn, idempotency_key: str | None = Header(None),
+                             user=Depends(s.get_current_user)):
+        return await record_delivery(s, request, body, user, idempotency_key)
+
+    @router.get('/materials')
+    async def materials_route(request: Request, client_id: str = Query(..., min_length=1, max_length=160),
+                              framework_key: FrameworkKey = Query(...), as_of: date | None = None,
+                              user=Depends(s.get_current_user)):
+        return await materials(s, request, client_id, framework_key, as_of, user)
 
     @router.get('/history')
     async def history_route(request: Request, client_id: str = Query(..., min_length=1, max_length=160),

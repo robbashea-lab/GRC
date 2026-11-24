@@ -3,7 +3,7 @@ import { ColumnControl, TableFilterChips, FilterEmpty } from '@/components/Table
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import api, { formatError } from "@/lib/api";
-import PageHeader from "@/components/PageHeader";
+import PlatformPageHeading from "@/components/PlatformPageHeading";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -236,15 +236,15 @@ export default function AdminAudit() {
   }, [clientFilter, userFilter, actionFilter, entityFilter, datePreset, debouncedQ]);
 
   return (
-    <div className="admin-page admin-audit-page">
-      <PageHeader
+    <div className="wrap admin-page admin-audit-page">
+      <PlatformPageHeading
         eyebrow="Administration"
         title="Audit Log"
         subtitle="Application audit records and their recorded changes."
         action={<Button variant="outline" size="sm" onClick={exportCsv} disabled={exporting} className="h-9" data-testid="audit-export"><Download className="h-3.5 w-3.5 mr-1.5" /> Export CSV</Button>}
       />
-      <div className="admin-body"><section className="admin-panel">
-      <div className="admin-panel-head"><div><h2>Audit events</h2><p>Application audit records are append-only through the Omnisciente interface.</p></div>
+      <div className="admin-body"><section className="panel admin-panel">
+      <div className="panel-head admin-panel-head"><div><h2>Audit events</h2><p>Application audit records are append-only through the Omnisciente interface.</p></div>
         <span className="admin-record-meta" data-testid="audit-count">{loading ? "Loading…" : `${total.toLocaleString()} event${total === 1 ? "" : "s"}`}{total > 0 && ` · Page ${page} of ${totalPages}`}</span>
       </div>
       <div className="admin-toolbar" data-testid="audit-filters">

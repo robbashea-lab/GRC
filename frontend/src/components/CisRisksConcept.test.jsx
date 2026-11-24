@@ -39,7 +39,7 @@ test('Risk profile keeps unknown scores separate and uses the native status filt
   expect(profile.querySelector('.high .pb-n').textContent).toBe('1');
   expect(profile.querySelector('.unrated .pb-n').textContent).toBe('1');
   expect(profile.querySelector('.low .pb-n').textContent).toBe('0');
-  expect(container.querySelector('.quarter-card').nextElementSibling.contains(profile)).toBe(true);
+  expect(container.querySelector('.v3-quarter-ledger').nextElementSibling.contains(profile)).toBe(true);
   const summary=container.querySelector('.native-summary');
   expect(summary.previousElementSibling.classList.contains('register-heading')).toBe(true);
   await click([...profile.querySelectorAll('button')].find(button=>button.textContent.startsWith('Open · decision needed')));
@@ -113,39 +113,38 @@ test('same-date circles retain separate review, expiry and linked Action identit
   api.get.mockResolvedValue({data: [action]});
   await render({rows: [risk], filtered: [risk], users: [{user_id: 'analyst', name: 'Assigned analyst'}]});
   expect(api.get).toHaveBeenCalledWith('/tasks', expect.objectContaining({params: {client_id: risk.client_id}}));
-  const circles = container.querySelectorAll('.review-dot');
-  expect(circles).toHaveLength(3);
-  expect([...circles].map(circle => circle.querySelector('.dot').textContent)).toEqual(['', '', '']);
-  expect([...circles].map(circle => circle.style.getPropertyValue('--cadence')).sort()).toEqual(['#199681', '#2f66c6', '#b38131'].sort());
-  const treatmentCircle = [...circles].find(circle => circle.getAttribute('aria-label').startsWith('Treatment action,'));
-  await act(async () => treatmentCircle.focus());
+  const circles = [...container.querySelectorAll('.ql-point')];
+  expect(circles.map(point => point.dataset.k.split('|')[0]).sort()).toEqual(['action','expiry','review']);
+  const treatment = circles.find(point => point.dataset.k.startsWith('action|'));
+  await act(async () => treatment.focus());
   expect(document.querySelector('[role="tooltip"]').textContent).toContain('Assigned analyst');
-  await click(treatmentCircle);
-  const selected = document.querySelector('.date-review.highlight');
+  const select = point => act(async () => point.dispatchEvent(new KeyboardEvent('keydown', {key:'Enter',bubbles:true})));
+  await select(treatment);
+  const selected = container.querySelector('.v3-ledger-tip button');
   expect(selected.textContent).toContain('Exact treatment');
   expect(selected.textContent).toContain('Assigned analyst');
-  expect(document.querySelectorAll('.date-review')).toHaveLength(3);
   expect(props.onOpenEvent).not.toHaveBeenCalled();
   await click(selected);
-  expect(props.onOpenEvent).toHaveBeenCalledWith('tasks', action);
-  await click([...container.querySelectorAll('.review-dot')].find(circle => circle.getAttribute('aria-label').startsWith('Risk review,')));
-  await click(document.querySelector('.date-review.highlight'));
-  expect(props.onOpenEvent).toHaveBeenLastCalledWith('risks', risk);
+  expect(props.onOpenEvent).toHaveBeenCalledWith('tasks',action);
+  await select(circles.find(point => point.dataset.k.startsWith('review|')));
+  await click(container.querySelector('.v3-ledger-tip button'));
+  expect(props.onOpenEvent).toHaveBeenLastCalledWith('risks',risk);
   for (const method of ['post', 'put', 'patch', 'delete']) expect(api[method]).not.toHaveBeenCalled();
 });
 
-test('quarter and legend selection are presentation only, keep summaries/register unchanged, and do not clamp Today into future quarters', async () => {
+test('quarter and same-day selection are presentation only, keep summaries/register unchanged, and do not clamp Today into future quarters', async () => {
   const rows = [{...base, risk_id: 'r1', title: 'January review', next_review: '2027-01-17'},
     {...base, risk_id: 'r2', title: 'Second January review', next_review: '2027-01-17'}];
   await render({rows, filtered: rows});
   const summaries = container.querySelector('.native-summary').textContent, register = container.querySelector('.register').textContent;
   const readCount = api.get.mock.calls.length;
   await click(container.querySelector('[aria-label="Next quarter"]'));
-  expect(container.querySelector('.quarter-controls strong').textContent).toBe('Q1 2027');
-  expect(container.querySelector('.today-line')).toBeNull();
-  expect(container.querySelectorAll('.review-dot')).toHaveLength(2);
-  await click(container.querySelector('[aria-label="Show treatment action events"]'));
-  expect(container.querySelectorAll('.review-dot')).toHaveLength(0);
+  expect(container.querySelector('.v3-quarter-switch b').textContent).toBe('Q1 2027');
+  expect(container.querySelector('.ql-today')).toBeNull();
+  const grouped=container.querySelector('.ql-point[data-count="2"]');
+  expect(grouped).toBeTruthy();
+  await act(async()=>grouped.dispatchEvent(new KeyboardEvent('keydown',{key:'Enter',bubbles:true})));
+  expect([...container.querySelectorAll('.v3-ledger-tip button')].map(node=>node.textContent)).toEqual(expect.arrayContaining([expect.stringContaining('January review'),expect.stringContaining('Second January review')]));
   expect(container.querySelector('.native-summary').textContent).toBe(summaries);
   expect(container.querySelector('.register').textContent).toBe(register);
   expect(api.get.mock.calls).toHaveLength(readCount);
@@ -157,10 +156,10 @@ test('complete Action collection retains treatment events beyond the old related
   const rows = [{...base, risk_id: 'r1', title: 'First Risk'}, {...base, risk_id: 'r2', title: 'Second Risk', related_task_ids: tasks.map(task => task.task_id)}];
   api.get.mockResolvedValue({data: tasks});
   await render({rows, filtered: rows});
-  expect(container.querySelectorAll('.review-dot')).toHaveLength(205);
-  await click(findButton('View data', container));
-  expect(document.querySelectorAll('.date-review')).toHaveLength(205);
-  const last = [...document.querySelectorAll('.date-review')].find(button => button.textContent.includes('Treatment 204'));
+  expect(container.querySelector('.ql-point[data-count="205"]')).toBeTruthy();
+  await click(container.querySelector('details.vd summary'));
+  expect(container.querySelectorAll('details.vd tbody tr')).toHaveLength(205);
+  const last = [...container.querySelectorAll('details.vd tbody button')].find(button => button.textContent.includes('Treatment 204'));
   await click(last);
   expect(props.onOpenEvent).toHaveBeenCalledWith('tasks', tasks[204]);
 });
@@ -171,7 +170,7 @@ test('empty collections use the explicit current client and failures remain visi
   expect(api.get).toHaveBeenCalledWith('/tasks', expect.objectContaining({params: {client_id: 'fixture-client'}}));
   expect(container.querySelector('[role="alert"]').textContent).toContain('Collection unavailable');
   expect(container.querySelector('[data-testid="new-risk"]')).toBeNull();
-  expect(container.querySelectorAll('.review-dot')).toHaveLength(0);
+  expect(container.querySelectorAll('.ql-point')).toHaveLength(0);
 });
 
 test('actor/client scope changes abort old Action reads and withhold stale event links', async () => {
@@ -186,19 +185,18 @@ test('actor/client scope changes abort old Action reads and withhold stale event
   expect(props.onOpenEvent).not.toHaveBeenCalled();
 });
 
-test('an open data list follows the pending authorized Action collection instead of freezing an empty snapshot', async () => {
+test('the data list becomes available with the pending authorized Action collection instead of freezing an empty snapshot', async () => {
   let resolveTasks;
   api.get.mockImplementationOnce(() => new Promise(resolve => { resolveTasks = resolve; }));
   const rows = [{...base, risk_id: 'r1', title: 'Undated Risk'}];
   await render({rows, filtered: rows});
-  await click(findButton('View data', container));
-  expect(document.querySelector('[role="dialog"]').textContent).toContain('Loading linked Action deadlines');
-  expect(document.querySelector('[role="dialog"]').textContent).not.toContain('No saved events in this selection');
+  expect(container.textContent).toContain('Loading linked Action deadlines');
+  expect(container.querySelector('details.vd')).toBeNull();
   const task = {client_id: base.client_id, task_id: 'loaded-later', risk_id: 'r1', title: 'Authorized late response', status: 'open', due_date: '2026-11-01'};
   await act(async () => resolveTasks({data: [task]}));
-  expect(document.querySelectorAll('.date-review')).toHaveLength(1);
-  expect(document.querySelector('[role="dialog"]').textContent).toContain('1 events');
-  await click(document.querySelector('.date-review'));
+  await click(container.querySelector('details.vd summary'));
+  expect(container.querySelectorAll('details.vd tbody tr')).toHaveLength(1);
+  await click(container.querySelector('details.vd tbody button'));
   expect(props.onOpenEvent).toHaveBeenCalledWith('tasks', task);
 });
 

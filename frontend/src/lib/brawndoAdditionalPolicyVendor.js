@@ -49,6 +49,7 @@ export function policyOverview(rows, reviews = [], programs = [], assessments = 
 
 export function policyVisualMatches(row, view, category, programs, assessments, cisGroup) {
   if (category && row.category !== category) return false;
+  if (view === 'verify') return policyStatus(row) === 'needs_verification';
   if (view === 'missing') return policyStatus(row) === 'needs_creation';
   if (view === 'mapped') return visiblePolicyAlignment(row, programs, assessments, cisGroup).length > 0;
   return true;

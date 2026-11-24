@@ -159,7 +159,7 @@ test('late data for a previous actor cannot replace the current actor read scope
   expect(container.textContent).not.toContain('Old actor response');
 });
 
-const subtitle = () => container.querySelector('.bapv-page-head p')?.textContent;
+const subtitle = () => container.querySelector('.v3-heading-copy .page-sub')?.textContent;
 const deferred = () => { let resolve, reject; const promise = new Promise((yes, no) => { resolve = yes; reject = no; }); return { promise, resolve, reject }; };
 const expectNoWrites = () => { expect(api.post).not.toHaveBeenCalled(); expect(api.patch).not.toHaveBeenCalled(); expect(api.delete).not.toHaveBeenCalled(); };
 

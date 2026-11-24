@@ -66,7 +66,7 @@ test.each(['demo', 'standard'].flatMap(mode => [[mode, false], [mode, true]]))(
     mockMode = mode; const {client, snapshot} = prepare({completed}); const before = JSON.stringify({client, snapshot});
     await render();
     expect(host.querySelector('.brawndo-demo-dashboard[data-cis-dashboard-concept=true]')).not.toBeNull();
-    expect(host.querySelector('h1').textContent).toBe('Unconfigured native organization Dashboard');
+    expect(host.querySelector('h1').textContent).toBe('Unconfigured native organization');
     expect(host.querySelector('#bdd-work-heading').textContent).toBe('Priority work');
     expect(host.textContent).toContain('No frameworks configured.');
     expect(host.querySelector('a[href="/client-profile?client_id='+clientId+'"]').textContent).toBe('Review client configuration');

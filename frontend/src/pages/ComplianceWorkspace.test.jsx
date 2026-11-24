@@ -4,6 +4,7 @@ import Layout from '@/components/Layout';
 import MockComplianceWorkspace from './ComplianceWorkspace';
 import MockRecordListPage from './RecordListPage';
 import {THEME_KEY} from '@/lib/brawndoTheme';
+import {APPEARANCE_KEY,setAppearance} from '@/lib/nativeAppearance';
 import api from '@/lib/api';
 import {cisClient} from '@/testUtils/cisExperience';
 import {frameworkDashboardFixture} from '@/testUtils/frameworkDashboard';
@@ -25,7 +26,7 @@ jest.mock('react-router-dom', () => ({
 let root, container;
 beforeEach(() => {
   global.IS_REACT_ACT_ENVIRONMENT = true;
-  localStorage.removeItem(THEME_KEY);
+  localStorage.removeItem(THEME_KEY);localStorage.removeItem(APPEARANCE_KEY);
   mockClient = { client_id: 'a', name: 'Client A' }; mockKey = 'hipaa'; mockPath = '/compliance/hipaa';
   mockAuth={user:{role:'super_admin',name:'Alex Morgan',workspace_mode:'demo'}};
   api.get.mockImplementation(async (path, config) => ({ data: path === '/onboarding/baseline' ? { state: { completed: true } }
@@ -34,7 +35,7 @@ beforeEach(() => {
     : config?.params?.client_id === 'a' ? ['hipaa','iso-27001','cmmc'].map(key => ({client_id:'a',baseline_key:key,baseline_response:'applies'})) : [] }));
   container = document.createElement('div'); document.body.appendChild(container); root = createRoot(container);
 });
-afterEach(async () => { await act(async () => root.unmount()); container.remove(); localStorage.removeItem(THEME_KEY); });
+afterEach(async () => { await act(async () => root.unmount()); container.remove(); localStorage.removeItem(THEME_KEY);localStorage.removeItem(APPEARANCE_KEY); });
 const render = async key => { await act(async () => root.render(<Layout key={key}/>)); };
 const navigationLink = path => container.querySelector(`nav.side a[href="${clientDestination(mockClient.client_id,path)}"]`);
 
@@ -81,7 +82,7 @@ test('SOC requirement loading and errors retain the outer metadata heading',asyn
   await render();
   expect(container.querySelectorAll('main h1')).toHaveLength(1);
   expect(container.querySelector('main h1').textContent).toBe('SOC 2');
-  expect(container.querySelector('main .bpage-eyebrow').textContent).toBe('Client A');
+  expect(container.querySelector('main .v3-workspace-head .eyebrow').textContent).toBe('Client workspace · Client A');
   expect(container.querySelector('main').textContent).toContain('Loading client requirement');
   await act(async()=>rejectRequirements(new Error('SOC requirement unavailable')));
   expect(container.querySelectorAll('main h1')).toHaveLength(1);
@@ -144,7 +145,7 @@ test('ISO requirement loading and errors retain one outer metadata heading until
   api.get.mockImplementation(path=>path==='/requirements'?requirements:Promise.resolve({data:{state:{completed:true}}}));
   await render();
   expect(container.querySelectorAll('main h1')).toHaveLength(1);expect(container.querySelector('main h1').textContent).toBe('ISO 27001');
-  expect(container.querySelector('main .bpage-eyebrow').textContent).toBe('Client A');
+  expect(container.querySelector('main .v3-workspace-head .eyebrow').textContent).toBe('Client workspace · Client A');
   expect(container.querySelector('main').textContent).toContain('Loading client requirement');
   expect(container.querySelector('main .iso-program-heading')).toBeNull();
   await act(async()=>rejectRequirements(new Error('ISO requirement unavailable')));
@@ -204,7 +205,7 @@ test('direct compliance routes render client empty states and preserve existing 
     }else{
       expect(container.querySelector('main').textContent).toContain('Assessment workspace · ');
       expect(container.querySelector('main').textContent).not.toContain('Applicability only; no assessment catalog');
-      expect(container.querySelector('main .bpage-eyebrow').textContent).toBe('Client A');
+      expect(container.querySelector('main .v3-workspace-head .eyebrow').textContent).toBe('Client workspace · Client A');
     }
     expect(api.get.mock.calls.some(([path,config])=>path===`/frameworks/${key}`&&config?.params?.client_id==='a')).toBe(true);
     expect(container.querySelectorAll('[data-testid^="nav-compliance-"]')).toHaveLength(3);
@@ -257,6 +258,10 @@ test('enrolled CIS keeps one scoped loading header across requirement and framew
 test.each(['demo_brawndo','demo_dunder','demo_prestige','new-client'])('%s Reviews inherits shared header, theme and portal surface from Layout',async clientId=>{
   mockClient={client_id:clientId,name:'Review client'};mockPath='/reviews';
   await render();
+  expect(document.documentElement.dataset.previewTheme).toBe('glass07');
+  expect(container.querySelector('main .client-surface').dataset.theme).toBe('light');
+  await act(async()=>setAppearance('teal','dark'));
+  expect(document.documentElement.dataset.brawndoPortal).toBe('dark');
   expect(container.querySelector('main .client-surface').dataset.theme).toBe('dark');
   expect(container.querySelector('main h1').textContent).toBe('Reviews');
   expect(container.querySelector('main .bpage-eyebrow').textContent).toBe('Review client');

@@ -10,6 +10,8 @@
 .native-cmmc-workbook .cmmc-paper { background:var(--surface-solid); color:var(--text); border-color:var(--border); border-radius:var(--card-radius,10px); box-shadow:var(--shadow); }
 .native-cmmc-workbook .cmmc-score-pending { margin-block:12px; font-size:1.35rem; font-weight:650; }
 .native-cmmc-workbook .cmmc-score-equation { margin-top:0; }
+.native-cmmc-workbook .cmmc-summary-body { padding:16px 22px; display:grid; gap:12px; }
+.native-cmmc-workbook .cmmc-breakdown-title { display:flex; align-items:center; gap:10px; font-weight:600; }
 .native-cmmc-workbook .cmmc-score-equation dt { font-size:.8rem; color:var(--muted); }
 .native-cmmc-workbook .cmmc-score-equation dd { font-size:1.5rem; font-weight:650; }
 .native-cmmc-workbook table { width:100%; font-variant-numeric:tabular-nums; }

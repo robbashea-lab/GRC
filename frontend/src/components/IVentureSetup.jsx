@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
+import IVentureSetupList from './IVentureSetupList';
+import V3WorkspaceHeading from './V3WorkspaceHeading';
 import api, { formatError } from '@/lib/api';
 import { useAuth } from '@/context/AuthContext';
 import { useOrg } from '@/context/OrgContext';
@@ -26,8 +28,6 @@ export default function IVentureSetup({
     [entry, setEntry] = useState(null),
     [error, setError] = useState(''),
     [busy, setBusy] = useState(false),
-    [tab, setTab] = useState('todo'),
-    [query, setQuery] = useState(''),
     [exclusion, setExclusion] = useState(null),
     [exclusionKind, setExclusionKind] = useState('spm'),
     [note, setNote] = useState('');
@@ -112,22 +112,25 @@ export default function IVentureSetup({
       if(activeClient.current === clientId)setBusy(false);
     }
   }
-  const all = data?.activities || [],
-    technical = all.filter(a => !a.internal && a.provider_relevant),
-    list = technical.filter(a => (tab === 'all' || tab === 'todo' ? tab === 'all' || ['todo', 'decide'].includes(a.state) : a.state === tab) && a.title.toLowerCase().includes(query.toLowerCase()));
+  const locked = busy || command.unconfirmed();
+  function editActivity(activity) {
+    setEntry(activity);
+    setDraft(setupDraft(activity, data.expected_client_updated_at));
+    setError('');
+  }
+  function removeOrRestore(activity) {
+    setExclusion(activity);
+    setExclusionKind('spm');
+    setNote('');
+    setError('');
+  }
   if (!clientId) return <p>Select an authorized client to view iVenture Setup.</p>;
-  return <div className="space-y-4"><div className="page-head"><div><div className="eyebrow">INTERNAL · OPERATIONAL SETUP</div><h1 className="page-title">iVenture Setup</h1><p className="page-sub">Record recurring work established externally. Setup does not create a ticket, evidence or a completed Review.</p></div><Link className="ghost" to={'/client-profile?client_id=' + encodeURIComponent(clientId) + '&tab=services'}>Services &amp; Tools</Link></div>{error && <p role="alert" className="callout">{error}</p>}{editable&&command.unconfirmed()&&<button type="button" className="cta" disabled={busy} onClick={retryRecovery}>Retry unconfirmed save</button>}{!data ? <p>{recoveryOnly ? 'Client context is unavailable until the unfinished save is recovered.' : 'Loading applicable recurring activities…'}</p> : <><div className="kstrip"><span>To set up <b>{data.outstanding_count}</b></span><span>Set up <b>{technical.filter(a => a.state === 'done').length}</b></span><span>Removed <b>{technical.filter(a => a.state === 'removed').length}</b></span></div><section className="panel"><div className="toolbar"><input className="input" aria-label="Search setup activities" placeholder="Search activities" value={query} onChange={e => setQuery(e.target.value)} /><div className="tabs">{[['todo', 'To set up'], ['done', 'Set up'], ['removed', 'Removed'], ['all', 'All']].map(([id, label]) => <button type="button" className={'tab' + (tab === id ? ' on' : '')} key={id} aria-pressed={tab === id} onClick={() => setTab(id)}>{label}</button>)}</div></div>{!list.length ? <p className="empty">No activities in this view.</p> : list.map(a => <div className="gt-row" style={{
-          gridTemplateColumns: 'minmax(200px,1.5fr) minmax(120px,1fr) auto'
-        }} key={a.activity_id}><div><b>{a.title}</b><p className="sub">{a.drivers.map(d => d.framework_key).join(' · ')} · {serviceCatalog.areas.find(s => s.id === a.area_id)?.name}</p>{a.exclusion && <p className="sub">{a.exclusion.reason}</p>}</div><div>{a.state === 'done' ? 'Set up' : a.state === 'decide' ? 'Who runs it isn’t set' : a.state === 'removed' ? 'Removed' : 'To set up'}<p className="sub">{a.setup?.recurring_ticket_number ? '#' + a.setup.recurring_ticket_number : 'No recurring ticket'}{a.first_next_due ? ' · ' + a.first_next_due : ''}</p></div><div className="flex flex-wrap gap-2">{editable && a.state !== 'removed' && <button className="ghost" type="button" disabled={busy || command.unconfirmed()} onClick={() => {
-              setEntry(a);
-              setDraft(setupDraft(a, data.expected_client_updated_at));
-              setError('');
-            }}>Set up / edit</button>}{a.review_id && <Link className="link-btn" to={'/reviews?client_id=' + encodeURIComponent(clientId) + '&review_id=' + encodeURIComponent(a.review_id)}>Open review</Link>}{editable && <button type="button" className="link-btn" disabled={busy || command.unconfirmed()} onClick={() => {
-              setExclusion(a);
-              setExclusionKind('spm');
-              setNote('');
-              setError('');
-            }}>{a.state === 'removed' ? 'Restore' : 'Remove from setup'}</button>}</div></div>)}</section>{all.some(a => a.internal) && <section className="panel"><h2 className="panel-title">Security Program Manager activities</h2><p className="sub">Governance activities remain in Reviews; they do not require technical ticket setup.</p>{all.filter(a => a.internal).map(a => <p key={a.activity_id}>{a.title}</p>)}</section>}{all.some(a => !a.provider_relevant) && <details className="panel"><summary>Not iVenture-run</summary>{all.filter(a => !a.provider_relevant).map(a => <p key={a.activity_id}>{a.title}</p>)}</details>}</>}
+  return <div className="ivs-workspace"><V3WorkspaceHeading clientName={currentClient?.name} title="iVenture Setup" subtitle={(currentClient?.name || 'Client')+' · recurring ConnectWise tickets for program-support Reviews performed by iVenture'}>
+    <Link className="ghost" to={'/client-profile?client_id='+encodeURIComponent(clientId)+'&tab=services'}>Services &amp; Tools</Link></V3WorkspaceHeading>
+    {error && <p role="alert" className="callout">{error}</p>}
+    {editable && command.unconfirmed() && <button type="button" className="cta" disabled={busy} onClick={retryRecovery}>Retry unconfirmed save</button>}
+    {!data ? !error && <p role="status">{recoveryOnly ? 'Client context is unavailable until the unfinished save is recovered.' : 'Loading applicable recurring activities…'}</p> :
+      <IVentureSetupList clientName={currentClient?.name || 'this client'} clientId={clientId} activities={data.activities || []} editable={editable} locked={locked} onEdit={editActivity} onRemoval={removeOrRestore}/>}
     <Dialog open={!!draft} onOpenChange={open => !open && !busy && !command.unconfirmed() && setDraft(null)}><DialogContent><DialogHeader><DialogTitle>{entry?.title}</DialogTitle><DialogDescription>Saved configuration is shared with Reviews and the relevant guided assessment.</DialogDescription></DialogHeader>{draft && <form onSubmit={submit} className="space-y-3">{error && <p role="alert">{error}</p>}<fieldset disabled={busy || command.unconfirmed()} className="space-y-3"><label className="block">Who runs it<select className="select w-full" required value={draft.responsibility || ''} onChange={e => setDraft({
               ...draft,
               responsibility: e.target.value

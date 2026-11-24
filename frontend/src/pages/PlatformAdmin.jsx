@@ -7,7 +7,7 @@ import { tableColumns } from '@/lib/tableColumns';
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import api, { formatError } from "@/lib/api";
 import { useAuth } from "@/context/AuthContext";
-import PageHeader from "@/components/PageHeader";
+import PlatformPageHeading from "@/components/PlatformPageHeading";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -251,9 +251,9 @@ export function UsersTable({ scope = "platform", clientId = null, allowedRoles, 
   );
   if (!adminPresentation) return <div className="space-y-4">{content}</div>;
   return <>
-    <PageHeader eyebrow="Administration" title="Users & Access" subtitle="Invite internal team members, assign platform roles and manage which clients each user can access." action={addUserAction} />
-    <div className="admin-body"><section className="admin-panel">
-      <div className="admin-panel-head"><div><h2>Users & client access</h2><p>Account identity, assigned role and authorized client scope.</p></div><span className="admin-record-meta">{loading ? 'Loading users…' : `${filtered.length} / ${tableSource.length} users`}</span></div>
+    <PlatformPageHeading eyebrow="Administration" title="Users & Access" subtitle="Invite internal team members, assign platform roles and manage which clients each user can access." action={addUserAction} />
+    <div className="admin-body"><section className="panel admin-panel">
+      <div className="panel-head admin-panel-head"><div><h2>Users & client access</h2><p>Account identity, assigned role and authorized client scope.</p></div><span className="admin-record-meta">{loading ? 'Loading users…' : `${filtered.length} / ${tableSource.length} users`}</span></div>
       {content}
     </section></div>
   </>;
@@ -444,7 +444,7 @@ export default function PlatformAdmin() {
     ? ["super_admin", "platform_admin", "client_grc_manager", "client_contributor", "client_readonly"]
     : ["client_grc_manager", "client_contributor", "client_readonly"];
   return (
-    <div className="admin-page admin-users-page">
+    <div className="wrap admin-page admin-users-page">
       <UsersTable scope="platform" allowedRoles={allowedRoles} adminPresentation />
     </div>
   );

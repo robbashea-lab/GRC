@@ -1,7 +1,6 @@
 .bcal { --k-review:var(--bp-muted); --k-finding:var(--bp-muted); --k-task:var(--bp-muted); --k-assurance:var(--bp-muted); --k-renewal:var(--bp-muted); --k-notice:var(--bp-muted); --bcal-late:var(--bp-critical); --bcal-late-bg:var(--bp-critical-bg); }
 .bcal[data-theme="dark"] { --bcal-late:var(--bp-critical); --bcal-late-bg:var(--bp-critical-bg); }
-.bcal-layout { display:grid; min-width:0; grid-template-columns:minmax(0,1fr) 300px; gap:16px; align-items:start; padding:0 var(--register-gutter,20px); }
-@media (max-width:1099px){ .bcal-layout { grid-template-columns:minmax(0,1fr); } }
+.bcal-layout { display:grid; min-width:0; grid-template-columns:minmax(0,1fr); gap:16px; padding:0 var(--register-gutter,20px); }
 .bcal-card { background:var(--bp-card); border:1px solid var(--bp-border); border-radius:12px; min-width:0; }
 .bcal-toolbar { display:flex; flex-wrap:wrap; align-items:center; gap:10px 16px; padding:14px 16px 10px; }
 .bcal-nav { display:flex; align-items:center; gap:6px; flex-wrap:wrap; }

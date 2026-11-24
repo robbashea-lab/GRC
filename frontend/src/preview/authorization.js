@@ -41,7 +41,7 @@ export function authorizeDemo(db, method, parts, body = {}, requestKey) {
   const user = db.user, role = roleOf(user);
   if (!ROLES.includes(role)) deny('Unsupported role');
   if (method === 'get') return;
-  if(method==='post'&&['reports/exports','frameworks/cmmc/workbook/export'].includes(parts.join('/')))return; // Export routes recheck native role and scope.
+  if(method==='post'&&['reports/exports','reports/deliveries','frameworks/cmmc/workbook/export'].includes(parts.join('/')))return; // Export routes recheck native role and scope.
   const route = `${method} /${parts.join('/')}`;
   if (SELF.some(pattern => pattern.test(route))) return;
   const target = (db[parts[0]] || []).find(r => r[ids[parts[0]]] === parts[1]);

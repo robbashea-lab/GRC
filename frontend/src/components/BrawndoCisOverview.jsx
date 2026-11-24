@@ -4,6 +4,7 @@ import {Button} from './ui/button';
 import {useBrawndoTheme} from '@/lib/brawndoTheme';
 import './BrawndoCisOverview.css';
 import Donut from './ProgramDonut';
+import V3WorkspaceHeading from './V3WorkspaceHeading';
 
 // Brawndo CIS IG1 overview: where the program stands, what to do next, then the controls.
 const SEGMENTS=[['addressed','Implemented','good'],['partial','Partial','attention'],['gap','Not implemented','critical'],['notAssessed','Not assessed','neutral']];
@@ -11,13 +12,10 @@ const FILTER={addressed:'addressed',partial:'in_progress',gap:'needs_attention',
 // Shared framework workspace header from the approved cross-client visual work.
 export function FrameworkHeader({eyebrow,title,subtitle,resume,onContinue}){
   const [theme,setTheme]=useBrawndoTheme();
-  return <header className="bcis-head">
-    <div><p className="bcis-eyebrow">{eyebrow}</p><h1>{title}</h1>{subtitle&&<p className="text-sm text-ink-secondary">{subtitle}</p>}</div>
-    <div className="bcis-actions">
+  return <V3WorkspaceHeading className="bcis-head" actionsClass="bcis-actions" title={title} subtitle={subtitle||eyebrow}>
+      {resume&&<Button className="bcis-primary cta" onClick={onContinue} aria-label={`Continue assessment: ${resume.definition_id} ${resume.title}`}>Continue with {resume.definition_id}</Button>}
       <button type="button" className="bcis-theme" onClick={()=>setTheme(theme==='dark'?'light':'dark')} aria-pressed={theme==='dark'} aria-label={theme==='dark'?'Switch to light mode':'Switch to dark mode'}>{theme==='dark'?<Sun size={16} aria-hidden="true"/>:<Moon size={16} aria-hidden="true"/>}<span>{theme==='dark'?'Light':'Dark'}</span></button>
-      {resume&&<Button className="bcis-primary" onClick={onContinue} aria-label={`Continue assessment: ${resume.definition_id} ${resume.title}`}>Continue with {resume.definition_id}</Button>}
-    </div>
-  </header>;
+  </V3WorkspaceHeading>;
 }
 export const BrawndoCisHeader=({implementationGroup=1,...props})=><FrameworkHeader eyebrow={`CIS Controls v8.1 IG${implementationGroup}`} title={`CIS IG${implementationGroup}`} {...props}/>;
 // Share of applicable safeguards for a segment; assessment progress only, never a compliance score.

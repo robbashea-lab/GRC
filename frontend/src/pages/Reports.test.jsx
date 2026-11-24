@@ -13,6 +13,7 @@ const iso={key:'iso-27001',name:'ISO/IEC 27001',version:'2022 + Amd 1:2024',scop
 const pdf=()=>({data:new Blob(['%PDF-1.7\n'],{type:'application/pdf'}),headers:{'content-disposition':'attachment; filename="client-report.pdf"'}});
 let root,node,downloads,click;
 beforeEach(()=>{
+  window.history.replaceState(null,'','/reports?reports_tab=details');
   global.IS_REACT_ACT_ENVIRONMENT=true;jest.useFakeTimers();
   mockOrg={currentClientId:'client-a',currentClient:{name:'Client A'}};
   mockUser={user_id:'viewer-a',role:'client_readonly'};

@@ -1,3 +1,4 @@
+import V3WorkspaceHeading from '@/components/V3WorkspaceHeading';
 import ReviewCompletionsExport from '@/components/ReviewCompletionsExport';
 import {visualCorrectionSurface} from '@/lib/visualCorrectionScope';
 import {quarterlyChartScope} from '@/lib/quarterlyProgramTimeline';
@@ -190,7 +191,7 @@ function EntityListPage({ kind }) {
   const signal = useMemo(() => signals.find(x => x.id === (params.get("signal") || (legacyReviewView==='unassigned'?'unowned':''))), [signals, params, legacyReviewView]);
   const requestedReviewTab = params.get('tab') || ({open:'all',upcoming:'due30',unassigned:'all'}[legacyReviewView] || legacyReviewView) || 'all';
   const reviewTab = requestedReviewTab==='completed'?'history':requestedReviewTab==='active'?'all':requestedReviewTab;
-  const policyView = ['approved','awaiting','due30','overdue',...(additionalPolicies?['missing','mapped']:[])].includes(params.get('policyView')) ? params.get('policyView') : '';
+  const policyView = ['approved','awaiting','due30','overdue',...(additionalPolicies?['missing','mapped','verify']:[])].includes(params.get('policyView')) ? params.get('policyView') : '';
   const defaultSort = DEFAULT_SORT[kind] || { by: "due_date", dir: "desc" };
   const sortBy = params.get("sortBy") || defaultSort.by;
   const sortDir = params.get("sortDir") || defaultSort.dir;
@@ -614,7 +615,10 @@ function EntityListPage({ kind }) {
     }
   }
 
-  const openReviewRow=row=>{if(reviewsPilot)setLinkedInitialValues(executionHistory&&row._execution?{occurrence:row._execution}:{});setSelected(executionHistory?row._review||row:row);setOpen(true);};
+  const openReviewRow=row=>{
+    if(reviewsPilot)setLinkedInitialValues(row._execution?{occurrence:row._execution}:{});
+    setSelected(row._review||row);setOpen(true);
+  };
   const rowActions=(row,i)=>(<DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <button
@@ -741,7 +745,7 @@ function EntityListPage({ kind }) {
 
   return (<>
     {kind==='policies'&&policyPresentation&&!additionalPolicies ? <section className="brawndo-additional bap-page" data-theme={theme} data-testid="policies-navigation-loading" aria-busy={!(loadError||policyScopeError)}>
-      <div className="bapv-page-head"><div><h1>{currentClient?.name||'Client'} Policies</h1><p>Policy library</p></div></div>
+      <V3WorkspaceHeading clientName={currentClient?.name} title="Policies" subtitle="Policy library"/>
       <RegisterLoadError error={loadError||policyScopeError} onRetry={()=>{if(policyScopeError)setPolicyAlignmentRetry(value=>value+1);load();}} name="policies"/>
       {!loadError&&!policyScopeError&&<p role="status">Loading policies…</p>}
     </section> : additionalPolicies ? <BrawndoAdditionalPolicies clientId={currentClientId} clientName={currentClient?.name||'Client'}

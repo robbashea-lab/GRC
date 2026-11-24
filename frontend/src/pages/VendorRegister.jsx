@@ -1,3 +1,4 @@
+import V3WorkspaceHeading from '@/components/V3WorkspaceHeading';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import BrawndoAdditionalVendors from '@/components/BrawndoAdditionalVendors';
 import {quarterlyChartScope} from '@/lib/quarterlyProgramTimeline';
@@ -209,7 +210,7 @@ export default function VendorRegister() {
   let surface;
   if(presentation&&!additional){
     surface = <section className="brawndo-additional bav-page" data-theme={theme} data-testid="vendors-navigation-loading" aria-busy={!loadError}>
-      <div className="bapv-page-head"><div><h1>{currentClient?.name||'Client'} Vendors</h1><p>Third-party register</p></div></div>
+      <V3WorkspaceHeading clientName={currentClient?.name} title="Vendors" subtitle="Third-party register"/>
       <RegisterLoadError error={loadError} onRetry={load} name="vendors"/>
       {!loadError&&<p role="status">Loading vendors…</p>}
       {recordLinkError&&<p role="alert">{recordLinkError}</p>}

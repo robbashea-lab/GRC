@@ -1,6 +1,7 @@
 import {useSyncExternalStore} from 'react';
 
-export const APPEARANCE_KEY = 'governara.appearance.v2';
+// Start the signed-in v3 experience in Glass ’07 until a theme is chosen here.
+export const APPEARANCE_KEY = 'governara.appearance.v3';
 export const MODE_KEY = 'omnisciente:brawndo-dashboard-theme';
 export const APPEARANCE_EVENT = 'omnisciente:brawndo-theme';
 
@@ -38,20 +39,7 @@ function storedPreference(key) {
 export function readAppearance() {
   if (sessionPreference) return sessionPreference;
   const saved = storedPreference(APPEARANCE_KEY);
-  const current = normalize(saved?.theme, saved?.mode);
-  if (current) return current;
-
-  const legacy = storedPreference('governara.appearance.v1');
-  // The first preview automatically saved Midnight Blue/Dark without a user choice.
-  if (legacy && !(legacy.theme === 'midnight' && legacy.mode === 'dark')) {
-    const previous = normalize(legacy.theme, legacy.mode);
-    if (previous) return previous;
-  }
-  try {
-    const mode = localStorage.getItem(MODE_KEY);
-    if (validMode(mode)) return normalize('teal', mode);
-  } catch { /* The page works with in-memory preferences when storage is blocked. */ }
-  return normalize(initialChoice.id);
+  return normalize(saved?.theme, saved?.mode) || normalize(initialChoice.id);
 }
 
 export function setAppearance(theme, mode) {

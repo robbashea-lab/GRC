@@ -22,10 +22,11 @@ jest.mock('@/components/RecordDrawer',()=>({__esModule:true,default:props=>{mock
 jest.mock('@/components/CisActionItemsConcept',()=>({
   useActionConceptClock:()=>new Date(),
   CisActionItemsSummary:({metrics,onSelect})=><button data-testid="owner-summary" onClick={()=>onSelect('unassigned')}>{metrics.needsOwner.length}</button>,
-  CisActionItemsOverview:({onOpen})=><button data-testid="concept-open" onClick={()=>onOpen({task:mockRows[1].raw},mockReturnFocus)}>Open saved action</button>,
   ActionConceptPriority:({value})=><span data-testid="concept-priority">{value}</span>,
   ActionConceptDue:()=>null,
 }));
+
+jest.mock('@/components/ActionQuarterLedger',()=>({__esModule:true,default:({onOpen})=><button data-testid="concept-open" onClick={()=>onOpen({task:mockRows[1].raw},mockReturnFocus)}>Open saved action</button>}));
 
 let root,container;
 beforeAll(()=>Object.defineProperty(globalThis,'crypto',{value:require('crypto').webcrypto,configurable:true}));

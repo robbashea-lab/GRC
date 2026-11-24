@@ -29,18 +29,23 @@ test("page clearly separates the five planned roles from current permissions", a
   try {
     await act(async () => root.render(<AdminRoles />));
     const cards = container.querySelector('[data-testid="admin-roles-grid"]');
-    expect(cards.children).toHaveLength(5);
-    expect([...cards.children].map(card => [card.querySelector("h3").textContent,
+    const roleCards=cards.querySelectorAll('button');
+    expect(roleCards).toHaveLength(5);
+    expect([...cards.querySelectorAll('h2')].map(node=>node.textContent)).toEqual(['iVenture team','Client users']);
+    expect([...roleCards].map(card => [card.querySelector("h3").textContent,
       card.querySelector(".admin-role-scope").textContent, card.querySelector("p").textContent]))
       .toEqual(PLANNED_ROLES.map(role => [role.label, role.scope, role.detail]));
     expect(cards.textContent).not.toContain("Super Admin");
-    expect(container.querySelectorAll("thead th")).toHaveLength(6);
+    expect(container.querySelectorAll('thead th[scope="col"]')).toHaveLength(6);
+    expect([...container.querySelectorAll('thead th[scope="colgroup"]')].map(node=>node.colSpan)).toEqual([2,3]);
     expect(container.querySelector('[data-testid="admin-roles-note"]').textContent).toContain("Server-enforced role contract");
     expect(container.querySelector('[data-testid="current-effective-permissions"]').textContent).toContain("No accounts are automatically promoted");
     expect(container.querySelector('[data-testid="future-client-approver"]')).toBeNull();
     expect(container.textContent).not.toMatch(/future|coming soon|planned/i);
-    expect([...container.querySelectorAll("tbody tr")].map(row => [...row.cells].map(cell => cell.textContent)))
-      .toEqual(PLANNED_CAPABILITIES.map(row => [row.label, ...PLANNED_ROLES.map(role => row.roles[role.key])]));
+    const permissionRows=[...container.querySelectorAll("tbody tr")].filter(row=>row.firstElementChild.tagName==='TD');
+    expect(permissionRows).toHaveLength(PLANNED_CAPABILITIES.length);
+    expect(Object.fromEntries(permissionRows.map(row=>[row.cells[0].textContent,[...row.cells].slice(1).map(cell=>cell.textContent)])))
+      .toEqual(Object.fromEntries(PLANNED_CAPABILITIES.map(row=>[row.label,PLANNED_ROLES.map(role=>row.roles[role.key])])));
     expect(container.querySelectorAll("input, select, textarea, form")).toHaveLength(0);
     expect(container.querySelectorAll('button')).toHaveLength(10);
     const role = cards.querySelector('button');
@@ -74,8 +79,9 @@ test('role counts use actual active native accounts and remain unknown after a f
   const container = document.createElement('div'), root = createRoot(container);
   try {
     await act(async () => root.render(<AdminRoles/>));
-    expect(container.querySelector('[data-testid="admin-roles-grid"]').children[0].textContent).toContain('1 active user');
-    expect([...container.querySelector('[data-testid="admin-roles-grid"]').children].map(card=>card.querySelector('.sub').textContent))
+    const cards=container.querySelectorAll('[data-testid="admin-roles-grid"] button');
+    expect(cards[0].textContent).toContain('1 active user');
+    expect([...cards].map(card=>card.querySelector('.sub').textContent))
       .toEqual(['1 active user','0 active users','0 active users','0 active users','2 active users']);
     expect(JSON.stringify(users)).toBe(original);
     await act(async () => root.render(null));

@@ -14,7 +14,7 @@ const CLIENT_VERSION = '2026-11-19T08:00:00+00:00', REVIEW_VERSION = '2026-11-19
 const EXCLUSION_PATH = '/clients/' + CLIENT + '/iv-setup/exclusion/' + encodeURIComponent(ACTIVITY);
 let host, root;
 const dialog = () => document.querySelector('[role="dialog"]');
-const button = (scope, label) => [...scope.querySelectorAll('button')].find(node => node.textContent === label);
+const button = (scope, label) => [...scope.querySelectorAll('button')].find(node => node.textContent === label || (label === 'Set up / edit' && node.getAttribute('aria-label')?.startsWith('Set up / edit ')));
 const click = async node => {expect(node).toBeTruthy(); await act(async () => node.click());};
 const writeNote = async text => {
   const node = dialog().querySelector('textarea');
@@ -26,6 +26,21 @@ const writeNote = async text => {
 const render = async () => {await act(async () => root.render(<IVentureSetup />));};
 const configuredSetup = () => Object.assign(mockSetup.activities[0], {
   responsibility: 'iv', cadence: 'annual', setup: {recurring_ticket_number: '74231', notes: 'Initial owned setup notes'}
+});
+
+test('initial setup groups only the selected client’s provider activities and keeps completed tickets and reviews linked',async()=>{
+  const open=mockSetup.activities[0];
+  mockSetup.activities.push({...open,activity_id:'saved-configured',title:'Configured inventory',state:'done',setup:{recurring_ticket_number:'84729'},review_id:'saved-review'},
+    {...open,activity_id:'governance',title:'Policy attestation',internal:true},{...open,activity_id:'other',title:'Customer-managed scan',provider_relevant:false});
+  await render();
+  expect(host.querySelector('.ivs-panel h2').textContent).toBe('Initial setup');
+  const groups=[...host.querySelectorAll('.ivs-section')];
+  expect(groups).toHaveLength(2);
+  expect(groups[0].textContent).toContain('To set up');expect(groups[1].textContent).toContain('Ticket #84729');
+  expect(groups[1].querySelector('a').getAttribute('href')).toContain('review_id=saved-review');
+  expect(host.querySelector('.ivs-note').textContent).toContain('Policy attestation');
+  expect(host.querySelector('.ivs-note').textContent).toContain('Customer-managed scan');
+  expect(host.querySelectorAll('.ivs-row')).toHaveLength(2);
 });
 
 beforeEach(() => {
@@ -91,7 +106,7 @@ test.each(['Cancel', 'Escape'])('%s dismisses the removal without a native write
 test('Restore uses the same native exclusion route with explicit false and no new removal fields', async () => {
   mockSetup.activities[0].state = 'removed'; mockSetup.outstanding_count = 0;
   mockSetup.activities[0].exclusion = {kind: 'spm', reason: 'Retained original removal'};
-  await render(); await click(button(host, 'Removed')); await click(button(host, 'Restore'));
+  await render(); await click(host.querySelector('.ivs-removed summary')); await click(button(host, 'Restore'));
   expect(dialog().textContent).toContain('Restore activity to setup');
   expect(dialog().querySelectorAll('input[type="radio"], textarea')).toHaveLength(0);
   await click(button(dialog(), 'Save decision'));

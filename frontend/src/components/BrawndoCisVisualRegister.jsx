@@ -23,7 +23,7 @@ export default function CisVisualRegister({rows,visible,domains,filter,search,on
   const allOpen=shown.length>0&&shown.every(group=>expanded.includes(group.key));
   const selectGrouping=value=>{setGrouping(value);setExpanded([]);onResetControl?.();};
   const counts=Object.fromEntries(['all','attention','not_assessed','stale'].map(key=>[key,rows.filter(row=>matchesAssessment(row,key)).length]));
-  return <section ref={register} className="pcard" aria-labelledby="cis-visual-register">
+  return <section ref={register} className="panel pcard" aria-labelledby="cis-visual-register">
     <ProgramVisualToolbar id="cis-visual-register" title="Safeguards" description={`All ${rows.length} IG${implementationGroup} safeguards in one register. Group them by security domain or by CIS control.`}
       grouping={{value:grouping,options:[['domain','Security domain'],['control','CIS control']],onChange:selectGrouping}}
       {...{search,onSearch,filter,onFilter,counts,order,onClear}} onOrder={setOrder}

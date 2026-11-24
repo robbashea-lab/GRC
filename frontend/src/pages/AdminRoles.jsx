@@ -1,4 +1,4 @@
-import PageHeader from "@/components/PageHeader";
+import PlatformPageHeading from "@/components/PlatformPageHeading";
 import { Building2, ChevronDown, FileText, KeyRound, Lock, ShieldCheck, Users } from "lucide-react";
 
 import { PLANNED_ROLES as ROLES, PLANNED_CAPABILITIES as CAPS, nativeRoleDefinition } from "@/lib/plannedRoleModel";
@@ -37,10 +37,10 @@ export default function AdminRoles() {
   }, []);
   const select = key => setHighlight(previous => previous === key ? null : key);
   return (
-    <div className="admin-page admin-roles-page">
-      <PageHeader eyebrow="Administration" title="Roles & Permissions" subtitle="Role families, client scope, and server-side authorization boundaries." />
+    <div className="wrap admin-page admin-roles-page">
+      <PlatformPageHeading eyebrow="Administration" title="Roles & Permissions" subtitle="Role families, client scope, and server-side authorization boundaries." />
       <div className="admin-body">
-        <div className="admin-notice" data-testid="admin-roles-note">
+        <div className="callout admin-notice" data-testid="admin-roles-note">
           <ShieldCheck aria-hidden="true" />
           <div><strong>Server-enforced role contract.</strong> This page explains permissions; it does not edit grants. Every operation also requires authorized client scope and the applicable record/workflow checks.</div>
         </div>
@@ -48,7 +48,7 @@ export default function AdminRoles() {
           {roleFamilies.map(family => <Fragment key={family.label}><h2 className="admin-role-family">{family.label}</h2>{family.roles.map((r) => {
             const Icon = ROLE_ICONS[r.key] || ShieldCheck;
             const count = users?.filter(user => nativeRoleDefinition(user.role)?.legacyKey === r.legacyKey && user.status === 'active').length;
-            return <button type="button" key={r.key} className="admin-role-card" aria-pressed={highlight === r.key} onClick={() => select(r.key)}>
+            return <button type="button" key={r.key} className="role-card admin-role-card" aria-pressed={highlight === r.key} onClick={() => select(r.key)}>
               <div className="admin-tile-icon"><Icon aria-hidden="true" /></div>
               <div>
                 <h3>{r.label}</h3>
@@ -59,8 +59,8 @@ export default function AdminRoles() {
             </button>;
           })}</Fragment>)}
         </section>
-        <section data-testid="admin-roles-matrix" className="admin-panel">
-          <div className="admin-panel-head">
+        <section data-testid="admin-roles-matrix" className="panel admin-panel">
+          <div className="panel-head admin-panel-head">
             <div><h2>Capability matrix</h2><p>Capabilities apply within the role's authorized scope.</p></div>
             <span className="admin-readonly-badge"><Lock aria-hidden="true" />Read-only reference</span>
           </div>

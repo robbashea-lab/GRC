@@ -64,7 +64,7 @@ async function click(target) {
 }
 
 async function openFirst() {
-  const target = [...host.querySelectorAll('button')].find(node => node.textContent.trim().startsWith('Continue: 1.1 '));
+  const target = [...host.querySelectorAll('button')].find(node => node.textContent.trim().startsWith('Continue with 1.1 '));
   await click(target);
   expect(currentLocation.pathname).toBe('/compliance/cis-ig1');
   expect(new URLSearchParams(currentLocation.search).get('assessment')).toBe(CLIENT + ':1.1');

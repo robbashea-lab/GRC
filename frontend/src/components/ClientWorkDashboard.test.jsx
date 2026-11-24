@@ -33,8 +33,8 @@ test('compact preview, selected filters, paging, authoritative row open and CIS 
   expect(container.querySelector('.bd-tiles')).toBeNull();
   expect(container.querySelector('.bd-program-intro').textContent).toContain('A clearer view. A stronger program.');
   expect(container.querySelector('.bd-aside').compareDocumentPosition(container.querySelector('.bd-queue')) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
-  expect(container.querySelector('.bd-donut')).toBeTruthy();
-  expect(container.textContent).toContain('1 of 2');expect(container.textContent).toContain('50%');
+  expect(container.querySelector('[aria-label="Status comparison"]')).toBeTruthy();
+  expect(container.textContent).toContain('1 of 2');expect(container.textContent).toContain('50.0%');
   expect(container.textContent).not.toContain('Program health');
   const click=async text=>act(async()=>[...container.querySelectorAll('button')].find(b=>b.textContent.includes(text)).click());
   await click('View all 30');expect(container.querySelectorAll('tbody tr')).toHaveLength(25);
@@ -135,5 +135,7 @@ test('CIS card derives gaps from linked work and links each count to its filtere
   const gap=container.querySelector('a[href="/compliance/cis-ig1?view=unremediated"]');
   expect(gap.textContent).toBe('Gaps without a finding1');
   expect(container.querySelector('a[href="/compliance/cis-ig1?view=unevidenced"]').textContent).toBe('Implemented without evidence1');
-  expect(container.querySelector('.bd-donut').getAttribute('aria-label')).toContain('1 Implemented');
+  const implemented=container.querySelector('.bfb-row');
+  expect(implemented.querySelector('.bfb-name').textContent).toBe('Implemented');
+  expect(implemented.querySelector('.bfb-count').textContent).toBe('1');
 });

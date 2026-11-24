@@ -1,6 +1,8 @@
-import {useEffect,useState} from 'react';
+import {useEffect,useRef,useState} from 'react';
 import {ChevronLeft,ChevronRight,Link2} from 'lucide-react';
-import {BrawndoSurface,BrawndoPageHeader} from '@/components/BrawndoPage';
+import {BrawndoSurface} from '@/components/BrawndoPage';
+import V3WorkspaceHeading from '@/components/V3WorkspaceHeading';
+import {useBrawndoTheme} from '@/lib/brawndoTheme';
 import SurfaceThemeAction from '@/components/SurfaceThemeAction';
 import {calendarStatus,calendarType,stepCalendarDate} from '@/lib/calendarView';
 import {calendarKind,calendarOwner,calendarCompleted,filterCalendarItems} from '@/lib/brawndoDemoCalendar';
@@ -13,7 +15,7 @@ export default function BrawndoDemoCalendar(p){
   // Keep the native query window; display only complete weeks containing this month.
   const monthWeeks=Math.ceil((((new Date(anchor.getFullYear(),anchor.getMonth(),1).getDay()+6)%7)+new Date(anchor.getFullYear(),anchor.getMonth()+1,0).getDate())/7);
   const monthGridDays=days.slice(0,monthWeeks*7);
-  const [types,setTypes]=useState(Object.keys(KINDS)),[scope,setScope]=useState('all'),[owner,setOwner]=useState('all'),[highlight,setHighlight]=useState('all'),[showDone,setShowDone]=useState(false),[tip,setTip]=useState(null);
+  const [types,setTypes]=useState(Object.keys(KINDS)),[scope,setScope]=useState('active'),[owner,setOwner]=useState('all'),[highlight,setHighlight]=useState('all'),[showDone,setShowDone]=useState(false),[tip,setTip]=useState(null);
   useEffect(()=>{const hide=()=>setTip(null);window.addEventListener('scroll',hide,true);return()=>window.removeEventListener('scroll',hide,true);},[]);
   function showTip(event,item){const rect=event.currentTarget.getBoundingClientRect();setTip({item,left:Math.max(8,Math.min(rect.left,window.innerWidth-308)),top:rect.bottom+150>window.innerHeight?Math.max(8,rect.top-140):rect.bottom+6});}
   const filtered=filterCalendarItems(entries,{types,scope,owner,highlight,today,nativeScheduledItems:nativeBehavior});
@@ -26,7 +28,24 @@ export default function BrawndoDemoCalendar(p){
   const summaryUnavailable=id=>loading||error||['overdue','week'].includes(id)&&(!summaryEntries||!!summaryError);
   const summaryMessage=id=>error?'Unavailable':loading?'Loading…':summaryError?'Unavailable':'Loading…';
   const tipProps=item=>({onPointerEnter:ev=>showTip(ev,item),onPointerLeave:()=>setTip(null),onFocus:ev=>showTip(ev,item),onBlur:()=>setTip(null),'aria-describedby':tip?.item.key===item.key?'bdcal-tip':undefined});
-  const goDay=date=>{setAnchor(new Date(date+'T12:00:00'));setView('day');};
+  const [theme,setTheme]=useBrawndoTheme();
+  const [selectedDate,setSelectedDate]=useState(null);
+  const agendaRef=useRef(null);
+  const activeDay=view==='day'?ymd(anchor):selectedDate;
+  const longDate=date=>new Date(date+'T12:00:00').toLocaleDateString(undefined,{month:'short',day:'numeric',year:'numeric'});
+  function selectDay(date) {
+    setSelectedDate(date);
+    agendaRef.current?.scrollIntoView?.({block:'start',behavior:'smooth'});
+  }
+  function changeView(next) {
+    if(selectedDate) setAnchor(new Date(selectedDate+'T12:00:00'));
+    setSelectedDate(null);
+    setView(next);
+  }
+  function navigatePeriod(direction) {
+    setSelectedDate(null);
+    setAnchor(direction===0?new Date():stepCalendarDate(anchor,view,direction));
+  }
   const glyph=item=><i className={`g g-${calendarKind(item)}`} aria-hidden="true"/>;
   const state=item=>!item.historical&&item.date<today?'Overdue':calendarStatus(item);
   function event(item,mode){return <button key={item.key} type="button" className={`${mode}${highlight!=='all'&&!filtered.some(row=>row.key===item.key)?' dim':''}${item.historical?' done':item.date<today?' late':''}`} data-testid={`cal-item-${item.key}`} draggable={item.can_reschedule&&!busy&&!loading&&!error} aria-disabled={busy||loading||!!error} {...tipProps(item)} aria-label={`${calendarType(item)}: ${item.title} — ${state(item)} — ${item.date}`} onClick={ev=>openSchedule(item,ev)} onDragStart={ev=>onDragStart(ev,item)} onDragEnd={()=>{setDragging(null);setDragOverDay('');}}>
@@ -36,10 +55,100 @@ export default function BrawndoDemoCalendar(p){
   const agenda=filtered.filter(item=>item.date>=period.start&&item.date<=period.end||!item.historical&&item.date<today).sort((a,b)=>a.date.localeCompare(b.date)||a.title.localeCompare(b.title));
   const dayOffset=item=>Math.round((Date.parse(item.date)-Date.parse(today))/86400000);
   const groups=[['Overdue',agenda.filter(item=>!item.historical&&item.date<today)],['Today',agenda.filter(item=>!item.historical&&item.date===today)],['Next 7 days',agenda.filter(item=>!item.historical&&dayOffset(item)>0&&dayOffset(item)<=7)],[view==='month'?`Later in ${month}`:'Later',agenda.filter(item=>!item.historical&&dayOffset(item)>7)],['Completed',agenda.filter(calendarCompleted)],['Other historical items',agenda.filter(item=>item.historical&&!calendarCompleted(item))]];
-  return <BrawndoSurface className="bdcal"><BrawndoPageHeader title={`${clientName} Calendar`} subtitle="Reviews, findings, action items and vendor dates"
-    renderThemeAction={props=><SurfaceThemeAction {...props} className="bpage-btn"/>}/>
-    <div className="cal-layout"><section className="pcard" aria-label={view[0].toUpperCase()+view.slice(1)}><div className="cal-bar"><div className="cal-nav"><button type="button" className="iconbtn" aria-label={`Previous ${view}`} data-testid="cal-prev" onClick={()=>setAnchor(stepCalendarDate(anchor,view,-1))}><ChevronLeft size={16}/></button><button type="button" className="btn" data-testid="cal-today" onClick={()=>setAnchor(new Date())}>Today</button><button type="button" className="iconbtn" aria-label={`Next ${view}`} data-testid="cal-next" onClick={()=>setAnchor(stepCalendarDate(anchor,view,1))}><ChevronRight size={16}/></button><h2 data-testid="cal-month-label">{period.label}</h2></div><div className="seg" role="group" aria-label="Calendar view">{['day','week','month'].map(id=><button key={id} type="button" aria-pressed={view===id} onClick={()=>setView(id)}>{id[0].toUpperCase()+id.slice(1)}</button>)}</div></div>
-    <div className="filters"><div className="types">{Object.entries(KINDS).map(([id,label])=><button type="button" className="tchip" key={id} aria-pressed={types.includes(id)} onClick={()=>setTypes(types.includes(id)?types.filter(x=>x!==id):[...types,id])}><i className={`g g-${id}`} aria-hidden="true"/>{label}<span className="n">{entries.filter(item=>calendarKind(item)===id&&item.date>=period.start&&item.date<=period.end).length}</span></button>)}</div><div className="f-right"><label className="f-field"><span>Owner</span><select value={owner} onChange={ev=>setOwner(ev.target.value)}><option value="all">All owners</option>{members.map(person=><option key={person.user_id} value={person.user_id}>{person.name||'Owner unavailable'}</option>)}<option value="">Unassigned</option></select></label><div className="seg" role="group" aria-label="Calendar state">{[['active','Active'],['done','Completed / Closed'],['all','All']].map(([id,label])=><button type="button" key={id} aria-pressed={scope===id} onClick={()=>{setScope(id);if(id==='active'&&highlight==='done'||id==='done'&&['overdue','week'].includes(highlight))setHighlight('all');}}>{label}</button>)}</div></div></div>
-    {(loading||busy)&&<p role="status">{busy?'Saving…':'Loading…'}</p>}{errorNode}{summaryError&&<p role="alert">Calendar summary: {summaryError}</p>}{memberError&&<p role="alert">{memberError}</p>}{recoveryNode}<div className="cal-body">{view==='month'?<><div className="dow-row">{['Mon','Tue','Wed','Thu','Fri','Sat','Sun'].map(d=><div className="dow" key={d}>{d}</div>)}</div>{Array.from({length:Math.ceil(monthGridDays.length/7)},(_,week)=><div className="wk" key={week}>{monthGridDays.slice(week*7,week*7+7).map(day=>{const date=ymd(day),items=shown(date),visibleCount=nativeBehavior?(expanded[date]?items.length:3):items.length>3?2:3;return <div key={date} data-testid={`cal-day-${date}`} className={`day${day.getMonth()!==anchor.getMonth()?' out':''}${date===today?' today':''}${dragOverDay===date?' drop':''}`} {...dropProps(date)}><button type="button" className="dnum" aria-label={`Show ${date}`} onClick={()=>goDay(date)}>{day.getDate()}</button><div className="evs">{items.slice(0,visibleCount).map(item=>event(item,'ev'))}{items.length>3&&<button type="button" className="more" aria-label={nativeBehavior?`${expanded[date]?'Show fewer':'Show all '+items.length+' items'} on ${date}`:undefined} onClick={()=>nativeBehavior?setExpanded(current=>({...current,[date]:!current[date]})):goDay(date)}>{nativeBehavior&&expanded[date]?'Show fewer':`+${items.length-visibleCount} more`}</button>}</div></div>;})}</div>)}</>:view==='week'?<div className="week">{days.map(day=>{const date=ymd(day),items=shown(date);return <div className={`wcol${date===today?' today':''}${dragOverDay===date?' drop':''}`} key={date} data-testid={`cal-day-${date}`} {...dropProps(date)}><button type="button" className="wcol-h" onClick={()=>goDay(date)}>{day.toLocaleDateString(undefined,{weekday:'short'})}<b>{day.getDate()}</b>{date===today&&<em>Today</em>}</button><div className="wcards">{items.map(item=>event(item,'card'))}{!items.length&&<p className="wempty">No items</p>}</div></div>;})}</div>:<div className={`dayv${dragOverDay===ymd(anchor)?' drop':''}`} data-testid={`cal-day-${ymd(anchor)}`} {...dropProps(ymd(anchor))}>{shown(ymd(anchor)).map(item=>event(item,'drow'))}{!shown(ymd(anchor)).length&&!loading&&!error&&<div className="empty"><h3>No scheduled items</h3><p>Nothing matches these filters on this day.</p></div>}</div>}</div><footer className="card-foot cal-foot"><span className="lgd"><i className="sw late"/>Overdue</span><span className="lgd"><i className="sw done"/>Completed / Closed</span><span className="hint">{view!=='day'?'Drag an open item to change its date.':'Select an item to open its details.'}</span></footer></section>
-    <section className="pcard agenda native-calendar-agenda" aria-labelledby="bdcal-agenda"><div className="card-head"><div><h2 id="bdcal-agenda">Scheduled items</h2><p>{period.label} · includes current overdue items</p></div></div><div className="reg-kstrip native-summary" data-native-summary><div className="kstrip" role="group" aria-label="Calendar summary">{summaries.map(([id,label,items,sub])=><button type="button" className="kchip" key={id} aria-pressed={highlight===id} disabled={summaryUnavailable(id)} onClick={()=>{setHighlight(highlight===id?'all':id);if(id==='done'&&scope==='active'||['overdue','week'].includes(id)&&scope==='done')setScope('all');}}><span className="klabel">{label}</span><strong className={'kvalue'+(id==='overdue'&&items.length?' bad':'')}>{summaryUnavailable(id)?'—':items.length}</strong><small className={id==='overdue'&&items.length&&!summaryUnavailable(id)?'bad':undefined}>{summaryUnavailable(id)?summaryMessage(id):sub}</small></button>)}</div></div><div className="ag-body">{groups.map(([label,items])=>!!items.length&&<section className="ag-sec" key={label}><h3 className={`ag-group${label==='Overdue'?' bad':''}`}><span>{label}</span><span>{items.length}</span></h3>{(label!=='Completed'||showDone||highlight==='done'||scope==='done')&&items.map(item=><button type="button" className={`ag-row${item.historical?' done':item.date<today?' late':''}`} key={item.key} data-testid={`cal-attn-${item.key}`} {...tipProps(item)} aria-disabled={busy||loading||!!error} onClick={ev=>openSchedule(item,ev)}><span className="ag-date"><small>{new Date(item.date+'T12:00:00').toLocaleDateString(undefined,{month:'short'})}</small><b>{+item.date.slice(8,10)}</b></span><span className="ag-main"><b>{item.title}</b><span className="ag-meta">{glyph(item)}{calendarType(item)} · <span className={item.date<today&&!item.historical?'late':''}>{state(item)}</span></span>{item.represented&&<span className="ag-link"><Link2 className="ic-s" aria-hidden="true"/>Tracked by an action item · not counted</span>}</span></button>)}{label==='Completed'&&highlight!=='done'&&scope!=='done'&&<button type="button" className="link ag-more" aria-expanded={showDone} onClick={()=>setShowDone(!showDone)}>{showDone?'Hide completed':`Show ${items.length} completed items`}</button>}</section>)}{!agenda.length&&!loading&&!error&&<p className="ag-empty">Nothing matches these filters in this period.</p>}</div></section></div>{tip&&<div id="bdcal-tip" role="tooltip" className="tip" style={{left:tip.left,top:tip.top}}><span className="tt">{glyph(tip.item)}{calendarType(tip.item)}</span><span className="tl">{tip.item.title}</span><span>{short(tip.item.date)} · {state(tip.item)}</span><span>Owner: {calendarOwner(tip.item,members)}</span>{tip.item.represented&&<span className="tn">Remediation is tracked by its linked action item.</span>}</div>}{drawerNode}</BrawndoSurface>;
+  const displayedAgenda=activeDay?filtered.filter(item=>item.date===activeDay):agenda;
+  const displayGroups=activeDay?[['',displayedAgenda]]:groups;
+  const scopeItems=filterCalendarItems(monthItems,{types:Object.keys(KINDS),scope,owner,highlight:'all',today});
+  const gridDays=view==='month'?monthGridDays:days;
+  const cellLimit=view==='week'?12:3;
+  const pickScope=id=>{
+    setScope(id);
+    if(id==='active'&&highlight==='done'||id==='done'&&['overdue','week'].includes(highlight))setHighlight('all');
+  };
+  return <BrawndoSurface className="bdcal">
+    <V3WorkspaceHeading clientName={clientName} title="Calendar" subtitle={`Reviews, findings, action items and vendor dates · As of ${longDate(today)}`}>
+      <SurfaceThemeAction theme={theme} onTheme={()=>setTheme(theme==='dark'?'light':'dark')} className="bpage-btn"/>
+    </V3WorkspaceHeading>
+    <div className="cal-layout">
+      <section className="panel pcard" aria-label={view[0].toUpperCase()+view.slice(1)}>
+        <div className="toolbar cal-bar">
+          <div className="cal-nav">
+            <button type="button" className="icon-btn sm" aria-label={`Previous ${view}`} data-testid="cal-prev" onClick={()=>navigatePeriod(-1)}><ChevronLeft size={16}/></button>
+            <h2 data-testid="cal-month-label">{period.label}</h2>
+            <button type="button" className="icon-btn sm" aria-label={`Next ${view}`} data-testid="cal-next" onClick={()=>navigatePeriod(1)}><ChevronRight size={16}/></button>
+            <button type="button" className="ghost sm" data-testid="cal-today" onClick={()=>navigatePeriod(0)}>Today</button>
+          </div>
+          <div className="f-right">
+            <div className="seg sm" role="group" aria-label="Calendar view">{['day','week','month'].map(id=>
+              <button key={id} type="button" aria-pressed={view===id} onClick={()=>changeView(id)}>{id[0].toUpperCase()+id.slice(1)}</button>)}</div>
+            <label><span className="sr-only">Owner</span><select className="select" value={owner} onChange={ev=>setOwner(ev.target.value)}>
+              <option value="all">All owners</option>{members.map(person=><option key={person.user_id} value={person.user_id}>{person.name||'Owner unavailable'}</option>)}<option value="">Unassigned</option>
+            </select></label>
+            <div className="seg sm" role="group" aria-label="Calendar state">{[['active','Active'],['done','Completed / Closed'],['all','All']].map(([id,label])=>
+              <button type="button" key={id} aria-pressed={scope===id} onClick={()=>pickScope(id)}>{label}</button>)}</div>
+          </div>
+        </div>
+        <div className="toolbar filters">{Object.entries(KINDS).map(([id,label])=>
+          <button type="button" className="tchip type-chip" key={id} aria-pressed={types.includes(id)} onClick={()=>setTypes(types.includes(id)?types.filter(x=>x!==id):[...types,id])}>
+            <i className={`g g-${id}`} aria-hidden="true"/>{label}<span className="num">{scopeItems.filter(item=>calendarKind(item)===id).length}</span>
+          </button>)}</div>
+        {(loading||busy)&&<p role="status">{busy?'Saving…':'Loading…'}</p>}{errorNode}
+        {summaryError&&<p role="alert">Calendar summary: {summaryError}</p>}{memberError&&<p role="alert">{memberError}</p>}{recoveryNode}
+        {view==='day'?<div className={`dayv${dragOverDay===ymd(anchor)?' drop':''}`} data-testid={`cal-day-${ymd(anchor)}`} {...dropProps(ymd(anchor))}>
+          {shown(ymd(anchor)).map(item=>event(item,'drow'))}
+          {!shown(ymd(anchor)).length&&!loading&&!error&&<p>Nothing scheduled on {longDate(ymd(anchor))}.</p>}
+        </div>:<div className="scroll-x cal-body" role="region" aria-label="Calendar dates" tabIndex="0"><div className={`cal ${view}`}>
+          <div className="cal-head">{['MON','TUE','WED','THU','FRI','SAT','SUN'].map(day=><span key={day}>{day}</span>)}</div>
+          {Array.from({length:gridDays.length/7},(_,week)=><div className="cal-grid wk" key={week}>
+            {gridDays.slice(week*7,week*7+7).map(day=>{
+              const date=ymd(day),items=shown(date);
+              const expandedDay=nativeBehavior&&view==='month'&&expanded[date];
+              const count=expandedDay?items.length:cellLimit;
+              const classes=['cal-cell',day.getMonth()!==anchor.getMonth()&&'muted',date===today&&'today',date===activeDay&&'sel',dragOverDay===date&&'drop'].filter(Boolean).join(' ');
+              return <div key={date} className={classes} data-testid={`cal-day-${date}`} {...dropProps(date)}>
+                <button type="button" className="cal-day" aria-label={`${longDate(date)}, ${items.length} items`} onClick={()=>selectDay(date)}>{day.getDate()}</button>
+                {items.slice(0,count).map(item=>event(item,'ev'))}
+                {items.length>cellLimit&&<button type="button" className="ev-more more"
+                  aria-label={`${expandedDay?'Show fewer':'Show all '+items.length+' items'} on ${date}`}
+                  onClick={()=>nativeBehavior&&view==='month'?setExpanded(current=>({...current,[date]:!current[date]})):selectDay(date)}>
+                  {expandedDay?'Show fewer':`+${items.length-count} more`}
+                </button>}
+              </div>;
+            })}
+          </div>)}
+        </div></div>}
+        <footer className="note">Overdue items carry a red edge. Select an item to open it; select a day to list its items below.</footer>
+      </section>
+      <section className="panel pcard agenda native-calendar-agenda" aria-labelledby="bdcal-agenda" ref={agendaRef}>
+        <div className="panel-head card-head">
+          <div><h2 className="panel-title" id="bdcal-agenda">{activeDay?longDate(activeDay):'Scheduled items'}</h2>
+            <p className="panel-desc">{activeDay?`${displayedAgenda.length} items on this day`:`${period.label} · includes current overdue items`}</p></div>
+          {activeDay?<button className="link-btn" type="button" onClick={()=>{setSelectedDate(null);setView('month');}}>Show the whole month →</button>
+            :<span className="panel-count">{displayedAgenda.length} {displayedAgenda.length===1?'item':'items'}</span>}
+        </div>
+        <div className="reg-kstrip native-summary" data-native-summary><div className="kstrip" role="group" aria-label="Calendar summary">
+          {summaries.map(([id,label,items,sub])=><button type="button" className="kchip" key={id} aria-pressed={highlight===id} disabled={summaryUnavailable(id)}
+            onClick={()=>{setHighlight(highlight===id?'all':id);if(id==='done'&&scope==='active'||['overdue','week'].includes(id)&&scope==='done')setScope('all');}}>
+            <strong className={'kvalue num'+(id==='overdue'&&items.length?' bad':'')}>{summaryUnavailable(id)?'—':items.length}</strong>
+            <span className="klabel kl">{label}</span><small className={id==='overdue'&&items.length&&!summaryUnavailable(id)?'kc bad':'kc'}>{summaryUnavailable(id)?summaryMessage(id):sub}</small>
+          </button>)}
+        </div></div>
+        <div className="ag-body">{displayGroups.map(([label,items])=>!!items.length&&<section className="ag-sec" key={label}>
+          {label&&<h3 className={`ag-group${label==='Overdue'?' bad':''}`}>{label} · {items.length}</h3>}
+          {(label!=='Completed'||showDone||highlight==='done'||scope==='done')&&items.map(item=>
+            <button type="button" className={`ag-row${item.historical?' done':item.date<today?' late':''}`} key={item.key} data-testid={`cal-attn-${item.key}`}
+              {...tipProps(item)} aria-disabled={busy||loading||!!error} onClick={ev=>openSchedule(item,ev)}>
+              <span className="ag-date num">{short(item.date)}</span><span aria-hidden="true" className={`ag-bar g-${calendarKind(item)}`}/>
+              <span className="ag-main"><b>{item.title}</b><span className="ag-meta">{calendarType(item)} · {calendarOwner(item,members)} · <span className={item.date<today&&!item.historical?'late':''}>{state(item)}</span></span>
+                {item.represented&&<span className="ag-link"><Link2 className="ic-s" aria-hidden="true"/>Tracked by an action item · not counted</span>}</span><ChevronRight size={16} aria-hidden="true"/>
+            </button>)}
+          {label==='Completed'&&highlight!=='done'&&scope!=='done'&&<button type="button" className="link ag-more" aria-expanded={showDone} onClick={()=>setShowDone(!showDone)}>{showDone?'Hide completed':`Show ${items.length} completed items`}</button>}
+        </section>)}
+        {!displayedAgenda.length&&!loading&&!error&&<p className="ag-empty">{activeDay?'Nothing scheduled on this day.':'Nothing matches these filters in this period.'}</p>}</div>
+      </section>
+    </div>
+    {tip&&<div id="bdcal-tip" role="tooltip" className="tip" style={{left:tip.left,top:tip.top}}>
+      <span className="tt">{glyph(tip.item)}{calendarType(tip.item)}</span><span className="tl">{tip.item.title}</span><span>{short(tip.item.date)} · {state(tip.item)}</span>
+      <span>Owner: {calendarOwner(tip.item,members)}</span>{tip.item.represented&&<span className="tn">Remediation is tracked by its linked action item.</span>}
+    </div>}{drawerNode}
+  </BrawndoSurface>;
 }

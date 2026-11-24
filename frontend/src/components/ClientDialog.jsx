@@ -55,12 +55,12 @@ export default function ClientDialog({ open, onOpenChange, onCreated, client = n
   }
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent onCloseAutoFocus={onCloseAutoFocus} className="max-w-lg max-h-[90vh] overflow-y-auto" data-testid="add-client-dialog">
-        <DialogHeader>
+      <DialogContent onCloseAutoFocus={onCloseAutoFocus} className="client-organization-dialog max-w-lg" data-testid="add-client-dialog">
+        <DialogHeader className="client-organization-header">
           <DialogTitle>{client ? "Edit client organization" : "Add client organization"}</DialogTitle>
           <DialogDescription>{client ? "Update the existing client organization." : "Create a new tenant. You can walk through GRC Program Onboarding right after creation."}</DialogDescription>
         </DialogHeader>
-        <div className="space-y-3.5 py-2">
+        <div className="client-organization-fields">
           <div>
             <Label className="text-xs text-ink-secondary">Organization name <span className="text-semantic-critical">*</span></Label>
             <Input aria-label="Organization name" maxLength={200} data-testid="new-client-name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="Acme Corp" className="text-sm" />
@@ -123,16 +123,18 @@ export default function ClientDialog({ open, onOpenChange, onCreated, client = n
             {!ready && !choiceError && <p role="status" className="text-xs text-ink-secondary">Loading relationship choices…</p>}
             {choiceError && <p role="alert" className="text-xs text-ink-secondary">Relationship choices could not be loaded. <button type="button" className="underline" onClick={() => setRetry(n => n + 1)}>Retry</button></p>}
           </div>
-          <div>
-            <Label className="text-xs text-ink-secondary">Environment</Label>
-            <Input aria-label="Environment" value={form.environment} onChange={e => setForm({ ...form, environment: e.target.value })} />
-          </div>
-          <div>
-            <Label className="text-xs text-ink-secondary">Logo URL (optional)</Label>
-            <Input aria-label="Logo URL" value={form.logo_url || ""} onChange={e => setForm({ ...form, logo_url: e.target.value })} />
+          <div className="client-field-pair">
+            <div>
+              <Label className="text-xs text-ink-secondary">Environment</Label>
+              <Input aria-label="Environment" value={form.environment} onChange={e => setForm({ ...form, environment: e.target.value })} />
+            </div>
+            <div>
+              <Label className="text-xs text-ink-secondary">Logo URL (optional)</Label>
+              <Input aria-label="Logo URL" value={form.logo_url || ""} onChange={e => setForm({ ...form, logo_url: e.target.value })} />
+            </div>
           </div>
         </div>
-        <DialogFooter>
+        <DialogFooter className="client-organization-footer">
           <Button variant="outline" onClick={() => onOpenChange(false)} disabled={saving}>Cancel</Button>
           <Button onClick={save} disabled={saving} data-testid="new-client-save" className="bg-primary hover:bg-primary/90">
             {saving ? "Saving…" : client ? "Save changes" : "Create client"}

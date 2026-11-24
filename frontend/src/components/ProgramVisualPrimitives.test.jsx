@@ -29,11 +29,11 @@ const row=overrides=>Object.freeze({framework_assessment_id:'native-record',clie
 test.each([[1,56,15],[2,130,18],[3,153,18]])('CIS IG%s header defaults retain exact native title, metadata, actions and attributes',async(implementationGroup,count,controls)=>{
   const rows=cis.requirements.filter(record=>record.implementation_group<=implementationGroup),resume={...rows[0],definition_id:rows[0].id},onContinue=jest.fn(),onTheme=jest.fn();
   await render(<CisVisualHeader {...{rows,implementationGroup,resume,onContinue,onTheme}} summary={{total:rows.length}} asOf="Native saved date" theme="light"/>);
-  expect(container.querySelector('header').className).toBe('page-head');
+  expect(container.querySelector('header').className).toBe('dash-head v3-workspace-head page-head');
   expect(container.querySelector('h1').textContent).toBe(`CIS IG${implementationGroup}`);
   expect(container.querySelector('h1').hasAttribute('tabindex')).toBe(false);
   expect(container.querySelector('.page-head p').textContent).toBe(`CIS Controls v8.1 · Implementation Group ${implementationGroup} · ${controls} controls · ${count} safeguards · As of Native saved date`);
-  expect(container.querySelector('.head-actions .primary').textContent).toBe(`Continue: ${resume.definition_id} ${resume.title}`);
+  expect(container.querySelector('.head-actions .primary').textContent).toBe(`Continue with ${resume.definition_id} ${resume.title}`);
   await click(container.querySelector('.head-actions .primary'));expect(onContinue).toHaveBeenCalledTimes(1);
   await click(container.querySelector('.head-actions .ghost'));expect(onTheme).toHaveBeenCalledTimes(1);
   expect(container.querySelector('.head-actions .ghost').getAttribute('aria-label')).toBe('Switch to dark theme');
@@ -132,7 +132,7 @@ test('SOC header can supply native category metadata, focus and a back action wi
   await render(<ProgramVisualHeader title="Security — Common Criteria" metadata="Native SOC edition · 33 criteria" className="soc-program-heading" focusHeading
     beforeTitle={<button type="button" onClick={onBack}>Back to SOC 2</button>}/>);
   expect(container.querySelectorAll('h1')).toHaveLength(1);
-  expect(container.querySelector('header').className).toBe('page-head soc-program-heading');
+  expect(container.querySelector('header').className).toBe('dash-head v3-workspace-head page-head soc-program-heading');
   expect(container.querySelector('p').textContent).toBe('Native SOC edition · 33 criteria');
   container.querySelector('h1').focus();expect(document.activeElement).toBe(container.querySelector('h1'));
   await click(button('Back to SOC 2'));expect(onBack).toHaveBeenCalledTimes(1);
@@ -144,7 +144,7 @@ test('toolbar delegates search, native filters, ordering, grouping and expansion
   const props={id:'native-register',title:'Safeguards',description:'All native safeguards in one register.',search:'',filter:'all',order:'program',counts:{all:5,attention:3,not_assessed:1,stale:2},
     grouping:{value:'domain',options:[['domain','Security domain'],['control','CIS control']],onChange:onGrouping},expand:{allOpen:false,onToggle:onExpand},summary:'5 safeguards in 2 domains',onSearch,onFilter,onOrder,onClear};
   await render(<ProgramVisualToolbar {...props}/>);
-  expect([...container.children].map(element=>element.className)).toEqual(['card-head','filters','summary']);
+  expect([...container.children].map(element=>element.className)).toEqual(['panel-head card-head','filters','summary']);
   expect(container.querySelector('h2').id).toBe('native-register');
   expect(container.querySelector('input').placeholder).toBe('Search safeguards…');
   expect(container.querySelector('[aria-label="Show safeguards"]').textContent).toBe('All5Needs attention3Not assessed1Needs reassessment2');

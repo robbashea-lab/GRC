@@ -30,7 +30,7 @@ MODELS = {key: section_model(key) for key in CATALOG['sections']}
 
 class ProfileUpdate(BaseModel):
     model_config = ConfigDict(extra='forbid')
-    section: Literal['organization','technical','security']
+    section: Literal['organization','technical','security','scope']
     values: dict
     expected_updated_at: str | None = Field(default=None, max_length=100)
 
@@ -111,7 +111,7 @@ def router_for(s):
         # Reuse the audit log; do not create a parallel profile-history collection.
         history = await s.db.audit_logs.find({'client_id':cid,'$or':[{'action':{'$in':['client-profile-updated','program-applicability-updated']}},{'action':'update','entity_type':'client'}]},
             {'_id':0,'action':1,'at':1,'user_name':1,'meta':1}).sort('at',-1).limit(50).to_list(50)
-        return {'client_id':cid,'profile':client.get('profile') or {},'updated_at':client.get('updated_at'),
+        return {'client_id':cid,'profile':client.get('profile') or {},'scope_confirmation':client.get('profile_scope_confirmation'),'updated_at':client.get('updated_at'),
                 'baseline':baseline,'completed':baseline is not None,
                 'history':history}
 
@@ -123,10 +123,14 @@ def router_for(s):
         old = (client.get('profile') or {}).get(body.section) or {}
         merged = {**old,**values}
         changes = {key:{'before':old.get(key),'after':value} for key,value in values.items() if old.get(key)!=value}
-        if not changes: return {'ok':True}
+        confirm_scope = body.section == 'scope' and any(merged.values())
+        if not changes and not confirm_scope: return {'ok':True}
         at = s._next_write_time(client.get('updated_at'))
+        fields = {f'profile.{body.section}':merged,'updated_at':at}
+        if body.section == 'scope':
+            fields['profile_scope_confirmation'] = {'at':at,'by':user.get('name') or user.get('user_id')} if confirm_scope else None
         changed = await s.db.clients.update_one({'client_id':cid,'updated_at':client.get('updated_at'),'_r4_context_pending':None},
-            {'$set':{f'profile.{body.section}':merged,'updated_at':at}})
+            {'$set':fields})
         if not changed.matched_count: raise HTTPException(409,'Profile changed; reload before saving')
         await s.audit(user,'client-profile-updated','client',cid,cid,meta={'section':body.section,'changes':changes})
         return {'ok':True}

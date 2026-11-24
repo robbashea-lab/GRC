@@ -171,7 +171,7 @@ test.each(['iso-27001','soc-2','hipaa','nist-csf-2'].flatMap(framework=>['mapped
   expect(mapping.textContent).toContain(['iso-27001','soc-2'].includes(framework)?'Mapped to '+catalog.label:'Framework-mapped');expect(mapping.querySelector('strong').textContent).toBe('—');
   expect(container.textContent).not.toContain('CIS');expect(container.textContent).not.toContain('No policies match');expect(container.textContent).not.toContain('Showing 0');
   expect(container.querySelector('.bapv-empty[role=alert]').textContent).toContain('Policy mappings unavailable');
-  expect(container.querySelector('.bapv-summary [role=status]').textContent).toBe('Policy mapping counts unavailable.');
+  expect(container.querySelector('.npc-footer [role=status]').textContent).toBe('Policy mapping counts unavailable.');
   expect(container.querySelector('[data-testid=additional-policy-metric-approved] strong').textContent).toBe('1');
   if(mappingFilter==='mapped')expect(new URLSearchParams(mockLocationSearch).get('policyView')).toBe('mapped');
   else expect(container.querySelector('[aria-label="Active table filters"]')).toBeTruthy();
@@ -188,7 +188,7 @@ test.each(['iso-27001','soc-2','hipaa','nist-csf-2'].flatMap(framework=>['mapped
   expect(api.post).not.toHaveBeenCalled();expect(api.patch).not.toHaveBeenCalled();expect(api.delete).not.toHaveBeenCalled();
 });
 
-const policySubtitle = () => container.querySelector('.bapv-page-head p')?.textContent;
+const policySubtitle = () => container.querySelector('.v3-heading-copy .page-sub')?.textContent;
 const deferred = () => { let resolve, reject; const promise = new Promise((yes, no) => { resolve = yes; reject = no; }); return { promise, resolve, reject }; };
 
 test('accepted Policies + Reviews refresh stays stable across native filters, theme and open/cancel, and hides during refresh/failure', async () => {
@@ -272,7 +272,7 @@ test.each([[-1, 'bad'], [0, 'warn'], [5, 'warn'], [40, ''], [null, '']])('card p
   expect([...card.querySelectorAll('dt')].map(node => node.textContent)).toEqual(['Last reviewed', 'Assigned to']);
   expect([...card.querySelectorAll('dd')].map(node => node.textContent)).toEqual([savedDate('2025-10-01'), 'Actual Reviewer']);
   expect(card.querySelector('.bap-review-note')).toBeNull();
-  await click(card.querySelector('.bapv-link'));
+  await click(container.querySelector('.npc-footer .bapv-link'));
   expect(onOpenReview).toHaveBeenCalledWith(selected);
   expect(api.get).not.toHaveBeenCalled(); expect(api.post).not.toHaveBeenCalled(); expect(api.patch).not.toHaveBeenCalled();
 });

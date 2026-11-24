@@ -339,11 +339,59 @@ async function retainedBytes(row) {
   return bytes;
 }
 
+function packageHistory(source, key) {
+  const rows = [];
+  function add(register, title, at, event, version=null) {
+    if (typeof at !== 'string' || !/^\d{4}-\d{2}-\d{2}/.test(at)) return;
+    const day = new Date(at.slice(0,10) + 'T00:00:00Z');
+    if (!Number.isFinite(day.getTime()) || day.toISOString().slice(0,10) !== at.slice(0,10)) return;
+    if (rows.length >= 10000) fail('The complete register history exceeds the supported package size',413);
+    rows.push({register, record:typeof title === 'string' ? title : '', at,
+      event:typeof event === 'string' ? event : 'Decision recorded',
+      version:['number','string'].includes(typeof version) ? String(version) : null});
+  }
+  for (const policy of source.policies) {
+    for (const item of policy.approval_history || []) if (item) {
+      add('Policies',policy.title,item.at || item.approved_at,item.action || item.status || 'Approval decision recorded',item.version);
+    }
+    for (const item of policy.decision_history || []) if (item?.action === 'external_approval_recorded') {
+      add('Policies',policy.title,item.recorded_at,'External approval recorded');
+    }
+    if (!policy.approval_history?.length && !policy.decision_history?.length) {
+      add('Policies',policy.title,policy.approved_at,'Approval recorded',policy.version);
+    }
+  }
+  for (const risk of source.risks) for (const item of risk.decision_history || []) if (item) {
+    add('Risks',risk.title,item.at || item.decided_at || item.date,item.action || item.decision || 'Decision recorded');
+  }
+  for (const vendor of source.vendors) {
+    for (const item of vendor.assurance_records || []) if (item) {
+      const name = item.document_name || item.type;
+      const label = typeof name === 'string' ? name : 'Document';
+      add('Vendors',vendor.name,item.received_at,'Assurance received: ' + label);
+      add('Vendors',vendor.name,item.last_reviewed || item.reviewed_at,'Assurance reviewed: ' + label);
+    }
+    add('Vendors',vendor.name,vendor.last_review,'Review recorded');
+  }
+  const assessmentIds = new Set(source.framework_assessments.filter(row => row.framework_key === key).map(row => row.framework_assessment_id));
+  for (const review of source.reviews) {
+    if (review.framework_assessment_id && !assessmentIds.has(review.framework_assessment_id)) continue;
+    const drivers = review.framework_drivers ?? (review.framework_key ? [review] : null);
+    if (drivers && (!Array.isArray(drivers) || !drivers.some(driver => driver?.framework_key === key))) continue;
+    const dates = new Set((review.occurrences || []).map(row=>row?.completed_at).filter(value=>typeof value === 'string'));
+    if (typeof review.completion_date === 'string' && !Array.from(dates).some(date=>date.slice(0,10)===review.completion_date.slice(0,10))) {
+      dates.add(review.completion_date);
+    }
+    for (const at of dates) add('Reviews',review.title,at,'Review completed');
+  }
+  return rows.sort((a,b)=>a.at.localeCompare(b.at) || a.register.localeCompare(b.register) || a.record.localeCompare(b.record));
+}
+
 // The adapter owns session/stale-snapshot guards and the single storage commit.
 export async function r4ReportsRequest(db, path, method, params={}, body={}, requestKey) {
   path = path.replace(/^\/api(?=\/reports\/)/, '');
   const download = /^\/reports\/exports\/([^/]+)\/download$/.exec(path);
-  if (!['/reports/frameworks', '/reports/preview', '/reports/history', '/reports/exports'].includes(path) && !download) return undefined;
+  if (!['/reports/frameworks', '/reports/preview', '/reports/materials', '/reports/history', '/reports/exports', '/reports/deliveries'].includes(path) && !download) return undefined;
   const actorId = db.user?.user_id;
   const sameActor = () => { if (db.user?.user_id !== actorId) fail('The authenticated account changed during report generation', 401); };
   if (path === '/reports/frameworks' && method === 'get') {
@@ -354,6 +402,16 @@ export async function r4ReportsRequest(db, path, method, params={}, body={}, req
       .map(framework => frameworkOption(framework.key, client)) : []}, headers: {}, persist: false};
   }
   if (path === '/reports/preview' && method === 'get') return {data: await preview(db, params), headers: {}, persist: false};
+  if (path === '/reports/materials' && method === 'get') {
+    const {client_id,framework_key} = params;
+    authority(db,client_id,framework_key);
+    const source = sourceRecords(db,client_id), guard = stable(source);
+    const reports = Object.fromEntries(await Promise.all(TYPES.map(async type => [type,await preview(db,{...params,type})])));
+    sameActor();
+    authority(db,client_id,framework_key);
+    if (guard !== stable(sourceRecords(db,client_id))) fail('Saved report sources changed during generation; generate the report again',409);
+    return {data:{client_id,framework_key,reports,register_history:packageHistory(source,framework_key)}, headers:{}, persist:false};
+  }
   if (path === '/reports/history' && method === 'get') {
     authority(db, params.client_id, params.framework_key);
     const rows = (db.report_exports || []).filter(row => row.client_id === params.client_id && row.framework_key === params.framework_key);
@@ -370,6 +428,23 @@ export async function r4ReportsRequest(db, path, method, params={}, body={}, req
     return {data: new Blob([bytes], {type: row.content_type}), persist: false, headers: {
       'content-type': row.content_type, 'content-disposition': `attachment; filename="${row.filename}"`,
       'cache-control': 'private, no-store', 'x-content-type-options': 'nosniff'}};
+  }
+  if (path === '/reports/deliveries' && method === 'post') {
+    sameActor();
+    authority(db, body.client_id, body.framework_key);
+    const choices={'audit-package':['Audit package','zip'],'executive-summary':['Executive summary','pdf'],'prep-checklist':['Preparation checklist','csv']};
+    const day=value=>typeof value==='string'&&/^\d{4}-\d{2}-\d{2}$/.test(value)&&Number.isFinite(Date.parse(value+'T00:00:00Z'))&&new Date(value+'T00:00:00Z').toISOString().slice(0,10)===value;
+    if(Object.keys(body).some(key=>!['client_id','framework_key','kind','bytes','sha256','period_start','period_end'].includes(key))
+      || !Object.hasOwn(choices,body.kind)||!Number.isInteger(body.bytes)||body.bytes<=0||body.bytes>96*1024*1024||typeof body.sha256!=='string'||!/^[a-f0-9]{64}$/.test(body.sha256)
+      || !day(body.period_start)||!day(body.period_end)||body.period_start>body.period_end||typeof requestKey!=='string'||!/^[A-Za-z0-9_-]{16,128}$/.test(requestKey))fail('Invalid report delivery request');
+    const result=commandRequest(db,path,body.client_id,requestKey,body,()=>{
+      const deliveryId='delivery_'+recordUuid();
+      const [title,format]=choices[body.kind];
+      audit(db,'generate','report-delivery',{client_id:body.client_id,title},{framework_key:body.framework_key,type:body.kind,format,title,period_start:body.period_start,period_end:body.period_end,browser_reported_bytes:body.bytes,browser_reported_sha256:body.sha256,event:'browser_download_requested'});
+      db.logs[0].entity_id=deliveryId;
+      return {delivery_id:deliveryId,client_id:body.client_id,framework_key:body.framework_key,kind:body.kind,sha256:body.sha256};
+    });
+    return {data:clone(result),headers:{},persist:true};
   }
   if (path !== '/reports/exports' || method !== 'post') fail('Unknown report operation', 404);
   if (Object.keys(body).some(key => !['client_id', 'framework_key', 'type', 'format', 'as_of'].includes(key))) fail('Unknown report export fields');

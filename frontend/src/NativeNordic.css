@@ -730,6 +730,46 @@ html[data-native-standard], .native-standard.native-standard.native-standard {
 .native-standard.native-standard.native-standard .side { flex:0 0 221px; width:221px; padding:12px 12px 24px; border-color:var(--divider); }
 .native-standard.native-standard.native-standard > .shell > .main { width:calc(100% - 221px); padding:26px clamp(24px,2.45vw,50px) 48px; }
 .native-standard.native-standard.native-standard > .shell > .main > * { max-width:1580px; }
+/* The authenticated shell owns the page gutter. These program views also run outside it. */
+.native-standard.native-standard.native-standard {
+  display:flex;
+  flex-direction:column;
+}
+.native-standard.native-standard.native-standard > .shell { flex:1; }
+html[data-native-standard] .native-standard .brawndo-demo-dashboard[data-theme],
+html[data-native-standard] .native-standard.native-standard .bcis:is(.brawndo-cis-visual,.soc-cis-program-visual,.iso-cis-program-visual)[data-theme] {
+  margin:0;
+  padding:0;
+  max-width:none;
+  background:transparent;
+}
+.native-standard .platform-page-heading-copy {flex:1 1 360px;min-width:0}
+.native-standard .platform-page-head .eyebrow {text-transform:uppercase}
+.native-standard.native-standard .admin-security-page .admin-body {max-width:none}
+.native-standard .tool-catalog-category {padding:16px 22px}
+.native-standard .tool-catalog-category .tc-grid {margin-top:10px}
+.native-standard.native-standard .brawndo-onboarding .content {padding:0;gap:17px;max-width:none}
+.native-standard .brawndo-onboarding .v3-workspace-head,
+.native-standard .brawndo-onboarding .panel-c {margin-block:0}
+.native-standard .brawndo-onboarding .native-step-body .fws {grid-template-columns:repeat(auto-fill,minmax(min(100%,220px),1fr));gap:12px}
+@media (min-width:1101px) {
+  .native-standard .brawndo-onboarding .wiz {grid-template-columns:minmax(0,1fr) 300px}
+}
+@media (max-width:1100px) {
+  .native-standard .brawndo-onboarding .stepper {grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+html[data-native-standard] .ui-dialog.client-organization-dialog {
+  display:flex;flex-direction:column;gap:0;padding:0;overflow:hidden;
+  max-height:92dvh;width:min(560px,calc(100vw - 32px));max-width:none;
+  top:4vh;transform:translateX(-50%);animation:none;
+}
+html[data-native-standard] .client-organization-header {padding:20px 48px 20px 24px;border-bottom:1px solid var(--divider);background:var(--surface-header);text-align:left}
+html[data-native-standard] .client-organization-fields {display:grid;gap:16px;padding:20px 24px 24px;overflow:auto;min-height:0}
+html[data-native-standard] .client-organization-footer {padding:14px 24px;flex-shrink:0;border-top:1px solid var(--divider);background:var(--surface-header)}
+.client-field-pair {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+@media (max-width:560px) {
+  .client-field-pair {grid-template-columns:minmax(0,1fr)}
+}
 .native-standard.native-standard.native-standard :is(.page-header,.bpage-head,.bd-header) { margin-bottom:17px; gap:16px 24px; }
 .native-standard.native-standard.native-standard :is(.page-header h1,.bpage-head h1,.bd-header h1,.crr-root h1,.cia-page h1,.cis-risks-concept h1,.bdcal h1,.brawndo-additional h1,.airf-page h1) { font:600 38px/1.07 var(--font); letter-spacing:-.055em; color:var(--text); }
 .native-standard.native-standard.native-standard :is(.page-eyebrow,.bpage-eyebrow) { margin-bottom:4px; font-size:10px; font-weight:700; letter-spacing:.14em; color:var(--accent); }

@@ -13,7 +13,7 @@ test('approved summary selects the native destination independently of quarter p
   const cards=[...container.querySelectorAll('.kchip')];expect(cards).toHaveLength(4);
   expect(cards[0].textContent).toContain('Active reviews');expect(cards[0].querySelector('strong').textContent).toBe('1');
   await act(async()=>cards[1].click());expect(onView).toHaveBeenCalledWith('overdue');
-  expect(container.querySelector('.bdr-workload')).toBeNull();expect(container.textContent).toContain('Calendar quarter');
+  expect(container.querySelector('.bdr-workload')).toBeNull();expect(container.querySelector('[aria-label="Quarter Ledger chart"]')).toBeTruthy();
 });
 test('History opens the original review with exact persisted occurrence and actor',async()=>{
   const onOpen=jest.fn();await act(async()=>root.render(<BrawndoReviewRows rows={[review]} users={[{user_id:'actor',name:'Historical actor'}]} checked={new Set()} allChecked={false} toggleAll={()=>{}} toggleOne={()=>{}} history onOpen={onOpen} rowMenu={()=>null}/>));
@@ -100,7 +100,8 @@ test('legacy missing historical dates and actor never inherit latest parent comp
 test('unavailable summaries use unknown values and keep the chart frame without fabricated zero totals',async()=>{
   await act(async()=>root.render(<BrawndoDemoReviews rows={[]} available={false} view="all" onView={()=>{}} theme="light"/>));
   expect([...container.querySelectorAll('.kchip strong')].map(node=>node.textContent)).toEqual(['—','—','—','—']);
-  expect([...container.querySelectorAll('.kchip')].every(node=>node.disabled)).toBe(true);expect(container.querySelector('.plot')).toBeTruthy();expect(container.querySelector('.review-dot')).toBeNull();
+  expect([...container.querySelectorAll('.kchip')].every(node=>node.disabled)).toBe(true);
+  expect(container.querySelector('.v3-quarter-ledger [role="status"]').textContent).toBe('Dates unavailable.');expect(container.querySelector('.v3-quarter-ledger [data-k]')).toBeNull();
 });
 
 test('genuine native controls remain reachable in the compact result-row disclosure',async()=>{

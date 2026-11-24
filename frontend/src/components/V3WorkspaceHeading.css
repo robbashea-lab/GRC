@@ -1,0 +1,21 @@
+.native-standard .v3-workspace-head {
+  display:flex; align-items:center; flex-wrap:wrap; gap:14px; padding:4px 0 10px; margin:0 0 16px;
+}
+.native-standard .v3-workspace-head .v3-client-mark {
+  display:grid; place-items:center; flex:0 0 58px; height:58px; overflow:hidden;
+  border-radius:12px; background:var(--accent-soft); color:var(--accent); font-size:26px; font-weight:700;
+}
+.native-standard .v3-heading-copy {flex:1 1 360px;min-width:0}
+.native-standard .v3-workspace-head .eyebrow {margin-bottom:4px;font-size:10px;letter-spacing:.14em;font-weight:700;text-transform:uppercase;color:var(--faint)}
+.native-standard .v3-workspace-head h1.page-title {margin:0;font-size:38px;font-weight:600;line-height:1.07;letter-spacing:-.055em;color:var(--text)}
+.native-standard .v3-workspace-head .page-sub {color:var(--muted);margin:6px 0 0;max-width:72ch;font-size:16px;letter-spacing:-.01em;line-height:1.5}
+.native-standard .v3-heading-actions {display:flex;align-items:center;flex-wrap:wrap;gap:10px}
+html[data-theme-fixed-mode] .native-standard .v3-workspace-head :is(.surface-theme-action,[aria-label="Theme"],button[aria-label^="Switch to "]) {display:none}
+@media(max-width:640px){.native-standard .v3-heading-copy {flex-basis:180px}}
+
+@media(max-width:600px){.native-standard .v3-workspace-head .page-sub{font-size:13px}}
+@media(max-width:560px){.native-standard .v3-workspace-head h1.page-title{font-size:30px}}
+
+/* These three registers already separate the heading and first panel with a grid gap. */
+.native-standard :is(.bac-page, .bav-page, .bae-page) > .v3-workspace-head { margin-bottom:0; }
+.native-standard .main :is(.bac-page, .bav-page, .bae-page) { row-gap:17px; }
