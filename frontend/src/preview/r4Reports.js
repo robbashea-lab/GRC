@@ -17,6 +17,9 @@ import {clone, audit, now} from './store';
 import {reviewView} from '../lib/reviewOccurrences';
 import {recordUuid} from '../lib/recordUuid';
 import {clientAccess} from './assignmentEligibility';
+import packageFields from '../lib/reportPackageFields.json';
+import {aiScreening} from '../lib/aiGovernance';
+import {programWork} from '../components/ReportPackageRegisters';
 
 const TYPES = ['assessment', 'executive', 'scope', 'risks', 'vendors', 'policies'];
 const STATUSES = ['addressed', 'in_progress', 'needs_attention', 'not_assessed', 'not_applicable'];
@@ -387,6 +390,44 @@ function packageHistory(source, key) {
   return rows.sort((a,b)=>a.at.localeCompare(b.at) || a.register.localeCompare(b.register) || a.record.localeCompare(b.record));
 }
 
+function packageRegisters(db, source, clientId, frameworkKey) {
+  function select(sourceRow,target,[field,...path]) {
+    if(!sourceRow||!Object.hasOwn(sourceRow,field))return;
+    const value=sourceRow[field];
+    if(!path.length) {target[field]=value;return;}
+    if(Array.isArray(value)) {
+      target[field] ||= value.map(()=>({}));
+      value.forEach((item,index)=>select(item,target[field][index],path));
+    }else if(value&&typeof value==='object') {
+      target[field] ||= {};select(value,target[field],path);
+    }
+  }
+  const registers = {};
+  for (const [kind,fields] of Object.entries(packageFields)) {
+    const rows = (db[kind] || []).filter(row=>row.client_id===clientId);
+    if(rows.length>10000) fail('The complete '+kind+' register exceeds the supported report size',413);
+    registers[kind]=rows.map(row=>{
+      if(row._r4_context_pending||row._ai_review_schedule_pending||row._ai_retirement_pending) fail('A saved record requires recovery before reporting',409);
+      const result={};
+      for(const field of fields)select(row,result,field.split('.'));
+      if(kind==='ai_systems')result.risk_tier=aiScreening(row).risk_tier;
+      return result;
+    }).sort((a,b)=>String(a[fields[0]]||'').localeCompare(String(b[fields[0]]||'')));
+  }
+  registers.users=source.users.map(row=>({user_id:row.user_id,name:row.name}));
+  const catalog=frameworkCatalog(frameworkKey);
+  const saved=new Map(source.framework_assessments.filter(row=>row.framework_key===frameworkKey).map(row=>[row.definition_id,row]));
+  registers.framework_units=activeDefinitions(frameworkKey,configurationFor(frameworkKey,source.client)).map(definition=>{
+    const row=saved.get(definition.id)||{};
+    return {id:definition.id,title:definition.title,status_label:catalog.status_labels?.[row.status] || row.status || 'not_assessed',
+      verification_state:row.verification||'not_verified',soa_applicability:row.soa_applicability,soa_justification:row.soa_justification,
+      specification:definition.specification};
+  });
+  Object.assign(registers,programWork(registers,frameworkKey));
+  registers.framework_assessments=registers.framework_assessments.filter(row=>row.framework_key===frameworkKey);
+  return registers;
+}
+
 // The adapter owns session/stale-snapshot guards and the single storage commit.
 export async function r4ReportsRequest(db, path, method, params={}, body={}, requestKey) {
   path = path.replace(/^\/api(?=\/reports\/)/, '');
@@ -406,11 +447,12 @@ export async function r4ReportsRequest(db, path, method, params={}, body={}, req
     const {client_id,framework_key} = params;
     authority(db,client_id,framework_key);
     const source = sourceRecords(db,client_id), guard = stable(source);
+    const registers = packageRegisters(db,source,client_id,framework_key);
     const reports = Object.fromEntries(await Promise.all(TYPES.map(async type => [type,await preview(db,{...params,type})])));
     sameActor();
     authority(db,client_id,framework_key);
-    if (guard !== stable(sourceRecords(db,client_id))) fail('Saved report sources changed during generation; generate the report again',409);
-    return {data:{client_id,framework_key,reports,register_history:packageHistory(source,framework_key)}, headers:{}, persist:false};
+    if (guard !== stable(sourceRecords(db,client_id)) || stable(registers)!==stable(packageRegisters(db,source,client_id,framework_key))) fail('Saved report sources changed during generation; generate the report again',409);
+    return {data:{client_id,framework_key,reports,registers,register_history:packageHistory(source,framework_key)}, headers:{}, persist:false};
   }
   if (path === '/reports/history' && method === 'get') {
     authority(db, params.client_id, params.framework_key);

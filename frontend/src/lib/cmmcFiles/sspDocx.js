@@ -253,5 +253,5 @@ export function sspDocx(data, generatedAt) {
       Uint8Array.from(atob(contents.base64),character => character.charCodeAt(0))
   ]);
   parts.push(["word/document.xml",T.prefix+body+T.end]);
-  return officeZip(parts);
+  return officeZip(parts,generatedAt);
 }

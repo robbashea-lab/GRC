@@ -109,14 +109,14 @@ export default function ReportPackageWorkspace({clientId,framework,scopeKey,acti
   useEffect(()=>()=>{exporting.current?.abort();},[tab]);
   useEffect(()=>{
     const controller=new AbortController();setMaterials(null);setError('');setMessage('');setDecisions({});setOpened({});
-    if(validDay(cutoff)&&cutoff<=today)loadReportMaterials(clientId,framework.key,cutoff,controller.signal).then(value=>{
+    if(validDay(cutoff)&&cutoff<=today)loadReportMaterials(clientId,framework.key,cutoff,controller.signal,()=>!controller.signal.aborted&&activeScope.current===scopeKey).then(value=>{
       readiness(value);if(!controller.signal.aborted&&activeScope.current===scopeKey)setMaterials(value);
     }).catch(failure=>{if(!controller.signal.aborted&&activeScope.current===scopeKey)setError(formatError(failure));});
     return()=>{controller.abort();exporting.current?.abort();};
   },[clientId,framework.key,scopeKey,activeScope,cutoff,today,revision]);
   const files=materials?packageFiles(materials,config):[],checks=materials?readiness(materials):[];
   const addressed=checks.filter(check=>!check.open||decisions[check.key]).length;
-  const grouped=files.reduce((groups,file)=>{(groups[file.path.split('/')[0]]||=[]).push(file);return groups;},{});
+  const grouped=files.filter(file=>file.path.includes('/')).reduce((groups,file)=>{(groups[file.path.split('/')[0]]||=[]).push(file);return groups;},{});
   const count=materials?1+files.length+Object.values(decisions).filter(value=>value instanceof File).length+(config.copies&&materials.evidenceCount>0?1:0):null;
   function setting(key,value){setConfig(old=>({...old,[key]:value}));setMessage('');}
   function decide(key,value){setDecisions(old=>({...old,[key]:value}));setMessage('');}
@@ -124,15 +124,15 @@ export default function ReportPackageWorkspace({clientId,framework,scopeKey,acti
     if(exporting.current||!current()||!valid||!materials)return;
     const controller=new AbortController();exporting.current=controller;setBusy(true);setMessage('');setError('');
     try{
-      const fresh=await loadReportMaterials(clientId,framework.key,cutoff,controller.signal);
+      const fresh=await loadReportMaterials(clientId,framework.key,cutoff,controller.signal,current);
       if(controller.signal.aborted||!current())return;
-      if(checks.some((item,index)=>JSON.stringify(item)!==JSON.stringify(readiness(fresh)[index])) || JSON.stringify(files)!==JSON.stringify(packageFiles(fresh,config))||materials.evidenceCount!==fresh.evidenceCount) {
+      if(checks.some((item,index)=>JSON.stringify(item)!==JSON.stringify(readiness(fresh)[index])) || JSON.stringify(files)!==JSON.stringify(packageFiles(fresh,config))||materials.cmmc?.materialStamp!==fresh.cmmc?.materialStamp) {
         setMaterials(fresh);setDecisions({});throw new Error('Saved records changed. Review the refreshed package before downloading.');
       }
       if(preparation) {
         const content=csvRows([['Check','Details','Response'],...checks.map(c=>[c.title,c.detail,decisions[c.key] instanceof File?'Attached '+decisions[c.key].name:decisions[c.key] || (c.open?'Open':'Ready')])]);
         await auditedDownload({content,name:'Preparation-checklist.csv',type:'text/csv;charset=utf-8',clientId,frameworkKey:framework.key,kind:'prep-checklist',from:config.start,to:config.end,pending:prepIntent,signal:controller.signal,isCurrent:current});
-      } else await downloadAuditPackage({clientId,frameworkKey:framework.key,materials:fresh,config,decisions,files,signal:controller.signal,isCurrent:current,pending:auditIntent});
+      } else await downloadAuditPackage({clientId,frameworkKey:framework.key,materials:{...fresh,cmmc:materials.cmmc},config,decisions,files,signal:controller.signal,isCurrent:current,pending:auditIntent});
       if(!controller.signal.aborted&&current())setMessage(preparation?'Preparation checklist download started.':'Audit package download started.');
     }catch(failure){if(!controller.signal.aborted&&current())setError(formatError(failure));}finally{if(exporting.current===controller)exporting.current=null;if(current())setBusy(false);}
   }
@@ -151,7 +151,7 @@ export default function ReportPackageWorkspace({clientId,framework,scopeKey,acti
         <div className="rp-actions rp-actions-end">{check.items.length>0&&<button type="button" className="ghost" aria-expanded={!!opened[check.key]} onClick={()=>setOpened({...opened,[check.key]:!opened[check.key]})}>{opened[check.key]?'Hide':'View'} {check.items.length}</button>}
         {check.open&&(decisions[check.key]?<><span>{decisions[check.key] instanceof File?'Attached':decisions[check.key]}</span><button className="link-btn" type="button" onClick={()=>decide(check.key,null)}>Undo</button></>:<><label className="ghost rp-attach">Attach file<input type="file" aria-label={'Attach file for '+check.title} accept=".pdf,.docx,.xlsx,.csv,.txt,.png,.jpg,.jpeg" onChange={e=>{const f=e.target.files?.[0];if(!f)return;if(f.size>8*1024*1024||!f.size||!(/\.(pdf|docx|xlsx|csv|txt|png|jpe?g)$/i.test(f.name))){setError('Choose a supported file up to 8 MB.');return;}decide(check.key,f);}}/></label><button type="button" className="ghost" onClick={()=>decide(check.key,'Provided separately')}>Provided separately</button></>)}</div></div>
         {opened[check.key]&&<ul className="rp-items">{check.items.map((item,index)=><li key={index}>{item}</li>)}</ul>}</div>)}
-    </Panel><Panel title="Package contents" step={3} badge={count!==null?count+' files':''}>{materials&&<><p><FileText size={15}/> 00_Start-here.pdf</p>{Object.entries(grouped).map(([folder,records])=><details className="rp-folder" key={folder}><summary><Folder size={15}/> {folder} · {records.length} files</summary>{records.map(file=><p className="rp-file" key={file.path}><FileText size={15}/>{file.path.slice(folder.length+1)}<span className="rp-chip">Generated</span></p>)}</details>)}{config.copies&&materials.evidenceCount>0&&<p>08_Evidence/Stored-files.zip · {materials.evidenceCount} stored files</p>}{Object.entries(decisions).filter(([,value])=>value instanceof File).map(([key,value])=><p key={key}>09_Attachments · {value.name}</p>)}</>}</Panel>
+    </Panel><Panel title="Package contents" step={3} badge={count!==null?count+' files':''}>{materials&&<><p><FileText size={15}/> 00_Start-here.pdf</p>{files.filter(file=>!file.path.includes('/')).map(file=><p key={file.path}><FileText size={15}/> {file.path}</p>)}{Object.entries(grouped).map(([folder,records])=><details className="rp-folder" key={folder}><summary><Folder size={15}/> {folder} · {records.length} files</summary>{records.map(file=><p className="rp-file" key={file.path}><FileText size={15}/>{file.path.slice(folder.length+1)}<span className="rp-chip">Generated</span></p>)}</details>)}{config.copies&&materials.evidenceCount>0&&<p>08_Evidence/Stored-files.zip · {materials.evidenceCount} stored files</p>}{Object.entries(decisions).filter(([,value])=>value instanceof File).map(([key,value])=><p key={key}>09_Attachments · {value.name}</p>)}</>}</Panel>
     <details className="rp-panel rp-more" onToggle={event=>setShowSingles(event.currentTarget.open)}><summary className="rp-head"><div><h2>Single reports</h2><p>Download an individual register for a follow-up request.</p></div><span className="rp-chip">6 reports</span></summary>
       {showSingles&&<NativeReportCatalog {...{clientId,framework,scopeKey,activeScope,clientTimeZone}} singleReports/>}</details>
     </div><aside className="rp-stack rp-sticky"><Panel title="Audit package" description={[framework.name,config.start+' – '+config.end].join(' · ')}>

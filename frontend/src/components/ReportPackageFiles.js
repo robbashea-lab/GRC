@@ -2,10 +2,12 @@ import {strToU8, zipSync} from 'fflate';
 import api from '@/lib/api';
 import {buildEvidenceArchive} from '@/lib/evidenceArchive';
 import {recordUuid} from '@/lib/recordUuid';
+import {collectEvidencePages} from '@/lib/brawndoAdditionalEvidence';
+import packageFields from '@/lib/reportPackageFields.json';
 import {verifiedPreview} from './NativeReportCatalog';
+import {registerWorkbooks} from './ReportPackageRegisters';
 
 const types = ['assessment','scope','executive','risks','vendors','policies'];
-const folders = {assessment:'01_Assessment',scope:'02_Requirements',executive:'03_Open-work',risks:'04_Risks',vendors:'05_Vendors',policies:'06_Policies'};
 const slug = value => String(value).replace(/[^a-z0-9-]+/gi,'-').replace(/^-+|-+$/g,'').slice(0,100) || 'Report';
 export const dayString = value => String(value || '').slice(0,10);
 export const evidenceParams = frameworkKey => ({state:JSON.stringify({filters:{frameworks:[frameworkKey]}})});
@@ -17,12 +19,13 @@ export function csvRows(rows) {
   }).join(',')).join('\r\n')+'\r\n';
 }
 
-export async function loadReportMaterials(clientId, frameworkKey, end, signal) {
+export async function loadReportMaterials(clientId, frameworkKey, end, signal, isCurrent=()=>!signal?.aborted) {
   const params={client_id:clientId,framework_key:frameworkKey};
-  const [bundle,history,evidence]=await Promise.all([
+  const [bundle,history,evidence,cmmc]=await Promise.all([
     api.get('/reports/materials',{params:{...params,as_of:end},signal}),
     api.get('/reports/history',{params,signal}),
-    api.get('/evidence/catalog',{params:{client_id:clientId,...evidenceParams(frameworkKey),page:1,page_size:1},signal})
+    collectEvidencePages(async page=>(await api.get('/evidence/catalog',{params:{client_id:clientId,...evidenceParams(frameworkKey),page,page_size:100},signal})).data,{signal}),
+    frameworkKey==='cmmc'?import('./ReportPackageCmmc').then(adapter=>adapter.loadCmmcPackageMaterials({clientId,frameworkKey,asOf:end,signal,isCurrent})):null
   ]);
   if(bundle.data?.client_id!==clientId||bundle.data?.framework_key!==frameworkKey||!Array.isArray(bundle.data.register_history)||
     bundle.data.register_history.some(row=>!['Policies','Risks','Vendors','Reviews'].includes(row.register)||typeof row.record!=='string'||typeof row.at!=='string'||typeof row.event!=='string'))
@@ -33,40 +36,15 @@ export async function loadReportMaterials(clientId, frameworkKey, end, signal) {
     return [type,preview];
   }));
   if(!Array.isArray(history.data?.exports)||history.data.exports.some(row=>row.client_id!==clientId||row.framework_key!==frameworkKey||typeof row.export_id!=='string')) throw new Error('The saved export history could not be verified.');
-  if(!Number.isSafeInteger(evidence.data?.total)||evidence.data.total<0||!Array.isArray(evidence.data.items)||evidence.data.items.some(row=>row.client_id!==clientId||!row.frameworks?.includes(frameworkKey))) throw new Error('The framework evidence selection could not be verified.');
-  return {reports,registerHistory:bundle.data.register_history,history:history.data.exports,evidenceCount:evidence.data.total};
+  const registers=bundle.data.registers;
+  if(!registers||[...Object.keys(packageFields),'users','framework_units'].some(name=>!Array.isArray(registers[name]))||
+      registers.clients.length!==1||registers.clients[0].client_id!==clientId)throw new Error('The saved governance registers could not be verified.');
+  if(evidence.some(row=>row.client_id!==clientId||!row.frameworks?.includes(frameworkKey)||!row.evidence_id)||new Set(evidence.map(row=>row.evidence_id)).size!==evidence.length)
+    throw new Error('The framework evidence selection could not be verified.');
+  return {reports,registers,cmmc,registerHistory:bundle.data.register_history,history:history.data.exports,evidence,evidenceCount:evidence.length};
 }
 
-export function packageFiles(materials, config) {
-  const files=[];
-  for(const type of types) {
-    const dto=materials.reports[type];
-    for(const section of dto.sections) {
-      if(type==='executive' && (section.title!=='Overdue work'||!config.open)) continue;
-      let rows=section.rows;
-      if(type==='policies' && !config.drafts) {
-        const status=section.columns.findIndex(column=>column.toLowerCase()==='status');
-        if(status<0) throw new Error('The policy register is missing its approval status.');
-        rows=rows.filter(row=>['approved','published','active'].includes(String(row[status]).toLowerCase()));
-      }
-      files.push({path:folders[type]+'/'+slug(section.title)+'.csv',rows:[section.columns,...rows]});
-    }
-  }
-  if(config.history) {
-    const inPeriod=value=>dayString(value)>=config.start&&dayString(value)<=config.end;
-    for(const register of ['Policies','Risks','Vendors','Reviews']) {
-      const rows=materials.registerHistory.filter(row=>row.register===register&&inPeriod(row.at));
-      if(rows.length)files.push({path:'07_History/'+register+'.csv',rows:[
-        ['Date','Record','Event','Version'],...rows.map(row=>[row.at,row.record,row.event,row.version])
-      ]});
-    }
-    files.push({path:'07_History/Report-exports.csv',rows:[
-      ['Report','Format','As of','Generated','Prepared by'],
-      ...materials.history.filter(row=>inPeriod(row.created_at)).map(row=>[row.title,row.format,row.as_of,row.created_at,row.prepared_by?.name])
-    ]});
-  }
-  return files;
-}
+export const packageFiles = registerWorkbooks;
 
 export function readiness(materials) {
   const assessment=materials.reports.assessment.sections.find(section=>section.title==='Items needing attention');
@@ -103,7 +81,12 @@ export async function downloadAuditPackage({clientId,frameworkKey,materials,conf
   const source=materials.reports.assessment.header;
   const entries=Object.create(null);
   const separate=Object.entries(decisions).filter(([,value])=>value==='Provided separately').map(([key])=>key);
-  for(const file of files) entries[file.path]=strToU8(csvRows(file.rows));
+  const {reportWorkbook}=await import('./ReportPackageXlsx');
+  for(const file of files)if(!file.cmmc)entries[file.path]=reportWorkbook(file.sheets);
+  if(materials.cmmc) {
+    const {buildCmmcPackageFiles}=await import('./ReportPackageCmmc');
+    Object.assign(entries,await buildCmmcPackageFiles(materials.cmmc,{signal,isCurrent}));
+  }
   if(config.copies && materials.evidenceCount) {
     const archive=await buildEvidenceArchive({clientId,params:evidenceParams(frameworkKey),signal,isCurrent});
     if(archive.fileCount!==materials.evidenceCount) throw new Error('The evidence selection changed. Refresh the package.');

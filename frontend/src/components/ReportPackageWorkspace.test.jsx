@@ -4,7 +4,7 @@ import {unzipSync,strFromU8} from 'fflate';
 import Reports from '@/pages/Reports';
 import api from '@/lib/api';
 import {reportToday} from './NativeReportCatalog';
-import {auditedDownload,csvRows,downloadAuditPackage,packageFiles,readiness,loadReportMaterials} from './ReportPackageFiles';
+import {auditedDownload,downloadAuditPackage,packageFiles,readiness,loadReportMaterials} from './ReportPackageFiles';
 
 jest.mock('@/context/AuthContext',()=>({useAuth:()=>({user:{role:'client_readonly',name:'Owner',user_id:'member'}})}));
 jest.mock('@/context/OrgContext',()=>({useOrg:()=>({currentClientId:'client-a',currentClient:{name:'A'}})}));
@@ -21,6 +21,12 @@ const detail={
   policies:[group('Policy register',['Policy','Status'],[['Active','approved'],['Draft policy','draft']])]
 };
 function report(type,key='framework-a'){return {header:{client:{id:'client-a',name:'A'},program:{key,name:'Program A'},as_of:asOf,title:type,prepared_by:{name:'Owner'}},sections:detail[type],stats:[{label:'Addressed',value:'50%'}],allowed_formats:['pdf']};}
+const registers={clients:[{client_id:'client-a',name:'A',timezone:'UTC',profile:{scope:{statement:'Accounts payable',systems:'Billing platform',exclusions:'Historic billing appliance'}},isms_scope:'Prior boundary'}],assets:[{name:'Unclassified device'}],contacts:[],ai_systems:[{name:'Approved AI'}],users:[],findings:[],framework_assessments:[],framework_units:[],
+  reviews:[{review_id:'r1',title:'Previous period',status:'completed',completion_date:'2000-01-01'},
+    {review_id:'r2',title:'Past-due review',due_date:'2000-01-01',status:'in_progress'}],risks:[{risk_id:'rr',title:'=formula'}],vendors:[],
+  tasks:[{task_id:'a1',title:'Future task',due_date:'2099-07-10',status:'open'},{task_id:'a2',title:'Undated open task',status:'open'},
+    {task_id:'a3',title:'Closed in period',status:'done',completed_at:asOf},{task_id:'a4',title:'Cancelled work',status:'cancelled'}],
+  policies:[{policy_id:'p1',title:'Active',status:'approved'},{policy_id:'p2',title:'Draft policy',status:'draft'}]};
 beforeEach(()=>{
   global.IS_REACT_ACT_ENVIRONMENT=true;
   if(!crypto.subtle)Object.defineProperty(crypto,'subtle',{configurable:true,value:require('crypto').webcrypto.subtle});
@@ -28,11 +34,11 @@ beforeEach(()=>{
   anchor=jest.spyOn(HTMLAnchorElement.prototype,'click').mockImplementation(()=>{});
   api.get.mockReset().mockImplementation(async(path,{params})=>{
     if(path==='/reports/frameworks')return {data:{frameworks:[{key:'framework-a',name:'Program A'},{key:'framework-b',name:'Program B'}]}};
-    if(path==='/reports/materials')return {data:{client_id:'client-a',framework_key:params.framework_key,reports:Object.fromEntries(Object.keys(detail).map(type=>[type,report(type,params.framework_key)])),
+    if(path==='/reports/materials')return {data:{client_id:'client-a',framework_key:params.framework_key,registers,reports:Object.fromEntries(Object.keys(detail).map(type=>[type,report(type,params.framework_key)])),
       register_history:[{register:'Policies',record:'Active',event:'Approved',at:asOf,version:'2'},
         {register:'Reviews',record:'Previous period',event:'Review completed',at:'2000-01-01'}]}};
     if(path==='/reports/history')return {data:{exports:[]}};
-    if(path==='/evidence/catalog')return {data:{total:0,items:[]}};
+    if(path==='/evidence/catalog')return {data:{total:0,page_size:100,items:[]}};
     if(path==='/dashboard')return {data:{client_id:'client-a',recent_activity:[],upcoming_reviews:[]}};
     if(path==='/portfolio/reporting/history')return {data:{client_id:'client-a',program_key:params.program_key,snapshots:[]}};
     throw Error('Unexpected '+path);
@@ -68,14 +74,26 @@ test('the package exports only chosen native materials, current report values an
   await downloadAuditPackage({clientId:'client-a',frameworkKey:'framework-a',materials,config,decisions:{evidence:'Provided separately'},files:entries,signal,isCurrent:()=>true,pending:{current:null}});
   const archive=unzipSync(await readBlob(files[0]));
   expect(strFromU8(archive['00_Start-here.pdf']).slice(0,5)).toBe('%PDF-');
-  expect(strFromU8(archive['06_Policies/Policy-register.csv'])).toContain('"Active","approved"');
-  expect(strFromU8(archive['06_Policies/Policy-register.csv'])).not.toContain('Draft policy');
-  expect(strFromU8(archive['04_Risks/Risk-register.csv'])).toContain("'=formula");
-  expect(Object.keys(archive).some(key=>key.startsWith('03_Open-work/')||key.startsWith('07_History/'))).toBe(false);
-  expect(csvRows(packageFiles(materials,{...config,drafts:true}).find(file=>file.path.startsWith('06_')).rows)).toContain('Draft policy');
+  const xml=(path,sheet)=>strFromU8(unzipSync(archive[path])['xl/worksheets/sheet'+sheet+'.xml']);
+  const policy=xml('02_Policies/Policy-register.xlsx',1),risk=xml('03_Risk-management/Risk-register.xlsx',1);
+  expect(policy).toContain('Active');expect(policy).not.toContain('Draft policy');
+  expect(risk).toContain('=formula');expect(risk).not.toContain('<f>');
+  expect(xml('06_AI-governance/AI-register.xlsx',1)).toContain('Approved AI');
+  expect(xml('09_Open-items/Open-items.xlsx',1)).toContain('Closed in period');
+  expect(xml('09_Open-items/Open-items.xlsx',1)).not.toMatch(/Undated open task|Future task|Cancelled work/);
+  expect(xml('09_Open-items/Open-items.xlsx',2)).not.toContain('Past-due review');
+  expect(strFromU8(unzipSync(archive['01_Scope-and-governance/Scope-and-roles.xlsx'])['xl/workbook.xml'])).toContain('Roles and contacts');
+  expect(xml('01_Scope-and-governance/Scope-and-roles.xlsx',1)).toContain('Accounts payable');
+  expect(xml('01_Scope-and-governance/Scope-and-roles.xlsx',1)).not.toContain('Prior boundary');
+  expect(xml('01_Scope-and-governance/Scope-and-roles.xlsx',2)).toContain('Billing platform');
+  expect(xml('01_Scope-and-governance/Scope-and-roles.xlsx',2)).not.toContain('Unclassified device');
+  expect(JSON.stringify(packageFiles(materials,{...config,drafts:true}).find(file=>file.path.startsWith('02_')).sheets)).toContain('Draft policy');
+  const open=packageFiles(materials,{...config,open:true}).find(file=>file.path.startsWith('09_')).sheets;
+  expect(JSON.stringify(open[0].rows)).toMatch(/Future task/);expect(JSON.stringify(open[0].rows)).toContain('Undated open task');
+  expect(JSON.stringify(open[1].rows)).toContain('Past-due review');
   const historical=packageFiles(materials,{...config,history:true});
-  expect(historical.find(file=>file.path==='07_History/Policies.csv').rows[1]).toEqual([asOf,'Active','Approved','2']);
-  expect(historical.some(file=>file.path==='07_History/Reviews.csv')).toBe(false);
+  expect(historical.find(file=>file.path.startsWith('02_')).sheets[1].rows).toContainEqual([asOf,'Active','Approved','2']);
+  expect(JSON.stringify(historical.find(file=>file.path.startsWith('04_')).sheets[0].rows)).not.toContain('Previous period');
 });
 
 test('an unconfirmed audit receipt prevents download and a retry reuses the original request key',async()=>{
@@ -89,7 +107,8 @@ test('an unconfirmed audit receipt prevents download and a retry reuses the orig
 });
 
 test('a mismatched native program fails visibly and cannot be downloaded',async()=>{
-  api.get.mockImplementation(async(path)=>path==='/reports/frameworks'?{data:{frameworks:[{key:'framework-a',name:'Program A'}]}}:{data:{client_id:'other'}});
+  api.get.mockImplementation(async(path)=>path==='/reports/frameworks'?{data:{frameworks:[{key:'framework-a',name:'Program A'}]}}:
+    path==='/evidence/catalog'?{data:{total:0,page_size:100,items:[]}}:{data:{client_id:'other'}});
   await act(async()=>root.render(<Reports/>));
   expect(host.querySelector('[role="alert"]').textContent).toContain('could not be verified');
   expect([...host.querySelectorAll('button')].find(item=>item.textContent.includes('Download package')).disabled).toBe(true);

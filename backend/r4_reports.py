@@ -5,6 +5,7 @@ import hashlib
 import io
 import json
 import math
+from pathlib import Path
 import re
 from typing import Literal
 import uuid
@@ -20,6 +21,7 @@ from pymongo.read_concern import ReadConcern
 from starlette.concurrency import run_in_threadpool
 
 import authorization
+import ai_governance
 import create_requests
 import framework_reports
 import framework_policy_links
@@ -58,6 +60,7 @@ FIELDS = {
     'tasks': ('task_id', 'title', 'status', 'due_date', 'assignee_id', 'owner_id', 'finding_id', 'framework_assessment_id', 'review_id'),
     'findings': ('finding_id', 'title', 'status', 'framework_assessment_id', 'review_id'),
 }
+PACKAGE_FIELDS = json.loads((Path(__file__).resolve().parents[1] / 'frontend/src/lib/reportPackageFields.json').read_text())
 
 
 class ReportExportIn(BaseModel):
@@ -450,6 +453,56 @@ def package_history(records, key):
     return sorted(rows, key=lambda row: (row['at'], row['register'], row['record']))
 
 
+async def package_registers(s, cid):
+    result = {}
+    for kind, fields in PACKAGE_FIELDS.items():
+        screening = ('screening','onboarding_screening','access','environment','description','permitted_data_types','vendor_id') if kind == 'ai_systems' else ()
+        rows = await s.db[kind].find({'client_id': cid}, framework_reports.projection(
+            [*fields, *screening, '_r4_context_pending', '_ai_review_schedule_pending', '_ai_retirement_pending'])).limit(10001).to_list(10001)
+        if len(rows) > 10000:
+            raise HTTPException(413, 'The complete ' + kind + ' register exceeds the supported report size')
+        for row in rows:
+            assert_settled(row)
+            if row.get('_ai_review_schedule_pending') or row.get('_ai_retirement_pending'):
+                raise HTTPException(409, 'AI governance records require recovery before reporting')
+            if kind == 'ai_systems':
+                row['risk_tier'] = ai_governance.screening(row)['risk_tier']
+                for field in screening:
+                    row.pop(field, None)
+        result[kind] = sorted(({field: value for field, value in row.items() if not field.startswith('_')} for row in rows),
+                              key=lambda row: str(row.get(fields[0]) or ''))
+    return result
+
+
+def scope_package_registers(registers, key):
+    assignments = {row['framework_assessment_id']: row['framework_key'] for row in registers['framework_assessments']}
+    links = {}
+    for assessment in registers['framework_assessments']:
+        for link in assessment.get('related_links') or []:
+            if isinstance(link, dict) and link.get('kind') and link.get('id'):
+                links.setdefault((link['kind'], link['id']), set()).add(assessment['framework_key'])
+
+    def applies(row, kind, id_field):
+        if row.get('framework_assessment_id'):
+            return assignments.get(row['framework_assessment_id']) == key
+        if (kind, row.get(id_field)) in links:
+            return key in links[(kind, row[id_field])]
+        if kind == 'reviews':
+            if row.get('framework_drivers') is not None:
+                return any(isinstance(driver, dict) and driver.get('framework_key') == key for driver in row['framework_drivers'])
+            return not row.get('framework_key') or row['framework_key'] == key
+        if kind == 'tasks' and row.get('finding_id'):
+            return row['finding_id'] in selected_findings
+        return not row.get('review_id') or row['review_id'] in selected_reviews
+
+    registers['reviews'] = [r for r in registers['reviews'] if applies(r, 'reviews', 'review_id')]
+    selected_reviews = {r['review_id'] for r in registers['reviews']}
+    registers['findings'] = [r for r in registers['findings'] if applies(r, 'findings', 'finding_id')]
+    selected_findings = {r['finding_id'] for r in registers['findings']}
+    registers['tasks'] = [r for r in registers['tasks'] if applies(r, 'tasks', 'task_id')]
+    registers['framework_assessments'] = [r for r in registers['framework_assessments'] if r.get('framework_key') == key]
+
+
 async def materials(s, request, cid, key, as_of, user):
     actor = await authority(s, request, cid, key, user)
     assessment, snapshot, client, operational = await current_report(s, cid, key, 'assessment', as_of, actor)
@@ -457,8 +510,17 @@ async def materials(s, request, cid, key, as_of, user):
     for report_type in ('scope', 'executive', 'risks', 'vendors', 'policies'):
         reports[report_type] = build_preview(snapshot, operational, report_type, actor)
     events = package_history(operational['records'], key)
+    registers = await package_registers(s, cid)
     await generation_guard(s, request, cid, key, actor, snapshot, client, operational)
-    return {'client_id': cid, 'framework_key': key, 'reports': reports, 'register_history': events}
+    if digest(registers) != digest(await package_registers(s, cid)):
+        raise HTTPException(409, 'Saved package records changed; prepare the package again')
+    await authority(s, request, cid, key, actor)
+    registers['users'] = [{'user_id': row['user_id'], 'name': row.get('name')} for row in operational['records']['users']]
+    registers['framework_units'] = [{field: row.get(field) for field in (
+        'id','title','status_label','verification_state','soa_applicability','soa_justification','specification')}
+        for row in snapshot['assessments']]
+    scope_package_registers(registers, key)
+    return {'client_id': cid, 'framework_key': key, 'reports': reports, 'register_history': events, 'registers': registers}
 
 
 def table_rows(dto):

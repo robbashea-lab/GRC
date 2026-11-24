@@ -236,3 +236,9 @@
 
 .native-standard .bdcal {row-gap:17px}
 .native-standard .bdcal > .v3-workspace-head {margin-bottom:0}
+/* The reference keeps the fixed theme's hidden mode control in the flex layout. */
+html[data-theme-fixed-mode] .native-standard .bdcal .v3-heading-actions:has(> .surface-theme-action:only-child) {width:101px;min-height:34px}
+@media(max-width:640px) {
+  .native-standard .bdcal {row-gap:12px}
+  .native-standard .bdcal .v3-heading-copy {flex-basis:185px}
+}

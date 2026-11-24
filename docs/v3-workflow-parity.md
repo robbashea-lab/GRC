@@ -12,6 +12,10 @@ Glass ’07 is the initial appearance on upgrade. Choosing another theme saves i
 
 Scope confirmations use the existing version-checked client profile save. The audit package reads the selected client and program, includes saved report and register history for the selected period, and records the download. Current register rows reflect the saved state at generation. Reconstruction of a complete prior-period register would require historical snapshots.
 
+The package includes native multi-sheet workbooks, current client-profile scope and dated history. Level 2 CMMC packages use the same authorized SSP, POA&M, and SPRS generators as the workbook tabs. Linked open actions include future and undated work.
+
+The local shared-view check opened 90 routes across all five clients in a new Demo and paired 70 with a matching mockup page. The route checks found no browser exceptions or horizontal document overflow. Additional isolated onboarding checks exercised newly created clients.
+
 The branch is `codex/staging-signed-in-v3-20261124`. The deployment receipt and hosted verification are recorded separately after activation.
 
 ## Earlier implementation baseline

@@ -21,3 +21,4 @@
 !shared/catalogs/**
 !frontend/src/lib/evidenceSources.json
 !frontend/src/lib/clientProfileFields.json
+!frontend/src/lib/reportPackageFields.json

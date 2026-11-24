@@ -143,5 +143,5 @@ export function sprsXlsx(model, rows, generated) {
       .replaceAll("__GN_SPRS_GENERATED_AT__",generated.toISOString());
     return [path,sheet ? cmmcSprsRenderSheet(prepared,sheet[0],sheet[1]) : prepared];
   });
-  return officeZip(files);
+  return officeZip(files,generated);
 }

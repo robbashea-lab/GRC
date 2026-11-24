@@ -318,6 +318,7 @@ test('foreign preview, history and retained bytes remain inaccessible to a scope
 test('report materials include only saved dated register events for this client and selected program',async()=>{
   const at='2026-11-18T03:00:00Z';
   edit(db=>{
+    db.clients.find(row=>row.client_id===CID).profile={scope:{statement:'Production boundary',systems:'Billing platform',private:'Excluded note'}};
     db.policies.push({client_id:CID,policy_id:'p1',title:'Access policy',status:'approved',
       decision_history:[{action:'external_approval_recorded',recorded_at:at,subject:{private:'Confidential approval attachment'}}]},
     {client_id:'foreign',policy_id:'p2',title:'Foreign policy',status:'approved',approved_at:at});
@@ -327,10 +328,12 @@ test('report materials include only saved dated register events for this client 
   });
   const bundle=(await api.get('/reports/materials',{params:params()})).data;
   expect(bundle).toMatchObject({client_id:CID,framework_key:'cis-ig1'});
+  expect(bundle.registers.clients[0].profile.scope).toEqual({statement:'Production boundary',systems:'Billing platform'});
   expect(Object.keys(bundle.reports).sort()).toEqual(['assessment','executive','policies','risks','scope','vendors']);
   expect(bundle.register_history.filter(row=>row.record==='Access policy').map(row=>row.event)).toEqual(['External approval recorded']);
   expect(bundle.register_history.filter(row=>row.record==='Selected review').map(row=>row.event)).toEqual(['Review completed']);
   expect(bundle.register_history.some(row=>row.record==='Other program review')).toBe(false);
+  expect(bundle.registers.reviews.some(row=>row.title==='Other program review')).toBe(false);
   expect(JSON.stringify(bundle)).not.toMatch(/Confidential approval attachment|Foreign policy/);
   edit(db=>{db.requirements.find(row=>row.client_id===CID&&row.baseline_key==='cis-ig1').baseline_response='excluded';});
   await expect(api.get('/reports/materials',{params:params()})).rejects.toMatchObject({response:{status:403}});

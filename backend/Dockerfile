@@ -15,6 +15,7 @@ COPY frontend/src/lib/aiOnboardingCatalog.json /app/frontend/src/lib/aiOnboardin
 COPY shared/catalogs /app/shared/catalogs
 COPY frontend/src/lib/evidenceSources.json /app/frontend/src/lib/evidenceSources.json
 COPY frontend/src/lib/clientProfileFields.json /app/frontend/src/lib/clientProfileFields.json
+COPY frontend/src/lib/reportPackageFields.json /app/frontend/src/lib/reportPackageFields.json
 RUN useradd --create-home --uid 10001 app
 USER app
 CMD ["sh", "-c", "uvicorn server:app --host 0.0.0.0 --port ${PORT:-8000}"]

@@ -253,5 +253,5 @@ export function poamXlsx(model, workbook, generatedAt) {
       output = output.replace(/ r:id="rId1"\s*\/>/g,' location="Dashboard!A1"/>');
     }
     return [path,output];
-  }));
+  }),generatedAt);
 }

@@ -8,7 +8,7 @@ export function validDay(value) {
   return Number.isFinite(date.getTime()) && date.toISOString().slice(0,10) === value ? value : '';
 }
 export const displayDate = value => String(value || '').slice(0,10);
-export function officeZip(parts) {
+export function officeZip(parts,generatedAt) {
   return zipSync(Object.fromEntries(parts.map(([path, value]) =>
-    [path,typeof value === 'string' ? strToU8(value) : value])),{level:4});
+    [path,typeof value === 'string' ? strToU8(value) : value])),{level:4,mtime:generatedAt});
 }

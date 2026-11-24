@@ -378,6 +378,9 @@ class R4ReportRouteTests(unittest.IsolatedAsyncioTestCase):
     async def test_materials_limit_saved_register_events_to_the_selected_workspace(self):
         await self.prepare()
         at = '2026-11-18T03:00:00Z'
+        await server.db.clients.update_one({'client_id':'a'}, {'$set': {
+            'profile.scope': {'statement':'Production boundary','systems':'Nominated billing platform','private':'Excluded note'},
+            'profile_scope_confirmation': {'at':at,'by':'Account owner'}}})
         await server.db.policies.insert_many([
             {'client_id': 'a', 'policy_id': 'package-a', 'title': 'Access policy', 'status': 'approved',
              'decision_history': [{'action': 'external_approval_recorded', 'recorded_at': at,
@@ -397,12 +400,16 @@ class R4ReportRouteTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(set(bundle['reports']), {'assessment','executive','scope','risks','vendors','policies'})
         self.assertEqual(bundle['framework_key'], params['framework_key'])
         self.assertEqual(bundle['client_id'], params['client_id'])
+        self.assertEqual(bundle['registers']['clients'][0]['profile']['scope'],
+                         {'statement':'Production boundary','systems':'Nominated billing platform'})
+        self.assertEqual(bundle['registers']['clients'][0]['profile_scope_confirmation']['at'], at)
         self.assertEqual([row['event'] for row in bundle['register_history'] if row['record'] == 'Access policy'],
                          ['External approval recorded'])
         self.assertEqual([row['event'] for row in bundle['register_history'] if row['record'] == 'Selected review'],
                          ['Review completed'])
         self.assertNotIn('Confidential approval attachment', response.text)
         self.assertNotIn('Foreign policy', response.text)
+        self.assertNotIn('Other program review', json.dumps(bundle['registers']))
         self.assertFalse(any(row['record'] == 'Other program review' for row in bundle['register_history']))
         await server.db.requirements.update_one({'client_id':'a','baseline_key':'cis-ig1'},{'$set':{'baseline_response':'excluded'}})
         self.assertEqual((await self.client.get(path, params=params)).status_code, 403)

@@ -55,7 +55,7 @@ export default function ClientDialog({ open, onOpenChange, onCreated, client = n
   }
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent onCloseAutoFocus={onCloseAutoFocus} className="client-organization-dialog max-w-lg" data-testid="add-client-dialog">
+      <DialogContent onCloseAutoFocus={onCloseAutoFocus} className="client-organization-dialog top-[4vh] translate-y-0 max-w-lg" data-testid="add-client-dialog">
         <DialogHeader className="client-organization-header">
           <DialogTitle>{client ? "Edit client organization" : "Add client organization"}</DialogTitle>
           <DialogDescription>{client ? "Update the existing client organization." : "Create a new tenant. You can walk through GRC Program Onboarding right after creation."}</DialogDescription>
