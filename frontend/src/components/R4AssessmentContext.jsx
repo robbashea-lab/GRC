@@ -84,7 +84,11 @@ export default function R4AssessmentContext({record,disabled,value,onApply,onDra
     if(!context||disabled||stale)return;
     if(custom.trim()){setError('Add the client-specific tool to the draft, or clear its name before applying context.');return;}
     if(selected&&!entry){setError('Choose a current activity.');return;}
-    const accepted=onApply({...changes,activity_id:selected||null,review_id:entry?.review_id??null,expected_updated_at:draftBase.current?.activities[selected]??entry?.expected_updated_at??null,
+    const scheduleChanged=entry&&(Object.hasOwn(changes,'cadence')&&fields.cadence!==entry.cadence
+      ||Object.hasOwn(changes,'custom_days')&&fields.cadence==='custom'&&fields.custom_days!==entry.custom_days);
+    if((scheduleChanged||Object.hasOwn(changes,'first_next_due'))&&!fields.first_next_due){setError('Choose the first / next review date before applying the schedule.');return;}
+    const schedule=scheduleChanged?{cadence:fields.cadence,first_next_due:fields.first_next_due,...(fields.cadence==='custom'?{custom_days:fields.custom_days}:{})}:{};
+    const accepted=onApply({...changes,...schedule,activity_id:selected||null,review_id:entry?.review_id??null,expected_updated_at:draftBase.current?.activities[selected]??entry?.expected_updated_at??null,
       expected_client_updated_at:draftBase.current?.client??context.expected_client_updated_at??null,...(area?{area_id:area}:{})});
     if(accepted===false)return;
     edited.current=false;onDraftChange?.(false);setError('');
@@ -99,8 +103,8 @@ export default function R4AssessmentContext({record,disabled,value,onApply,onDra
     {error&&<p role="alert">{error}</p>}{stale&&<p role="alert">Saved service or activity context changed. Your draft is retained. Discard these context edits or the staged assessment proposal before applying against the current saved context.</p>}{context&&<fieldset disabled={disabled}>
       <label>Activity<select aria-label="Assessment recurring activity" value={selected} onChange={event=>{markDraft();setSelected(event.target.value);setChanges({});}}><option value="">Select the relevant activity</option>{context.candidates.map(candidate=><option key={candidate.activity_id} value={candidate.activity_id}>{candidate.title}{candidate.state==='removed'?' — removed / excluded':''}</option>)}</select></label>
       {entry?.exclusion&&<p>Retained exclusion: {entry.exclusion.reason}. Restore it deliberately in iVenture Setup before recording a ticket.</p>}
-      <label>Service area<select aria-label="Assessment service area" value={area||''} onChange={event=>change('area_id',event.target.value)}><option value="">Not set</option>{serviceCatalog.areas.map(area=><option key={area.id} value={area.id}>{area.name}</option>)}</select></label>
-      <p>Responsibility: {serviceCatalog.responsibilities.find(option=>option.id===service?.responsibility)?.label||'Not set'}</p>
+      <label>Service area<select aria-label="Assessment service area" value={area||''} disabled={!!(changes.responsibility||changes.tool_ids||custom)} onChange={event=>change('area_id',event.target.value)}><option value="">Not set</option>{serviceCatalog.areas.map(area=><option key={area.id} value={area.id}>{area.name}</option>)}</select></label>
+      <label>Who runs this service area<select aria-label="Service area responsibility" disabled={!area} value={changes.responsibility||service?.responsibility||'un'} onChange={event=>change('responsibility',event.target.value)}>{serviceCatalog.responsibilities.map(option=><option key={option.id} value={option.id} disabled={option.id==='un'}>{option.label}</option>)}</select></label>
       <fieldset><legend>Selected tools</legend><div className="r4-context-tools">{tools.map(tool=><label key={tool.tool_id}><input type="checkbox" checked={chosen.includes(tool.tool_id)} onChange={event=>chooseTool(tool,event.target.checked)}/>{tool.name}</label>)}</div></fieldset>
       <div className="r4-context-add"><Input aria-label="Client-specific interview tool" value={custom} maxLength={255} placeholder="Client-specific tool" onChange={event=>{markDraft();setCustom(event.target.value);}}/><Button variant="outline" disabled={!custom.trim()||!area} onClick={addTool}>Add to draft</Button></div>
       {entry&&<><div className="r4-context-grid">{[['recurring_ticket_number','Recurring ticket number'],['recurring_ticket_url','Recurring ticket URL'],['recurring_ticket_summary','Recurring ticket summary']].map(([key,label])=><label key={key}>{label}<Input aria-label={label} value={fields[key]} onChange={event=>change(key,event.target.value)}/></label>)}

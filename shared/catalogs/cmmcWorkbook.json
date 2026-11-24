@@ -1,0 +1,271 @@
+{
+  "source": "32 CFR 170.24(c)(2) and 170.21(a)(2)",
+  "five": [
+    "3.1.1",
+    "3.1.2",
+    "3.2.1",
+    "3.2.2",
+    "3.3.1",
+    "3.4.1",
+    "3.4.2",
+    "3.5.1",
+    "3.5.2",
+    "3.6.1",
+    "3.6.2",
+    "3.7.2",
+    "3.8.3",
+    "3.9.2",
+    "3.10.1",
+    "3.10.2",
+    "3.12.1",
+    "3.12.3",
+    "3.13.1",
+    "3.13.2",
+    "3.14.1",
+    "3.14.2",
+    "3.14.3",
+    "3.1.12",
+    "3.1.13",
+    "3.1.16",
+    "3.1.17",
+    "3.1.18",
+    "3.3.5",
+    "3.4.5",
+    "3.4.6",
+    "3.4.7",
+    "3.4.8",
+    "3.5.10",
+    "3.7.5",
+    "3.8.7",
+    "3.11.2",
+    "3.13.5",
+    "3.13.6",
+    "3.13.15",
+    "3.14.4",
+    "3.14.6",
+    "3.5.3",
+    "3.13.11"
+  ],
+  "three": [
+    "3.3.2",
+    "3.7.1",
+    "3.8.1",
+    "3.8.2",
+    "3.9.1",
+    "3.11.1",
+    "3.12.2",
+    "3.1.5",
+    "3.1.19",
+    "3.7.4",
+    "3.8.8",
+    "3.13.8",
+    "3.14.5",
+    "3.14.7"
+  ],
+  "prohibited": [
+    "3.1.20",
+    "3.1.22",
+    "3.12.4",
+    "3.10.3",
+    "3.10.4",
+    "3.10.5"
+  ],
+  "partial": {
+    "3.5.3": "remote-privileged-only",
+    "3.13.11": "encrypted-not-fips"
+  },
+  "sspFields": [
+    {
+      "id": "documentId",
+      "section": "control",
+      "label": "Document identifier"
+    },
+    {
+      "id": "version",
+      "section": "control",
+      "label": "Document version"
+    },
+    {
+      "id": "owner",
+      "section": "control",
+      "label": "SSP owner"
+    },
+    {
+      "id": "ownerContact",
+      "section": "control",
+      "label": "Owner contact / responsible roles"
+    },
+    {
+      "id": "approval",
+      "section": "control",
+      "label": "Review / approval record reference"
+    },
+    {
+      "id": "handling",
+      "section": "control",
+      "label": "Document handling instructions"
+    },
+    {
+      "id": "system",
+      "section": "scope",
+      "label": "System or enclave name"
+    },
+    {
+      "id": "systemId",
+      "section": "scope",
+      "label": "System identifier / business purpose"
+    },
+    {
+      "id": "information",
+      "section": "scope",
+      "label": "Information types & handling basis"
+    },
+    {
+      "id": "boundary",
+      "section": "scope",
+      "label": "System boundary"
+    },
+    {
+      "id": "scopeExclusions",
+      "section": "scope",
+      "label": "Scope exclusions & rationale"
+    },
+    {
+      "id": "alternativeMeasures",
+      "section": "scope",
+      "label": "Alternative measures / enduring exception adjudications"
+    },
+    {
+      "id": "inventoryRef",
+      "section": "scope",
+      "label": "Inventory reference & reconciliation"
+    },
+    {
+      "id": "environment",
+      "section": "architecture",
+      "label": "Operating environment"
+    },
+    {
+      "id": "diagram",
+      "section": "architecture",
+      "label": "Network diagram reference"
+    },
+    {
+      "id": "dataFlows",
+      "section": "architecture",
+      "label": "Protected information flows"
+    },
+    {
+      "id": "connections",
+      "section": "architecture",
+      "label": "System connections & interfaces"
+    },
+    {
+      "id": "providers",
+      "section": "providers",
+      "label": "External service providers & service scope"
+    },
+    {
+      "id": "responsibilities",
+      "section": "providers",
+      "label": "Organizational / provider responsibilities"
+    },
+    {
+      "id": "crm",
+      "section": "providers",
+      "label": "Service descriptions & responsibility matrix references"
+    },
+    {
+      "id": "reviewFrequency",
+      "section": "maintenance",
+      "label": "Defined SSP update frequency"
+    },
+    {
+      "id": "changeTriggers",
+      "section": "maintenance",
+      "label": "Change triggers & maintenance process"
+    },
+    {
+      "id": "lastReview",
+      "section": "maintenance",
+      "label": "Last actual SSP review"
+    },
+    {
+      "id": "reviewRecord",
+      "section": "maintenance",
+      "label": "Review performed by / supporting record"
+    },
+    {
+      "id": "nextReview",
+      "section": "maintenance",
+      "label": "Next planned SSP review"
+    },
+    {
+      "id": "revisionHistory",
+      "section": "maintenance",
+      "label": "Revision / change history"
+    }
+  ],
+  "sections": [
+    {
+      "id": "control",
+      "title": "Document control & accountability",
+      "description": "Identify this plan and the people accountable for it."
+    },
+    {
+      "id": "scope",
+      "title": "System purpose, boundary & information",
+      "description": "Describe the system and the protected information within its boundary."
+    },
+    {
+      "id": "architecture",
+      "title": "Environment, architecture & data flows",
+      "description": "Explain where the system operates and how information crosses its boundary."
+    },
+    {
+      "id": "providers",
+      "title": "Services & shared responsibilities",
+      "description": "Document external services and the division of security responsibilities."
+    },
+    {
+      "id": "maintenance",
+      "title": "Maintenance, review & change record",
+      "description": "Record the defined update frequency and actual reviews; saving a draft is not a review."
+    }
+  ],
+  "fields": {
+    "plans": [
+      "status",
+      "milestone",
+      "owner",
+      "due_date",
+      "notes",
+      "closeout",
+      "evidence"
+    ],
+    "exceptions": [
+      "value"
+    ],
+    "assets": [
+      "category",
+      "treatment"
+    ],
+    "posting": [
+      "score",
+      "date",
+      "scope",
+      "cage",
+      "reference"
+    ],
+    "conditional": [
+      "date"
+    ],
+    "decisions": [
+      "outcome",
+      "authority",
+      "date",
+      "reference",
+      "notes"
+    ]
+  }
+}

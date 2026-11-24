@@ -3,7 +3,7 @@ import {TextEncoder} from 'node:util';
 import {buildReviewContract,completionPayload,validateCompletionGuide,parseReviewCompletionGuide} from '../lib/r4ReviewCompletion';
 import {commonToolDefinitions,serviceCatalog} from '../lib/r4ServicesTools';
 import {CATALOGS,activePlans} from '../lib/frameworks';
-import {r4ServicesRequest,r4Catalog,setupActivities,readServiceContext,prepareServiceContext} from './r4ServicesTools';
+import {r4ServicesRequest,r4Catalog,setupActivities,readServiceContext,prepareServiceContext,commitServiceContext} from './r4ServicesTools';
 import {prepareR4Completion,r4ReviewCompletionRequest,validateDemoCompletion} from './r4ReviewCompletion';
 
 const snapshot=value=>JSON.stringify(value);
@@ -163,6 +163,18 @@ test('Setup and assessment context reads preserve all activities without creatin
   const plan=prepareServiceContext(db,assessment,{activity_id:candidate.activity_id,review_id:'r',expected_updated_at:'v1',expected_client_updated_at:'c1',area_id:'endpoint',tool_ids:['intune'],recurring_ticket_number:'12',recurring_ticket_url:'https://tickets.example.test/12',cadence:'semiannual',first_next_due:'2027-03-01'});
   expect(plan.review.activity_setup.recurring_ticket_number).toBe('12');expect(snapshot(db)).toBe(before);
   expect(plan.services.areas.endpoint.tool_ids).toEqual(['ninjaone','intune']);
+});
+
+test('a confirmed interview setup reaches Demo Services and iVenture Setup for an unfamiliar client',()=>{
+  const db=fixture(),client=db.clients[0],assessment={framework_assessment_id:'new',client_id:'c',framework_key:'cis-ig1',definition_id:'1.1'};
+  client.profile.services.areas.endpoint={responsibility:'un',tool_ids:[]};
+  const activity=readServiceContext(db,assessment).candidates.find(row=>row.review_id==='r');
+  const plan=prepareServiceContext(db,assessment,{activity_id:activity.activity_id,review_id:'r',expected_updated_at:'v1',expected_client_updated_at:'c1',
+    responsibility:'co',area_id:activity.area_id,tool_ids:['ninjaone'],recurring_ticket_number:'34567',cadence:'semiannual',first_next_due:'2027-02-15'});
+  commitServiceContext(db,assessment,plan);
+  const reloaded=readServiceContext(db,assessment);
+  expect(reloaded.services.areas[activity.area_id]).toMatchObject({responsibility:'co',tool_ids:['ninjaone']});
+  expect(setupActivities(db,db.clients[0]).find(row=>row.review_id==='r')).toMatchObject({state:'done',first_next_due:'2027-02-15',setup:{recurring_ticket_number:'34567'}});
 });
 
 test('Guide PUT without an explicit request key replays its exact payload and refuses a stale changed payload without side effects',async()=>{

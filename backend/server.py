@@ -52,6 +52,7 @@ import policy_provenance
 import risk_lifecycle
 import vendor_governance
 import review_occurrences
+import shared_review_plans
 import review_commands
 import r4_review_completion
 import r4_services
@@ -4276,14 +4277,15 @@ async def related_items(entity_type: str, entity_id: str, user: Dict = Depends(g
         if fid:
             explicit_finding=await db.framework_assessments.find({'client_id':cid,'related_links':{'$elemMatch':{'kind':'findings','id':fid}}},{'_id':0,'framework_assessment_id':1}).to_list(None)
             if explicit_finding:assessment_clauses.append({'framework_assessment_id':{'$in':[a['framework_assessment_id'] for a in explicit_finding]}})
+    review_source = source if entity_type == 'reviews' else None
     if entity_type in ('tasks','findings') and source.get('review_id') and not explicit_finding and not any('framework_assessment_id' in clause for clause in assessment_clauses):
         parent_review=await db.reviews.find_one({'review_id':source['review_id'],'client_id':cid},{'_id':0})
         if parent_review:
             assessment_clauses.append({'related_links':{'$elemMatch':{'kind':'reviews','id':parent_review['review_id']}}})
-            if parent_review.get('framework_key'):
-                assessment_clauses.append({'framework_key':parent_review['framework_key'],'definition_id':{'$in':parent_review.get('framework_safeguards',[])}})
-    if entity_type=='reviews' and source.get('framework_key'):
-        assessment_clauses.append({'framework_key':source['framework_key'],'definition_id':{'$in':source.get('framework_safeguards',[])}})
+            review_source = parent_review
+    if review_source:
+        for driver in shared_review_plans.active_mappings(review_source):
+            assessment_clauses.append({'framework_key': driver['framework_key'], 'definition_id': {'$in': driver['framework_safeguards']}})
     linked['framework_assessments']=await db.framework_assessments.find({'client_id':cid,'$or':assessment_clauses},{'_id':0}).to_list(None)
     if entity_type=='policies':
         linked['framework_assessments']=[row for row in linked['framework_assessments'] if framework_governance.framework_policy_links.supports(row,source)]
@@ -5155,6 +5157,8 @@ for _kind in ("findings", "policies", "assets", "exceptions", "requirements", "c
 app.include_router(api)
 import sys
 app.include_router(ai_governance.router_for(sys.modules[__name__]))
+import cmmc_workbook
+app.include_router(cmmc_workbook.router_for(sys.modules[__name__]))
 app.include_router(framework_governance.router_for(sys.modules[__name__]))
 import framework_reports
 app.include_router(framework_reports.router_for(sys.modules[__name__]))

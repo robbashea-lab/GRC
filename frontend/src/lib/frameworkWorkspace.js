@@ -1,5 +1,7 @@
 import {isStale,lacksEvidence,gapUntracked} from './cisVerification';
 import {assessmentProgress} from './frameworkOperator';
+import {reviewMapsTo} from './frameworkReviewLinks';
+import {actionAppliesTo,findingAppliesTo,findingScopes} from './frameworkWorkLinks';
 
 // Native hierarchy adapters; catalog order remains authoritative (never lexical ID sorting).
 const ISO_GROUPS={
@@ -67,20 +69,21 @@ export function recurrencePresentation(definition,catalog){
 
 // Used by the Demo read model. Backend builds the same small operational projection.
 export function findingApplies(row,f,rids,assessments=[]){
-  const explicit=new Set(assessments.filter(a=>a.client_id===row.client_id&&a.related_links?.some(l=>l.kind==='findings'&&l.id===f.finding_id)).map(a=>a.framework_assessment_id));
-  if(f.framework_assessment_id)explicit.add(f.framework_assessment_id);
-  if(row.related_links?.some(l=>l.kind==='findings'&&l.id===f.finding_id))explicit.add(row.framework_assessment_id);
-  return explicit.size?explicit.has(row.framework_assessment_id):rids.has(f.review_id);
+  const scopes=findingScopes([...assessments.filter(a=>a.client_id===row.client_id),row]);
+  return findingAppliesTo(row.framework_assessment_id,f,rids,scopes);
 }
 export function assessmentWork(row,{reviews=[],findings=[],tasks=[],evidence=[],framework_assessments=[]},today=new Date().toISOString().slice(0,10)){
   const linked=(kind,id)=>(row.related_links||[]).some(l=>l.kind===kind&&l.id===id);
-  const rs=reviews.filter(r=>r.client_id===row.client_id&&(linked('reviews',r.review_id)||(r.framework_key===row.framework_key&&r.framework_safeguards?.includes(row.definition_id))));
+  const rs=reviews.filter(r=>r.client_id===row.client_id&&(linked('reviews',r.review_id)
+    || (row.framework_assessment_id && r.framework_assessment_id===row.framework_assessment_id)
+    || reviewMapsTo(r,row.framework_key,row.definition_id)));
   const rids=new Set(rs.map(r=>r.review_id));
-  const relevant=new Set(findings.filter(f=>f.client_id===row.client_id&&findingApplies(row,f,rids,framework_assessments)).map(f=>f.finding_id));
+  const scopes=findings.length ? findingScopes([...framework_assessments.filter(a=>a.client_id===row.client_id),row]) : new Map();
+  const relevant=new Set(findings.filter(f=>f.client_id===row.client_id&&findingAppliesTo(row.framework_assessment_id,f,rids,scopes)).map(f=>f.finding_id));
   const fs=findings.filter(f=>relevant.has(f.finding_id)&&!['closed','accepted'].includes(f.status));
   const fids=new Set(fs.map(f=>f.finding_id));
   const overdue=(r,closed)=>!closed.includes(r.status)&&!!r.due_date&&r.due_date.slice(0,10)<today;
-  const ts=tasks.filter(t=>t.client_id===row.client_id&&(linked('tasks',t.task_id)||t.framework_assessment_id===row.framework_assessment_id||(t.finding_id?relevant.has(t.finding_id):!t.framework_assessment_id&&rids.has(t.review_id))));
+  const ts=tasks.filter(t=>t.client_id===row.client_id&&(linked('tasks',t.task_id)||actionAppliesTo(row.framework_assessment_id,t,rids,relevant)));
   // Evidence directly supporting this assessment (uploaded to it or linked); dates only, never content.
   // Deleted (archived) Evidence and Evidence unlinked from this assessment are not current support.
   const es=evidence.filter(e=>e.client_id===row.client_id&&!e.archived_at&&!row.unlinked_evidence_ids?.includes(e.evidence_id)&&(linked('evidence',e.evidence_id)||(['framework_assessment','framework_assessments'].includes(e.linked_type)&&e.linked_id===row.framework_assessment_id)));

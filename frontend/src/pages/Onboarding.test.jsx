@@ -72,6 +72,8 @@ test('successful completion becomes a read-only baseline and operational handoff
   expect(button('Complete onboarding')).toBeUndefined();
   expect(container.textContent).toContain('View onboarding baseline');
   expect(container.querySelector('a[href="/dashboard?client_id=a"]')).toBeTruthy();
+  expect(container.querySelector('a[href="/client-profile?tab=services&client_id=a"]')?.textContent).toBe('Set up services & tools');
+  expect(container.querySelector('a[href="/iv-setup?client_id=a"]')?.textContent).toBe('Open iVenture Setup');
 });
 
 test('entered first due date remains visible and reaches draft and final submission',async()=>{

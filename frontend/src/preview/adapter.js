@@ -1,6 +1,7 @@
 import {cisDemoOperationalView,visibleCisDemoRows} from './cisDemoVisibility';
 import catalog from '@catalogs/onboardingCatalog.json';
 import {isoAuditRequest} from './isoAudit';
+import {cmmcWorkbookRequest} from './cmmcWorkbook';
 import { authorizeDemo } from './authorization';
 import {organizationalControlRequest} from './organizationalControls';
 import {clientProfileRequest} from './clientProfile';
@@ -246,6 +247,11 @@ async function executePreviewAdapter(config,generation) {
     if (approval !== undefined) return method === 'get' ? respond(approval) : await save(approval);
     if(path==='/ai_systems/onboard'&&method==='post')return await save(aiOnboardingRequest(db,body,config.headers?.['Idempotency-Key']));
     if(path==='/ai-intake'||kind==='ai_systems')return await save(aiRequest(db,path,method,params,body));
+    if (path === '/frameworks/cmmc/workbook' || path === '/frameworks/cmmc/workbook/export') {
+      if (path.endsWith('/export') ? method!=='post' : !['get','put'].includes(method)) return fail(405,'Unsupported workbook operation');
+      const result = await cmmcWorkbookRequest(db,method,params,body);
+      return method === 'get' ? respond(result) : await save(result);
+    }
     if(path==='/frameworks/summary'&&method==='get')return respond(frameworkSummary(db,params.client_id,params));
     if(kind==='framework_assessments'&&method==='post'&&name==='findings')return await save(commandRequest(db,path,record(db,kind,id).client_id,body.request_id,body,()=>frameworkRequest(db,path,method,params,body)));
     const reviewSetupKey=config.headers?.get?.('Idempotency-Key')??config.headers?.['Idempotency-Key'];

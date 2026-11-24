@@ -16,9 +16,10 @@ const fail = (message, status = 422) => {
 function fields(value, allowed, required = []) {
   if (!value || typeof value !== 'object' || Array.isArray(value) || Object.keys(value).some(key => !allowed.includes(key)) || required.some(key => !Object.hasOwn(value, key))) fail('Unsupported or missing service command fields');
 }
-const coordinationFields = ['activity_id','review_id','expected_updated_at','expected_client_updated_at','area_id','tool_ids','custom_tools','recurring_ticket_number','recurring_ticket_url','recurring_ticket_summary','cadence','custom_days','first_next_due','notes','no_ticket','ticket_confirmed'];
-function coordinationShape(data, setup = false) {
-  fields(data, setup ? [...coordinationFields,'responsibility'] : coordinationFields, ['expected_client_updated_at']);
+const coordinationFields = ['activity_id','review_id','expected_updated_at','expected_client_updated_at','area_id','responsibility','tool_ids','custom_tools','recurring_ticket_number','recurring_ticket_url','recurring_ticket_summary','cadence','custom_days','first_next_due','notes','no_ticket','ticket_confirmed'];
+function coordinationShape(data) {
+  fields(data, coordinationFields, ['expected_client_updated_at']);
+  if (data.responsibility != null && !['iv','co','cl','tp','no'].includes(data.responsibility)) fail('Invalid service responsibility');
   for (const key of ['recurring_ticket_number','recurring_ticket_url','recurring_ticket_summary','notes']) if (Object.hasOwn(data,key) && typeof data[key] !== 'string') fail('Activity context must contain text fields');
   for (const key of ['no_ticket','ticket_confirmed']) if (Object.hasOwn(data,key) && data[key] !== null && typeof data[key] !== 'boolean') fail('Activity decisions must be boolean');
   if (data.tool_ids !== undefined && (!Array.isArray(data.tool_ids) || data.tool_ids.length > 100 || data.tool_ids.some(id => typeof id !== 'string' || !/^[A-Za-z0-9_-]{1,160}$/.test(id)))) fail('Invalid tool identities');
@@ -153,7 +154,7 @@ function checkTicket(data) {
   if ((data.notes || '').length > 2000 || (data.recurring_ticket_summary || '').length > 255) fail('Activity context is too long');
 }
 export function prepareServiceContext(db, assessment, data, options = {}) {
-  coordinationShape(data, options.setup === true);
+  coordinationShape(data);
   const context = readServiceContext(db, assessment),
     client = clientFor(db, assessment.client_id),
     entry = context.candidates.find(a => a.activity_id === data.activity_id);
@@ -171,6 +172,7 @@ export function prepareServiceContext(db, assessment, data, options = {}) {
     }
   }
   const area = data.area_id || entry?.area_id;
+  if (!area && (data.responsibility || data.tool_ids?.length || data.custom_tools?.length)) fail('Choose a service area for the selected tools or responsibility');
   if (area && !serviceCatalog.areas.some(a => a.id === area)) fail('Choose a known service area');
   if ((data.tool_ids || []).some(id => !known.has(id)) || new Set(data.tool_ids || []).size !== (data.tool_ids || []).length) fail('Unknown or duplicate selected tool');
   if (area) {
@@ -179,6 +181,7 @@ export function prepareServiceContext(db, assessment, data, options = {}) {
     if ((data.tool_ids || []).some(id => known.get(id).retired && !current.tool_ids.includes(id))) fail('A retired tool cannot be newly selected');
     services.areas[area] = {
       ...current,
+      ...(!options.setup && data.responsibility ? {responsibility: data.responsibility} : {}),
       tool_ids: [...new Set([...current.tool_ids, ...(data.tool_ids || [])])]
     };
   }
@@ -370,7 +373,7 @@ export function r4ServicesRequest(db, path, method, body = {}, requestKey) {
           if (body.note !== undefined && (typeof body.note !== 'string' || body.note.length > 2000)) fail('The removal note must contain at most 2000 characters');
           if (body.kind != null && !['spm', 'client', 'na'].includes(body.kind)) fail('Choose a supported removal reason');
           if (body.kind == null && body.note?.trim()) fail('Choose a removal reason for the note');
-        } else coordinationShape(body,true);
+        } else coordinationShape(body);
         const activityId = action === 'exclusion' ? parts.slice(4).join('/') : body.activity_id,
           entry = entries.find(a => a.activity_id === activityId);
         if (!entry || body.expected_client_updated_at !== (client.updated_at ?? null) || body.expected_updated_at !== entry.expected_updated_at) fail('Shared activity changed; reload before saving', 409);

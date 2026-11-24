@@ -41,7 +41,7 @@ export function authorizeDemo(db, method, parts, body = {}, requestKey) {
   const user = db.user, role = roleOf(user);
   if (!ROLES.includes(role)) deny('Unsupported role');
   if (method === 'get') return;
-  if(method==='post'&&parts.join('/')==='reports/exports')return; // Native read-equivalent export; handler rechecks tenant/role.
+  if(method==='post'&&['reports/exports','frameworks/cmmc/workbook/export'].includes(parts.join('/')))return; // Export routes recheck native role and scope.
   const route = `${method} /${parts.join('/')}`;
   if (SELF.some(pattern => pattern.test(route))) return;
   const target = (db[parts[0]] || []).find(r => r[ids[parts[0]]] === parts[1]);
@@ -70,6 +70,7 @@ export function authorizeDemo(db, method, parts, body = {}, requestKey) {
     || (method === 'post' && kind === 'framework_assessments' && action === 'items'
       && (parts.length === 3 || parts.length === 5 && ['remove','task'].includes(parts[4])));
   const guidedWrite=method==='put'&&kind==='framework_assessments'&&action==='guided-assessment'&&parts.length===3;
+  if (route === 'put /frameworks/cmmc/workbook') return; // The workbook enforces its client and item-assignment checks.
   if (!allowed&&!guidedWrite) deny('This operation requires a service-provider administrator');
   if (method === 'post' && parts.length === 1 && generic) {
     if (kind !== 'tasks') deny('Creating this record requires a service-provider administrator');

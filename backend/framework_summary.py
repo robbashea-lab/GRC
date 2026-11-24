@@ -7,6 +7,7 @@ from soc_readiness import configuration as soc_configuration
 from framework_catalog import client_configuration
 from management_obligations import calendar_day, active_record
 import review_occurrences
+import shared_review_plans
 from r4_services import assert_settled
 
 
@@ -84,7 +85,7 @@ async def read(s, client, detail=None, offset=0, limit=25):
             # Match the existing framework relationship model in one batch, not one call per safeguard.
             reviews = await bounded(s.db.reviews, {'client_id': cid, '$or': [
                 {'review_id': {'$in': direct('reviews')}}, {'framework_assessment_id': {'$in': aids}},
-                {'framework_key': key, 'framework_safeguards': {'$in': definitions}}]},
+                shared_review_plans.mapping_query(key, definitions)]},
                 ['review_id', 'client_id', 'title', 'status', 'due_date', 'recurrence',
                  'custom_recurrence_days', 'schedule_anchor', 'archived', 'archived_at'])
             health, obligations = ongoing(reviews, s._now())

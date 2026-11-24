@@ -13,6 +13,24 @@ server = harness.server
 class WorkspaceWorkContextTests(unittest.IsolatedAsyncioTestCase):
     asyncSetUp = harness.ClientDashboardSourcesTests.asyncSetUp
 
+    async def test_active_review_driver_is_scoped_as_a_pair_and_legacy_links_survive(self):
+        row = {'client_id':'a', 'framework_key':'cis-ig1', 'definition_id':'1.1', 'framework_assessment_id':'cis-asset',
+               'related_links':[{'kind':'reviews','id':'explicit'}]}
+        legacy = {'framework_key':'cis-ig1', 'framework_safeguards':['1.1']}
+        for review_id, mapping in {
+            'active': {'framework_drivers':[{'framework_key':'cis-ig1','framework_safeguards':['1.1']}]},
+            'wrong-pair': {'framework_drivers':[{'framework_key':'cis-ig1','framework_safeguards':['2.1']},
+                                                {'framework_key':'iso-27001','framework_safeguards':['1.1']}]},
+            'retired': {**legacy, 'framework_drivers':[{**legacy, 'framework_driver_active':False}]},
+            'empty': {**legacy,'framework_drivers':[]}, 'legacy': legacy, 'explicit': {'framework_drivers':[]},
+        }.items():
+            await server.db.reviews.insert_one({'review_id':review_id, 'client_id':'a', 'status':'upcoming', **mapping})
+        expected = {'active','legacy','explicit'}
+        related = await framework_governance.related(server, row)
+        self.assertEqual({r['review_id'] for r in related['reviews']}, expected)
+        overview = await framework_governance.workspace_work(server, 'a', [row])
+        self.assertEqual(set(overview['cis-asset']['review_ids']), expected)
+
     async def seed(self):
         rows = [
             {'client_id': 'a', 'framework_assessment_id': 'assessment-a', 'framework_key': 'cis-ig1',

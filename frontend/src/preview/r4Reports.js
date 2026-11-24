@@ -1,6 +1,8 @@
 // Browser-local saved Demo records only; authenticated report delivery stays native.
 import {zipSync, strToU8} from 'fflate';
 import {policySupportIds} from '../lib/frameworkPolicyLinks';
+import {reviewMapsTo} from '../lib/frameworkReviewLinks';
+import {actionAppliesTo, findingAppliesTo, findingScopes} from '../lib/frameworkWorkLinks';
 import {FRAMEWORKS, activeDefinitions, frameworkCatalog} from '../lib/frameworks';
 import {cisConfiguration} from '../lib/cisScope';
 import {socConfiguration, SOC_CATEGORIES} from '../lib/socReadiness';
@@ -133,20 +135,23 @@ function policyAlignment(policy, key, assessments) {
   return policySupportIds(policy,key,assessments);
 }
 
-function linkedWork(row, source, key) {
-  const references = row.related_links || [];
-  const findingIds = new Set((row.items_to_address || []).map(item => item.finding_id).filter(Boolean));
-  for (const link of references) if (link.kind === 'findings' && link.id) findingIds.add(link.id);
-  return ['findings', 'tasks', 'reviews'].flatMap(kind => {
-    const field = kind === 'tasks' ? 'task_id' : kind === 'findings' ? 'finding_id' : 'review_id';
-    const direct = new Set(references.filter(link => link.kind === kind).map(link => link.id));
-    return source[kind].filter(item => isOpen(kind, item) && (direct.has(item[field])
-      || item.framework_assessment_id === row.framework_assessment_id
-      || kind === 'findings' && findingIds.has(item.finding_id)
-      || kind === 'tasks' && findingIds.has(item.finding_id)
-      || kind === 'reviews' && item.framework_key === key && item.framework_safeguards?.includes(row.definition_id)))
-      .map(item => ({type: kind, id: item[field], title: item.title ?? null, status: item.status ?? null}));
-  });
+function linkedWork(row, source, key, scopes) {
+  const aid = row.framework_assessment_id, references = row.related_links || [];
+  const direct = kind => new Set(references.filter(link => link.kind === kind).map(link => link.id));
+  const directReviews = direct('reviews');
+  const reviews = source.reviews.filter(review => directReviews.has(review.review_id)
+    || review.framework_assessment_id === aid || reviewMapsTo(review, key, row.definition_id));
+  const reviewIds = new Set(reviews.map(review => review.review_id));
+  const findingIds = direct('findings');
+  for (const item of row.items_to_address || []) if (item.finding_id) findingIds.add(item.finding_id);
+  const findings = source.findings.filter(finding => findingIds.has(finding.finding_id)
+    || findingAppliesTo(aid, finding, reviewIds, scopes));
+  for (const finding of findings) findingIds.add(finding.finding_id);
+  const directTasks = direct('tasks');
+  const tasks = source.tasks.filter(task => directTasks.has(task.task_id) || actionAppliesTo(aid, task, reviewIds, findingIds));
+  return [['findings', 'finding_id', findings], ['tasks', 'task_id', tasks], ['reviews', 'review_id', reviews]]
+    .flatMap(([kind, field, records]) => records.filter(item => isOpen(kind, item))
+      .map(item => ({type: kind, id: item[field], title: item.title ?? null, status: item.status ?? null})));
 }
 
 async function preview(db, params) {
@@ -240,11 +245,14 @@ async function preview(db, params) {
         source.policies.filter(policy => policyAlignment(policy, key, rows).includes(row.definition_id)).map(policy => policy.title).join('; ')]))];
     else if (key === 'soc-2') sections = [section(header.title, ['Criterion', 'Title', 'Category', 'Owner', 'Readiness'],
       rows.map(row => [row.definition_id, row.title, SOC_CATEGORIES[row.category] ?? null, person(row.owner_id), labels[row.status]]))];
-    else sections = [section(header.title, ['ID', 'Title', 'Status', 'Verification', 'Linked work'],
-      included.map(row => ({row, work: linkedWork(row, source, key)}))
+    else {
+      const scopes = findingScopes(source.framework_assessments);
+      sections = [section(header.title, ['ID', 'Title', 'Status', 'Verification', 'Linked work'],
+        included.map(row => ({row, work: linkedWork(row, source, key, scopes)}))
         .filter(({row, work}) => row.status !== 'addressed' || work.some(item => ['tasks', 'findings'].includes(item.type)))
         .map(({row, work}) => [row.definition_id, row.title, labels[row.status], row.verification || 'not_verified',
           work.map(item => `${{tasks: 'Action item', findings: 'Finding', reviews: 'Review'}[item.type]} ${item.id}: ${item.title || ''} (${item.status || ''})`).join('; ')]))];
+    }
   } else if (type === 'risks') sections = [section(header.title, ['Risk', 'Title', 'Score', 'Status', 'Owner', 'Next review'],
     risks.map(row => [row.display_id || row.risk_id, row.title, row.risk_score, row.status, person(row.owner_id), row.next_review]))];
   else if (type === 'vendors') {

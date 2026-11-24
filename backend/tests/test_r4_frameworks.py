@@ -727,6 +727,8 @@ class R4NativeFrameworkTests(unittest.IsolatedAsyncioTestCase):
         body = {'implementation': 'Scoped actual implementation', 'status': 'in_progress', 'expected_last_assessed': None,
             'coordination': {'activity_id': activity['activity_id'], 'review_id': activity['review_id'],
                 'expected_updated_at': activity['expected_updated_at'], 'expected_client_updated_at': context['expected_client_updated_at'],
+                'responsibility': 'co', 'recurring_ticket_number': '34567', 'cadence': 'semiannual',
+                'first_next_due': '2027-02-15', 'tool_ids': ['ninjaone'],
                 'notes': 'Retain the original setup notes and add this reviewed change.'}}
         key = uuid.uuid4().hex
         collection=harness.server.db.framework_assessments
@@ -753,6 +755,13 @@ class R4NativeFrameworkTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(len(response.json()['assessment_history']), 1)
         review = await harness.server.db.reviews.find_one({'review_id': activity['review_id']})
         self.assertEqual(review['activity_setup']['notes'], body['coordination']['notes'])
+        setup = (await self.client.get('/api/clients/a/iv-setup')).json()['activities']
+        self.assertEqual(next(entry['state'] for entry in setup if entry['review_id'] == activity['review_id']), 'done')
+        saved_context = (await self.client.get(path + '/service-context')).json()
+        self.assertEqual(saved_context['services']['areas'][activity['area_id']]['responsibility'], 'co')
+        self.assertIn('ninjaone', saved_context['services']['areas'][activity['area_id']]['tool_ids'])
+        self.assertEqual(review['activity_setup']['recurring_ticket_number'], '34567')
+        self.assertEqual(review['due_date'][:10], '2027-02-15')
         self.assertFalse(review.get('_r4_context_pending'))
         self.assertEqual(await harness.server.db.framework_assessments.count_documents({'client_id': 'b'}), 0)
 

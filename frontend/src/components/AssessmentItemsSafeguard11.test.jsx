@@ -18,7 +18,7 @@ async function editResolution(scope,value){
 }
 function Harness({disabled=false,safeguard11=true,standard=false,recordOverride}){
   const [saved,setSaved]=useState(record);
-  return <AssessmentItems record={recordOverride||saved} ctx={{current:recordOverride||saved,related:{findings:[{finding_id:'linked-finding',title:'Actual linked Finding'}]}}} controls={{scope:recordOwner,commandScope:'synthetic-pilot-item-view-owner',writable:!disabled}} disabled={disabled} standard={standard} safeguard11={safeguard11} onSaved={setSaved} onCreateFinding={createFinding} onDraftChange={draft}/>;
+  return <AssessmentItems record={recordOverride||saved} ctx={{current:recordOverride||saved,related:{findings:[{client_id:saved.client_id,finding_id:'linked-finding',title:'Actual linked Finding'}]}}} controls={{scope:recordOwner,commandScope:'synthetic-pilot-item-view-owner',writable:!disabled}} disabled={disabled} standard={standard} safeguard11={safeguard11} onSaved={setSaved} onCreateFinding={createFinding} onDraftChange={draft}/>;
 }
 async function render(disabled=false,options={}){await act(async()=>root.render(<Harness disabled={disabled} {...options}/>));}
 beforeEach(()=>{sessionStorage.clear();

@@ -1,6 +1,8 @@
 import React,{act} from 'react';
 import {createRoot} from 'react-dom/client';
 import R4AssessmentContext from './R4AssessmentContext';
+import CisSequentialInterview from './CisSequentialInterview';
+import {versionForSafeguard} from '@/lib/guidedAssessment';
 import {AssessmentClientContextProvider} from './AssessmentClientContext';
 import api from '@/lib/api';
 jest.mock('@/lib/api',()=>({__esModule:true,default:{get:jest.fn(),put:jest.fn(),post:jest.fn(),patch:jest.fn()},formatError:error=>error.message}));
@@ -29,6 +31,43 @@ function contextFor(clientId='new-client',token='client-v1'){
     candidates:[{activity_id:'review:one',review_id:'one',title:'Current scoped activity',area_id:'endpoint',
       expected_updated_at:token,cadence:'annual',setup:{notes:'Current scoped notes'}}]};
 }
+test('new CIS client reuses the scheduled inventory review only after confirmation, including after a cadence edit',async()=>{
+  const record={client_id:'new-client',framework_assessment_id:'fresh-cis',framework_key:'cis-ig1',framework_version:'8.1',definition_id:'1.1'};
+  const data=contextFor(record.client_id),activity=data.candidates[0];
+  Object.assign(activity,{cadence:'semiannual',state:'done',first_next_due:'2027-01-15',setup:{recurring_ticket_number:'34567'},drivers:[
+    {framework_key:'cis-ig1',framework_plan_key:'asset-inventory',framework_safeguards:['1.1']}]});
+  data.services.areas.endpoint.responsibility='un';
+  data.services.areas.endpoint.tool_ids=['client-register'];
+  data.catalog.push({tool_id:'client-register',name:'North warehouse register',area_ids:['endpoint']});
+  api.get.mockResolvedValue({data});
+  const confirm=jest.fn(),stage=jest.fn();
+  const render=step=>act(async()=>root.render(<AssessmentClientContextProvider record={record} scopeKey="new-client-1.1">
+    <R4AssessmentContext record={record} onApply={stage}/>
+    <CisSequentialInterview id="1.1" version={versionForSafeguard('1.1')} step={step} answers={{inventory:'Yes'}}
+      assessmentConcept={true} put={confirm}/>
+  </AssessmentClientContextProvider>));
+  await render('system');
+  expect([...host.querySelectorAll('.brawndo-pilot-tool-field option')].map(node=>node.value)).toContain('North warehouse register');
+  await render('last_review');
+  const date=host.querySelector('fieldset[data-question-id="last_review"]');
+  expect(date.textContent).toContain('Ticket #34567');
+  expect(date.querySelector('input[type="date"]').value).toBe('');
+  await render('frequency');
+  const question=host.querySelector('fieldset[data-question-id="frequency"]');
+  expect(question.textContent).toContain('Scheduled review · 2027-01-15 · Every six months');
+  expect(confirm).not.toHaveBeenCalled();
+  await act(async()=>[...question.querySelectorAll('button')].find(button=>button.textContent==='Confirm every six months is in use').click());
+  expect(confirm).toHaveBeenCalledWith(expect.objectContaining({id:'frequency'}),'Every six months');
+  const select=async(label,value)=>act(async()=>{
+    const field=host.querySelector('[aria-label="'+label+'"]');field.value=value;field.dispatchEvent(new Event('change',{bubbles:true}));
+  });
+  await select('Service area responsibility','iv');
+  await select('Planned activity cadence','custom');
+  await act(async()=>[...host.querySelectorAll('button')].find(node=>node.textContent==='Apply context to draft').click());
+  expect(stage).toHaveBeenCalledWith(expect.objectContaining({activity_id:activity.activity_id,review_id:activity.review_id,
+    cadence:'custom',custom_days:1,first_next_due:'2027-01-15',responsibility:'iv'}));
+  expect(api.post).not.toHaveBeenCalled();
+});
 test.each([
   ['missing candidates',data=>{delete data.candidates;}],
   ['missing catalog',data=>{delete data.catalog;}],
@@ -56,7 +95,9 @@ test('retained partial service facts remain readable as unknown without manufact
   api.get.mockResolvedValue({data});const onApply=jest.fn(),record={client_id:'new-client',framework_assessment_id:'assessment-id'};
   await act(async()=>root.render(<R4AssessmentContext {...{record,onApply}}/>));
   expect(host.querySelector('[role="alert"]')).toBeNull();expect(host.querySelector('fieldset')).toBeTruthy();
-  expect(host.textContent).toContain('Responsibility: Not set');
+  const responsibility=host.querySelector('[aria-label="Service area responsibility"]');
+  expect(responsibility.value).toBe('un');
+  expect(responsibility.selectedOptions[0].textContent).toBe('Not set');
   expect(host.querySelector('[aria-label="Assessment setup notes"]').value).toBe('');
   expect(onApply).not.toHaveBeenCalled();
   for(const method of ['post','put','patch'])expect(api[method]).not.toHaveBeenCalled();

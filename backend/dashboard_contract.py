@@ -7,6 +7,7 @@ from datetime import date
 from grc_rules import assessed_risk, represented_finding
 from management_obligations import KINDS, calendar_day
 from framework_catalog import FRAMEWORKS
+from shared_review_plans import active_mappings
 import vendor_governance
 
 PREVIEW_LIMIT = 25
@@ -42,7 +43,8 @@ def framework_membership(records, assessments, controls, include_metadata=False)
     by_assessment = {r['framework_assessment_id']: r.get('framework_key') for r in assessments}
     assessment_rows = {r['framework_assessment_id']: r for r in assessments}
     known = {key: not r.get('framework_assessment_id') or r['framework_assessment_id'] in assessment_rows for key, r in nodes.items()}
-    safeguards = {key: set(f"{r.get('framework_key')}|{did}" for did in r.get('framework_safeguards') or []) for key, r in nodes.items()}
+    safeguards = {key: {f"{driver['framework_key']}|{did}" for driver in active_mappings(r)
+                        for did in driver['framework_safeguards']} for key, r in nodes.items()}
     def add_assessment(key, aid):
         a = assessment_rows.get(aid)
         if aid and not a and key in known:

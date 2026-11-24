@@ -3,6 +3,28 @@ from framework_catalog import CATALOGS, active_plans
 
 INTERVALS = {'monthly': 1, 'quarterly': 3, 'semiannual': 6, 'annual': 12}
 
+# These are saved Review relationships. A catalog recommendation alone is not a link.
+MAPPING_FIELDS = ('framework_key', 'framework_safeguards', 'framework_driver_active', 'framework_drivers')
+
+
+def active_mappings(review):
+    drivers = review.get('framework_drivers')
+    return [driver for driver in (drivers if drivers is not None else [review])
+            if isinstance(driver, dict) and driver.get('framework_key') and driver.get('framework_safeguards')
+            and driver.get('framework_driver_active') is not False]
+
+
+def maps_to(review, framework_key, definition_id):
+    return any(driver['framework_key'] == framework_key and definition_id in driver['framework_safeguards']
+               for driver in active_mappings(review))
+
+
+def mapping_query(framework_key, definition_ids):
+    # Match the framework and unit on the same driver; an empty driver list retires an old flat mapping.
+    match = {'framework_key': framework_key, 'framework_safeguards': {'$in': definition_ids},
+             'framework_driver_active': {'$ne': False}}
+    return {'$or': [{'framework_drivers': None, **match}, {'framework_drivers': {'$elemMatch': match}}]}
+
 
 def selected_plans(state):
     return [{**p, 'framework_key': key} for key, catalog in CATALOGS.items()

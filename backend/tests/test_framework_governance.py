@@ -11,6 +11,23 @@ class FrameworkTests(unittest.IsolatedAsyncioTestCase):
     asyncSetUp = Harness.asyncSetUp
     sign_in = Harness.sign_in
 
+    async def test_linked_library_files_reach_the_scoped_assessment_context(self):
+        await self.configure(self.body(('iso-27001',)))
+        row = await server.db.framework_assessments.find_one({'client_id': 'a', 'framework_key': 'iso-27001'})
+        aid = row['framework_assessment_id']
+        await server.db.reviews.insert_one({'review_id': 'linked-review', 'client_id': 'a', 'framework_assessment_id': aid})
+        review_links = [{'kind': 'reviews', 'id': 'linked-review', 'occurrence_id': 'saved-occurrence'}]
+        scoped = {'client_id': 'a', 'relationships': review_links, 'filename': 'same.pdf'}
+        await server.db.evidence.insert_many([
+            {**scoped, 'evidence_id': 'review-file'}, {**scoped, 'evidence_id': 'assessment-file', 'relationships': [{'kind':'framework_assessments','id':aid}]},
+            {**scoped, 'evidence_id': 'foreign', 'client_id':'b'}, {**scoped, 'evidence_id': 'archived', 'archived_at':'2026-10-01'},
+            {**scoped, 'evidence_id': 'unlinked'}, {**scoped, 'evidence_id': 'unrelated', 'relationships':[{'kind':'vendors','id':'linked-review'}]},
+        ])
+        await server.db.framework_assessments.update_one({'client_id':'a','framework_assessment_id':aid},{'$set':{'unlinked_evidence_ids':['unlinked']}})
+        response = await self.client.get('/api/framework_assessments/' + aid + '/related')
+        self.assertEqual(response.status_code, 200, response.text)
+        self.assertEqual({file['evidence_id'] for file in response.json()['evidence']}, {'review-file','assessment-file'})
+
     async def test_workspace_review_setup_reuses_onboarding_and_preserves_schedule(self):
         workspace=await self.configure()
         plan=active_plans('cis-ig1')[0]
