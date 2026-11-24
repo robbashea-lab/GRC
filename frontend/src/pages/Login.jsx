@@ -20,6 +20,9 @@ export default function Login() {
   const pending = useRef(false);
 
   useEffect(() => {
+    if (process.env.REACT_APP_STANDARD_SIGN_IN === 'true') {
+      document.cookie = 'governara_staging_workspace=; Max-Age=0; Path=/; SameSite=Lax';
+    }
     const previousTitle = document.title;
     document.title = "GoverNara Sign In";
     return () => { if (document.title === "GoverNara Sign In") document.title = previousTitle; };
@@ -63,6 +66,10 @@ export default function Login() {
 
   async function enterDemo() {
     if (!DEMO_AVAILABLE || pending.current) return;
+    if (process.env.REACT_APP_STANDARD_SIGN_IN === 'true') {
+      window.location.assign('/visual-preview.html');
+      return;
+    }
     pending.current = true;
     setLoading(true);
     setStatus("");

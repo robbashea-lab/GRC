@@ -1,6 +1,16 @@
 # GoverNara v3.0 native workflow handoff
 
-## Signed-in staging update, November 24
+## Current exact HTML staging delivery, November 24
+
+Robb confirmed that the complete supplied interactive HTML should be the ordinary staging interface, including all eight sample clients and ten programs, with existing saved records still available. The default internal sign-in entry at `/clients` serves `frontend/public/visual-preview.html`, copied from `GoverNara-v3-Workflow-Parity (3).html`. The SHA-256 is `5bb03e1219276a01459f2a44be6da44dce71271feb8a17c15a2083e6db397db9`.
+
+The complete source document supplies the sample screens, records, framework assignments, guided assessments, reports and interactions. A single external session script provides real Sign out and an Existing records menu link. The source file itself is unchanged. The first exact-document release opens Glass ’07, and later theme selections follow the mockup's saved preference.
+
+`/existing` returns to the native application and its saved records using the original route paths and authentication. A session preference selects which portfolio opens. Customer roles retain their authorized native dashboard. Explore Demo opens the complete supplied sample directly.
+
+Sample edits retain the HTML's browser-local save/recovery behavior. They are independent of native client records and their database history. This deployment does not establish native persistence or workflow parity for the sample document. The prior native implementation remains available through Existing records.
+
+## Earlier native staging implementation, November 24
 
 The signed-in release on `codex/staging-signed-in-v3-20261124` combines the native workflows below with the design from `GoverNara-v3-Workflow-Parity (3).html`. Its SHA-256 is `5bb03e1219276a01459f2a44be6da44dce71271feb8a17c15a2083e6db397db9`. The exact HTML is available in `frontend/public/visual-preview.html` for visual comparison. The authenticated application uses its own React components, existing API and database.
 

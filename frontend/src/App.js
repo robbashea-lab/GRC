@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { Toaster } from "sonner";
 import { AuthProvider, useAuth } from "@/context/AuthContext";
@@ -40,12 +41,30 @@ function Protected({ children }) {
   return children;
 }
 
+const isExistingWorkspace = () => document.cookie.split(';').some(value =>
+  value.trim() === 'governara_staging_workspace=existing');
+
+function ClientPortfolioRoute() {
+  const {workspaceMode} = useAuth();
+  const approved = process.env.REACT_APP_STANDARD_SIGN_IN === 'true' && !isExistingWorkspace();
+  useEffect(() => {
+    if (approved) {
+      // A document navigation loads the supplied HTML after client-side sign-in.
+      window.location.replace(workspaceMode === 'demo' ? '/visual-preview.html' : '/clients');
+    }
+  }, [approved, workspaceMode]);
+  return approved ? <p role="status">Opening client portfolio…</p> : <ClientDirectory />;
+}
+
 // Internal users (super_admin, platform_admin) land on Client Directory.
 // Client users land directly in their tenant Dashboard.
 function LandingRoute() {
   const { user } = useAuth();
   const isInternal = ["super_admin", "platform_admin"].includes(user?.role);
   const {clients, loading} = useOrg();
+  if (isInternal && process.env.REACT_APP_STANDARD_SIGN_IN === 'true' && !isExistingWorkspace()) {
+    return <Navigate to="/clients" replace />;
+  }
   if (loading) return <div className="p-8">Loading clients…</div>;
   if (!clients.length && user?.role !== "super_admin") return <div role="status" className="page-content">No client access is assigned. Contact your administrator.</div>;
   return <Navigate to={isInternal && (clients.length !== 1 || user?.role === "super_admin") ? "/clients" : "/dashboard"} replace />;
@@ -82,7 +101,7 @@ function AppRouter() {
         }
       >
         <Route index element={<LandingRoute />} />
-        <Route path="clients" element={<InternalOnly><ClientDirectory /></InternalOnly>} />
+        <Route path="clients" element={<InternalOnly><ClientPortfolioRoute /></InternalOnly>} />
         <Route path="admin/clients" element={<InternalOnly><ClientManagement /></InternalOnly>} />
         <Route path="admin/users" element={<InternalOnly><PlatformAdmin /></InternalOnly>} />
         <Route path="admin/roles" element={<InternalOnly><AdminRoles /></InternalOnly>} />
