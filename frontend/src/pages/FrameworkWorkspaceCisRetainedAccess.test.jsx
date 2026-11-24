@@ -199,8 +199,8 @@ test('retained toggle, search and filter open exact native records and managemen
   expect(host.querySelector('[data-testid="location"]').textContent).toContain('assessment=native-1.3');
   const assessment=host.querySelector('[data-testid="brawndo-cis-assessment"]');
   expect(assessment).toBeTruthy();expect(assessment.classList.contains('brawndo-cis-visual-safeguard')).toBe(false);
-  expect(assessment.querySelector('[aria-label="Implemented"]').value).toBe('Retained implementation 1.3');
-  expect(assessment.querySelector('[aria-label="Implemented"]').disabled).toBe(false);
+  expect(assessment.querySelector('[aria-label="Current implementation"]').value).toBe('Retained implementation 1.3');
+  expect(assessment.querySelector('[aria-label="Current implementation"]').disabled).toBe(false);
   expect(assessment.querySelector('[aria-label="Saved verification"]').textContent).toBe('Verified');
   expect(host.textContent).toContain('Retained out-of-scope safeguard · history and linked work remain available.');
   expect(api.get).toHaveBeenCalledWith('/framework_assessments/native-1.3/related',expect.any(Object));
@@ -229,8 +229,8 @@ test('a retained deep link keeps its native notice and actor-based read-only per
   mockAuth={...mockAuth,user:{...mockAuth.user,role:'client_viewer'}};
   await render('/compliance/cis-ig1?assessment=native-1.5');
   const assessment=host.querySelector('[data-testid="brawndo-cis-assessment"]');
-  expect(assessment).toBeTruthy();expect(assessment.querySelector('[aria-label="Implemented"]').value).toBe('Retained implementation 1.5');
-  expect(assessment.querySelector('[aria-label="Implemented"]').disabled).toBe(true);
+  expect(assessment).toBeTruthy();expect(assessment.querySelector('[aria-label="Current implementation"]').value).toBe('Retained implementation 1.5');
+  expect(assessment.querySelector('[aria-label="Current implementation"]').disabled).toBe(true);
   expect(button(assessment,'Save assessment')).toBeUndefined();
   expect(assessment.textContent).toContain('Retained assessment');expect(assessment.textContent).toContain('Read-only assessment');
   expect(host.textContent).toContain('Retained out-of-scope safeguard · history and linked work remain available.');

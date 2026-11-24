@@ -169,7 +169,8 @@ test('Prestige SOC 2 uses scoped progress and category-first hierarchy without p
  expect(summary).toContain('Implemented');expect(summary).toContain('28 of 38 criteria');expect(summary).toContain('35 of 38 assessed');expect(workspace.querySelector('.gn-ring-value').textContent).toBe('73.7%');expect(workspace.querySelector('[aria-label="Show criteria"]').textContent).toContain('Not assessed3');
  const partial=workspace.querySelector('.gn-ring-card[data-status=P]');expect(partial.tabIndex).toBe(0);expect(partial.tagName).toBe('BUTTON');expect(partial.title).toBe('Partially implemented: 5 of 38 criteria');expect(parseFloat(partial.querySelector('.gn-ring-arc').getAttribute('stroke-dasharray'))).toBeCloseTo(100*5/38);
  const addressed=workspace.querySelector('.gn-ring-card[data-status=I]');expect(addressed.title).toBe('Implemented: 28 of 38 criteria');expect(parseFloat(addressed.querySelector('.gn-ring-arc').getAttribute('stroke-dasharray'))).toBeCloseTo(100*28/38);
- expect(workspace.querySelector('.lg').textContent).toContain('13.2%5 of 38');
+ expect(partial.querySelector('.gn-ring-value').textContent).toBe('13.2%');
+ expect(partial.querySelector('.gn-ring-copy strong').textContent).toBe('5 of 38');
  expect(workspace.querySelectorAll('[data-testid^="soc-category-"]')).toHaveLength(3);expect(workspace.querySelector('[data-testid="soc-category-security"]').textContent).toContain('Security — Common Criteria33');
  expect(workspace.querySelector('.soc-criteria-register').textContent).not.toMatch(/Processing Integrity|Privacy/);
  expect(workspace.dataset.theme).toBe('dark');await act(async()=>buttons('Light')[0].click());expect(workspace.dataset.theme).toBe('light');await act(async()=>buttons('Dark')[0].click());expect(workspace.dataset.theme).toBe('dark');
