@@ -34,7 +34,7 @@ test.each([
 
 test('non-CIS assessments reject verification and keep history shape',async()=>{
   const row=(await configure('nist-csf-2')).assessments[0],path='/framework_assessments/'+row.framework_assessment_id;
-  await expect(api.patch(path,{verification:'verified',expected_last_assessed:null})).rejects.toThrow('Verification is available only for CIS Controls IG1 and SOC 2');
+  await expect(api.patch(path,{verification:'verified',expected_last_assessed:null})).rejects.toThrow('Verification is unavailable for this framework');
   await expect(api.patch(path,{verification_checklist:{},expected_last_assessed:null})).rejects.toThrow('Verification checklists apply only to CIS Controls IG1');
   const saved=(await api.patch(path,{notes:'CSF note',expected_last_assessed:null})).data;
   expect(saved.assessment_history.at(-1)).not.toHaveProperty('verification');

@@ -2,13 +2,42 @@
 import os
 import sys
 import inspect
-from contextlib import ExitStack
+from contextlib import ExitStack, nullcontext
 from pathlib import Path
+from types import SimpleNamespace
 from unittest.mock import patch
 
 import uvicorn
 from mongomock_motor import AsyncMongoMockClient
 from mongomock.collection import BulkOperationBuilder
+
+
+class SerialReportCollection:
+    """Keep the real report queries while dropping mock-only session metadata."""
+
+    def __init__(self, collection):
+        self.collection = collection
+
+    def find(self, *args, session, **kwargs):
+        return self.collection.find(*args, **kwargs)
+
+    async def find_one(self, *args, session, **kwargs):
+        return await self.collection.find_one(*args, **kwargs)
+
+    async def distinct(self, *args, session, **kwargs):
+        return await self.collection.distinct(*args, **kwargs)
+
+
+class SerialReportDatabase:
+    def __init__(self, database):
+        self.database = database
+        self.client = SimpleNamespace(start_session=self.start_session)
+
+    async def start_session(self):
+        return nullcontext(SimpleNamespace(operation_time=None, start_transaction=lambda **_: nullcontext()))
+
+    def __getattr__(self, name):
+        return SerialReportCollection(self.database[name])
 
 
 def main():
@@ -37,11 +66,20 @@ def main():
             stack.enter_context(patch.object(BulkOperationBuilder, 'add_update', unsorted_update))
         import server
         import cmmc_workbook
-        # This sequential browser run reads/exports a workbook. Snapshot isolation
-        # and transaction durability require a real replica set in their own suite.
+        import framework_reports
+        import r4_reports
+        # The disposable browser verifies serial reads and real output writers.
+        # Snapshot isolation and transaction durability run in the real Mongo suite.
         async def workbook_operation(service, operation):
             return await operation(None)
         stack.enter_context(patch.object(cmmc_workbook, 'transaction', workbook_operation))
+        read_snapshot = framework_reports.read_snapshot
+
+        async def serial_snapshot(service, *args):
+            return await read_snapshot(SimpleNamespace(db=SerialReportDatabase(service.db)), *args)
+
+        stack.enter_context(patch.object(framework_reports, 'read_snapshot', serial_snapshot))
+        stack.enter_context(patch.object(r4_reports, 'operational_snapshot', r4_reports.read_operational))
         @server.app.get('/qa-native-identity', include_in_schema=False)
         async def loopback_identity():
             return {'run_id': run_id}

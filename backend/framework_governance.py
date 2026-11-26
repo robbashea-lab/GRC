@@ -956,7 +956,7 @@ def router_for(s):
             raise HTTPException(422,'CSF profile fields apply only to NIST CSF')
         verification_allowed='verification' in supported
         if 'verification' in changes and not verification_allowed:
-            raise HTTPException(422,'Verification is available only for CIS Controls IG1 and SOC 2')
+            raise HTTPException(422,'Verification is unavailable for this framework')
         if 'verification_checklist' in changes:
             if 'verification_checklist' not in supported:raise HTTPException(422,'Verification checklists apply only to CIS Controls IG1')
             if any(c.split('-')[0]!=old['definition_id'] for ids in (changes.get('verification_checklist') or {}).values() for c in ids):
