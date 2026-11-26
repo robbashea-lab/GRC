@@ -182,7 +182,7 @@ test.each(['1.1','1.2','12.1'])('%s saves from each entry path, reloads the nati
   await value('Current implementation','Exact manual domain wording '+id);await click(native().querySelector('input[value="addressed"]'));await clickName('Save assessment',native());
   expect(api.patch).toHaveBeenLastCalledWith('/framework_assessments/native-'+id,expect.objectContaining({implementation:'Exact manual domain wording '+id,status:'addressed',verification:'needs_validation',owner_id:'native-owner',expected_last_assessed:TOKEN}),{assessmentAuthority:expect.any(Function)});
   expect(native().textContent).toContain('Assessment saved.');await closeNative();
-  expect(container.querySelector('[data-testid="bcis-seg-addressed"]').getAttribute('aria-label')).toContain('1 of 56');
+  expect(container.querySelector('.gn-ring-card[data-status="I"]').getAttribute('aria-label')).toContain('1 of 56');
   expect(query(`[data-testid="security-domain-${domain.id}"]`).textContent).toContain('1 of '+domain.safeguardIds.length);
   await openControl(id);expect(editorSnapshot().implementation).toBe('Exact manual domain wording '+id);
   await value('Current implementation','Exact manual Controls wording '+id);await clickName('Save assessment',native());await closeNative();await openDomain(id);
@@ -216,7 +216,7 @@ test('domain native save rejects a stale record without overwriting manual wordi
 
 test('clearing only the domain selection retains native status and safeguard search filters',async()=>{
   record('1.1').status='addressed';await mount();
-  const statusFilter=()=>[...container.querySelectorAll('.bcis-legend button')].find(element=>element.textContent.startsWith('Not assessed'));
+  const statusFilter=()=>container.querySelector('.gn-ring-card[data-status="A"]');
   await click(statusFilter());await value('Search safeguards','1.2');
   const originalResults=[...container.querySelectorAll('[data-testid^="requirement-"]')].map(element=>element.dataset.testid);
   expect(originalResults).toEqual(['requirement-1.2','requirement-11.2']);
@@ -229,7 +229,7 @@ test('clearing only the domain selection retains native status and safeguard sea
 });
 
 test('mapped Controls receives focus and a saved row that leaves its filter returns to an available native context',async()=>{
-  await mount();await click([...container.querySelectorAll('.bcis-legend button')].find(element=>element.textContent.startsWith('Not assessed')));
+  await mount();await click(container.querySelector('.gn-ring-card[data-status="A"]'));
   await value('Search safeguards','1.1');await expandDomain('assets');
   const shortcut=query('[aria-label="View mapped controls for Asset & Software Management"]');shortcut.focus();await click(shortcut);await frame();
   const controls=container.querySelector('.bcis-controls');expect(document.activeElement).toBe(controls.querySelector('[aria-current="page"]'));

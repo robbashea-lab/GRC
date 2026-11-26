@@ -124,17 +124,19 @@ test('actual Review overdue agenda keeps occurrence counts, completed exclusion 
 test('actual Risk register and overdue timeline retain labels, severity, dates and native Risk destination',async()=>{
   const rows=[{client_id:'qa-client',risk_id:'risk-late',display_id:'RISK-QA-1',title:'QA overdue Risk review',status:'assessed',likelihood_score:2,impact_score:3,next_review:'2026-10-28'},
     {client_id:'qa-client',risk_id:'risk-future',display_id:'RISK-QA-2',title:'QA future Risk review',status:'assessed',likelihood_score:3,impact_score:4,next_review:'2026-10-30'}];
-  const before=JSON.stringify(rows),onOpenRisk=jest.fn();
-  await act(async()=>root.render(<CisRisksConcept rows={rows} filtered={rows} users={[]} matches={riskMatches} view="all_active" onView={jest.fn()} search="" onSearch={jest.fn()} table={{state:{filters:{}},setSort:jest.fn()}} filters={null} onOpenRisk={onOpenRisk} onOpenEvent={jest.fn()} onNewRisk={jest.fn()} onRiskScale={jest.fn()} onExport={jest.fn()} canWrite clientId="qa-client" clientName="QA client" scope="qa-clock-risk" now={now}/>));
+  const before=JSON.stringify(rows),onOpenRisk=jest.fn(),onOpenEvent=jest.fn();
+  await act(async()=>root.render(<CisRisksConcept rows={rows} filtered={rows} users={[]} matches={riskMatches} view="all_active" onView={jest.fn()} search="" onSearch={jest.fn()} table={{state:{filters:{}},setSort:jest.fn()}} filters={null} onOpenRisk={onOpenRisk} onOpenEvent={onOpenEvent} onNewRisk={jest.fn()} onRiskScale={jest.fn()} onExport={jest.fn()} canWrite clientId="qa-client" clientName="QA client" scope="qa-clock-risk" now={now}/>));
   const late=container.querySelector('[data-risk-row="risk-late"]'),relative=late.querySelector('.review-relative');
   expect(relative.textContent).toBe('1 day overdue · Last Never reviewed');expectClock(relative,true);
   expect(late.querySelector('time').getAttribute('datetime')).toBe('2026-10-28');
   expectClock(container.querySelector('[data-risk-row="risk-future"] .review-relative'),false);
   expect(container.querySelector('.score-badge').textContent).toBe('6 · Moderate');
   expect(container.querySelector('.score-badge svg')).toBeNull();
-  await act(async()=>container.querySelector('.agenda-switch [data-mode="overdue"]').click());
-  const eventBadge=container.querySelector('.agenda .due-badge.overdue');
-  expect(eventBadge.textContent).toBe('1 day overdue');expectClock(eventBadge,true);
+  const overdue=container.querySelector('.v3-quarter-ledger .tl2-h[data-mode="overdue"]');
+  expect(overdue.textContent).toBe('Behind schedule · 1');
+  const event=overdue.parentElement.querySelector('.tl-item'),eventBadge=event.querySelector('.v3-item-copy small');
+  expect(eventBadge.textContent).toContain('1 day overdue');expectClock(eventBadge,false);
+  await act(async()=>event.click());expect(onOpenEvent).toHaveBeenCalledWith('risks',rows[0]);
   await act(async()=>relative.querySelector('svg').dispatchEvent(new MouseEvent('click',{bubbles:true})));
   expect(onOpenRisk).toHaveBeenCalledTimes(1);expect(onOpenRisk).toHaveBeenCalledWith(rows[0]);
   for(const method of ['post','put','patch','delete'])expect(api[method]).not.toHaveBeenCalled();

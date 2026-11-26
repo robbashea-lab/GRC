@@ -47,7 +47,7 @@ beforeEach(() => {
   previousObserver = global.ResizeObserver;
   global.ResizeObserver = class {observe() {} unobserve() {} disconnect() {}};
   geometry = jest.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(function () {
-    return {width: this.classList.contains('qpt-plot') ? 1100 : 0, height: 0, top: 0, left: 0, right: 1100, bottom: 0};
+    return {x:0,y:0,width:1100,height:0,top:0,left:0,right:1100,bottom:0};
   });
   container = document.createElement('div'); document.body.appendChild(container); root = createRoot(container);
 });
@@ -56,7 +56,10 @@ afterEach(async () => {
   geometry.mockRestore(); global.ResizeObserver = previousObserver; jest.useRealTimers();
 });
 
-const click = node => act(async () => node.click());
+const click = node => act(async () => {expect(node).toBeTruthy();node.dispatchEvent(new MouseEvent('click',{bubbles:true}));});
+// Settle the scheduled animation frame without relying on its timer's phase.
+// The separate midnight test advances the calendar clock explicitly.
+const frame = () => act(async () => jest.advanceTimersToNextTimer());
 const buttonNamed = text => [...document.querySelectorAll('button')].find(node => node.getAttribute('aria-label') === text || node.textContent === text);
 
 async function render(overrides = {}) {
@@ -84,85 +87,73 @@ function protectedMarkup(modalOpen = false) {
   }));
 }
 
-test('quarter/year and readable date-list interactions leave global cards and register unchanged', async () => {
-  const {handlers} = await render();
-  const baseline = protectedMarkup();
-  for (const control of ['Q2', 'Previous quarter', 'Next quarter', 'Q4']) {
-    await click(buttonNamed(control));expect(protectedMarkup()).toEqual(baseline);
-  }
-  const marker = container.querySelector('.cv-event-dot');
-  expect(container.querySelectorAll('.cv-event-dot')).toHaveLength(6);
-  await click(marker);
-  expect(document.querySelectorAll('.cv-list-items>button')).toHaveLength(4);
-  expect(protectedMarkup(true)).toEqual(baseline);
-  await click(buttonNamed('Close'));
-  await act(async () => jest.advanceTimersByTime(20));
-  expect(document.querySelector('.cv-event-list')).toBeNull();
-  expect(document.activeElement).toBe(marker);
-  expect(protectedMarkup()).toEqual(baseline);
-  for (const handler of Object.values(handlers)) expect(handler).not.toHaveBeenCalled();
+const ledger=()=>container.querySelector('[aria-label="Vendor dates"]');
+const totals=()=>ledger().querySelector('.ql-totals');
+const point=(lane,month,day)=>ledger().querySelector('[data-k="'+lane+'|'+new Date(2026,month-1,day).getTime()+'"]');
+const choices=()=>[...ledger().querySelectorAll('.v3-ledger-tip button')];
+const viewDataRows=()=>[...ledger().querySelectorAll('.vd tbody tr')];
+
+test('quarter navigation and readable point choices leave global cards and register unchanged',async()=>{
+  const {handlers}=await render();const baseline=protectedMarkup();
+  await click(buttonNamed('Previous quarter'));await click(buttonNamed('Previous quarter'));
+  expect(ledger().querySelector('.v3-quarter-switch b').textContent).toBe('Q2 2026');expect(totals().dataset.total).toBe('0');expect(protectedMarkup()).toEqual(baseline);
+  await click(buttonNamed('Next quarter'));expect(ledger().querySelector('.v3-quarter-switch b').textContent).toBe('Q3 2026');
+  await click(buttonNamed('This quarter'));expect(totals().dataset.total).toBe('6');
+  expect([...ledger().querySelectorAll('.ql-point')].reduce((sum,node)=>sum+Number(node.dataset.count),0)).toBe(6);
+  const marker=point('asr',11,5);expect(marker.getAttribute('role')).toBe('button');expect(marker.getAttribute('tabindex')).toBe('0');
+  await act(async()=>marker.dispatchEvent(new KeyboardEvent('keydown',{key:'Enter',bubbles:true})));
+  expect(choices()).toHaveLength(2);expect(protectedMarkup()).toEqual(baseline);
+  await frame();expect(document.activeElement).toBe(choices()[0]);
+  await act(async()=>choices()[0].dispatchEvent(new KeyboardEvent('keydown',{key:'Escape',bubbles:true})));
+  expect(ledger().querySelector('.v3-ledger-tip')).toBeNull();expect(document.activeElement).toBe(marker);expect(protectedMarkup()).toEqual(baseline);
+  for(const handler of Object.values(handlers))expect(handler).not.toHaveBeenCalled();
 });
 
 test.each([
-  ['review:isolated-client:native-review:occ_native-review', 'review', review],
-  ['review:isolated-client:native-assurance-review:occ_native-assurance-review', 'review', assurance],
-  ['assurance:isolated-client:native-vendor:native-assurance', 'vendor', 'assurance'],
-  ['review:isolated-client:native-contract-review:occ_native-contract-review', 'review', contract],
-  ['date:isolated-client:native-vendor:contract_renewal', 'vendor', 'contract'],
-  ['date:isolated-client:native-vendor:contract_notice_deadline', 'vendor', 'contract'],
-])('readable Vendor selector keeps exact native event destination: %s', async (eventId, source, target) => {
-  const {handlers} = await render();
-  const baseline = protectedMarkup();
-  await click(container.querySelector(`.cv-event-dot[data-event-id="${eventId}"]`));
-  expect(handlers.onOpen).not.toHaveBeenCalled();expect(handlers.onOpenReview).not.toHaveBeenCalled();
-  await click(document.querySelector(`.cv-list-items>[data-event-id="${eventId}"]`));
-  if (source === 'review') {
+  ['review:isolated-client:native-review:occ_native-review','rev',11,5,0,'review',review],
+  ['review:isolated-client:native-assurance-review:occ_native-assurance-review','asr',11,5,1,'review',assurance],
+  ['assurance:isolated-client:native-vendor:native-assurance','asr',11,5,0,'vendor','assurance'],
+  ['review:isolated-client:native-contract-review:occ_native-contract-review','ren',11,5,0,'review',contract],
+  ['date:isolated-client:native-vendor:contract_renewal','ren',12,12,0,'vendor','contract'],
+  ['date:isolated-client:native-vendor:contract_notice_deadline','ren',11,12,0,'vendor','contract'],
+])('approved ledger choice keeps the exact native event destination: %s',async(eventId,lane,month,day,index,source,target)=>{
+  const {handlers}=await render();const baseline=protectedMarkup();await click(point(lane,month,day));
+  expect(handlers.onOpen).not.toHaveBeenCalled();expect(handlers.onOpenReview).not.toHaveBeenCalled();await click(choices()[index]);
+  if(source==='review'){
     expect(handlers.onOpenReview).toHaveBeenCalledTimes(1);expect(handlers.onOpenReview.mock.calls[0][0]).toBe(target);expect(handlers.onOpen).not.toHaveBeenCalled();
-  } else {
+  }else{
     expect(handlers.onOpen).toHaveBeenCalledTimes(1);expect(handlers.onOpen.mock.calls[0][0]).toBe(vendor);expect(handlers.onOpen.mock.calls[0][1]).toBe(target);expect(handlers.onOpenReview).not.toHaveBeenCalled();
     if(target==='assurance')expect(handlers.onOpen.mock.calls[0][2]).toBe('native-assurance');
   }
-  expect(protectedMarkup(true)).toEqual(baseline);
-  expect(handlers.onView).not.toHaveBeenCalled();expect(handlers.onSearch).not.toHaveBeenCalled();
+  expect(protectedMarkup()).toEqual(baseline);expect(handlers.onView).not.toHaveBeenCalled();expect(handlers.onSearch).not.toHaveBeenCalled();
 });
 
-test('native record roundtrip retains the exact date list and restores its opener on close', async () => {
-  const {props,handlers} = await render();
-  const marker = container.querySelector('.cv-event-dot');
-  await click(marker);
-  const ids = [...document.querySelectorAll('.cv-list-items>button')].map(node=>node.dataset.eventId);
-  await click(document.querySelector('.cv-list-items>button'));
-  expect(handlers.onOpen).toHaveBeenCalledTimes(1);
-  await act(async()=>root.render(<BrawndoAdditionalVendors {...props} recordOpen/>));
-  expect(document.querySelector('.cv-event-list')).toBeNull();
-  await act(async()=>root.render(<BrawndoAdditionalVendors {...props} recordOpen={false}/>));
-  expect([...document.querySelectorAll('.cv-list-items>button')].map(node=>node.dataset.eventId)).toEqual(ids);
-  await click(buttonNamed('Close'));
-  await act(async()=>jest.advanceTimersByTime(20));
-  expect(document.activeElement).toBe(marker);
+test('native record roundtrip retains quarter and all independent date choices and restores chart focus after refresh',async()=>{
+  const {props,handlers}=await render();const marker=point('asr',11,5);await click(marker);const labels=choices().map(node=>node.textContent);
+  await frame();expect(document.activeElement).toBe(choices()[0]);
+  await click(choices()[0]);expect(handlers.onOpen.mock.calls[0].slice(0,2)).toEqual([vendor,'assurance']);
+  await act(async()=>root.render(<BrawndoAdditionalVendors {...props} recordOpen/>));expect(ledger().querySelector('.v3-ledger-tip')).toBeNull();
+  await act(async()=>root.render(<BrawndoAdditionalVendors {...props} recordOpen={false}/>));await frame();
+  // A native refresh replaces the SVG nodes. Its explicit heading fallback keeps
+  // focus in the same ledger instead of focusing a detached pre-refresh point.
+  expect(marker.isConnected).toBe(false);expect(document.activeElement).toBe(ledger().querySelector('h2'));expect(totals().dataset.total).toBe('6');await click(point('asr',11,5));expect(choices().map(node=>node.textContent)).toEqual(labels);
 });
 
-test('native refresh retains selected quarter while dates unavailable, then returns actual dates', async () => {
-  const {props} = await render();
-  await click(buttonNamed('Q2'));await click(buttonNamed('Next quarter'));
-  await act(async () => root.render(<BrawndoAdditionalVendors {...props} loading acceptedRefresh={null}/>));
-  expect(container.querySelector('.cv-quarter-controls strong').textContent).toBe('Q3 2026');
-  expect(container.querySelector('.cv-quarter').textContent).toContain('Dates unavailable');
-  await act(async () => root.render(<BrawndoAdditionalVendors {...props} acceptedRefresh="2026-10-18T16:01:00Z"/>));
-  expect(container.querySelector('.cv-quarter-controls strong').textContent).toBe('Q3 2026');
-  expect(container.querySelector('.cv-quarter').textContent).toContain('No saved events in Q3 2026');
-  await click(buttonNamed('This quarter'));expect(container.querySelectorAll('.cv-event-dot')).toHaveLength(6);
+test('native refresh retains selected quarter while dates unavailable, then returns actual saved dates',async()=>{
+  const {props}=await render();await click(buttonNamed('Previous quarter'));expect(ledger().querySelector('.v3-quarter-switch b').textContent).toBe('Q3 2026');
+  await act(async()=>root.render(<BrawndoAdditionalVendors {...props} loading acceptedRefresh={null}/>));
+  expect(ledger().querySelector('.v3-quarter-switch b').textContent).toBe('Q3 2026');expect(ledger().querySelector('[role="status"]').textContent).toBe('Dates unavailable.');
+  await act(async()=>root.render(<BrawndoAdditionalVendors {...props} acceptedRefresh="2026-10-18T16:01:00Z"/>));
+  expect(ledger().querySelector('.v3-quarter-switch b').textContent).toBe('Q3 2026');expect(totals().dataset.total).toBe('0');expect(viewDataRows()).toHaveLength(0);
+  await click(buttonNamed('This quarter'));expect(totals().dataset.total).toBe('6');expect(viewDataRows()).toHaveLength(6);
 });
 
-test('three agenda entries open a readable list before native work; independent same-date obligations retained', async () => {
-  const {handlers}=await render();
-  expect(container.querySelectorAll('.cv-agenda-entry')).toHaveLength(3);
-  await click(container.querySelector('.cv-agenda-entry'));
-  expect(document.querySelectorAll('.cv-list-items>button')).toHaveLength(1);
-  expect(handlers.onOpen).not.toHaveBeenCalled();expect(handlers.onOpenReview).not.toHaveBeenCalled();
-  await click(document.querySelector('.cv-list-items>button'));
-  expect(handlers.onOpen.mock.calls[0].slice(0,2)).toEqual([vendor,'assurance']);
-  expect(handlers.onView).not.toHaveBeenCalled();expect(handlers.onSearch).not.toHaveBeenCalled();
+test('agenda and readable table retain all six independent obligations including same-day records',async()=>{
+  const {handlers}=await render();const before=JSON.stringify({vendor,review,assurance,contract});const list=ledger().querySelectorAll('.tl2-lists > div')[1];
+  expect(list.querySelectorAll('.tl-item')).toHaveLength(4);await click(buttonNamed('View all 6 items →'));expect(list.querySelectorAll('.tl-item')).toHaveLength(6);expect(viewDataRows()).toHaveLength(6);
+  expect(viewDataRows().map(row=>row.cells[1].textContent)).toEqual(['Assurance follow-up','Assurance follow-up','Contract renewal','Vendor review','Contract renewal','Contract renewal']);
+  await click(viewDataRows()[0].querySelector('button'));expect(handlers.onOpen.mock.calls[0].slice(0,3)).toEqual([vendor,'assurance','native-assurance']);expect(handlers.onOpenReview).not.toHaveBeenCalled();
+  expect(handlers.onView).not.toHaveBeenCalled();expect(handlers.onSearch).not.toHaveBeenCalled();expect(JSON.stringify({vendor,review,assurance,contract})).toBe(before);
 });
 
 

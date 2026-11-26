@@ -23,9 +23,9 @@ jest.mock('@/components/RecordDrawer', () => props => {mockDrawerProps=props;ret
 
 let root, container, pending;
 const pages = [
-  ['risks', RiskRegister, 'Brawndo Risks', 'cis-risks-concept'],
-  ['policies', () => <RecordListPage kind="policies"/>, 'Brawndo Policies', 'additional-policies'],
-  ['vendors', VendorRegister, 'Brawndo Vendors', 'additional-vendors'],
+  ['risks', RiskRegister, 'Risks', 'cis-risks-concept'],
+  ['policies', () => <RecordListPage kind="policies"/>, 'Policies', 'additional-policies'],
+  ['vendors', VendorRegister, 'Vendors', 'additional-vendors'],
 ];
 beforeAll(() => Object.defineProperty(global, 'crypto', {configurable: true, value: require('crypto').webcrypto}));
 beforeEach(() => {
@@ -53,12 +53,14 @@ test.each(pages)('%s keeps the approved heading while native reads are pending, 
   mockPath = `/${route}`;
   await render(Page);
   expect(container.querySelector('h1')?.textContent).toBe(heading);
+  expect(container.querySelector('.v3-workspace-head .eyebrow')?.textContent).toBe('Client workspace · Brawndo');
   expect(container.querySelector(`[data-testid="${route}-navigation-loading"] [role="status"]`)?.textContent).toMatch(/Loading/);
   expect(container.querySelector(`[data-testid="${loadedMarker}"]`)).toBeNull();
   expect(container.querySelector('[data-testid^="new-"],[data-testid="create-policies-button"],[data-testid$="-export"]')).toBeNull();
   expect(container.querySelector('table,[role="table"]')).toBeNull();
   await finishReads();
   expect(container.querySelector('h1')?.textContent).toBe(heading);
+  expect(container.querySelector('.v3-workspace-head .eyebrow')?.textContent).toBe('Client workspace · Brawndo');
   expect(container.querySelector(`[data-testid="${route}-navigation-loading"]`)).toBeNull();
   expect(container.querySelector(`[data-testid="${loadedMarker}"]`)).not.toBeNull();
   expect(api.post).not.toHaveBeenCalled(); expect(api.patch).not.toHaveBeenCalled();
@@ -158,7 +160,7 @@ test('a mixed-client Risk response cannot switch to a generic register or expose
   const frame = container.querySelector('[data-testid="risks-navigation-loading"]');
   expect(frame?.getAttribute('aria-busy')).toBe('false');
   expect(frame?.querySelector('[role="alert"]')?.textContent).toContain('Risks could not be verified for this client.');
-  expect(container.querySelector('h1')?.textContent).toBe('Brawndo Risks');
+  expect(container.querySelector('h1')?.textContent).toBe('Risks');
   expect(container.querySelector('table,[role="table"]')).toBeNull();
   expect(container.textContent).not.toContain('Current native risk');
   expect(container.textContent).not.toContain('Foreign native risk');

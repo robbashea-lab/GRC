@@ -9,6 +9,7 @@ const BOUNDARY='.section-body:has(> .soc-cis-program-visual)';
 const CANVAS='.client-surface:has(.section-body > .soc-cis-program-visual)';
 const SEGMENT_RESET='\n.soc-cis-program-visual .sbar button.sbar-segment { border:0; padding:0; appearance:none; }\n';
 const SEGMENT_FOCUS='.soc-cis-program-visual .sbar button.sbar-segment:focus-visible { outline-offset:-2px; }\n';
+const V3_HEADING_SPACING='\n.native-standard .brawndo-cis-visual > .v3-workspace-head {margin-bottom:0}\n';
 const baseline={
   'BrawndoCisVisual.css':'139af93992d00a783eb0ccf6caaddbfdf5a2c4416c519b7e46b5113ce3ce9beb',
   'SixSurfaceAppearance.css':'317b36402abd7d2589c13c06402aabc499f6d676de4835d6b90e1915df1f9e6e',
@@ -36,10 +37,16 @@ function withoutIsoAliases(source){
   return sheet.toString();
 }
 
-test.each(Object.entries(baseline))('%s preserves every prior selector, declaration and order from ef5dfdd after removing local adapters',(name,digest)=>{
-  const original=withoutIsoAliases(sources[name]).replace(SEGMENT_RESET,'').replace(SEGMENT_FOCUS,'').replace(', '+BOUNDARY,'').replace(', '+CANVAS,'')
+test.each(Object.entries(baseline))('%s preserves prior rules apart from local adapters and approved v3 heading spacing',(name,digest)=>{
+  const original=withoutIsoAliases(sources[name].replace(V3_HEADING_SPACING,'')).replace(SEGMENT_RESET,'').replace(SEGMENT_FOCUS,'').replace(', '+BOUNDARY,'').replace(', '+CANVAS,'')
     .replace(/, \.soc-cis-program-visual[^{]+?(?=\s+\{)/g,'');
   expect(createHash('sha256').update(original).digest('hex')).toBe(digest);
+});
+
+test('approved v3 heading spacing adds no global or SOC override',()=>{
+  expect(sources['BrawndoCisVisual.css'].split(V3_HEADING_SPACING)).toHaveLength(2);
+  const rule=rules('BrawndoCisVisual.css').find(value=>value.selector==='.native-standard .brawndo-cis-visual > .v3-workspace-head');
+  expect(rule.nodes.map(({prop,value})=>[prop,value])).toEqual([['margin-bottom','0']]);
 });
 
 test('new selector targets stay inside the SOC root or its direct section boundary, leaving external native portals and chrome untouched',()=>{

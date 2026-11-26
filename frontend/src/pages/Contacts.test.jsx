@@ -75,9 +75,9 @@ test('the approved Contacts header is the default for existing and future client
 test('additional presentation keeps the full native workspace and uses actual contact/access facts',async()=>{
   mockAdditional=true;await act(async()=>root.render(<Contacts/>));
   expect(container.querySelector('.bac-page')).toBeTruthy();expect(container.querySelectorAll('.bac-segments button')).toHaveLength(3);
-  expect(container.querySelector('h1').textContent).toBe('Brawndo Contacts');expect(container.querySelector('.ba-page-head p').textContent).toBe('People · 1 contact');
+  expect(container.querySelector('h1').textContent).toBe('Contacts');expect(container.querySelector('.v3-workspace-head .eyebrow').textContent).toBe('Client workspace · Brawndo');expect(container.querySelector('.v3-workspace-head .page-sub').textContent).toBe('People · 1 contact');
   const heading=container.querySelector('.bac-card .panel-head #bac-heading');
-  expect(heading.textContent).toBe('Contacts directory');expect(heading.classList.contains('sr-only')).toBe(false);
+  expect(heading.textContent).toBe('Contact directory');expect(heading.classList.contains('sr-only')).toBe(false);
   expect(heading.closest('section').getAttribute('aria-labelledby')).toBe(heading.id);
   expect(container.querySelector('button[aria-label="Switch to light mode"]')).toBeTruthy();
   expect(container.textContent).toContain('Primary contact');expect(container.textContent).not.toMatch(/Security Lead|HR Lead|Administrator|Reassign|Export CSV/);

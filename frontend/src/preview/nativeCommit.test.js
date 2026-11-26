@@ -3,6 +3,7 @@ import {previewAdapter} from './adapter';
 import {STORE_KEY,readStore,saveStore,saveStoreAsync,resetStore,clearEvidenceFiles,write} from './store';
 import {decodeDemoStore} from './demoStorageCodec';
 import {clearFileCache,getEvidenceCacheRevision} from './evidenceStorage';
+import * as reporting from './portfolioReporting';
 
 const {CompressionStream:NativeCompressionStream,WritableStream}=require('node:stream/web');
 const api=axios.create({adapter:previewAdapter}),cid='demo_brawndo';
@@ -219,6 +220,58 @@ test('request-owned comparison baseline is independent, consumed once and never 
   external.tasks.find(item=>item.task_id===row.task_id).title='SYNTHETIC external native save';saveStore(external);
   await expect(saveStoreAsync(stale,{expectedSaved:staleSaved})).rejects.toMatchObject({status:409});
   expect(readStore().tasks.find(item=>item.task_id===row.task_id).title).toBe('SYNTHETIC external native save');
+});
+
+test('Review completion retries preserve saved bytes, independent history and current client authority',async()=>{
+  const review=(await api.post('/reviews',{client_id:cid,title:'Synthetic independent recurrence',review_type:'access',recurrence:'monthly',due_date:'2027-01-31'})).data;
+  const first=(await api.post(`/reviews/${review.review_id}/complete`,{occurrence_id:review.current_occurrence_id,completion_notes:'First accepted occurrence'})).data;
+  const frozen=JSON.parse(JSON.stringify(first.occurrence)),saved=sessionStorage.getItem(STORE_KEY),before=readStore();
+  const writes=jest.spyOn(Storage.prototype,'setItem');
+  try{
+    const replay=(await api.post(`/reviews/${review.review_id}/complete`,{occurrence_id:review.current_occurrence_id})).data;
+    expect(replay.occurrence).toEqual(frozen);
+    expect(replay.review.current_occurrence_id).toBe(first.review.current_occurrence_id);
+    expect(writes.mock.calls.filter(([key])=>key===STORE_KEY)).toHaveLength(0);
+    expect(sessionStorage.getItem(STORE_KEY)).toBe(saved);
+    replay.occurrence.notes='Caller-local edit';
+    expect(readStore().reviews.find(row=>row.review_id===review.review_id).occurrences).toEqual([frozen]);
+  }finally{writes.mockRestore();}
+  const second=(await api.post(`/reviews/${review.review_id}/complete`,{occurrence_id:first.review.current_occurrence_id,completion_notes:'Second accepted occurrence'})).data;
+  const persisted=readStore().reviews.find(row=>row.review_id===review.review_id);
+  expect(persisted.occurrences).toEqual([frozen,second.occurrence]);
+  expect(before.reviews.find(row=>row.review_id===review.review_id).occurrences).toEqual([frozen]);
+  expect(persisted.due_date.slice(0,10)).toBe('2027-03-31');
+  for(const actor of [{role:'client_readonly',client_ids:[cid]},{role:'client_contributor',client_ids:['unrelated-client']}]){
+    const db=readStore();db.user={...db.user,...actor,all_clients:false};saveStore(db);
+    const deniedSaved=sessionStorage.getItem(STORE_KEY);
+    await expect(api.post(`/reviews/${review.review_id}/complete`,{occurrence_id:review.current_occurrence_id})).rejects.toMatchObject({response:{status:403}});
+    expect(sessionStorage.getItem(STORE_KEY)).toBe(deniedSaved);
+    expect(readStore().reviews.find(row=>row.review_id===review.review_id).occurrences).toEqual([frozen,second.occurrence]);
+  }
+});
+
+test('only an accepted completion retry skips its comparison fork after API path normalization',async()=>{
+  const review=(await api.post('/reviews',{client_id:cid,title:'Synthetic comparison boundary',review_type:'access',recurrence:'monthly',due_date:'2027-01-31'})).data;
+  const nativePair=reporting.readPortfolioStorePair,comparisons=[];
+  jest.spyOn(reporting,'readPortfolioStorePair').mockImplementation((...args)=>{
+    const result=nativePair(...args);comparisons.push(!!result.before);return result;
+  });
+  const endpoint=`/api/reviews/${encodeURIComponent(review.review_id)}/complete`;
+  const first=(await api.post(endpoint,{occurrence_id:review.current_occurrence_id})).data;
+  expect(comparisons).toEqual([true]);
+  const saved=sessionStorage.getItem(STORE_KEY);
+  await api.post(endpoint,{occurrence_id:review.current_occurrence_id});
+  expect(comparisons).toEqual([true,false]);
+  expect(sessionStorage.getItem(STORE_KEY)).toBe(saved);
+  for(const body of [{},{occurrence_id:'stale-unaccepted-occurrence'}]){
+    await expect(api.post(endpoint,body)).rejects.toMatchObject({response:{status:400,data:{detail:'This occurrence is closed or has changed. Reload the Review.'}}});
+    expect(comparisons.at(-1)).toBe(true);
+    expect(sessionStorage.getItem(STORE_KEY)).toBe(saved);
+  }
+  const second=(await api.post(endpoint,{occurrence_id:first.review.current_occurrence_id})).data;
+  expect(comparisons).toEqual([true,false,true,true,true]);
+  expect(second.review.occurrences).toEqual([first.occurrence,second.occurrence]);
+  expect(readStore().reviews.find(row=>row.review_id===review.review_id).occurrences).toEqual([first.occurrence,second.occurrence]);
 });
 
 test.each([false,true])('late parser errors retain the original save failure and bytes (request baseline %s)',async comparisonBaseline=>{

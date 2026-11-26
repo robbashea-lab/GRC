@@ -43,7 +43,10 @@ test.each(['existing-iso','new-multi-framework-client'])('ISO dashboard links pr
   for(const [view,ids] of cases){
     await act(async()=>root.render(<FrameworkProgramCard program={{key:'iso-27001',to:'/compliance/iso-27001'}} rows={rows}/>));
     const link=[...container.querySelectorAll('a')].find(a=>new URL(a.href).searchParams.get('view')===view);
-    expect(link).toBeDefined();expect(link.querySelector('strong').textContent).toBe(String(ids.length));
+    expect(link).toBeDefined();
+    if(view==='not_applicable')expect(link.textContent).toBe(`${ids.length} excluded / not applicable`);
+    else if(['addressed','in_progress','needs_attention','not_assessed'].includes(view))expect(link.querySelector('.bfb-count').textContent).toBe(String(ids.length));
+    else expect(link.querySelector('strong').textContent).toBe(String(ids.length));
     mockParams=new URL(link.href).searchParams;
     api.get.mockImplementation(async path=>({data:path==='/iso-audit'?{reviews:[]}:data}));
     await act(async()=>root.render(<FrameworkWorkspace frameworkKey="iso-27001" clientId={clientId}/>));

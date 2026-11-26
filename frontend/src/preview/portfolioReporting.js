@@ -465,10 +465,12 @@ export const canForkPortfolioStore=()=>scopeSerializationUnchanged()
   &&Object.getOwnPropertyDescriptor(Number,'isInteger')?.value===sourceInteger;
 // This fork receives only native JSON.parse output, never caller-owned graphs.
 // Both branches are restored separately and retain no shared mutable containers.
-export function readPortfolioStorePair(saved){
+export function readPortfolioStorePair(saved,{needsComparison}={}){
   if(!canForkPortfolioStore())
     return {current:readPortfolioStore(saved),before:null};
   const decoded=decodeDemoStore(saved);
+  if(needsComparison?.(decoded)===false)
+    return {current:restoreDecodedStore(decoded,saved),before:null};
   const container=value=>scopeIsArray(value)?jsonSlice.call(value):{...value};
   let before=decoded;
   if(decoded&&typeof decoded==='object'){

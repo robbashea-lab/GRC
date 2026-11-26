@@ -10,6 +10,7 @@ import {validateDemoCompletion} from './r4ReviewCompletion';
 export function reviewEvent(db, review, action, occurrence, meta = {}) {
   audit(db, action, 'reviews', review, {occurrence_id:occurrence || occurrenceId(review), by_name:db.user.name, ...meta});
 }
+export const acceptedReviewOccurrence=(review,id)=>review?.occurrences?.find(occurrence=>occurrence.occurrence_id===id);
 export function history(db, review) {
   const result = [...(review.occurrences || [])], seen = new Set();
   let cursor = review;
@@ -33,7 +34,7 @@ export function reviewAction(db, id, name, body, executionAt=now(), annualCovera
   }
   const review = record(db, 'reviews', id), current = reviewView(review);
   if(review.ai_system_id&&(db.ai_systems||[]).some(a=>a.ai_system_id===review.ai_system_id&&a.status==='retired')&&review.status!=='in_progress')throw new Error('Retired AI only permits completion of already-started closure work');
-  const previous = review.occurrences?.find(o => o.occurrence_id === body.occurrence_id);
+  const previous = acceptedReviewOccurrence(review,body.occurrence_id);
   if (name === 'complete' && previous) return {review:current, occurrence:previous, spawned:null};
   if(name==='complete'&&body.risk_next_review&&!review.risk_id)throw new Error('Schedule overrides apply only to Risk Reviews');
   if(review.vendor_id&&db.vendors.some(v=>v.vendor_id===review.vendor_id&&v.status==='inactive')&&review.vendor_purpose!=='offboarding') throw new Error('Inactive Vendors have no active recurring Reviews.');

@@ -82,7 +82,7 @@ test('choosing another workspace status after dashboard arrival keeps the chosen
   await act(async()=>root.render(<FrameworkWorkspace frameworkKey="soc-2" clientId={clientId}/>));
   const ids=()=>[...container.querySelectorAll('[data-testid^="requirement-"]')].map(row=>row.dataset.testid.replace('requirement-',''));
   expect(ids()).toEqual(['CC1.4','CC1.5']);
-  const button=[...container.querySelectorAll('.lg button')].find(b=>b.textContent.startsWith('Not assessed'));
+  const button=container.querySelector('.gn-ring-card[data-status="A"]');
   await act(async()=>button.click());
   expect(ids()).toEqual(['CC2.1']);
   expect(button.getAttribute('aria-pressed')).toBe('true');
@@ -101,6 +101,6 @@ test('retained SOC narrative timestamps do not fabricate judgment freshness whil
   await act(async()=>root.render(<FrameworkWorkspace frameworkKey="soc-2" clientId={clientId}/>));
   expect(container.querySelectorAll('[data-testid^="requirement-"]')).toHaveLength(0);
   expect(container.querySelector('.soc-register-result-count').textContent).toBe('0 matching criteria');
-  expect(container.querySelector('.snap').textContent).toContain('Assessment date unavailable');
+  expect(container.querySelector('.gn-cis-snapshot').textContent).toContain('Assessment date unavailable');
   expect(JSON.stringify(data)).toBe(before);expect(api.patch).not.toHaveBeenCalled();
 });

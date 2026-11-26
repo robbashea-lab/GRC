@@ -92,7 +92,7 @@ test('missing owners, completed history and open high Finding populations retain
   expect(new Set(titles())).toEqual(new Set(['Action done','Action cancelled','Accepted Finding']));
   expect(new URLSearchParams(location.search).get('view')).toBe('completed');
   expect(new URLSearchParams(location.search).get('client_id')).toBe(mockClient.client_id);
-  expect(host.querySelector('th:nth-child(4)').textContent).toContain('Due Date');
+  expect(host.querySelector('thead [aria-label="Due Date: sort and filter"]').closest('th').textContent).toContain('Due Date');
   expect(host.textContent).not.toContain('Completion actor not recorded');
   await click(host.querySelector('[data-testid="ai-view-high_critical"]'));
   expect(titles()).toEqual(['Open high Finding']);

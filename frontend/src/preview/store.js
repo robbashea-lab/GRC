@@ -123,11 +123,11 @@ export function transferStoreBaseline(from,to){
   const prepared=requestBaselines.get(from);requestBaselines.delete(from);
   if(prepared)requestBaselines.set(to,prepared);
 }
-export function readStore({comparisonBaseline=false}={}) {
+export function readStore({comparisonBaseline=false,needsComparison}={}) {
   let saved;
   try {saved=sessionStorage.getItem(STORE_KEY);}catch(error){throw demoStorageError(error,'read');}
   if (saved) {
-    let db,pair;try{pair=comparisonBaseline?readPortfolioStorePair(saved):null;db=pair?pair.current:readPortfolioStore(saved);}catch(error){throw demoStorageError(error,'parse');}
+    let db,pair;try{pair=comparisonBaseline?readPortfolioStorePair(saved,{needsComparison}):null;db=pair?pair.current:readPortfolioStore(saved);}catch(error){throw demoStorageError(error,'parse');}
     if(!db||!Array.isArray(db.clients)||!Array.isArray(db.evidence))throw demoStorageError(null,'parse');
     const approvedOnly=isApprovedOnlyStore(db);
     const retired=removeRetiredDemoClients(db);

@@ -107,9 +107,12 @@ test.each([true,false])('explicit SOC overview labels retain 27/7/2/2 counts, to
 
 test.each([true,false])('SOC dashboard card inherits canonical labels and unchanged counts/destinations (pilot=%s)',async workspacePilot=>{
   await render(<FrameworkProgramCard workspacePilot={workspacePilot} program={{key:'soc-2',label:'SOC 2'}} rows={rows}/>);
-  expect([...document.querySelectorAll('.bd-legend li')].map(el=>el.textContent)).toEqual(['Addressed (Readiness)27','Partially Addressed7','Needs Remediation / Validation2','Not Assessed2']);
-  expect(document.querySelector('.bd-donut').getAttribute('aria-label')).toContain('27 Addressed (Readiness)');
-  expect(document.querySelector('.bd-legend a[href="/compliance/soc-2?view=in_progress"]').textContent).toBe('Partially Addressed7');
+  expect([...document.querySelectorAll('.bfb-name')].map(el=>el.textContent)).toEqual(['Addressed (Readiness)','Partially Addressed','Needs Remediation / Validation','Not Assessed']);
+  expect([...document.querySelectorAll('.bfb-count')].map(el=>el.textContent)).toEqual(['27','7','2','2']);
+  expect(document.querySelector('.bfb-big').textContent).toBe('71.1%');
+  const partial=document.querySelector('.bfb-row[href="/compliance/soc-2?view=in_progress"]');
+  expect(partial.getAttribute('aria-label')).toBe('Open partially addressed criteria (7, 18.4%)');
+  expect(partial.querySelector('.bfb-name').textContent).toBe('Partially Addressed');
   expect(document.querySelector('.bd-program-note').textContent).toBe('Internal readiness, not an auditor opinion.');
 });
 

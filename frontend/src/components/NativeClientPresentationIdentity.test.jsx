@@ -65,7 +65,8 @@ function expectR4() {
   expect(org.currentClient).toEqual(clients[0]);
   expect(new URLSearchParams(location.search).get('client_id')).toBe(P);
   expect(host.querySelector('.brawndo-cis-visual [aria-labelledby="cis-visual-register"]')).not.toBeNull();
-  expect(host.querySelector('.now-label').textContent).toBe('Current implementation');
+  expect(host.querySelector('.gn-cis-heading .panel-title').textContent).toBe('Program snapshot');
+  expect(host.querySelector('.sgmap-scope').textContent).toBe('56 applicable safeguards');
   expect(host.textContent).not.toContain('Controls overview');
 }
 

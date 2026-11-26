@@ -9,6 +9,9 @@ import {selectorSpecificity,compare} from '@csstools/selector-specificity';
 const ROOT='.iso-cis-program-visual',SOC='.soc-cis-program-visual';
 const BOUNDARY='.section-body:has(> .iso-cis-program-visual)';
 const CANVAS='.client-surface:has(.section-body > .iso-cis-program-visual)';
+// The approved v3 native heading adds one scoped spacing rule; retain the original
+// whole-sheet guard for every earlier declaration and validate this addition explicitly.
+const V3_HEADING_SPACING='\n.native-standard .brawndo-cis-visual > .v3-workspace-head {margin-bottom:0}\n';
 const baseline={
   'BrawndoCisVisual.css':'147de14bce41c8cbd0cbdf410d244da2ce379c1d60e47512e134103b8969a652',
   'BrawndoCisVisualShell.css':'1914e227c748280bf03a93f9b931e87a27da2dc8e456121300adb730775d1350',
@@ -57,8 +60,8 @@ test('ISO program type matches the approved CIS sizing cascade, not only the sma
   }
 });
 
-test.each(Object.entries(baseline))('%s retains every approved CIS/SOC selector, declaration and order from 333b0052 after removing only ISO aliases',(name,digest)=>{
-  const sheet=postcss.parse(sources[name]);
+test.each(Object.entries(baseline))('%s retains prior CIS/SOC rules apart from ISO aliases and approved v3 heading spacing',(name,digest)=>{
+  const sheet=postcss.parse(sources[name].replace(V3_HEADING_SPACING,''));
   sheet.walkRules(rule=>{
     const alias=rule.selectors.find(selector=>selector.includes(ROOT));
     if(!alias)return;
@@ -67,6 +70,12 @@ test.each(Object.entries(baseline))('%s retains every approved CIS/SOC selector,
     rule.selector=rule.selector.slice(0,start);
   });
   expect(createHash('sha256').update(sheet.toString()).digest('hex')).toBe(digest);
+});
+
+test('approved v3 heading spacing stays scoped to the native CIS heading',()=>{
+  expect(sources['BrawndoCisVisual.css'].split(V3_HEADING_SPACING)).toHaveLength(2);
+  const rule=rules('BrawndoCisVisual.css').find(value=>value.selector==='.native-standard .brawndo-cis-visual > .v3-workspace-head');
+  expect(rule.nodes.map(({prop,value})=>[prop,value])).toEqual([['margin-bottom','0']]);
 });
 
 test('ISO aliases share all corresponding SOC declaration blocks and never add global chrome or portal selectors',()=>{

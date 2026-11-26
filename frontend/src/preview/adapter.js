@@ -28,7 +28,7 @@ import { onboard, action } from './workflows';
 import {commandRequest} from './commandRequests';
 import {retainFinding} from './remediationTickets';
 import { guardEdit } from './decisions';
-import { history, reviewEvent } from './reviews';
+import { history, reviewEvent, acceptedReviewOccurrence } from './reviews';
 import { reviewView, belongsToOccurrence, assertCurrentOccurrence } from '../lib/reviewOccurrences';
 import {evidencePage,evidenceAccess,evidenceLibraryRequest,controlEvidenceLinks,auditEvidenceLinks,prepareDemoEvidenceUpload} from './evidence';
 import {evidenceKind} from '../lib/evidenceReferences';
@@ -142,7 +142,20 @@ async function executePreviewAdapter(config,generation) {
       if(method==='post'&&path!=='/demo/storage'){if(path==='/demo/reset')resetStore();else clearEvidenceFiles();return respond({ok:true});}
     }
     const initialNativeReads=nativeSnapshotReads();
-    const db = readStore({comparisonBaseline:method!=='get'});requestDb=db;
+    const completionPath=method==='post'&&path.match(/^\/reviews\/([^/]+)\/complete$/);
+    const needsComparison=completionPath?decoded=>{
+      // This only avoids an unused fork; normal authorization and lifecycle checks still run.
+      try{
+        const input=typeof config.data==='string'?JSON.parse(config.data||'{}'):config.data||{};
+        const reviewId=decodeURIComponent(completionPath[1]);
+        const review=decoded.reviews?.find(row=>row.review_id===reviewId);
+        return !acceptedReviewOccurrence(review,input.occurrence_id);
+      }catch{
+        // Invalid intent follows the existing validation path with a full baseline.
+        return true;
+      }
+    }:undefined;
+    const db = readStore({comparisonBaseline:method!=='get',needsComparison});requestDb=db;
     const evidenceRevision=getEvidenceCacheRevision();
     let expectedSaved=sessionStorage.getItem(STORE_KEY),authorizedSaved;
     const actorId=db.user.user_id;
@@ -217,7 +230,7 @@ async function executePreviewAdapter(config,generation) {
         'content-disposition':`attachment; filename="completed-reviews-${params.from_date}-to-${params.to_date}.csv"`}};
     }
     if(kind==='reviews'&&['complete','completion-guide'].includes(name)
-      && !(name==='complete'&&record(db,'reviews',id).occurrences?.some(item=>item.occurrence_id===body.occurrence_id))) {
+      && !(name==='complete'&&acceptedReviewOccurrence(record(db,'reviews',id),body.occurrence_id))) {
       await prepareR4Completion(db,path,method,body);
       // Web Crypto yields; never apply a contract to a different persisted
       // snapshot, actor, session or document-local file set after that await.
@@ -583,7 +596,7 @@ async function executePreviewAdapter(config,generation) {
         const review=record(db,kind,id);
         return await save(commandRequest(db,path,review.client_id,body.request_id,body,()=>action(db,kind,id,name,body)));
       }
-      const retainedReview=kind==='reviews'&&name==='complete'&&record(db,kind,id).occurrences?.some(item=>item.occurrence_id===body.occurrence_id);
+      const retainedReview=kind==='reviews'&&name==='complete'&&acceptedReviewOccurrence(record(db,kind,id),body.occurrence_id);
       const result = action(db, kind, id, name, body);
       // Current authorization and Review replay/lifecycle validation ran above; an accepted occurrence is read-only.
       if(retainedReview)return respond(result);

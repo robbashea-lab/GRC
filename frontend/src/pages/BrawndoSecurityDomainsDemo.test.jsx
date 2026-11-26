@@ -65,11 +65,11 @@ test('the actual Explore Demo seed supplies the exact 56-record native domain mo
   }
 });
 
-test.each(['domain','Controls'])('the actual Demo %s entry opens the canonical seeded record below the original progress section',async entry=>{
+test.each(['domain','Controls'])('the actual Demo %s entry opens the canonical seeded record below the approved snapshot and domains',async entry=>{
   const before=readStore(),data=await workspace(),row=data.assessments.find(value=>value.definition_id==='1.1');
-  await mount();const progress=container.querySelector('.bcis-summary'),domains=query('.bcis-domains'),controls=container.querySelector('.bcis-controls');
+  await mount();const progress=container.querySelector('.gn-cis-snapshot'),domains=query('.bcis-domains'),controls=container.querySelector('.bcis-controls');
   expect(domains).toBeTruthy();expect(controls).toBeTruthy();expect(progress).toBeTruthy();
-  expect(progress.contains(domains)).toBe(true);expect(domains.compareDocumentPosition(controls)&Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  expect(progress.compareDocumentPosition(domains)&Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();expect(domains.compareDocumentPosition(controls)&Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   if(entry==='domain')await openDomain('1.1');else await openControl('1.1');
   expect(snapshot()).toEqual({id:row.framework_assessment_id,title:data.definitions.find(definition=>definition.id==='1.1').title,implementation:row.implementation,status:row.status});
   expect(route().state).toEqual({fromWorkspace:true});
@@ -114,8 +114,8 @@ test('native Demo applicability excludes a justified safeguard without partial c
 
 test('the actual Demo filter intersection clears only the domain and retains native search and status',async()=>{
   const data=await workspace(),row=data.assessments.find(value=>value.definition_id==='1.2');
-  const labels={addressed:'Implemented',in_progress:'Partial',needs_attention:'Not implemented',not_assessed:'Not assessed'};
-  await mount();const legend=[...container.querySelectorAll('.bcis-legend button')].find(element=>element.textContent.startsWith(labels[row.status]));
+  const labels={addressed:'Implemented',in_progress:'Partially implemented',needs_attention:'Not implemented',not_assessed:'Not assessed'};
+  await mount();const legend=[...container.querySelectorAll('[aria-label="Filter by status"] button')].find(element=>element.getAttribute('aria-label').startsWith(labels[row.status]+':'));
   await click(legend);await value('Search safeguards','1.2');
   const results=()=>[...container.querySelectorAll('[data-testid^="requirement-"]')].map(element=>element.dataset.testid),original=results();expect(original).toContain('requirement-1.2');
   await click(query('[data-testid="security-domain-assets"]'));await click(query('[aria-label="View mapped controls for Asset & Software Management"]'));
