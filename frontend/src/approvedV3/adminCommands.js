@@ -1,3 +1,5 @@
+import {nativeRoleDefinition} from '../lib/plannedRoleModel';
+
 const roles={super_admin:'owner',platform_admin:'spadmin',client_grc_manager:'cmgr',client_contributor:'ccontrib',client_readonly:'cread'};
 const nativeRole=Object.fromEntries(Object.entries(roles).map(([native,source])=>[source,native]));
 const toolFields={name:'n',vendor:'v',category:'g',area_ids:'a',description:'what',product_reference:'s',source_references:'cw',
@@ -34,7 +36,7 @@ export function overlayGlobalRecords(view,globals,identityMaps,scopedRecords={})
   view.users=(view.users||[]).filter(p=>!p.self&&!p.nativeUserId&&!realEmails.has(p.email?.toLowerCase()))
     .map(p=>({...p,referenceOnly:true,status:'Reference only'}));
   for(const person of actual.values())view.users.push({id:person.user_id,nativeUserId:person.user_id,name:person.name,email:person.email,
-    role:roles[person.role],status:label(person.status),self:person.user_id===account.user_id,
+    role:roles[nativeRoleDefinition(person.role)?.legacyKey || person.role],status:label(person.status),self:person.user_id===account.user_id,
     clients:person.role==='super_admin'||person.all_clients?'all':(person.client_ids||[]).map(id=>sourceIds.get(id)).filter(Boolean),
     nativeUpdatedAt:person.updated_at??null,directoryReadOnly:!!person.directoryReadOnly});
   view.account={...view.account,name:account.name,email:account.email,title:account.job_title||'',phone:account.phone||'',
@@ -64,7 +66,7 @@ function memberships(old,row,user,aliases) {
 // Determine every operation before writing. All rights, password policy, tenant
 // scope and final-owner checks are enforced again by each native endpoint.
 export async function applyGlobalChanges({before,after,globals,actor,api,identityMaps,commands=[]}) {
-  const actions=[],aliases=identityMaps.clientIds,known=new Map(globals.users.map(p=>[p.user_id,p]));
+  const actions=[],retainedLeads=[],aliases=identityMaps.clientIds,known=new Map(globals.users.map(p=>[p.user_id,p]));
   if(globals.account.user_id!==actor.user_id)fail('The signed-in account changed. Sign in again before saving.');
   const prev=before.account||{},next=after.account||{};
   const profile=onlyChanged(prev,next,{name:'name',job_title:'title',phone:'phone'});
@@ -109,6 +111,15 @@ export async function applyGlobalChanges({before,after,globals,actor,api,identit
     if(own(delta,'clients')){
       if(!own(delta,'role')&&!sourceAction(commands,'save-access',user.user_id))fail('Confirm client access for this account.');
       Object.assign(body,memberships(old,row,user,aliases));
+      // Access changes retain native assignments. The reference handler clears
+      // these leads automatically; an explicit client lead edit remains separate.
+      if(sourceAction(commands,'save-access',user.user_id)&&Array.isArray(row.clients)){
+        for(const client of before.clients||[]){
+          const nextClient=after.clients?.find(next=>next.id===client.id);
+          if(client.lead===old.name&&!row.clients.includes(client.id)&&nextClient?.lead===null)
+            retainedLeads.push([nextClient,client.lead]);
+        }
+      }
     }
     actions.push({method:'patch',path:route+(Object.keys(delta).length===1&&own(delta,'clients')?'/client-memberships':''),body,person:user.user_id});
   }
@@ -134,5 +145,6 @@ export async function applyGlobalChanges({before,after,globals,actor,api,identit
       message=data.delivery==='sent'?'Invitation sent.':'Account created. Invitation delivery has not been confirmed.';
     }
   }
+  for(const [client,lead] of retainedLeads)client.lead=lead;
   return {didWrite:actions.length>0,message};
 }

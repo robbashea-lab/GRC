@@ -1,4 +1,5 @@
 import {reviewSchedule} from '../lib/reviewOccurrences.js';
+import {calendarDay,managementDay} from '../lib/managementDates';
 
 const programKeys = {cis:'cis-ig1', soc:'soc-2', iso:'iso-27001', nist:'nist-csf-2', hipaa:'hipaa', cmmc:'cmmc'};
 const sourceProgramKeys = {'cis-ig1':'cis:8.1','soc-2':'soc:2017-2022','iso-27001':'iso:27001-2022',
@@ -21,6 +22,61 @@ const evidenceTypes = {Report:'Report', 'Audit report':'Report', 'Assurance repo
   Certificate:'Certification', Policy:'Policy / Procedure', Procedure:'Policy / Procedure', 'Log export':'Log / System Record'};
 const labelPrograms = {'CIS IG1':'cis-ig1','CIS IG2':'cis-ig1','CIS IG3':'cis-ig1','SOC 2':'soc-2',
   'NIST CSF 2.0':'nist-csf-2','ISO 27001':'iso-27001','CMMC L1':'cmmc','CMMC L2':'cmmc',HIPAA:'hipaa'};
+
+function overlayEvidenceSummary(view,records,ctx) {
+  const library=view.evidence?.[ctx.sourceId],catalog=records.evidenceCatalog;
+  if(!library||!Array.isArray(catalog))return;
+  const today=managementDay(ctx.asOfDate||new Date());
+  if(today===null)throw Error('Choose a valid reporting date for the Evidence Library.');
+  const rows=catalog.filter(row=>row.client_id===ctx.clientId&&!row.archived_at);
+  library.nativeFoldersByEvidenceId=Object.create(null);
+  const folderCounts=library.folders&&Object.fromEntries(Object.keys(library.folders).map(name=>[name,0]));
+  for(const row of rows) {
+    const areas=[...new Set(row.program_areas?.length?row.program_areas:['Unassigned'])];
+    library.nativeFoldersByEvidenceId[row.evidence_id]=areas;
+    const sourceId=row.source_record_id||(records.evidence||[]).find(file=>file.evidence_id===row.evidence_id)?.source_record_id;
+    if(sourceId)library.nativeFoldersByEvidenceId[sourceId]=areas;
+    if(folderCounts)for(const area of areas) {
+      const folder=area==='Unassigned'?'Needs classification':area;
+      folderCounts[folder]=(folderCounts[folder]||0)+1;
+    }
+  }
+  if(folderCounts)library.folders=folderCounts;
+  const files=rows.filter(row=>row.file_available!==false&&/^[a-f\d]{64}$/i.test(row.sha256||'')&&
+    Number.isSafeInteger(row.size_bytes??row.file_size??row.size)&&(row.size_bytes??row.file_size??row.size)>=0);
+  const refs=file=>(file.references||[]).filter(ref=>ref.available);
+  const periods=new Set();
+  for(const review of (records.reviews||[]).filter(row=>row.client_id===ctx.clientId)) {
+    for(const occurrence of [...(review.occurrences||[]),review])if(occurrence.status==='completed') {
+      const id=occurrence.occurrence_id||occurrence.current_occurrence_id||'occ_'+review.review_id;
+      periods.add(JSON.stringify([review.review_id,id]));
+    }
+  }
+  const supported=new Set(files.flatMap(file=>refs(file).filter(ref=>ref.kind==='reviews')
+    .map(ref=>JSON.stringify([ref.id,ref.occurrence_id||'occ_'+ref.id]))));
+  const summary={files:files.length,referenceCount:rows.filter(row=>row.file_available===false).length,
+    recent:files.filter(file=>{const day=calendarDay(file.created_at||file.uploaded_at);return day!==null&&day>=today-90&&day<=today;}).length,
+    recentSince:new Date((today-90)*86400000).toISOString().slice(0,10),
+    rp:String([...periods].filter(key=>supported.has(key)).length),rpOf:String(periods.size)};
+  const client=view.clients?.find(row=>row.id===ctx.sourceId);
+  library.nativeSummaryByProgram={};
+  for(const program of client?.progs||[]) {
+    if(program.retired||program.ws)continue;
+    const definitions=new Set((program.reg?.items||[]).map(item=>item.id));
+    const assessments=new Set((records.framework_assessments||[]).filter(row=>row.client_id===ctx.clientId&&
+      row.framework_key===programKeys[program.k]&&definitions.has(row.definition_id)).map(row=>row.framework_assessment_id));
+    const linked=new Set();let fileCount=0;
+    for(const file of files) {
+      const matches=refs(file).filter(ref=>ref.kind==='framework_assessments'&&assessments.has(ref.id));
+      if(matches.length)fileCount++;
+      matches.forEach(ref=>linked.add(ref.id));
+    }
+    library.nativeSummaryByProgram[program.k]={...summary,fwLabel:program.k==='cis'?(program.label||'CIS')+' safeguards with evidence':'Framework files',
+      fwVal:String(program.k==='cis'?linked.size:fileCount),fwOf:program.k==='cis'?String(definitions.size):null};
+  }
+  library.nativeSummary=summary;
+  Object.assign(library,summary,library.nativeSummaryByProgram[client?.activeProg]||{fwLabel:'Framework files',fwVal:'0',fwOf:null});
+}
 
 function linkedAssessment(ctx,itemId,program) {
   if (!itemId) return null;
@@ -409,6 +465,11 @@ function overlayClientWork(view, records, ctx) {
 
   if (Array.isArray(records.evidence) && view.evidence?.[sourceId]) {
     const library=view.evidence[sourceId], files=native.evidence.filter(e=>!e.archived_at);
+    // Preserve identifiable fixture figures before replacing them with native
+    // counts. A metadata reference does not establish stored file contents.
+    if(Array.isArray(records.evidenceCatalog))library.sourceSummary||=Object.fromEntries(
+      ['files','recent','fwLabel','fwVal','fwOf','rp','rpOf'].map(key=>[key,library[key]]));
+    else delete library.nativeFoldersByEvidenceId;
     const oldRows=new Map((library.rows || '').split('\n').filter(Boolean).map(line=>{
       const cells=line.split('^');
       return [cells[9] || cells[0],cells];
@@ -480,7 +541,10 @@ function overlayClientWork(view, records, ctx) {
       const type=originalType===file.evidence_type ? file.source_evidence_type || originalType : file.evidence_type;
       const cells=[file.display_name || file.filename,meta,type || 'Other',subject,title,
         file.source_link_count ?? (file.relationships || []).length,file.uploaded_by_name || people.get(file.uploaded_by) || file.uploaded_by_email || old[6] || '',dateLabel];
-      if (file.source_file_origin || old[8]) cells.push(file.source_file_origin || old[8],file.source_record_id || file.evidence_id);
+      // A native catalog supplies exact folder membership by evidence identity.
+      // Keep renamed or same-name files distinct when the drawer reads this row.
+      if(Array.isArray(records.evidenceCatalog))cells.push(file.source_file_origin||old[8]||'native-record',file.evidence_id);
+      else if (file.source_file_origin || old[8]) cells.push(file.source_file_origin || old[8],file.source_record_id || file.evidence_id);
       else if (!file.source_record_id) cells.push('native-record',file.evidence_id);
       return cells.map(clean).join('^');
     });
@@ -496,6 +560,7 @@ function overlayClientWork(view, records, ctx) {
       }
       library.folders=counts;
     }
+    overlayEvidenceSummary(view,records,ctx);
   }
 }
 

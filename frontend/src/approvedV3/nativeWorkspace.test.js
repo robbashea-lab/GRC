@@ -10,7 +10,8 @@ jest.mock('./clientCommands',()=>({applyClientChanges:jest.fn()}));
 jest.mock('./registerCommands',()=>({applyRegisterChanges:jest.fn()}));
 jest.mock('./workCommands',()=>({applyWorkChanges:jest.fn()}));
 jest.mock('./cmmcCommands',()=>({applyCmmcChanges:jest.fn(),overlayCmmcWorkbook:jest.fn(),downloadApprovedCmmc:jest.fn()}));
-jest.mock('./workGuidance',()=>({prepareReviewGuide:jest.fn(),downloadApprovedEvidence:jest.fn()}));
+jest.mock('./workGuidance',()=>({prepareReviewGuide:jest.fn(),downloadApprovedEvidence:jest.fn(),
+  loadApprovedEvidenceCatalog:async()=>[],downloadApprovedEvidenceArchive:jest.fn()}));
 jest.mock('./adminCommands',()=>({
   loadGlobalRecords:jest.fn(async(api)=>({account:(await api.get('/auth/me')).data,users:[],tools:[]})),
   overlayGlobalRecords:jest.fn(),applyGlobalChanges:jest.fn(async()=>({didWrite:false,message:''})),
@@ -58,6 +59,7 @@ test('switching the visible framework is presentation; a changed control remains
   after.clients.find(c=>c.id==='prestige').activeProg='iso';
   after.clients.find(c=>c.id==='prestige').program='ISO 27001';
   after.reg.prestige=after.clients.find(c=>c.id==='prestige').progs.find(p=>p.k==='iso').reg;
+  after.clients.find(c=>c.id==='prestige').progs.find(p=>p.k==='iso').domains=[['A.8',34]];
   expect(workspaceMaterial(after)).toBe(workspaceMaterial(before));
   after.clients.find(c=>c.id==='prestige').progs.find(p=>p.k==='iso').reg.items[0].st='N';
   expect(workspaceMaterial(after)).not.toBe(workspaceMaterial(before));
@@ -101,4 +103,50 @@ test('checkpoint-only changes are saved, unaffected clients are skipped, and a p
   expect(current.clients[0].name).toBe('Saved on the native server');
   expect(page.finish).toHaveBeenLastCalledWith(false,'Save interrupted');
   jest.clearAllTimers();jest.useRealTimers();
+});
+
+test('busy state covers queued onboarding drafts until every save drains or the edit is cancelled',async()=>{
+  jest.useFakeTimers();jest.clearAllMocks();
+  let current,callbacks,releaseAccount;
+  const firstAccountRead=new Promise(resolve=>{releaseAccount=resolve;});
+  const source=clone(fixture.source_state);source.clients=source.clients.filter(row=>row.id==='brawndo');
+  const records=scoped();records.approved_v3_guidance=[];records.audit_logs=[];
+  const packet={initialized:true,source_state:source,records:{[cid]:records},drafts:{},actor};
+  let accountReads=0;
+  const api={get:jest.fn(async path=>{
+    if(path.endsWith('/bootstrap'))return {data:clone(packet)};
+    if(path==='/auth/me'){
+      if(accountReads++===0)await firstAccountRead;
+      return {data:actor};
+    }
+    if(path.endsWith('/records'))return {data:{client_id:cid,records:clone(records)}};
+    throw Error('Unexpected read '+path);
+  }),put:jest.fn(async(path,body)=>({data:{client_id:cid,revision:body.expected_revision+1,view:body.view}}))};
+  const page={configure:options=>{callbacks=options;},snapshot:()=>clone(current),apply:state=>{current=state;},
+    actor:jest.fn(),status:jest.fn(),finish:jest.fn(),noop:jest.fn(),context:()=>({sourceId:'brawndo'})};
+  loadGlobalRecords.mockImplementation(async()=>({account:actor,users:[],tools:[]}));
+  applyGlobalChanges.mockResolvedValue({didWrite:false,message:''});
+  applyClientChanges.mockImplementation(async context=>({clientId:context.clientId,identityMaps:context.identityMaps,handled:{}}));
+  applyRegisterChanges.mockResolvedValue({handled:{}});applyCmmcChanges.mockResolvedValue({handled:{}});applyWorkChanges.mockResolvedValue({handled:{}});
+  try{
+    const controller=await startNativeWorkspace(page,api);
+    const programs=clone(current);programs.onboarding||={};programs.onboarding.brawndo={step:1,prog:{cis:'applies'},pol:{}};
+    callbacks.persist(programs,'brawndo');
+    expect(callbacks.busy()).toBe(true);expect(document.body.getAttribute('aria-busy')).toBe('true');
+    jest.advanceTimersByTime(119);
+    expect(document.body.getAttribute('aria-busy')).toBe('true');
+    const firstSave=controller.flush();
+    const policies=clone(programs);policies.onboarding.brawndo.step=2;
+    policies.onboarding.brawndo.pol.Inventory={inc:true,ans:'unsure'};
+    callbacks.persist(policies,'brawndo');releaseAccount();await firstSave;
+    expect(callbacks.busy()).toBe(true);expect(document.body.getAttribute('aria-busy')).toBe('true');
+    await controller.flush();
+    expect(callbacks.busy()).toBe(false);expect(document.body.hasAttribute('aria-busy')).toBe(false);
+    expect(page.snapshot().onboarding.brawndo).toEqual(policies.onboarding.brawndo);
+    expect(api.put).toHaveBeenCalledTimes(2);
+    const abandoned=clone(current);abandoned.onboarding.brawndo.step=3;
+    callbacks.persist(abandoned,'brawndo');expect(document.body.getAttribute('aria-busy')).toBe('true');
+    callbacks.persist(clone(current),'brawndo');
+    expect(callbacks.busy()).toBe(false);expect(document.body.hasAttribute('aria-busy')).toBe(false);
+  }finally{releaseAccount();jest.clearAllTimers();jest.useRealTimers();document.body.removeAttribute('aria-busy');}
 });

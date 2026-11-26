@@ -1,5 +1,24 @@
 # GoverNara v3.0 native workflow handoff
 
+## Staging QA corrections, November 26 (candidate)
+
+Robb authorized comprehensive staging QA and fixes while preserving the approved design and all existing data. Root owns this branch and the staging release; no other agent deploys. The prior live product is `fbc4fd5c77b72b1ed6480db48c074cbdda231c63`, Render deployment `dep-dc43fup5efls73cv70jg`. The source HTML and its SHA below are unchanged.
+
+Confirmed and corrected:
+
+- Refresh no longer reorders the authenticated account after Users & Access has rendered its action indexes. Access edits retain historical GRC lead assignments; legacy viewer roles map to the native readonly role.
+- Contacts reconcile by saved identity, including two Sacred Heart contacts with blank email addresses. Displayed access follows the explicit native linked account and its current permissions; matching email addresses cannot imply access. Reference people remain reference-only.
+- Cached program charts, contact badges and evidence totals do not turn read-only navigation into saves. Real register, assessment, enrollment, access and evidence changes remain tracked. Queued saves set the busy indicator immediately and retain it until the queue drains, preventing a misleading idle gap during onboarding.
+- A newly completed client with an empty security profile can reopen Client Profile. Missing maturity answers display Unknown; initialization no longer leaves an incomplete object that crashes the approved renderer.
+- Evidence totals use actual stored bytes, completed occurrences and current active-program links. The rolling 90-day caption and tooltip use the current date. Folder counts, browsing and ZIP selection share the native catalog's canonical membership, including files linked to both a Risk and its Review. Metadata references remain browseable and are not reported as stored files or exported as invented contents. Download all/folder uses the existing verified native ZIP writer. Busy, double-click, stale-client and replaced-dialog guards protect async downloads.
+- Security & Auth and password-help descriptions now describe enforced native behavior instead of asserting mockup-only MFA, lockout, password history/rotation or idle-session expiry. Cards, layout, icons and themes are unchanged; no authentication protections were weakened.
+
+Verification completed before candidate release: optimized authenticated build; 17 focused frontend suites / 144 tests; separate contact identity regression; queue-state regression; 83 isolated native backend tests and 14 isolated hosting tests. Actual approved-document tests exercise all eight clients across fourteen sections, all ten programs, eleven new-client framework/scope combinations and guided draft adoption. Native lifecycle checks complete/replay 29 existing review series across all eight fixture clients and verify their parent Risk/Policy/Vendor/AI readbacks, calendar occurrence identity and history. Evidence checks include a real native upload belonging to both Reviews and Risks and archived-client/catalog behavior. Independent AI review found no remaining material issue in the inspected diff; this is not human acceptance.
+
+The compiled local browser passed sign-in, all eight client calendar links and responsive width, calendar drag/reload, Action create/edit/reload, unanswered-review rejection, identical uploaded/downloaded evidence bytes, profile save/reload and native SPRS download. Its first onboarding run exposed a queued-save timing failure; the failed receipt is retained in `../governara-v3-qa/browser-final-20261126.json`, with a focused rerun in progress after the busy-state correction. The disposable browser uses in-memory Mongo and substitutes serial workbook reads, not replica-set qualification.
+
+Hosted checks, CI, candidate deployment and final acceptance are separate and are not yet claimed for these fixes. Existing staging clients are inspected read-only; use explicitly named new QA clients for completion/onboarding mutations and preserve their audit history. Do not repurpose earlier synthetic acceptance fixtures. Recent audit summaries in the approved page do not replace the full paginated native Audit Log. Historical sample approvals, screenings and evidence references are not certification or proof of file contents. Other roles and unmarked retained clients still use their native workspace as documented below.
+
 ## Live native integration on staging, November 26
 
 Branch: `codex/staging-signed-in-v3-20261124`, based on `d1d6beb55009cb63db534344dcc7e3bd5e25a168`. Robb authorized staging implementation of the complete approved portfolio alongside retained records. The unchanged reference remains `frontend/public/visual-preview.html`, SHA-256 `5bb03e1219276a01459f2a44be6da44dce71271feb8a17c15a2083e6db397db9`.

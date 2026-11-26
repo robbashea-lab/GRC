@@ -1,6 +1,7 @@
 {
   "offline": [
     "test_approved_v3.py",
+    "test_approved_v3_lifecycle.py",
     "test_approved_v3_guidance.py",
     "test_approved_v3_page_runtime.py",
     "test_nordic_policy_links.py",

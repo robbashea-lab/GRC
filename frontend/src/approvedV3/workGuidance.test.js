@@ -1,8 +1,11 @@
 /** @jest-environment node */
-import {prepareReviewGuide,sourceReviewGuide,downloadApprovedEvidence} from './workGuidance';
+import {prepareReviewGuide,sourceReviewGuide,downloadApprovedEvidence,loadApprovedEvidenceCatalog,downloadApprovedEvidenceArchive} from './workGuidance';
+import {downloadEvidenceArchive} from '../lib/evidenceArchive';
 import {JSDOM,VirtualConsole} from 'jsdom';
 import fs from 'node:fs';
 import path from 'node:path';
+
+jest.mock('../lib/evidenceArchive',()=>({downloadEvidenceArchive:jest.fn()}));
 
 const row={client_id:'a',review_id:'native-review',source_record_id:'r1',current_occurrence_id:'occ',updated_at:'v1'};
 const guide={occurrence_id:'occ',expected_updated_at:'v1',contract_token:'token',steps:[
@@ -72,4 +75,33 @@ test('stored evidence references and foreign clients cannot request file bytes',
     {client_id:'s',evidence_id:'ref',file_available:false}]};
   for(const evidenceId of ['real','ref']) await expect(downloadApprovedEvidence({api,records,clientId:'s',evidenceId})).rejects.toThrow('no downloadable file');
   expect(api.get).not.toHaveBeenCalled();
+});
+
+test('the saved evidence catalog reads every authorized page and rejects foreign or duplicate identities',async()=>{
+  const api={get:jest.fn(async(_,options)=>({data:{total:2,page_size:1,items:[{client_id:'a',evidence_id:'file'+options.params.page}]}}))};
+  expect((await loadApprovedEvidenceCatalog({api,clientId:'a',isCurrent:()=>true})).map(file=>file.evidence_id)).toEqual(['file1','file2']);
+  expect(api.get.mock.calls.map(([,options])=>options.params.page)).toEqual([1,2]);
+  api.get.mockResolvedValue({data:{total:1,page_size:100,items:[{client_id:'b',evidence_id:'foreign'}]}});
+  await expect(loadApprovedEvidenceCatalog({api,clientId:'a',isCurrent:()=>true})).rejects.toThrow('selected client');
+  api.get.mockResolvedValue({data:{total:2,page_size:100,items:[{client_id:'a',evidence_id:'same'},{client_id:'a',evidence_id:'same'}]}});
+  await expect(loadApprovedEvidenceCatalog({api,clientId:'a',isCurrent:()=>true})).rejects.toThrow('duplicate');
+});
+
+test('an Evidence folder downloads saved files through the verifier and accurately discloses references',async()=>{
+  downloadEvidenceArchive.mockResolvedValue({fileCount:1,entryCount:1});
+  const catalog=[{client_id:'a',evidence_id:'ref',file_available:false},{client_id:'a',evidence_id:'real',file_available:true}];
+  const api={get:jest.fn().mockResolvedValue({data:{total:2,page_size:100,items:catalog}})};
+  const isCurrent=()=>true,records={clients:[{client_id:'a',source_client_id:'source'}]};
+  const result=await downloadApprovedEvidenceArchive({api,records,clientId:'a',sourceId:'source',folder:'Reviews',isCurrent});
+  expect(downloadEvidenceArchive).toHaveBeenLastCalledWith(expect.objectContaining({clientId:'a',storedOnly:true,folderArea:'Reviews',isCurrent,
+    params:{state:JSON.stringify({filters:{program_areas:['Reviews']}})}}));
+  expect(result).toMatchObject({downloaded:true,fileCount:1,referenceCount:1});
+  expect(result.message).toContain('1 reference-only record');
+  api.get.mockResolvedValue({data:{total:1,page_size:100,items:[catalog[0]]}});
+  downloadEvidenceArchive.mockClear();
+  expect(await downloadApprovedEvidenceArchive({api,records,clientId:'a',sourceId:'source',folder:'__all',isCurrent})).toMatchObject({downloaded:false,fileCount:0,referenceCount:1});
+  expect(downloadEvidenceArchive).not.toHaveBeenCalled();
+  await expect(downloadApprovedEvidenceArchive({api,records,clientId:'a',sourceId:'other',isCurrent})).rejects.toThrow('selected saved client');
+  await expect(downloadApprovedEvidenceArchive({api,records,clientId:'a',sourceId:'source',folder:'Invented',isCurrent})).rejects.toThrow('folder');
+  await expect(loadApprovedEvidenceCatalog({api,clientId:'a',isCurrent:()=>false})).rejects.toThrow('selection changed');
 });

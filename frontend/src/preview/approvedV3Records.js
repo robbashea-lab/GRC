@@ -250,7 +250,7 @@ const statusCodes=inverse(statuses),verificationCodes=inverse(verification);
 
 function overlayClientProfile(view,client,row,records,users) {
   const cid=row.client_id,profile=view.profile[client.id]||={},saved=row.profile||{};
-  const v={...(profile.v2||{})};
+  const v={...(profile.v2||{}),areas:profile.v2?.areas||{}};
   for(const section of ['organization','technical','security']) {
     if(!Object.hasOwn(saved,section))continue;
     for(const [native,field] of Object.entries(mappings[section])) {
@@ -282,8 +282,16 @@ function overlayClientProfile(view,client,row,records,users) {
       return {...original,...project(item,original),sourceRecordId:key};
     });
   }
-  overlayRows('contacts','contacts','contact_id',item=>({name:item.name,email:item.email||'',role:item.role||item.title||'',
-    primary:item.contact_id===row.primary_contact_id,access:!!item.linked_user_id}));
+  const accounts=new Map((records.users||[]).map(account=>[account.user_id,account]));
+  overlayRows('contacts','contacts','contact_id',item=>{
+    const account=accounts.get(item.linked_user_id),role=account?.role==='client_viewer'?'client_readonly':account?.role;
+    const real=account&&!account.reference_only&&Object.values(roleMap).includes(role);
+    const permitted=real&&(role==='super_admin'||role==='platform_admin'&&account.all_clients===true||account.client_ids?.includes(cid));
+    const accountStatus=account?.reference_only?'Reference only':account?.status?
+      account.status.charAt(0).toUpperCase()+account.status.slice(1):'';
+    return {name:item.name,email:item.email||'',role:item.role||item.title||'',primary:item.contact_id===row.primary_contact_id,
+      access:!!(permitted&&account.status==='active'),invited:!!(real&&account.status==='invited'),accountStatus};
+  });
   overlayRows('assets','systems','asset_id',(item,original)=>({
     name:item.name,owner:item.owner_id?(users.get(item.owner_id)||item.source_owner_name||null):null,loc:item.location||'',
     type:String(original.type||'').toLowerCase()===item.asset_type?original.type:item.asset_type||'',

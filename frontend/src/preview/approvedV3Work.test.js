@@ -65,6 +65,49 @@ test('metadata-only evidence keeps recorded dates, references and versions witho
   }
 });
 
+test('live evidence figures use stored bytes, exact completed occurrences and the selected framework scope',()=>{
+  const src=fixture(),{db,ids}=convert(src);
+  src.clients=[{id:'a',activeProg:'cis',progs:[{k:'cis',label:'CIS IG1',reg:{items:[{id:'1.1'},{id:'1.2'}]}},
+    {k:'soc',label:'SOC 2',reg:{items:[{id:'CC1.1'}]}}]}];
+  db.framework_assessments=[{client_id:tenant,framework_assessment_id:'assessment-1',framework_key:'cis-ig1',definition_id:'1.1'},
+    {client_id:tenant,framework_assessment_id:'assessment-soc',framework_key:'soc-2',definition_id:'CC1.1'}];
+  const ref={client_id:tenant,evidence_id:'reference',file_available:false,created_at:'2026-11-25',
+    references:[{kind:'framework_assessments',id:'assessment-1',available:true}]};
+  const file={client_id:tenant,evidence_id:'file',file_available:true,sha256:'a'.repeat(64),size:5,created_at:'2026-11-25',
+    references:[{kind:'framework_assessments',id:'assessment-soc',available:true},
+      {kind:'reviews',id:ids.reviews.r1,occurrence_id:ids.occurrences.h1,available:true}]};
+  db.evidenceCatalog=[ref,file,{...file,evidence_id:'old',created_at:'2026-08-27',references:[]},
+    {...file,evidence_id:'future',created_at:'2026-11-27',references:[]}];
+  Object.assign(src.evidence.a,{files:99,recent:99,fwVal:'99',fwOf:'99',rp:'99',rpOf:'99'});
+  overlayApprovedV3Work(src,db,{...ctx,asOfDate:'2026-11-26'});
+  expect(src.evidence.a).toMatchObject({files:3,recent:1,recentSince:'2026-08-28',fwVal:'0',fwOf:'2',rp:'1',rpOf:'1',referenceCount:1});
+  expect(src.evidence.a.nativeSummaryByProgram.soc).toMatchObject({fwLabel:'Framework files',fwVal:'1',fwOf:null});
+  expect(src.evidence.a.sourceSummary).toMatchObject({files:99,fwVal:'99',rpOf:'99'});
+  overlayApprovedV3Work(src,db,{...ctx,asOfDate:'2026-11-26'});
+  expect(src.evidence.a.sourceSummary.files).toBe(99);
+  expect(src.evidence.a.rpOf).toBe('1');
+});
+
+test('native catalog membership keeps folder counts and stable row identities aligned across multiple contexts',()=>{
+  const src=fixture(),{db}=convert(src),reviewFile=db.evidence[1],otherFile=db.evidence[2];
+  reviewFile.display_name='Renamed proof.txt';
+  src.evidence.a.folders={Reviews:99,Risks:99,Vendors:99,Frameworks:99,'Needs classification':99,Findings:99,'Action Items':99};
+  db.evidenceCatalog=[{...db.evidence[0],program_areas:['Frameworks']},{...reviewFile,program_areas:['Reviews','Risks','Reviews']},
+    {...otherFile,program_areas:['Unassigned']}];
+  overlayApprovedV3Work(src,db,ctx);
+  const library=src.evidence.a;
+  expect(library.folders).toMatchObject({Reviews:1,Risks:1,Vendors:0,'Needs classification':1,Findings:0,'Action Items':0});
+  expect(library.nativeFoldersByEvidenceId[reviewFile.evidence_id]).toEqual(['Reviews','Risks']);
+  expect(library.nativeFoldersByEvidenceId[reviewFile.source_record_id]).toEqual(['Reviews','Risks']);
+  expect(library.nativeFoldersByEvidenceId[otherFile.evidence_id]).toEqual(['Unassigned']);
+  const row=library.rows.split('\n').find(line=>line.startsWith(reviewFile.display_name+'^')).split('^');
+  expect(row[9]).toBe(reviewFile.evidence_id);
+  // The standalone converter still uses the approved file's primary-folder behavior.
+  delete db.evidenceCatalog;overlayApprovedV3Work(src,db,ctx);
+  expect(src.evidence.a.nativeFoldersByEvidenceId).toBeUndefined();
+  expect(src.evidence.a.folders.Risks).toBe(0);
+});
+
 test('conversion preserves a completed one-time review when the active slot disappears',()=>{
   const src=fixture();
   const before=convert(src);

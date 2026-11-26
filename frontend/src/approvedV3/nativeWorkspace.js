@@ -7,7 +7,7 @@ import {overlayApprovedV3Registers} from '../preview/approvedV3Registers';
 import {applyClientChanges} from './clientCommands';
 import {applyRegisterChanges} from './registerCommands';
 import {applyWorkChanges} from './workCommands';
-import {prepareReviewGuide, downloadApprovedEvidence} from './workGuidance';
+import {prepareReviewGuide, downloadApprovedEvidence,loadApprovedEvidenceCatalog,downloadApprovedEvidenceArchive} from './workGuidance';
 import {applyCmmcChanges, overlayCmmcWorkbook, downloadApprovedCmmc} from './cmmcCommands';
 import {overlayNativeAudit} from './auditProjection';
 import {loadGlobalRecords,overlayGlobalRecords,applyGlobalChanges} from './adminCommands';
@@ -36,7 +36,7 @@ export function reconcileView(current, incoming) {
   if (!current || typeof current !== 'object' || Object.isFrozen(current)
       || Array.isArray(current) !== Array.isArray(incoming)) return incoming;
   if (Array.isArray(incoming)) {
-    const key = row => row?.wfId || row?.id || row?.occurrenceId || row?.email;
+    const key = row => row?.wfId || row?.id || row?.sourceRecordId || row?.occurrenceId || row?.email || undefined;
     const existing = new Map(current.map((row,index) => [key(row) ?? index,row]));
     current.splice(0,current.length,...incoming.map((row,index) =>
       reconcileView(existing.get(key(row) ?? index),row)));
@@ -72,10 +72,15 @@ function clientMaterial(state, sourceId) {
   const client=state.clients.find(client=>client.id===sourceId);
   const result = {client:client&&Object.fromEntries(['id','name','industry','lead','env','status','logoUrl','isNew','onboarded','progApp']
     .map(key=>[key,client[key]]))};
-  if(client)result.client.progs=(client.progs || []).map(({nativeCmmcReadiness,...program})=>program);
-  for (const field of ['work','programs','records','profile','evidence','own','services','onboarding']) {
+  if(client)result.client.progs=(client.progs || []).map(({nativeCmmcReadiness,domains,positions,...program})=>program);
+  for (const field of ['work','programs','records','profile','own','services','onboarding']) {
     result[field] = state[field]?.[sourceId];
   }
+  // Contact access badges come from the current user directory during rendering.
+  // Reading those badges must not turn navigation into a client-record save.
+  if(result.records)result.records={...result.records,contacts:result.records.contacts?.map(
+    ({accountStatus,invited,...contact})=>contact)};
+  result.evidence={rows:state.evidence?.[sourceId]?.rows};
   for (const field of draftFields) result[field] = clientDraft(state,sourceId)[field];
   for (const field of ['guideSaved','itemCur','ita','checklists']) result[field] =
     Object.fromEntries(Object.entries(state[field] || {}).filter(([key])=>key.split('|')[0]===sourceId));
@@ -153,7 +158,7 @@ export async function startNativeWorkspace(page, transport=api) {
     for (const [cid,records] of Object.entries(nativeRecords)) {
       const sourceId = records.clients[0].source_client_id;
       const names = new Map(records.users.map(row=>[row.user_id,row.name]));
-      const context = {clientId:cid,sourceId,userName:id=>names.get(id) || null,liveDates:true};
+      const context = {clientId:cid,sourceId,userName:id=>names.get(id) || null,liveDates:true,asOfDate:page.clock?.() || new Date()};
       page.prepareClient?.(result,sourceId,records);
       overlayApprovedClientAssessments(result,records,{asOfDate:page.clock?.() || new Date()});
       overlayApprovedV3Work(result,records,context);
@@ -173,6 +178,7 @@ export async function startNativeWorkspace(page, transport=api) {
       }
       nativeRecords[cid] = data.records;
       await refreshCmmc(cid);
+      nativeRecords[cid].evidenceCatalog=await loadApprovedEvidenceCatalog({api:transport,clientId:cid});
     }
     identityMaps = approvedV3IdentityMaps(allRecords(nativeRecords));
   }
@@ -212,6 +218,9 @@ export async function startNativeWorkspace(page, transport=api) {
     packet=reloaded;nativeRecords=packet.records;
     identityMaps=approvedV3IdentityMaps(allRecords(nativeRecords));
     for(const cid of Object.keys(nativeRecords))await refreshCmmc(cid);
+    await Promise.all(Object.entries(nativeRecords).map(async([cid,records])=>{
+      records.evidenceCatalog=await loadApprovedEvidenceCatalog({api:transport,clientId:cid});
+    }));
     globals=await loadGlobalRecords(transport,packet.actor);
     actor=packet.actor;
     return packet.source_state;
@@ -281,8 +290,8 @@ export async function startNativeWorkspace(page, transport=api) {
         globals=await loadGlobalRecords(transport,actor);
       }
       const saved = project(savedState);
-      page.apply(saved,reconcileView);
       page.actor(globals.account,saved.clients.map(client=>client.id));
+      page.apply(saved,reconcileView);
       baseline = page.snapshot();
       files.clear();
       pendingRequests = new Map();
@@ -293,8 +302,8 @@ export async function startNativeWorkspace(page, transport=api) {
         // Re-bootstrap captures membership changes, concurrent private drafts,
         // and a client created successfully before a later operation failed.
         const saved = project(await reloadScope());
-        page.apply(saved,reconcileView);
         page.actor(globals.account,saved.clients.map(client=>client.id));
+        page.apply(saved,reconcileView);
         baseline = page.snapshot();
       } catch {
         ready = false;
@@ -303,7 +312,7 @@ export async function startNativeWorkspace(page, transport=api) {
       if(!ready)page.fail?.('The saved workspace could not be verified. Sign in again to reload your current access.');
     } finally {
       saving = false;
-      document.body.removeAttribute('aria-busy');
+      if(!pending || !ready)document.body.removeAttribute('aria-busy');
       if (pending && ready) scheduled = window.setTimeout(flush,0);
     }
   }
@@ -318,9 +327,11 @@ export async function startNativeWorkspace(page, transport=api) {
         // Navigation and filters use the source's persistence callback too.
         // An unchanged snapshot must not redraw an open, unsaved form.
         pending=null;window.clearTimeout(scheduled);page.noop?.();
+        document.body.removeAttribute('aria-busy');
         return true;
       }
       pending = {state,sourceId};
+      document.body.setAttribute('aria-busy','true');
       window.clearTimeout(scheduled);
       scheduled = window.setTimeout(flush,120);
       return true;
@@ -329,6 +340,11 @@ export async function startNativeWorkspace(page, transport=api) {
       const clientId=identityMaps.clientIds[sourceId];
       return downloadApprovedEvidence({api:transport,records:nativeRecords[clientId],clientId,evidenceId,
         isCurrent:()=>page.context().sourceId===sourceId});
+    },
+    downloadEvidenceArchive:(sourceId,folder)=>{
+      const clientId=identityMaps.clientIds[sourceId];
+      return downloadApprovedEvidenceArchive({api:transport,records:nativeRecords[clientId],clientId,sourceId,folder,
+        isCurrent:()=>page.context().sourceId===sourceId && ready && !saving && !pending});
     },
     downloadReport,
   });
@@ -411,10 +427,13 @@ export async function startNativeWorkspace(page, transport=api) {
     packet.drafts ||= {};
     identityMaps = approvedV3IdentityMaps(allRecords(nativeRecords));
     for (const cid of Object.keys(nativeRecords)) await refreshCmmc(cid);
+    await Promise.all(Object.entries(nativeRecords).map(async([cid,records])=>{
+      records.evidenceCatalog=await loadApprovedEvidenceCatalog({api:transport,clientId:cid});
+    }));
     globals=await loadGlobalRecords(transport,actor);
     const view = project(packet.source_state);
-    page.apply(view,reconcileView);
     page.actor(globals.account,view.clients.map(client=>client.id));
+    page.apply(view,reconcileView);
     baseline = page.snapshot();
     ready = true;
     page.status('Saved client records loaded.');

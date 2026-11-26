@@ -1,4 +1,39 @@
 import {downloadEvidence} from '../lib/evidenceContext';
+import {collectEvidencePages} from '../lib/brawndoAdditionalEvidence';
+import {downloadEvidenceArchive} from '../lib/evidenceArchive';
+import {EVIDENCE_AREAS} from '../lib/evidenceRepository';
+
+export async function loadApprovedEvidenceCatalog({api,clientId,params={},isCurrent=()=>true}) {
+  function check(){if(!clientId||!isCurrent())throw Error('The evidence selection changed. Reopen the selected client.');}
+  check();
+  const rows=await collectEvidencePages(async page=>{
+    check();
+    const {data}=await api.get('/evidence/catalog',{params:{...params,client_id:clientId,page,page_size:100}});
+    check();return data;
+  },{});
+  if(rows.some(row=>row.client_id!==clientId||!row.evidence_id))throw Error('The evidence catalog does not match the selected client.');
+  if(new Set(rows.map(row=>row.evidence_id)).size!==rows.length)throw Error('The evidence catalog contains duplicate identities. Reload this client.');
+  return rows;
+}
+
+/** Keep reference records visible without presenting their metadata as stored bytes. */
+export async function downloadApprovedEvidenceArchive({api,records,clientId,sourceId,folder='__all',isCurrent=()=>true}) {
+  const clients=(records?.clients || []).filter(client=>client.client_id===clientId&&client.source_client_id===sourceId);
+  if(clients.length!==1||!isCurrent())throw Error('Reopen the Evidence Library for the selected saved client.');
+  const folderArea=folder==='__all'?null:folder==='Needs classification'?'Unassigned':folder;
+  if(folderArea!==null&&![...Object.values(EVIDENCE_AREAS),'Unassigned'].includes(folderArea))throw Error('Reopen the selected evidence folder.');
+  const params=folderArea?{state:JSON.stringify({filters:{program_areas:[folderArea]}})}:{};
+  const rows=await loadApprovedEvidenceCatalog({api,clientId,params,isCurrent});
+  const referenceCount=rows.filter(row=>row.file_available===false).length;
+  const referenceNote=referenceCount?` ${referenceCount} reference-only record${referenceCount===1?'':'s'} remain in the Library; no file contents were supplied for them.`:'';
+  if(!rows.length)throw Error('No evidence records match this selection.');
+  if(referenceCount===rows.length)return {downloaded:false,fileCount:0,referenceCount,
+    message:'This selection has no stored files to download.'+referenceNote};
+  const result=await downloadEvidenceArchive({clientId,params,folderArea,storedOnly:true,isCurrent,
+    filename:'evidence-'+(folderArea||'all')+'.zip'});
+  if(!isCurrent())throw Error('The evidence selection changed. Reopen the selected client.');
+  return {...result,downloaded:true,referenceCount,message:`ZIP download started: ${result.fileCount} verified file${result.fileCount===1?'':'s'}.`+referenceNote};
+}
 
 export async function downloadApprovedEvidence({api,records,clientId,evidenceId,isCurrent}) {
   const rows=(records?.evidence || []).filter(f=>f.client_id===clientId && f.evidence_id===evidenceId && !f.archived_at);

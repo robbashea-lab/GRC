@@ -110,7 +110,7 @@ class HostingTests(unittest.TestCase):
                     without_hook = response.content.replace(PAGE_HOOK.encode()+b'\n',b'',1)
                     without_hook = without_hook.replace(BRIDGE_TAG+native_tag,b'',1)
                     without_hook = without_hook.replace(b'connectedRestore=function(){};connectedPersist=function(){return true;};window.GoverNaraPrototypePersist=connectedPersist;\n',b'',1)
-                    without_hook = without_hook.replace(b'<style id="native-workspace-loading">body{visibility:hidden}</style>',b'',1)
+                    without_hook = without_hook.replace(b'<style id="native-workspace-loading">body{visibility:hidden}#toast{visibility:visible}</style>',b'',1)
                     self.assertEqual(without_hook, source)
                     self.assertEqual(response.content,expected)
                 else:

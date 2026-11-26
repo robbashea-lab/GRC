@@ -8,6 +8,21 @@ PAGE_HOOK = r"""
 /* Native integration preserves the approved rendering functions and layout. */
 window.GoverNaraNativePage=(function(){
   var callbacks=null, importing=false, editing=false;
+  // Describe enforced native behavior, retaining the approved cards and icons.
+  var nativeSecurityDescriptions={
+    "Authentication":"Sign in with an approved email account and password. Invalid credentials return a generic error. Accounts must be active. Platform MFA and automatic account disabling for inactivity are not available.",
+    "Password policy":"New passwords and resets require 15–128 characters. Common passwords and low-diversity values are blocked. Scheduled password expiration and password history checks are not available.",
+    "Password storage":"Passwords are protected using adaptive, salted password hashing. New passwords use scrypt; existing bcrypt credentials remain supported.",
+    "Session lifetime":"Seven-day sessions; no inactivity timeout. Logout revokes account sessions. Role, status and client assignments are checked per request. Reload uses HttpOnly cookies; bearer tokens are not persisted in localStorage.",
+    "Abuse protection":"Authentication endpoints allow 30 requests per source IP and endpoint per minute. Excess requests are rejected. Failed-attempt account lockout is not available."
+  };
+  SECURITY.forEach(function(card){if(nativeSecurityDescriptions[card[0]])card[1]=nativeSecurityDescriptions[card[0]];});
+  var sourceRenderAccount=renderAccount;
+  renderAccount=function(){
+    sourceRenderAccount();
+    var passwordHelp=document.querySelector('#ac-conf + .help');
+    if(passwordHelp)passwordHelp.textContent='Use Existing records → My Account to change your password. New passwords require 15–128 characters; common passwords are blocked. Changing your password signs out all active sessions, including this one.';
+  };
   var originalToast=toast,installed=false,sourceRoute=route;
   route=function(){if(installed)return sourceRoute();};
   function refreshClock(){var now=new Date();NOW=now;TODAY=new Date(now.getFullYear(),now.getMonth(),now.getDate());}
@@ -178,6 +193,55 @@ window.GoverNaraNativePage=(function(){
     return state;
   }
   var completionForm=null;
+  var sourceContactAccess=connectedContactAccess;
+  connectedContactAccess=function(cid){
+    // Native contact access is resolved by the saved account link, never an email guess.
+    if(CL[cid]&&CL[cid].nativeSourceIdentities)return;
+    return sourceContactAccess(cid);
+  };
+  var sourceEvidenceRows=evRows,sourceEvidenceFolder=evInFolder;
+  evRows=function(c){
+    var rows=sourceEvidenceRows(c),folders=EVID[c.id].nativeFoldersByEvidenceId;
+    if(folders)rows.forEach(function(row){row.nativeAreas=folders[row.id]||[];});
+    return rows;
+  };
+  evInFolder=function(row,folder){
+    return row.nativeAreas?row.nativeAreas.includes(folder==='Needs classification'?'Unassigned':folder):sourceEvidenceFolder(row,folder);
+  };
+  var sourceRenderEvidence=renderEvidence;
+  renderEvidence=function(){
+    var c=byId(S.clientId),library=EVID[c.id];
+    if(library.nativeSummary)Object.assign(library,library.nativeSummaryByProgram[c.activeProg]||library.nativeSummary);
+    sourceRenderEvidence();
+    if(library.recentSince){
+      var parts=library.recentSince.split('-').map(Number),since=new Date(parts[0],parts[1]-1,parts[2]);
+      document.querySelectorAll('#v-client .kpi-cap,#v-client .kc').forEach(function(node){
+        if(node.textContent==='Uploaded since Aug 19'){
+          var caption='Uploaded since '+since.toLocaleDateString('en-US',{month:'short',day:'numeric'});
+          node.textContent=caption;
+          var card=node.closest('.kchip');if(card)card.title=card.title.replace('Uploaded since Aug 19',caption);
+        }
+      });
+    }
+  };
+  var sourceEvidenceZipDialog=evZipDlg;
+  evZipDlg=function(c,folder){
+    if(!callbacks||!callbacks.downloadEvidenceArchive)return sourceEvidenceZipDialog(c,folder);
+    openDlg('Download '+(folder==='__all'?'all evidence':'“'+folder+'”'),c.name,
+      '<p style="margin:0 0 10px;line-height:1.6">Download the current stored files as a ZIP with their index. Reference-only records have no file contents and remain available in the Library.</p>',
+      '<button class="ghost" type="button" data-action="dlg-close">Cancel</button><button class="cta" type="button" data-action="ev-zip-go" data-val="'+esc(folder)+'">Download ZIP</button>');
+  };
+  window.addEventListener('click',function(event){
+    var button=event.target.closest&&event.target.closest('[data-action="ev-zip-go"]');
+    if(!button||!callbacks||!callbacks.downloadEvidenceArchive)return;
+    event.preventDefault();event.stopImmediatePropagation();
+    if(button.disabled||callbacks.busy&&callbacks.busy())return;button.disabled=true;
+    var cid=S.clientId,folder=button.dataset.val;
+    Promise.resolve().then(function(){return callbacks.downloadEvidenceArchive(cid,folder);})
+      .then(function(result){if(cid!==S.clientId)return;if(button.isConnected)originalCloseDialog();originalToast(result.message);})
+      .catch(function(error){if(cid===S.clientId&&button.isConnected)originalToast(error.message||'The evidence archive could not be downloaded.');})
+      .finally(function(){button.disabled=false;});
+  },true);
   var sourceCompletionPolicy=gateCompletionPolicy;
   gateCompletionPolicy=function(cid,r,details){
     var attachments=(details.evidence||[]).filter(function(f){return f.fileAvailable===true&&!!f.nativeId;});
@@ -206,11 +270,12 @@ window.GoverNaraNativePage=(function(){
     if(!files)return;
     if(button.dataset.action==='native-evidence-download'){
       event.preventDefault();event.stopImmediatePropagation();
+      if(button.disabled||callbacks.busy&&callbacks.busy())return;
       var id=button.dataset.id,client=button.dataset.client;
       if(client!==S.clientId||!files.some(function(f){return f.id===id&&f.available;})){toast('Reopen this evidence record.');return;}
       button.disabled=true;
       Promise.resolve().then(function(){return callbacks.downloadEvidence(client,id);})
-        .catch(function(error){toast(error.message||'The saved file could not be downloaded.');})
+        .catch(function(error){if(client===S.clientId&&button.isConnected)toast(error.message||'The saved file could not be downloaded.');})
         .finally(function(){button.disabled=false;});
       return;
     }
@@ -372,6 +437,7 @@ window.GoverNaraNativePage=(function(){
         PROFILE=x.profile;OWN=x.own;EVID=x.evidence;USERS=x.users;AUDIT=x.audit;
         ITEM_CUR=x.itemCur;ITEM_HIST=x.itemHist;ITEM_EXTRA=x.itemExtra;ITA=x.ita;ITA_ID=x.itaId||0;
         GUIDE_SAVED=x.guideSaved||{};ACTLOG=scopedActivity(x.activity||{});ACCT=x.account||ACCT;
+        if(nativeActor)ACCT.role=roleName(nativeActor.role);
         WID=x.wid||WID;NEWID=x.newid||NEWID;CONNECTED_FILES=x.files||[];
         CONNECTED_TOUCHED=x.touched||{};TOOLCAT=x.toolCatalog||TOOLCAT;
         TOOL_BY={};TOOLCAT.forEach(function(t){TOOL_BY[t.id]=t;});
@@ -399,12 +465,14 @@ window.GoverNaraNativePage=(function(){
       var roles={super_admin:"owner",platform_admin:"spadmin",client_grc_manager:"cmgr",
         client_contributor:"ccontrib",client_readonly:"cread"};
       var previousActor=nativeActor&&nativeActor.id;
-      var savedAccount=USERS.find(person=>person.nativeUserId===actor.user_id);
-      nativeActor={name:savedAccount?.name||actor.name||actor.email,email:savedAccount?.email||actor.email,role:roles[actor.role],
+      var savedIndex=USERS.findIndex(person=>person.nativeUserId===actor.user_id||person.id===actor.user_id);
+      var savedAccount=savedIndex<0?null:USERS[savedIndex];
+      nativeActor={name:actor.name||savedAccount?.name||actor.email,email:actor.email||savedAccount?.email,role:roles[actor.role],
         clients:clients,status:"Active",self:true,id:actor.user_id};
       nativeActor.nativeUserId=actor.user_id;nativeActor.nativeUpdatedAt=savedAccount?.nativeUpdatedAt??actor.updated_at??null;
-      for(var i=USERS.length-1;i>=0;i--)if(USERS[i].self||USERS[i].email===actor.email)USERS.splice(i,1);
-      USERS.push(nativeActor);CONNECTED_ACTOR=nativeActor.name;ME=nativeActor.name;
+      // Visible account actions retain their array indexes after identity refresh.
+      if(savedIndex<0)USERS.push(nativeActor);else USERS[savedIndex]=Object.assign(savedAccount,nativeActor);
+      CONNECTED_ACTOR=nativeActor.name;ME=nativeActor.name;
       connectedActor=function(){return nativeActor;};
       var role=roleName(nativeActor.role),menu=document.querySelector('[data-menu="user"]'),header=document.querySelector('#pop-user > div:first-child');
       ACCT=Object.assign({},ACCT,{name:nativeActor.name,email:nativeActor.email,role:role});
@@ -430,7 +498,7 @@ window.GoverNaraNativePage=(function(){
     fail:function(message){
       installed=false;
       document.body.style.visibility='hidden';
-      var panel=document.createElement('div');panel.className='panel';
+      var panel=document.createElement('div');panel.className='panel';panel.dataset.nativeWorkspaceError='';
       panel.style.cssText='visibility:visible;position:fixed;inset:0;z-index:99999;padding:48px;background:var(--bg,#eef5f2)';
       var title=document.createElement('h1');title.textContent='GoverNara';panel.appendChild(title);
       var text=document.createElement('p');text.textContent=message;panel.appendChild(text);
@@ -461,4 +529,4 @@ def native_document(source):
     position = result.rfind(b'</body>')
     scripts = b'<script src="/staging-workspace.js"></script><script src="/approved-v3-native.js"></script>'
     result = result[:position] + scripts + result[position:]
-    return result.replace(b'</head>',b'<style id="native-workspace-loading">body{visibility:hidden}</style></head>',1)
+    return result.replace(b'</head>',b'<style id="native-workspace-loading">body{visibility:hidden}#toast{visibility:visible}</style></head>',1)

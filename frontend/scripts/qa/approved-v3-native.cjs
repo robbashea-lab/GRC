@@ -6,6 +6,7 @@ const fs=require('node:fs');
 const path=require('node:path');
 const {spawn}=require('node:child_process');
 const {chromium}=require('playwright');
+const {unzipSync}=require('fflate');
 
 const base='http://127.0.0.1:18194';
 const root=path.resolve(__dirname,'../../..');
@@ -55,7 +56,12 @@ async function run(){
       return response.json();
     },uri);
     const records=async(cid=clientId)=>(await api('/v3/approved-portfolio/records?client_id='+encodeURIComponent(cid))).records;
-    const ready=()=>page.waitForFunction(()=>window.GoverNaraNativePage?.snapshot().users.some(u=>u.self&&u.id==='qa-owner'),null,{timeout:45000});
+    const ready=async()=>{
+      const result=await page.waitForFunction(()=>document.querySelector('[data-native-workspace-error]')?.textContent ||
+        (!document.getElementById('native-workspace-loading')&&window.GoverNaraNativePage?.snapshot().users.some(u=>u.self&&u.id==='qa-owner')?true:false),
+        null,{timeout:45000});
+      const status=await result.jsonValue();assert.equal(status,true,String(status));
+    };
     const snapshot=()=>page.evaluate(()=>window.GoverNaraNativePage.snapshot());
     const route=async hash=>{await page.evaluate(h=>new Promise(resolve=>{
       if(location.hash==='#'+h){resolve();return;}
@@ -165,6 +171,17 @@ async function run(){
     await action('native-evidence-download').click();const file=await downloaded;
     assert.equal(hash(fs.readFileSync(await file.path())),hash(bytes));
     pass('Reviewed completion rules and recovered the exact uploaded evidence bytes after reload.');
+    await action('dlg-close').click();
+    if(await action('drawer-close').count())await action('drawer-close').click();
+    await page.locator('[data-action="ev-zip"][data-val="__all"]:visible').click();
+    const archiveDownload=page.waitForEvent('download');await action('ev-zip-go').click();
+    const archive=unzipSync(fs.readFileSync(await (await archiveDownload).path()));
+    const contents=Object.entries(archive).filter(([name])=>name!=='index.csv');
+    assert.ok(contents.length>0);contents.forEach(([,content])=>assert.equal(hash(content),hash(bytes)));
+    const indexText=Buffer.from(archive['index.csv']).toString('utf8'),evidence=(await records()).evidence;
+    assert.ok(indexText.includes(evidence.find(row=>row.filename==='inventory-proof.txt').evidence_id));
+    evidence.filter(row=>row.file_available===false).forEach(row=>assert.ok(!indexText.includes(row.evidence_id)));
+    pass('Evidence ZIP contained the exact saved file and native index without inventing bytes for metadata references.');
     });
     await runAdditional({page,action,field,route,settle,reload,snapshot,api,records,waitFor,workflow});
     if(issues.length){receipt.issues=issues;throw Error(issues.map(issue=>issue.label+': '+issue.message).join('\n'));}
@@ -219,6 +236,35 @@ async function runAdditional({page,action,field,route,settle,reload,snapshot,api
   await reload();const enrolled=(await snapshot()).clients.find(c=>c.id===client.id);
   assert.equal(enrolled.onboarded,true);assert.match(JSON.stringify(enrolled.progs),/cis/i);
   pass('New client reopened with an empty Action register, completed CIS IG1 onboarding and created native policies and reviews.');
+  });
+  await workflow('Multi-framework onboarding',async()=>{
+  await route('client-management');await action('add-client').click();await field('name').fill('Browser QA multi-framework client');
+  await action('save-client').click();await settle();await reload();
+  const client=(await snapshot()).clients.find(c=>c.name==='Browser QA multi-framework client');assert.ok(client);
+  await route('client-'+client.id+'-profile');
+  for(const [program,value] of Object.entries({cis:'ig3',cmmc:'l2',soc:'applies',iso:'applies',nist:'applies',hipaa:'applies'})){
+    await page.locator('#onbp-'+program).selectOption(value);await settle();
+  }
+  await action('onb-next').click();await settle();
+  const answers=page.locator('[data-action="onb-pol"][data-val="unsure"]:enabled');
+  const count=await answers.count();assert.ok(count>0);
+  for(let index=0;index<count;index++){await answers.nth(index).click();await settle();}
+  await action('onb-next').click();await settle();await action('onb-next').click();await settle();
+  await action('onb-complete').click();await settle();await reload();
+  const saved=(await api('/clients')).find(c=>c.name==='Browser QA multi-framework client');assert.ok(saved);
+  const data=await records(saved.client_id),frameworks=new Set(data.framework_assessments.map(a=>a.framework_key));
+  assert.deepEqual([...frameworks].sort(),['cis-ig1','cmmc','hipaa','iso-27001','nist-csf-2','soc-2']);
+  assert.equal(data.framework_assessments.filter(a=>a.framework_key==='cis-ig1').length,153);
+  assert.equal(data.framework_assessments.filter(a=>a.framework_key==='cmmc').length,110);
+  assert.ok(data.policies.length>0&&data.reviews.length>0);
+  const projected=(await snapshot()).clients.find(c=>c.id===client.id);
+  assert.equal(projected.onboarded,true);assert.equal(projected.progs.filter(p=>!p.retired).length,6);
+  for(const program of projected.progs.filter(p=>!p.retired)){
+    await route('client-'+client.id+'-program');
+    await page.locator('#side-client [data-action="prog-switch"][data-val="'+program.k+'"]').click();await settle();
+    assert.equal((await snapshot()).clients.find(c=>c.id===client.id).activeProg,program.k);
+  }
+  pass('A new six-framework client completed onboarding, retained CIS IG3/CMMC L2 scopes and all six native program links after reload.');
   });
 }
 run().catch(e=>{console.error(e.message);process.exitCode=1;});
