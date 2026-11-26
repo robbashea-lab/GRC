@@ -4,6 +4,7 @@ import importlib.util
 import os
 from pathlib import Path
 import secrets
+import hashlib
 import shutil
 import sys
 import tempfile
@@ -95,22 +96,36 @@ class HostingTests(unittest.TestCase):
         approved = ROOT / 'frontend' / 'public' / 'visual-preview.html'
         shutil.copyfile(approved, Path(self.directory.name) / approved.name)
         source = approved.read_bytes()
-        expected_length = len(source) + len(BRIDGE_TAG)
+        from approved_v3_page import native_document, PAGE_HOOK
+        source = source.replace(b'\r\n',b'\n')
+        expected = native_document(source)
         for method in (self.client.get, self.client.head):
             with self.subTest(method=method.__name__):
                 response = method('/clients', follow_redirects=False)
                 self.assertEqual(response.status_code, 200)
                 if method == self.client.get:
                     self.assertEqual(response.content.count(BRIDGE_TAG), 1)
-                    self.assertIn(BRIDGE_TAG + b'</body>', response.content)
-                    self.assertEqual(response.content.replace(BRIDGE_TAG, b'', 1), source)
+                    native_tag = b'<script src="/approved-v3-native.js"></script>'
+                    self.assertIn(BRIDGE_TAG + native_tag + b'</body>', response.content)
+                    without_hook = response.content.replace(PAGE_HOOK.encode()+b'\n',b'',1)
+                    without_hook = without_hook.replace(BRIDGE_TAG+native_tag,b'',1)
+                    without_hook = without_hook.replace(b'connectedRestore=function(){};connectedPersist=function(){return true;};window.GoverNaraPrototypePersist=connectedPersist;\n',b'',1)
+                    without_hook = without_hook.replace(b'<style id="native-workspace-loading">body{visibility:hidden}</style>',b'',1)
+                    self.assertEqual(without_hook, source)
+                    self.assertEqual(response.content,expected)
                 else:
                     self.assertEqual(response.content, b'')
                 self.assertEqual(response.headers['content-type'].split(';')[0], 'text/html')
-                self.assertEqual(int(response.headers['content-length']), expected_length)
+                self.assertEqual(int(response.headers['content-length']), len(expected))
                 self.assertIn('private', response.headers['cache-control'])
                 self.assertIn('no-store', response.headers['cache-control'])
                 self.assertEqual(response.headers['x-frame-options'], 'DENY')
+
+    def test_native_hooks_reject_an_unapproved_or_modified_document(self):
+        from approved_v3_page import native_document
+        source = (ROOT/'frontend/public/visual-preview.html').read_bytes()
+        with self.assertRaises(ValueError):
+            native_document(source+b'<!-- unapproved replacement -->')
 
     def test_restricted_account_keeps_its_tenant_landing(self):
         self.sign_in('client_readonly')

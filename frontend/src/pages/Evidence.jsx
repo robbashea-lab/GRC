@@ -13,6 +13,7 @@ import {HistoryDate} from '@/components/RegisterCells';
 import RegisterLoadError from '@/components/RegisterLoadError';
 import RecordDrawer from '@/components/RecordDrawer';
 import {useEvidenceCatalog,EvidencePagination} from '@/components/EvidencePanel';
+import {unavailableEvidenceProps} from '@/lib/evidenceReferences';
 import {EvidenceSource,resolveEvidenceSource,useEvidenceDownload,uploaderLabel} from '@/lib/evidenceContext';
 import {Folder,Download,File as FileIcon,ChevronRight,Plus} from 'lucide-react';
 import {toast} from 'sonner';
@@ -80,7 +81,7 @@ function EvidenceWorkspace(){
         {!data.items.length?<div className="empty-state">{q?'No evidence matches your search.':area==='Unassigned'?'No evidence needs classification.':'No evidence yet. Files uploaded from the source record appear here automatically.'}</div>:<div className="register-table-frame overflow-x-auto" role="region" aria-label="Evidence files" tabIndex={0}><table className="w-full"><thead><tr>{['File','Type','Linked To','Uploaded By','Date','Actions'].map(t=><th scope="col" className="tbl-head" key={t}>{t}</th>)}</tr></thead><tbody>{data.items.map((row,index)=><tr key={row.evidence_id} className="row-hover" data-testid={`evidence-row-${index}`}>
           <td className="tbl-cell"><div className="flex gap-2 items-start"><FileIcon aria-hidden="true" size={16} className="shrink-0 mt-1"/><button className="register-record-link" onClick={()=>setItemId(row.evidence_id)}>{row.display_name||row.filename}</button></div></td>
           <td className="tbl-cell">{row.evidence_type||'Other'}{row.archived_at&&<span className="register-subline">Archived</span>}</td><td className="tbl-cell"><EvidenceSource source={row.context?.source||row.references?.find(r=>r.available)} onOpen={openSource}/>{row.context?.source?.kind==='tasks'&&row.context.finding&&<span className="register-subline">Finding: {row.context.finding.title}</span>}{row.references?.length>1&&<span className="register-subline">{row.references.length} linked contexts</span>}</td><td className="tbl-cell">{uploaderLabel(row)}</td><td className="tbl-cell"><HistoryDate value={row.created_at} empty="Not recorded"/></td>
-          <td className="tbl-cell"><button className="register-icon-button" aria-label={`Download ${row.filename}`} title={`Download ${row.filename}`} data-testid={`evidence-download-${index}`} onClick={()=>downloadEvidence(row).catch(e=>toast.error(formatError(e)))}><Download size={16} aria-hidden="true"/></button></td>
+          <td className="tbl-cell"><button className="register-icon-button" aria-label={`Download ${row.filename}`} title={`Download ${row.filename}`} data-testid={`evidence-download-${index}`} {...unavailableEvidenceProps(row)} onClick={()=>downloadEvidence(row).catch(e=>toast.error(formatError(e)))}><Download size={16} aria-hidden="true"/></button></td>
         </tr>)}</tbody></table></div>}{!landing&&<EvidencePagination data={data} page={page} setPage={setPage}/>}</section>}
     </div>
   </>;

@@ -37,7 +37,8 @@ const identities = db => db.clients.map(row => ({client_id: row.client_id, name:
 
 function normalFlags() {
   process.env.REACT_APP_PREVIEW = 'true';
-  process.env.REACT_APP_STANDARD_SIGN_IN = 'true';
+  // This suite qualifies the historical standalone Demo fixture.
+  process.env.REACT_APP_STANDARD_SIGN_IN = 'false';
   for (const key of FLAGS.slice(2)) delete process.env[key];
 }
 

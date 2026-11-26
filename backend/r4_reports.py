@@ -76,7 +76,9 @@ class ReportDeliveryIn(BaseModel):
     model_config = ConfigDict(extra='forbid')
     client_id: str = Field(min_length=1, max_length=160)
     framework_key: FrameworkKey
-    kind: Literal['audit-package', 'executive-summary', 'prep-checklist']
+    kind: Literal['audit-package', 'executive-summary', 'prep-checklist', 'register-workbook']
+    workbook: str | None = Field(default=None, max_length=100,
+        pattern=r'^[A-Za-z0-9][A-Za-z0-9-]*\.xlsx$')
     sha256: str = Field(pattern=r'^[a-f0-9]{64}$')
     bytes: int = Field(strict=True, gt=0, le=96 * 1024 * 1024)
     period_start: date
@@ -88,8 +90,22 @@ async def record_delivery(s, request, body, user, idempotency_key):
     await authority(s, request, body.client_id, body.framework_key, user)
     if body.period_end < body.period_start:
         raise HTTPException(422, 'The report period ends before it starts')
-    payload = body.model_dump(mode='json')
-    report_format = {'audit-package': 'zip', 'executive-summary': 'pdf', 'prep-checklist': 'csv'}[body.kind]
+    # The browser identifies the requested output. Only allow names produced by
+    # the saved-register generator. Filenames here are audit metadata, never paths.
+    if body.kind == 'register-workbook':
+        shared = {'Scope-and-roles.xlsx', 'Policy-register.xlsx', 'Risk-register.xlsx', 'Review-schedule-and-log.xlsx',
+                  'Vendor-register.xlsx', 'AI-register.xlsx', 'Evidence-index.xlsx'}
+        specific = {'cis-ig1': {f'CIS-{group}safeguard-register.xlsx' for group in ('', 'IG1-', 'IG2-', 'IG3-')},
+                    'iso-27001': {'Statement-of-Applicability-and-clauses.xlsx'},
+                    'soc-2': {'SOC-2-criteria-matrix.xlsx'}}
+        actions = {'iso-27001': 'Corrective-actions.xlsx', 'soc-2': 'Exceptions-and-remediation.xlsx'}
+        allowed = shared | specific.get(body.framework_key, {'Requirement-evidence-matrix.xlsx'}) | {actions.get(body.framework_key, 'Open-items.xlsx')}
+        if body.workbook not in allowed:
+            raise HTTPException(422, 'Choose a saved workbook for the selected framework')
+    elif body.workbook is not None:
+        raise HTTPException(422, 'Workbook names are only accepted for individual workbook downloads')
+    payload = body.model_dump(mode='json', exclude_none=True)
+    report_format = {'audit-package': 'zip', 'executive-summary': 'pdf', 'prep-checklist': 'csv', 'register-workbook': 'xlsx'}[body.kind]
 
     async def execute(identity):
         actor = await authority(s, request, body.client_id, body.framework_key, user)
@@ -97,12 +113,12 @@ async def record_delivery(s, request, body, user, idempotency_key):
         await s.audit(actor, 'generate', 'report-delivery', delivery_id, body.client_id, meta={
             'framework_key': body.framework_key, 'type': body.kind, 'format': report_format,
             'title': {'audit-package': 'Audit package', 'executive-summary': 'Executive summary',
-                      'prep-checklist': 'Preparation checklist'}[body.kind],
+                      'prep-checklist': 'Preparation checklist', 'register-workbook': body.workbook}[body.kind],
             'period_start': payload['period_start'], 'period_end': payload['period_end'],
             'browser_reported_sha256': body.sha256, 'browser_reported_bytes': body.bytes,
             'event': 'browser_download_requested'})
         return {'delivery_id': delivery_id, 'client_id': body.client_id, 'framework_key': body.framework_key,
-                'kind': body.kind, 'sha256': body.sha256}
+                'kind': body.kind, 'sha256': body.sha256, **({'workbook': body.workbook} if body.workbook else {})}
 
     receipt = await create_requests.run(s.db, idempotency_key, user['user_id'], body.client_id,
                                        'reports/deliveries', payload, execute)

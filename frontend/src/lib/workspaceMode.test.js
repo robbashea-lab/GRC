@@ -27,7 +27,10 @@ test('standard mode uses HTTP; demo has no bearer token or HTTP writes',async()=
   expect(http.mock.calls[0][0].headers.Authorization).toBe('Bearer generated-test-token');
   expect(localStorage.getItem('grc_token')).toBeNull();
   setWorkspaceMode('demo');await api.post('/demo/enter');
-  const {data:clients}=await api.get('/clients');expect(clients.map(client=>client.client_id)).toEqual(['demo_brawndo','demo_dunder','demo_prestige','demo_initech','demo_krusty_krab']);
+  const {data:clients}=await api.get('/clients');expect(clients.map(client=>client.client_id)).toEqual([
+    'v3sample_brawndo','v3sample_dunder','v3sample_prestige','v3sample_initech',
+    'v3sample_krusty','v3sample_ppth','v3sample_cyberdyne','v3sample_piedpiper'
+  ]);
   await api.post('/clients',{name:'Isolated test client'});
   expect(http).toHaveBeenCalledTimes(1);expect(localStorage.getItem('grc_token')).toBeNull();
   setWorkspaceMode('standard');expect((await api.get('/clients')).data).toEqual({standard:true});

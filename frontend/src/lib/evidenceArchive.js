@@ -47,7 +47,7 @@ function entryName(row,index){
 
 // The exact complete authorized population is frozen, verified, then checked again;
 // a failed member never becomes a partial successful archive.
-export async function buildEvidenceArchive({clientId,params={},folderArea=null,signal,isCurrent,limits=EVIDENCE_ARCHIVE_LIMITS}){
+export async function buildEvidenceArchive({clientId,params={},folderArea=null,storedOnly=false,signal,isCurrent,limits=EVIDENCE_ARCHIVE_LIMITS}){
   if(!clientId||typeof isCurrent!=='function')fail('Select an authorized client.');
   const mode=PREVIEW_MODE,currentScope=isCurrent;
   isCurrent=()=>currentScope()&&PREVIEW_MODE===mode;
@@ -55,7 +55,11 @@ export async function buildEvidenceArchive({clientId,params={},folderArea=null,s
   delete query.page;delete query.page_size;query.client_id=clientId;
   async function load(){
     const rows=await collectEvidencePages(async page=>{check(signal,isCurrent);const response=await api.get('/evidence/catalog',{params:{...query,page,page_size:100},signal});check(signal,isCurrent);return response.data;},{signal,maxItems:limits.files});
-    check(signal,isCurrent);return JSON.parse(JSON.stringify(rows));
+    check(signal,isCurrent);
+    if(rows.some(row=>row.client_id!==clientId))fail('The evidence selection contains a different client.');
+    // Imported evidence references belong in a report index. Only records
+    // explicitly marked reference-only may be omitted from its stored-file ZIP.
+    return JSON.parse(JSON.stringify(storedOnly?rows.filter(row=>row.file_available!==false):rows));
   }
   const rows=await load();
   if(!rows.length)fail('No evidence files match this selection.');

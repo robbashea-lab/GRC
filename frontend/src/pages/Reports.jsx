@@ -31,7 +31,9 @@ function ReportForm({clientId,scopeKey,activeScope,clientTimeZone}){
       .then(({data})=>{
         if(controller.signal.aborted||activeScope.current!==scopeKey)return;
         if(!Array.isArray(data?.frameworks)||!data.frameworks.every(f=>typeof f?.key==='string'&&f.key&&typeof f?.name==='string'&&f.name))throw new Error('Enabled frameworks could not be verified.');
-        setFrameworks(data.frameworks);setFrameworkKey(data.frameworks[0]?.key||'');
+        const requested=new URLSearchParams(window.location.search).get('framework_key');
+        const selected=data.frameworks.find(program=>program.key===requested)||data.frameworks[0];
+        setFrameworks(data.frameworks);setFrameworkKey(selected?.key||'');
       }).catch(error=>{if(!controller.signal.aborted&&activeScope.current===scopeKey)setLoadError(formatError(error));});
     return()=>{controller.abort();downloadRequest.current?.abort();};
   },[clientId,scopeKey,activeScope,revision]);

@@ -19,7 +19,8 @@ let prior, legacy, normal, savedNormal, beforePrestige, dunderForeign;
 
 function normalFlags() {
   process.env.REACT_APP_PREVIEW = 'true';
-  process.env.REACT_APP_STANDARD_SIGN_IN = 'true';
+  // This suite qualifies the historical standalone Demo fixture.
+  process.env.REACT_APP_STANDARD_SIGN_IN = 'false';
   delete process.env.REACT_APP_DUNDER_EIGHT_YEAR_QA;
   delete process.env.REACT_APP_DUNDER_EIGHT_YEAR_ONBOARDING_QA;
 }
@@ -195,6 +196,7 @@ test('native persistence errors retain the saved visitor source and report failu
 });
 
 test('the combined sign-in and Demo bundle keeps standard API requests on HTTP without seeding Demo', async () => {
+  process.env.REACT_APP_STANDARD_SIGN_IN='true';
   sessionStorage.clear();
   let standard;
   jest.isolateModules(() => { standard = require('../lib/api'); });

@@ -134,7 +134,7 @@ export function registerWorkbooks(materials,config) {
   const supplemental=materials.cmmc?.files||[];
   files.push(...supplemental.map(file=>({path:file.path,cmmc:true})));
   const indexPath='00_Package-index.xlsx';
-  files.unshift(workbook(indexPath,sheet('Package contents',['File'],['00_Start-here.pdf',indexPath,...files.map(f=>f.path),...(config.copies&&evidence.length?['08_Evidence/Stored-files.zip']:[])].map(path=>[path])),
+  files.unshift(workbook(indexPath,sheet('Package contents',['File'],['00_Start-here.pdf',indexPath,...files.map(f=>f.path),...(config.copies&&materials.evidenceCount?['08_Evidence/Stored-files.zip']:[])].map(path=>[path])),
     ...(config.history?[sheet('Report export history',['Report','Format','As of','Generated','Prepared by'],materials.history.filter(row=>within(row.created_at)).map(h=>[h.title,h.format,h.as_of,h.created_at,h.prepared_by?.name]))]:[])));
   return files;
 }

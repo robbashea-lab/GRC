@@ -19,6 +19,7 @@ import authorization
 import shared_review_plans
 from framework_work_links import action_applies_to, finding_applies_to, finding_scopes
 import guided_assessment
+import approved_v3_guidance
 import assessment_items
 import assessment_item_tasks
 import soc_guided_lease
@@ -188,6 +189,7 @@ class AssessmentPatch(BaseModel):
     status: Optional[Literal['not_assessed','in_progress','addressed','needs_attention','not_applicable']]=None
     implementation: Optional[str]=Field(default=None,max_length=20000)
     guided_assessment_source: Optional[guided_assessment.GuidedSource]=None
+    approved_v3_guide: Optional[approved_v3_guidance.SourceGuideRef]=None
     item_draft: Optional[assessment_items.ItemDraft]=None
     coordination: Optional[r4_services.CoordinationIn]=None
     technology: Optional[str]=Field(default=None,max_length=4000)
@@ -383,6 +385,16 @@ def router_for(s):
             await iso_guided_assessment.require_active(s,row,client)
         if row['framework_key']=='soc-2' and not await s.db.requirements.find_one({'client_id':row['client_id'],'baseline_key':'soc-2','baseline_response':'applies'}):
             raise HTTPException(404,'SOC 2 guided assessment is not active for this client')
+    @router.get('/framework_assessments/{aid}/approved-guide')
+    async def read_source_guide(aid:str,user=Depends(s.get_current_user)):
+        row=await parent(aid,user)
+        return await approved_v3_guidance.read(s,row,await scoped(row['client_id'],user),user)
+
+    @router.put('/framework_assessments/{aid}/approved-guide')
+    async def save_source_guide(aid:str,body:approved_v3_guidance.SourceGuideWrite,user=Depends(s.get_current_user)):
+        row=await parent(aid,user,True)
+        return await approved_v3_guidance.save(s,row,await scoped(row['client_id'],user),user,body)
+
     @router.get('/framework_assessments/{aid}/guided-assessment')
     async def get_guided(aid:str,user=Depends(s.get_current_user)):
         row=await parent(aid,user)
@@ -808,7 +820,17 @@ def router_for(s):
         changes=body.model_dump(exclude_unset=True)
         changes.pop('coordination',None)
         item_draft=changes.pop('item_draft',None)
-        if 'item_draft' in body.model_fields_set and (not item_draft or not changes.get('guided_assessment_source') or 'status' in changes):
+        v3_reference=body.approved_v3_guide
+        if v3_reference and any(key in changes for key in ('status', 'verification', 'record_assessment', 'verification_checklist')):
+            raise HTTPException(422,'Apply the reviewed implementation separately from an assessment or verification decision')
+        if 'approved_v3_guide' in changes:
+            if not v3_reference or 'guided_assessment_source' in changes:
+                raise HTTPException(422,'Select one saved interview for this implementation')
+            changes['approved_v3_guide']=await approved_v3_guidance.verify_application(s,old,await scoped(old['client_id'],user),
+                user,v3_reference,changes.get('implementation'))
+        elif old.get('approved_v3_guide') and 'implementation' in changes and changes['implementation']!=old.get('implementation'):
+            changes['approved_v3_guide']=None
+        if 'item_draft' in body.model_fields_set and (not item_draft or 'status' in changes or not v3_reference and not changes.get('guided_assessment_source')):
             raise HTTPException(422,'Pending Item edits require the reviewed implementation-only Save')
         context_plan=await r4_services.prepare_context_plan(s,old,user,body.coordination) if body.coordination is not None else None
         if 'guided_assessment_source' in changes:
@@ -977,6 +999,11 @@ def router_for(s):
             if items!=old.get('items_to_address',[]):
                 changes.update(items_to_address=items,items_revision=old.get('items_revision',0)+1)
                 data.update(changes)
+        elif v3_reference and item_draft:
+            items=assessment_items.apply_draft(old,old.get('items_to_address',[]),body.item_draft,user['user_id'],s._now())
+            if items!=old.get('items_to_address',[]):
+                changes.update(items_to_address=items,items_revision=old.get('items_revision',0)+1)
+                data.update(changes)
         # Empty footer defaults do not add a native decision or confirmation.
         for key in NATIVE_EMPTY_DEFAULTS:
             if key in changes and same_native_field(key,changes[key],old.get(key)):
@@ -1007,13 +1034,13 @@ def router_for(s):
                 changes.update(last_saved=at,assessment_recorded_at=at if judgment else old.get('assessment_recorded_at'),
                                assessment_recorded_by=user['user_id'] if judgment else old.get('assessment_recorded_by'))
                 data.update(changes)
-            snapshot={k:data.get(k) for k in AssessmentPatch.model_fields if k not in ('expected_last_assessed','record_assessment','coordination','item_draft') and (k not in ('cis_assessment_criteria','soc_assessment_checks','iso_assessment_checks','cis_operation','guided_assessment_source') or k in data) and (k not in VERIFICATION_FIELDS or k in history_verification)};snapshot.update(at=at,by=user['user_id'])
-            if changes.get('guided_assessment_source'):
+            snapshot={k:data.get(k) for k in AssessmentPatch.model_fields if k not in ('expected_last_assessed','record_assessment','coordination','item_draft') and (k not in ('cis_assessment_criteria','soc_assessment_checks','iso_assessment_checks','cis_operation','guided_assessment_source','approved_v3_guide') or k in data) and (k not in VERIFICATION_FIELDS or k in history_verification)};snapshot.update(at=at,by=user['user_id'])
+            if changes.get('guided_assessment_source') or v3_reference:
                 snapshot.update(items_to_address=data.get('items_to_address',[]),items_revision=data.get('items_revision',0))
             if old['framework_key']=='soc-2':
                 snapshot.update({k:data.get(k) for k in ('last_saved','assessment_recorded_at','assessment_recorded_by')})
             predicate={'framework_assessment_id':aid,'client_id':old['client_id'],'last_assessed':old.get('last_assessed'),'last_saved':old.get('last_saved')}
-            if changes.get('guided_assessment_source'):predicate['items_revision']=old.get('items_revision')
+            if changes.get('guided_assessment_source') or v3_reference:predicate['items_revision']=old.get('items_revision')
             if 'management_controls' in changed: predicate['controls_migrated']={'$ne':True}
             write={'$set':{**changes,'last_saved':at}}
             reporting_client = await s.db.clients.find_one({'client_id': old['client_id']}, {'framework_settings': 1}) or {}

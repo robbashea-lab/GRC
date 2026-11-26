@@ -24,6 +24,8 @@
 !shared
 !shared/catalogs
 !shared/catalogs/**
+!shared/fixtures
+!shared/fixtures/approvedV3Scenario.json
 !deploy
 !deploy/render_staging.py
 **/.env

@@ -9,7 +9,7 @@ import {Sheet,SheetContent,SheetHeader,SheetTitle,SheetDescription} from './ui/s
 import {Button} from './ui/button';
 import {EvidenceSource,useEvidenceDownload,uploaderLabel} from '@/lib/evidenceContext';
 import {MetadataFields,SourcePicker,useLibraryRequest,selectClass} from './EvidenceLibraryControls';
-import {evidenceSources} from '@/lib/evidenceReferences';
+import {evidenceSources,unavailableEvidenceProps} from '@/lib/evidenceReferences';
 import {toast} from 'sonner';
 import {displayRecordedAt} from '@/lib/managementDates';
 import './EvidenceRepository.css';
@@ -34,7 +34,7 @@ export default function EvidenceItemDrawer({id,onClose,onOpen:onSourceOpen,onCha
     {loading&&<p role="status">Loading Evidence…</p>}{error&&<p role="alert">{error}</p>}
     {item&&!loading&&<div className="space-y-4 pt-4"><div role="group" aria-label="Evidence detail" className="flex border-b border-line">{['Overview','Related','Activity'].map(t=><button key={t} aria-pressed={tab===t} className={`px-3 py-2 text-sm ${tab===t?'font-semibold border-b-2 border-brand-charcoal':'text-ink-secondary hover:bg-surface-subtle'}`} onClick={()=>setTab(t)}>{t}</button>)}</div>
       {tab==='Overview'&&<section aria-label="Evidence overview" className="space-y-4"><dl className="grid grid-cols-2 gap-3 text-sm">{[['Filename',item.filename],['Program Area',item.program_areas?.join(', ')],['Evidence Type',item.evidence_type||'Other'],['Uploaded by',uploaderLabel(item)],['Uploaded',displayRecordedAt(item.created_at)||'Not recorded'],['File type',item.mime_type],['Size',item.size!=null?`${item.size.toLocaleString()} bytes`:'Not recorded'],['Artifact version',item.version],['Evidence date',item.evidence_date],['Effective date',item.effective_date],['Expiration date',item.expiration_date],['Refresh date',item.refresh_date]].filter(([,v])=>v!=null).map(([k,v])=><div key={k}><dt className="text-xs text-ink-secondary">{k}</dt><dd className="break-words">{v}</dd></div>)}</dl><p className="text-xs break-all text-ink-secondary">SHA-256: {item.sha256||'Not recorded'}</p>{item.notes&&<p className="text-sm whitespace-pre-wrap">{item.notes}</p>}
-        <Button variant="outline" onClick={()=>downloadEvidence(item).catch(e=>toast.error(formatError(e)))}>Download file</Button>
+        <Button variant="outline" {...unavailableEvidenceProps(item)} onClick={()=>downloadEvidence(item).catch(e=>toast.error(formatError(e)))}>{item.file_available===false ? 'Reference only · No file attached' : 'Download file'}</Button>
         <p className="text-xs text-ink-secondary">File bytes are immutable. Upload replacements from the source module; Policy approval/version history stays in Policies.</p>
         {canWrite&&!draft&&<Button variant="outline" onClick={()=>{setDraftVersion(item.updated_at||null);setDraft(Object.fromEntries(['display_name','evidence_type','evidence_date','effective_date','expiration_date','refresh_date','notes'].map(k=>[k,item[k]||null])));}}>Edit classification</Button>}
         {draft&&<form className="space-y-3" onSubmit={async e=>{e.preventDefault();if(await mutate(()=>api.patch(`/evidence-library/items/${id}`,{...draft,evidence_type:draft.evidence_type||'Other',expected_updated_at:draftVersion})))setDraft(null);}}><MetadataFields value={draft} onChange={setDraft}/><div className="flex gap-2"><Button disabled={busy}>Save classification</Button><Button type="button" variant="outline" onClick={()=>setDraft(null)}>Cancel</Button></div></form>}

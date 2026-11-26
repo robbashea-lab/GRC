@@ -56,7 +56,7 @@ export function UsersTable({ scope = "platform", clientId = null, allowedRoles, 
       const path = scope === "client" ? `/clients/${clientId}/members` : "/users";
       const { data } = await api.get(path);
       if (sequence !== loadSequence.current) return;
-      setUsers(data);
+      setUsers(data.filter(person => !person.reference_only));
       setLoadedScope(`${scope}:${clientId}`);
     } catch (e) { if (sequence === loadSequence.current) toast.error(formatError(e)); }
     finally { if (sequence === loadSequence.current) setLoading(false); }

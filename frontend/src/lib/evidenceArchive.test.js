@@ -20,6 +20,15 @@ beforeAll(()=>Object.defineProperty(globalThis,'crypto',{value:webcrypto,configu
 beforeEach(()=>{require('./api').PREVIEW_MODE=false;rows=[file('actual-1')];contents={'actual-1':Buffer.from([0,255,7,128]).toString('base64')};request={clientId:'client',isCurrent:()=>true,signal:new AbortController().signal};URL.createObjectURL=jest.fn(()=>'blob:owned-evidence-zip');URL.revokeObjectURL=jest.fn();linkClick=jest.spyOn(HTMLAnchorElement.prototype,'click').mockImplementation(()=>{});install();});
 afterEach(()=>{linkClick.mockRestore();jest.clearAllMocks();});
 
+test('report file copies include real bytes and exclude only explicitly reference-only records from the same client',async()=>{
+  rows.push({client_id:'client',evidence_id:'ref',filename:'External reference',file_available:false});
+  const result=await buildEvidenceArchive({...request,storedOnly:true});
+  expect(result.fileCount).toBe(1);
+  expect(api.get.mock.calls.some(([path])=>path.startsWith('/evidence/ref'))).toBe(false);
+  rows[1].client_id='another';
+  await expect(buildEvidenceArchive({...request,storedOnly:true})).rejects.toThrow('different client');
+});
+
 test('complete multi-page selection preserves binary bytes, Unicode and same-name identities in every authorized folder',async()=>{
   rows=Array.from({length:101},(_,index)=>file('actual-'+index));
   rows[0].program_areas=['Reviews','Frameworks'];rows[0].folder_paths.push('["Frameworks","cis-ig1"]');

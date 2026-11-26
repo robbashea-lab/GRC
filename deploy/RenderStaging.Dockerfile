@@ -6,6 +6,7 @@ COPY frontend/package.json frontend/yarn.lock ./
 RUN yarn install --frozen-lockfile --non-interactive
 COPY frontend/ ./
 COPY shared/catalogs /app/shared/catalogs
+COPY shared/fixtures/approvedV3Scenario.json /app/shared/fixtures/approvedV3Scenario.json
 RUN node scripts/staging.cjs
 
 FROM python:3.12-slim
@@ -21,6 +22,7 @@ COPY backend/routes ./routes
 COPY frontend/src/lib/*.json /app/frontend/src/lib/
 COPY shared/catalogs /app/shared/catalogs
 COPY --from=frontend /app/deploy/cloudflare/dist /app/frontend/build
+COPY shared/fixtures/approvedV3Scenario.json /app/shared/fixtures/approvedV3Scenario.json
 COPY deploy/render_staging.py ./render_staging.py
 RUN useradd --create-home --uid 10001 app
 USER app

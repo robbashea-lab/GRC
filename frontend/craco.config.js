@@ -89,7 +89,10 @@ let webpackConfig = {
     configure: (webpackConfig) => {
       // Both runtimes consume the same JSON data; retain CRA's scope guard for code.
       const scope = webpackConfig.resolve.plugins.find(plugin => plugin.constructor.name === 'ModuleScopePlugin');
-      if (scope) scope.allowedPaths.push(catalogRoot + path.sep);
+      if (scope) {
+        scope.allowedPaths.push(catalogRoot + path.sep);
+        scope.allowedFiles.add(path.resolve(__dirname, '../shared/fixtures/approvedV3Scenario.json'));
+      }
 
       // Add ignored patterns to reduce watched directories
         webpackConfig.watchOptions = {

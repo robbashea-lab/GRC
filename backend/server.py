@@ -1843,9 +1843,24 @@ async def client_members(client_id: str, user: Dict = Depends(get_current_user))
     # Preserve the minimal client-role people contract. Assignment health is only
     # available with the existing internal account projection.
     internal = authorization.role_of(user) in {authorization.OWNER, authorization.PROVIDER}
-    return [{**_member_summary(member, user),
-             **({"assignment_eligible": member.get("status") == "active" and _can_access_client(member, client_id)} if internal else {})}
-            for member in members]
+    result = [{**_member_summary(member, user),
+               **({"assignment_eligible": member.get("status") == "active" and _can_access_client(member, client_id)} if internal else {})}
+              for member in members]
+    # Source names are retained for historical attribution. They cannot sign in,
+    # join a workspace, or be selected for a new operational assignment.
+    if client_id.startswith('v3sample_'):
+        from approved_v3 import CLIENT_IDS, SOURCE_MARK
+        if client_id in CLIENT_IDS and await db.clients.find_one(
+                {'client_id': client_id, 'approved_v3_source': SOURCE_MARK}, {'_id': 1}):
+            refs = await db.approved_v3_people.find(
+                {'client_ids': client_id, 'approved_v3_source': SOURCE_MARK, 'reference_only': True},
+                {'_id': 0, 'user_id': 1, 'name': 1}).to_list(None)
+            actual_ids = {person['user_id'] for person in result}
+            result.extend({**ref, 'reference_only': True, 'status': 'reference_only',
+                           **({'role': 'reference_only', 'assignment_eligible': False} if internal else {})}
+                          for ref in refs if ref['user_id'] not in actual_ids)
+            result.sort(key=lambda person: (person.get('name') or person.get('email') or '').casefold())
+    return result
 
 # ---------------- Generic list/create/update/delete factory ----------------
 ENTITY_MAP = {
@@ -1999,6 +2014,8 @@ async def download_evidence(ev_id: str, user: Dict = Depends(get_current_user)):
         raise HTTPException(404, "Not found")
     if not _can_access_client(user, doc["client_id"]):
         raise HTTPException(403, "Forbidden")
+    if doc.get("file_available") is False or not isinstance(doc.get("content_base64"), str):
+        raise HTTPException(404, "This evidence record has no downloadable file.")
     return {"filename": doc["filename"], "mime_type": 'application/octet-stream',
             "content_base64": doc["content_base64"].split(',')[-1]}
 

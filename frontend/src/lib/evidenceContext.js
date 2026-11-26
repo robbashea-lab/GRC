@@ -3,6 +3,7 @@ import {useAuth} from '@/context/AuthContext';
 import {useOrg} from '@/context/OrgContext';
 import api from './api';
 import {useAssessmentApi} from './assessmentCommandScope';
+import {missingEvidenceFile} from './evidenceReferences';
 import {occurrenceId} from './reviewOccurrences';
 export {evidenceSources,evidenceKind,evidenceSourceLabel,uploaderLabel,sourceReference} from './evidenceReferences';
 
@@ -47,6 +48,7 @@ function decodeEvidenceContent(content){
 export async function downloadEvidence(row,{signal,isCurrent=()=>true,transport=api}={}){
   const current=()=>!signal?.aborted&&isCurrent();
   if(!current())return false;
+  if(row.file_available===false)throw new Error(missingEvidenceFile);
   const path=`/evidence/${encodeURIComponent(row.evidence_id)}/download`;
   let data;
   try{({data}=signal?await transport.get(path,{signal}):await transport.get(path));}

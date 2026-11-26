@@ -6,6 +6,21 @@ from test_client_dashboard_sources import ClientDashboardSourcesTests, server
 
 class EvidenceLibraryTests(ClientDashboardSourcesTests):
     r4_valid_completion_fixture = True
+
+    async def test_reference_only_record_is_visible_without_offering_missing_bytes(self):
+        self.sign_in('admin')
+        await server.db.evidence.insert_one({'evidence_id':'metadata-only', 'client_id':'b',
+            'filename':'Historical assurance reference', 'file_available':False})
+        result = await self.client.get('/api/evidence/catalog', params={'client_id':'b'})
+        self.assertEqual(result.status_code, 200, result.text)
+        record = next(row for row in result.json()['items'] if row['evidence_id'] == 'metadata-only')
+        self.assertFalse(record['file_available'])
+        response = await self.client.get('/api/evidence/metadata-only/download')
+        self.assertEqual(response.status_code, 404)
+        self.assertEqual(response.json()['detail'], 'This evidence record has no downloadable file.')
+        self.sign_in('member')
+        self.assertEqual((await self.client.get('/api/evidence/metadata-only/download')).status_code, 403)
+
     async def test_binary_unicode_integrity_after_fresh_authenticated_client(self):
         """Reload the transport, not its cached response; real-Mongo runner reuses this test."""
         import httpx

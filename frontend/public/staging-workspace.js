@@ -2,6 +2,21 @@
 (() => {
   'use strict';
 
+  window.addEventListener('error', event => {
+    if (!(event.target instanceof HTMLScriptElement) ||
+        !event.target.src.endsWith('/approved-v3-native.js')) return;
+    const message = 'The saved workspace could not load. Open Existing records or return to sign in and retry.';
+    if (window.GoverNaraNativePage?.fail) window.GoverNaraNativePage.fail(message);
+    else {
+      document.getElementById('native-workspace-loading')?.remove();
+      document.body.style.visibility = 'visible';
+      document.body.textContent = message;
+      const link = document.createElement('a');
+      link.href = '/existing';link.textContent = ' Open Existing records';
+      document.body.appendChild(link);
+    }
+  }, true);
+
   if (document.body.dataset.stagingEntry === 'existing') {
     try {
       sessionStorage.setItem('grc_workspace_mode', 'standard');

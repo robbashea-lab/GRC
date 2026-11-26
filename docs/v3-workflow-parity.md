@@ -1,6 +1,24 @@
 # GoverNara v3.0 native workflow handoff
 
-## Current exact HTML staging delivery, November 24
+## Native integration candidate, November 26
+
+Branch: `codex/staging-signed-in-v3-20261124`, based on `d1d6beb55009cb63db534344dcc7e3bd5e25a168`. Robb authorized staging implementation of the complete approved portfolio alongside retained records. The unchanged reference remains `frontend/public/visual-preview.html`, SHA-256 `5bb03e1219276a01459f2a44be6da44dce71271feb8a17c15a2083e6db397db9`.
+
+The authenticated `/clients` response uses that document's original renderers with a pinned integration hook and a separately built native API adapter. It waits for authorized records before rendering and does not read, write or reset the offline Demo's browser store. Glass ’07 is the initial appearance; later theme choices still work. Existing authentication, SSO, recovery, sessions and logout remain native.
+
+An Owner's first load imports the eight fictional clients and ten programs using reserved identities and insert-only, retry-safe writes. Existing clients and work are not replaced. Reference people are historical names, not authentication accounts, assignees or approvers. No placeholder evidence bytes, missing policy approval support, AI screening answers or historical audit events are invented. Newly created clients use normal allocated identities and native onboarding, then rehydrate into the approved page.
+
+The adapters connect client/profile/enrollment saves, approved guided interviews, shared tools and iVenture setup, review occurrences/checklists, findings/actions, risks, policies, vendors, AI, evidence and CMMC workbooks to native writers and version checks. Approved interview drafts remain private per actual actor; adopting implementation text does not itself make an assessment or verification decision. Required review checks and support remain enforced. SSP/POA&M/SPRS and supported Reports downloads use saved native materials and audit receipts. Report choices that cannot be translated safely link to the selected client's native Reports workbench.
+
+Source-only layout is retained. The authenticated clock uses the current local calendar day; date-only scheduling retains its day through reload. Three already-existing native HIPAA scope/dependency assessment units are visible with their catalog guidance, rather than silently hiding retained native rows. They remain unassessed until an operator evaluates them. The offline reference is unchanged.
+
+Access scope is deliberate: this entry is for authorized internal administrators and source-marked clients. `/existing` retains the ordinary native directory, all earlier records, other role workflows and full paginated Audit Log. Recent native tenant audit summaries are projected into the approved page. The integration does not claim that every existing unmarked client or customer role has been restyled.
+
+Local verification on November 26: optimized authenticated build; focused adapter/domain tests; isolated native hosting/import/guide/report/evidence tests; actual signed-in compiled browser using a disposable database. The browser opened all eight client calendars at desktop and phone widths, saved/moved the same occurrence through reload, created/edited an action, rejected unanswered review completion, uploaded/downloaded identical evidence bytes, saved profile notes, downloaded the native SPRS workbook and completed a new client's onboarding with generated policies/reviews. Receipts are in the sibling `governara-v3-qa` directory, particularly `native-browser-final-20261126-c.json`. The fixture browser substitutes in-memory Mongo and serial workbook reads; real replica-set snapshot durability is a separate existing gate. Full platform/security QA and product-owner acceptance remain open.
+
+The candidate is not a claim of deployment. Verify the delivered commit and Render live deployment separately and record the receipt below. The prior live build before this candidate is `d1d6beb5`, deployment `dep-dc30d8m1egvs738279l0`. No production release or main merge is authorized here.
+
+## Historical exact HTML staging delivery, November 24
 
 Robb confirmed that the complete supplied interactive HTML should be the ordinary staging interface, including all eight sample clients and ten programs, with existing saved records still available. The default internal sign-in entry at `/clients` serves `frontend/public/visual-preview.html`, copied from `GoverNara-v3-Workflow-Parity (3).html`. The SHA-256 is `5bb03e1219276a01459f2a44be6da44dce71271feb8a17c15a2083e6db397db9`.
 

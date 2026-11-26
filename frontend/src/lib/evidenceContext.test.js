@@ -1,5 +1,6 @@
 import api from './api';
-import {resolveEvidenceSource} from './evidenceContext';
+import {downloadEvidence,resolveEvidenceSource} from './evidenceContext';
+import {unavailableEvidenceProps} from './evidenceReferences';
 
 jest.mock('./api',()=>({__esModule:true,default:{get:jest.fn()}}));
 
@@ -8,6 +9,14 @@ const target={ai_system_id:'synthetic-ai-1',client_id:clientId,name:'Synthetic A
 const source={kind:'ai_systems',id:target.ai_system_id,available:true};
 
 beforeEach(()=>jest.clearAllMocks());
+
+test('metadata-only evidence offers a status and does not request missing bytes', async()=>{
+  const row={evidence_id:'reference-only',file_available:false};
+  expect(unavailableEvidenceProps(row).disabled).toBe(true);
+  expect(unavailableEvidenceProps({evidence_id:'ordinary-upload'})).toEqual({});
+  await expect(downloadEvidence(row)).rejects.toThrow('no downloadable file');
+  expect(api.get).not.toHaveBeenCalled();
+});
 
 test('AI Evidence uses the shared authorized collection contract and selects the exact same-client record',async()=>{
   api.get.mockResolvedValue({data:[null,{...target,client_id:'synthetic-client-b'},

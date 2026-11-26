@@ -33,6 +33,7 @@ import {createDunderEightYearCandidate} from './programs/dunderEightYearScenario
 import {EIGHT_YEAR_ANCHOR} from './programs/isoSocEightYearSupport';
 import prestigeEightYearFixture from './programs/prestigeEightYearFixtureData.json';
 import {installPrestigeEightYearFixture} from './programs/prestigeEightYearFixture';
+import {addMissingApprovedClients,freshApprovedDemo,isApprovedOnlyStore} from './approvedV3Demo';
 export const STORE_KEY = 'grc_interactive_demo_v3';
 // Older Demo stores remain recoverable; a rollout never deletes a prior session key.
 export const clone = value => JSON.parse(JSON.stringify(value));
@@ -110,6 +111,13 @@ export function seedStore(clock=new Date()) {
   return db;
 }
 const requestBaselines=new WeakMap();
+function freshEntryStore() {
+  if(process.env.REACT_APP_STANDARD_SIGN_IN!=='true')return seedStore();
+  const privateSource=process.env.REACT_APP_PREVIEW==='true'&&[
+    process.env.REACT_APP_DUNDER_EIGHT_YEAR_QA,process.env.REACT_APP_DUNDER_EIGHT_YEAR_ONBOARDING_QA,
+    process.env.REACT_APP_PRESTIGE_EIGHT_YEAR_ONBOARDING_QA].includes('true');
+  return privateSource?seedStore():freshApprovedDemo();
+}
 export const releaseStoreBaseline=db=>{if(db)requestBaselines.delete(db);};
 export function transferStoreBaseline(from,to){
   const prepared=requestBaselines.get(from);requestBaselines.delete(from);
@@ -121,28 +129,30 @@ export function readStore({comparisonBaseline=false}={}) {
   if (saved) {
     let db,pair;try{pair=comparisonBaseline?readPortfolioStorePair(saved):null;db=pair?pair.current:readPortfolioStore(saved);}catch(error){throw demoStorageError(error,'parse');}
     if(!db||!Array.isArray(db.clients)||!Array.isArray(db.evidence))throw demoStorageError(null,'parse');
+    const approvedOnly=isApprovedOnlyStore(db);
     const retired=removeRetiredDemoClients(db);
     const initech=db.clients.some(c=>['demo_brawndo','demo_prestige'].includes(c.client_id))&&addInitech(db);
     if(initech){reconcileFramework(db,'demo_initech',db.baselines.demo_initech);finishInitech(db);}
-    const cisRollout=applyCisDemoRollout(db,{fresh:false});
-    const cisRefresh=refreshCanonicalCisDemo(db,{fresh:false});
+    const cisRollout=!approvedOnly&&applyCisDemoRollout(db,{fresh:false});
+    const cisRefresh=!approvedOnly&&refreshCanonicalCisDemo(db,{fresh:false});
     const lightEvidence=lightweightEvidence(db.evidence,db.evidence);
-    const enriched=enrichBrawndoReportingHistory(db);
-    const reconciled=retired||initech||cisRollout||cisRefresh||enriched||lightEvidence.some((e,i)=>e!==db.evidence[i]);
+    const enriched=!approvedOnly&&enrichBrawndoReportingHistory(db);
+    const added=process.env.REACT_APP_STANDARD_SIGN_IN==='true'&&addMissingApprovedClients(db);
+    const reconciled=added||retired||initech||cisRollout||cisRefresh||enriched||lightEvidence.some((e,i)=>e!==db.evidence[i]);
     if(reconciled)saveStore(db);
     const result=restoreFiles(normalizePolicyDates(initializeRiskIds(db)));
     if(pair?.before&&!reconciled&&sessionStorage.getItem(STORE_KEY)===saved)requestBaselines.set(result,{saved,before:pair.before});
     return result;
   }
   clearFileCache();
-  const db = seedStore();
+  const db = freshEntryStore();
   saveStore(db);
   return db;
 }
 function prepareSavedStore(db,previous){
   const persisted=lightweightStore(db,previous?.evidence||[]);
   captureDemoReporting(persisted,previous,new Date().toISOString());
-  enrichBrawndoReportingHistory(persisted);
+  if(!isApprovedOnlyStore(persisted))enrichBrawndoReportingHistory(persisted);
   return persisted;
 }
 export function saveStore(db,{resetFiles=false}={}) {
@@ -175,7 +185,7 @@ export async function saveStoreAsync(db,{expectedSaved,beforeCommit,signal}={}){
   }finally{releaseStoreBaseline(db);}
 }
 export function resetStore() {
-  saveStore(seedStore(),{resetFiles:true});
+  saveStore(freshEntryStore(),{resetFiles:true});
   clearFileCache();
 }
 export function clearEvidenceFiles(){

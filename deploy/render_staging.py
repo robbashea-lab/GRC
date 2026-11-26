@@ -46,6 +46,11 @@ if any(os.environ.get(name) == 'true' for name in (
 
 # Import the unchanged application's routes, authorization and startup checks.
 from server import app, get_current_user
+import server as native_server
+import approved_v3
+from approved_v3_page import native_document
+
+app.include_router(approved_v3.router_for(native_server))
 
 
 frontend_directory = Path(os.environ.get('FRONTEND_BUILD_DIR',
@@ -66,12 +71,7 @@ async def approved_workspace(request: Request):
     if user.get('role') not in ('super_admin', 'platform_admin'):
         return RedirectResponse('/dashboard', status_code=303)
     source = (frontend_directory / 'visual-preview.html').read_bytes()
-    # Keep the approved document intact except for the real-session bridge.
-    bridge = b'<script src="/staging-workspace.js"></script>'
-    position = source.rfind(b'</body>')
-    if position < 0:
-        raise RuntimeError('Approved HTML is missing its body closing tag')
-    return HTMLResponse(source[:position] + bridge + source[position:],
+    return HTMLResponse(native_document(source),
         headers={'Cache-Control': 'private, no-store',
                  'X-GoverNara-Source-SHA256': hashlib.sha256(source).hexdigest()})
 

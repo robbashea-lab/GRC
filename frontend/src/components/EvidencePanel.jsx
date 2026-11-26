@@ -4,6 +4,7 @@ import {Download} from 'lucide-react';
 import {Button} from './ui/button';
 import {formatError} from '@/lib/api';
 import {useAssessmentApi} from '@/lib/assessmentCommandScope';
+import {unavailableEvidenceProps} from '@/lib/evidenceReferences';
 import {useEvidenceDownload,EvidenceSource,uploaderLabel} from '@/lib/evidenceContext';
 import {toast} from 'sonner';
 import {useAuth} from '@/context/AuthContext';
@@ -48,7 +49,7 @@ export function EvidencePagination({data,page,setPage}){
 }
 export function EvidenceDownload({row}){
   const downloadEvidence=useEvidenceDownload(row.client_id,row.evidence_id);
-  return <button type="button" aria-label={`Download ${row.filename}`} title={`Download ${row.filename}`} className="shrink-0 p-2 rounded hover:bg-surface-subtle text-ink-secondary" onClick={()=>downloadEvidence(row).catch(e=>toast.error(formatError(e)))}><Download aria-hidden="true" className="h-3.5 w-3.5"/></button>;
+  return <button type="button" aria-label={`Download ${row.filename}`} title={`Download ${row.filename}`} className="shrink-0 p-2 rounded hover:bg-surface-subtle text-ink-secondary" {...unavailableEvidenceProps(row)} onClick={()=>downloadEvidence(row).catch(e=>toast.error(formatError(e)))}><Download aria-hidden="true" className="h-3.5 w-3.5"/></button>;
 }
 function RelationshipAction({row,kind,id,occurrenceId,onDelete,onChanged,allowLink}){
   const api=useAssessmentApi();

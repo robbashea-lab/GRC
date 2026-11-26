@@ -41,7 +41,8 @@ export async function loadReportMaterials(clientId, frameworkKey, end, signal, i
       registers.clients.length!==1||registers.clients[0].client_id!==clientId)throw new Error('The saved governance registers could not be verified.');
   if(evidence.some(row=>row.client_id!==clientId||!row.frameworks?.includes(frameworkKey)||!row.evidence_id)||new Set(evidence.map(row=>row.evidence_id)).size!==evidence.length)
     throw new Error('The framework evidence selection could not be verified.');
-  return {reports,registers,cmmc,registerHistory:bundle.data.register_history,history:history.data.exports,evidence,evidenceCount:evidence.length};
+  return {reports,registers,cmmc,registerHistory:bundle.data.register_history,history:history.data.exports,evidence,
+    evidenceCount:evidence.filter(row=>row.file_available!==false).length};
 }
 
 export const packageFiles = registerWorkbooks;
@@ -58,18 +59,19 @@ export function readiness(materials) {
   ];
 }
 
-export async function auditedDownload({content,name,type,clientId,frameworkKey,kind,from,to,pending,signal,isCurrent}) {
+export async function auditedDownload({content,name,type,clientId,frameworkKey,kind,workbook,from,to,pending,signal,isCurrent}) {
   const bytes=typeof content==='string'?strToU8(content):content;
   if(signal?.aborted||!isCurrent())return;
   const digest=await crypto.subtle.digest('SHA-256',bytes);
   if(signal?.aborted||!isCurrent())return;
   const sha256=Array.from(new Uint8Array(digest),value=>value.toString(16).padStart(2,'0')).join('');
   const payload={client_id:clientId,framework_key:frameworkKey,kind,sha256,bytes:bytes.length,period_start:from,period_end:to};
+  if(workbook)payload.workbook=workbook;
   const fingerprint=JSON.stringify(payload);
   if(!pending.current||pending.current.fingerprint!==fingerprint)pending.current={fingerprint,key:recordUuid()};
   const {data}=await api.post('/reports/deliveries',payload,{headers:{'Idempotency-Key':pending.current.key},signal});
   if(signal?.aborted||!isCurrent())return;
-  if(!data?.delivery_id||data.client_id!==clientId||data.framework_key!==frameworkKey||data.kind!==kind||data.sha256!==sha256)throw new Error('The report download could not be confirmed for this program.');
+  if(!data?.delivery_id||data.client_id!==clientId||data.framework_key!==frameworkKey||data.kind!==kind||data.sha256!==sha256||workbook&&data.workbook!==workbook)throw new Error('The report download could not be confirmed for this program.');
   pending.current=null;
   const href=URL.createObjectURL(new Blob([content],{type}));
   const link=document.createElement('a');link.href=href;link.download=name;
@@ -88,12 +90,16 @@ export async function downloadAuditPackage({clientId,frameworkKey,materials,conf
     Object.assign(entries,await buildCmmcPackageFiles(materials.cmmc,{signal,isCurrent}));
   }
   if(config.copies && materials.evidenceCount) {
-    const archive=await buildEvidenceArchive({clientId,params:evidenceParams(frameworkKey),signal,isCurrent});
+    const archive=await buildEvidenceArchive({clientId,params:evidenceParams(frameworkKey),storedOnly:true,signal,isCurrent});
     if(archive.fileCount!==materials.evidenceCount) throw new Error('The evidence selection changed. Refresh the package.');
     entries['08_Evidence/Stored-files.zip']=archive.bytes;
   }
   for(const [key,value] of Object.entries(decisions)) {
-    if(value instanceof File) entries['09_Attachments/'+slug(key)+'-'+slug(value.name.replace(/\.[^.]+$/,''))+'.'+slug(value.name.split('.').pop())]=new Uint8Array(await value.arrayBuffer());
+    if(value instanceof File) {
+      const path='09_Attachments/'+slug(key)+'-'+slug(value.name.replace(/\.[^.]+$/,''))+'.'+slug(value.name.split('.').pop());
+      if(Object.hasOwn(entries,path))throw new Error('Two package attachments have the same output filename. Rename one before downloading.');
+      entries[path]=new Uint8Array(await value.arrayBuffer());
+    }
   }
   const {reportBasicPdf}=await import('./ReportPackagePdf');
   entries['00_Start-here.pdf']=reportBasicPdf(source.client.name+' · Audit package',[

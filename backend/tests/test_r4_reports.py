@@ -436,6 +436,27 @@ class R4ReportRouteTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual((await self.client.post(path, json=body, headers=headers)).status_code, 403)
         self.assertEqual(await server.db.audit_logs.count_documents({'entity_type':'report-delivery'}), 1)
 
+    async def test_register_workbook_delivery_is_scoped_typed_and_audited_once(self):
+        await self.prepare()
+        body = {'client_id': 'a', 'framework_key': 'cis-ig1', 'kind': 'register-workbook',
+                'workbook': 'CIS-IG1-safeguard-register.xlsx', 'sha256': 'a' * 64, 'bytes': 813,
+                'period_start': '2026-01-01', 'period_end': '2026-11-24'}
+        headers = {'Idempotency-Key': 'approved-register-workbook-test'}
+        path = '/api/reports/deliveries'
+        for invalid in ({'workbook': 'SOC-2-criteria-matrix.xlsx'}, {'workbook': '../../private.xlsx'},
+                        {'workbook': None}, {'kind': 'audit-package'}):
+            self.assertEqual((await self.client.post(path, json={**body, **invalid}, headers=headers)).status_code, 422)
+        response = await self.client.post(path, json=body, headers=headers)
+        self.assertEqual(response.status_code, 200, response.text)
+        self.assertEqual(response.json()['workbook'], body['workbook'])
+        self.assertEqual((await self.client.post(path, json=body, headers=headers)).json(), response.json())
+        rows = await server.db.audit_logs.find({'entity_type': 'report-delivery'}).to_list(None)
+        self.assertEqual(len(rows), 1)
+        self.assertEqual(rows[0]['meta']['format'], 'xlsx')
+        self.assertEqual(rows[0]['meta']['title'], body['workbook'])
+        await server.db.requirements.update_one({'client_id':'a','baseline_key':'cis-ig1'},{'$set':{'baseline_response':'excluded'}})
+        self.assertEqual((await self.client.post(path, json=body, headers=headers)).status_code, 403)
+
     async def export(self, report_type='risks', output_format='csv', intent='r4-report-export-intent'):
         return await self.client.post('/api/reports/exports',
             json={**self.params(report_type), 'format': output_format}, headers={'Idempotency-Key': intent})
