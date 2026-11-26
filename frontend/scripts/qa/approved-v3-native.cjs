@@ -13,8 +13,13 @@ const root=path.resolve(__dirname,'../../..');
 const build=path.resolve(process.env.APPROVED_QA_BUILD || path.join(root,'deploy/cloudflare/dist'));
 const hash=bytes=>crypto.createHash('sha256').update(bytes).digest('hex');
 const delay=ms=>new Promise(resolve=>setTimeout(resolve,ms));
-const receipt={checks:[],build:path.basename(build),bundle:hash(fs.readFileSync(path.join(build,'approved-v3-native.js')))};
+const receipt={checks:[],build:path.basename(build),revision:process.env.GITHUB_SHA||null,
+  source:hash(fs.readFileSync(path.join(build,'visual-preview.html'))),
+  bundle:hash(fs.readFileSync(path.join(build,'approved-v3-native.js')))};
 const selectedCase=process.env.APPROVED_QA_CASE;
+const fast=process.env.APPROVED_QA_FAST==='1';
+if(fast)assert.equal(receipt.source,'5bb03e1219276a01459f2a44be6da44dce71271feb8a17c15a2083e6db397db9',
+  'The built HTML must match the approved mockup bytes');
 if(selectedCase)receipt.selectedCase=selectedCase;
 const password=crypto.randomBytes(24).toString('hex'),runId=crypto.randomUUID();
 const owner='owner@example.com',clientId='v3sample_brawndo';
@@ -46,18 +51,24 @@ async function run(){
       if(url.origin===base || ['data:','blob:'].includes(url.protocol))return route.continue();
       external.push(url.origin);await route.abort();
     });
-    page=await context.newPage();page.setDefaultTimeout(9000);
-    page.on('pageerror',e=>pageErrors.push(e.message));
-    page.on('response',async resp=>{if(resp.status()>=400 && resp.url().includes('/api/') && !resp.url().endsWith('/auth/me'))
-      failures.push({path:new URL(resp.url()).pathname,status:resp.status(),detail:(await resp.text().catch(()=>'' )).slice(0,260)});});
+    const observe=target=>{
+      target.setDefaultTimeout(9000);
+      target.on('pageerror',e=>pageErrors.push(e.message));
+      target.on('response',resp=>{
+        const pathname=new URL(resp.url()).pathname;
+        if(resp.status()>=400&&pathname.startsWith('/api/')&&pathname!=='/api/auth/me')
+          failures.push({path:pathname,status:resp.status()});
+      });
+    };
+    page=await context.newPage();observe(page);
     const api=async uri=>page.evaluate(async path=>{
       const response=await fetch('/api'+path,{credentials:'same-origin'});
       if(!response.ok)throw Error(path+' returned '+response.status());
       return response.json();
     },uri);
     const records=async(cid=clientId)=>(await api('/v3/approved-portfolio/records?client_id='+encodeURIComponent(cid))).records;
-    const ready=async()=>{
-      const result=await page.waitForFunction(()=>document.querySelector('[data-native-workspace-error]')?.textContent ||
+    const ready=async(target=page)=>{
+      const result=await target.waitForFunction(()=>document.querySelector('[data-native-workspace-error]')?.textContent ||
         (!document.getElementById('native-workspace-loading')&&window.GoverNaraNativePage?.snapshot().users.some(u=>u.self&&u.id==='qa-owner')?true:false),
         null,{timeout:45000});
       const status=await result.jsonValue();assert.equal(status,true,String(status));
@@ -88,9 +99,12 @@ async function run(){
       }
     }
 
-    await page.goto(base+'/clients');assert.equal(new URL(page.url()).pathname,'/login');
-    await page.getByTestId('email-input').fill(owner);await page.getByTestId('password-input').fill(password);
-    await page.locator('button[type=submit]').click();await page.waitForURL('**/clients**',{timeout:25000});await ready();
+    const signIn=async target=>{
+      await target.goto(base+'/clients');assert.equal(new URL(target.url()).pathname,'/login');
+      await target.getByTestId('email-input').fill(owner);await target.getByTestId('password-input').fill(password);
+      await target.locator('button[type=submit]').click();await target.waitForURL('**/clients**',{timeout:25000});await ready(target);
+    };
+    await signIn(page);
     assert.ok((await context.cookies()).some(cookie=>cookie.name==='access_token'&&cookie.httpOnly&&cookie.secure));
     const approved=await page.evaluate(async()=>{
       const response=await fetch('/clients',{credentials:'same-origin',headers:{Accept:'text/html'}});
@@ -108,6 +122,107 @@ async function run(){
     }));
     await reload();
     const original=await snapshot();assert.equal(original.clients.length,8);
+    const scheduled=original.work.brawndo.revs.find(r=>r.title==='Enterprise Asset Inventory Review').id;
+    const review=original.work.brawndo.revs.find(r=>r.id===scheduled);assert.ok(review.nativeId);
+    if(fast||selectedCase==='CIS recurring review')await workflow('CIS recurring review',async()=>{
+      await route('client-brawndo-reviews');
+      await page.locator('#rev-q').fill(review.title);
+      await action('open-rev',scheduled).click();
+      const before=await getRevision(review.nativeId);
+      assert.equal(before.recurrence,'semiannual');
+      const due='2026-11-12',next='2027-05-12',occurrence=before.current_occurrence_id;
+      assert.equal(before.due_date.slice(0,10),due,'Pinned inventory fixture date');
+      await page.getByRole('progressbar',{name:'Review checklist results recorded'}).waitFor();
+      await action('rev-complete-dlg',scheduled).click();
+      await page.locator('#toast').filter({hasText:/result for every checklist step/i}).waitFor();
+      assert.equal(await field('outcome').count(),0,'Incomplete checklist must block completion');
+      assert.deepEqual((await getRevision(review.nativeId)).occurrences,before.occurrences);
+      const steps=await page.locator('#drawer [data-action="rck"][data-val="Pass"]').evaluateAll(
+        buttons=>buttons.map(button=>button.dataset.step));
+      const count=steps.length;
+      assert.ok(count>0,'A real checklist must be offered');
+      const note='Disposable browser fixture. This step has no operational customer scope.';
+      for(const step of steps){
+        const choice=step===steps.at(-1)?'N/A':'Pass';
+        await page.locator('#drawer [data-action="rck"][data-step="'+step+'"][data-val="'+choice+'"]').click();
+        if(choice==='N/A'){
+          const input=page.locator('#drawer [data-rck-note="'+step+'"]');
+          await input.fill(note);await input.press('Tab');
+        }
+        await settle();
+        await assertSuccessfulSaves();
+      }
+      await action('rev-complete-dlg',scheduled).click();
+      const conclusion='Disposable browser QA recurring occurrence.';
+      const reference='Synthetic inventory result for this occurrence.';
+      await field('notes').fill(conclusion);
+      await field('supportingReference').fill(reference);
+      await action('dlg-run').click();await settle();
+      const persisted=await getRevision(review.nativeId);
+      const matching=persisted.occurrences.filter(row=>row.occurrence_id===occurrence&&row.status==='completed');
+      assert.equal(matching.length,1,'Native history contains the completed occurrence exactly once');
+      assert.deepEqual(persisted.occurrences.filter(row=>row.occurrence_id!==occurrence),before.occurrences);
+      assert.equal(matching[0].completed_by,'qa-owner');
+      assert.equal(matching[0].notes,conclusion);
+      assert.equal(matching[0].supporting_reference,reference);
+      assert.deepEqual(matching[0].checklist_results.map(row=>row.result),[...steps.slice(1).map(()=> 'Pass'),'N/A']);
+      assert.equal(matching[0].checklist_results.at(-1).reason,note);
+      assert.notEqual(persisted.current_occurrence_id,occurrence);
+      assert.equal(persisted.due_date.slice(0,10),next);
+      await assertSuccessfulSaves();
+      const fresh=await browser.newContext({viewport:{width:1440,height:900}});
+      try {
+        await fresh.route('**/*',async request=>new URL(request.request().url()).origin===base||/^(data|blob):/.test(request.request().url())?
+          request.continue():request.abort());
+        const reopened=await fresh.newPage();observe(reopened);
+        await signIn(reopened);
+        await reopened.goto(base+'/clients#client-brawndo-reviews');await ready(reopened);
+        await reopened.getByRole('radio',{name:'History',exact:true}).click();
+        await reopened.locator('#rev-q').fill(review.title);
+        const matchingHistory=reopened.locator('#wk-reg [data-action="open-rev"]').filter({hasText:review.title});
+        assert.equal(await matchingHistory.filter({hasText:'Completed'}).count(),
+          before.occurrences.filter(row=>row.status==='completed').length+1);
+        const savedHistory=matchingHistory.filter({hasText:'Completed'}).filter({hasText:'Due '+new Date(due+'T12:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric'})});
+        assert.equal(await savedHistory.count(),1);
+        await savedHistory.click();
+        const historyDrawer=reopened.locator('#drawer');
+        assert.equal(await historyDrawer.locator('.review-check-note').count(),1);
+        assert.ok((await historyDrawer.innerText()).includes(note));
+        await reopened.goto(base+'/clients#client-brawndo-calendar');await ready(reopened);
+        const grid=reopened.locator('.cal-grid');
+        const calendarMonth=await grid.locator('[data-drop-date]').nth(15).getAttribute('data-drop-date');
+        const monthNumber=iso=>Number(iso.slice(0,4))*12+Number(iso.slice(5,7));
+        const offset=monthNumber(next)-monthNumber(calendarMonth);
+        for(let month=0;month<Math.abs(offset);month++)
+          await reopened.locator('[data-action="cal-nav"][data-val="'+Math.sign(offset)+'"]').click();
+        const nextCell=grid.locator('[data-drop-date="'+next+'"]');
+        assert.equal(await nextCell.locator('[data-kind="rev"][data-id="'+scheduled+'"]').count(),1);
+      }finally{await fresh.close();}
+      receipt.cisReview={occurrence,due,next,checklistResults:count,completedOccurrenceCount:matching.length};
+      pass('CIS IG1 review completed once and reappeared in History and Calendar after a separate sign-in.');
+    });
+    const browserContext={page,action,field,route,settle,reload,snapshot,api,records,waitFor};
+    if(fast||selectedCase==='CMMC scoring'){
+      await workflow('CMMC scoring',async()=>{
+        receipt.cmmc=await require('./approved-v3-cmmc.cjs')(browserContext);
+        pass('CMMC requirement judgment updated the exact working score and POA&M.');
+      });
+    }
+    if(fast||selectedCase==='Linked workflows'){
+      await workflow('Linked workflows',async()=>{
+        receipt.linked=await require('./approved-v3-linked.cjs')(browserContext);
+        pass('Saved assessment and linked corrective work agreed across client views.');
+      });
+    }
+    if(fast&&receipt.cisReview)await workflow('Review report',async()=>{
+      receipt.reviewReport=await require('./approved-v3-linked.cjs').verifyReviewReport(browserContext,receipt.cisReview);
+      pass('The native Review export retained the exact completed occurrence and next scheduled date.');
+    });
+    if(fast||['CIS recurring review','CMMC scoring','Linked workflows'].includes(selectedCase)) {
+      if(issues.length){receipt.issues=issues;throw Error(issues.map(issue=>issue.label+': '+issue.message).join('\n'));}
+      assert.deepEqual(pageErrors,[]);assert.deepEqual(failures,[]);
+      receipt.result=selectedCase?'partial-pass':'pass';return;
+    }
     receipt.calendarWidths={};
     for(const client of original.clients){
       await route('portfolio');
@@ -135,8 +250,6 @@ async function run(){
     assert.equal((await api('/clients')).find(c=>c.client_id==='qa-existing')?.name,'Retained QA client');
     pass('Used the portfolio links for all eight clients, verified full calendar width on desktop and phone, and preserved the original client.');
     await route('client-brawndo-calendar');
-    const scheduled=original.work.brawndo.revs.find(r=>r.title==='Enterprise Asset Inventory Review').id;
-    const review=original.work.brawndo.revs.find(r=>r.id===scheduled);assert.ok(review.nativeId);
     await workflow('Calendar move',async()=>{
     const prior=await getRevision(review.nativeId);
     const target=await page.locator('[data-drop-date]').evaluateAll((cells,old)=>cells.map(c=>c.dataset.dropDate).find(d=>d!==old),prior.due_date.slice(0,10));
@@ -281,4 +394,5 @@ async function runAdditional({page,action,field,route,settle,reload,snapshot,api
   pass('A new six-framework client completed onboarding, retained CIS IG3/CMMC L2 scopes and all six native program links after reload.');
   });
 }
+if(fast&&selectedCase)throw Error('APPROVED_QA_FAST runs all release browser workflows. Unset APPROVED_QA_CASE.');
 run().catch(e=>{console.error(e.message);process.exitCode=1;});

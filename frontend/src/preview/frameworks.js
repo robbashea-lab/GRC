@@ -610,7 +610,7 @@ export function frameworkRequest(db,path,method,params,body,context=null){
     }
     if(Object.keys(body).some(k=>!fields.includes(k)&&!VERIFICATION_FIELDS.includes(k)))fail('Unknown or immutable assessment fields');
     const verificationAllowed=supported.includes('verification');
-    if('verification' in body&&!verificationAllowed)fail('Verification is available only for CIS Controls IG1 and SOC 2');
+    if('verification' in body&&!verificationAllowed)fail('Verification is unavailable for this framework');
     if('verification_checklist' in body){
       if(!supported.includes('verification_checklist'))fail('Verification checklists apply only to CIS Controls IG1');
       body={...body};
