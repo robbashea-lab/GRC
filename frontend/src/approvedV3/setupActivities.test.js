@@ -21,6 +21,7 @@ beforeAll(()=>{
   const expose=`window.inspectSetup={
     entries:function(kind){var c=byId('${sourceId}');activateProg(c,kind);S.clientId=c.id;return ivsItemsAll(c);},
     open:function(key){ivsItemDlg(byId('${sourceId}'),key);},
+    cadenceContext:function(key){var c=byId('${sourceId}'),x=coordEntry(c,key),it=regFor(c).items.find(function(r){return r.id===x.ids[0];});return {frequency:coordContext(c,it,{reviewTarget:key}).frequency,hint:ivsCadHint(c,x,x.r&&x.r.cad)};},
     restore:function(key){ivsRestore(byId('${sourceId}'),key);},
     guidance:function(key,legacy){var c=byId('${sourceId}'),x=coordEntry(c,key),id=x.ids[0],it=regFor(c).items.find(function(r){return r.id===id;});
       var g=gState(c,it);g.ans={exist:'Yes',reviewTarget:legacy||key,ticket:'876543',ticketUrl:'https://tickets.example.test/876543',ticketTitle:'Synthetic setup',reviewCadence:'Every six months',nextReview:'2026-12-01',tool:['ninjaone']};
@@ -113,6 +114,48 @@ test('saved source Review aliases remain resolvable and stale native catalog ver
   expect(()=>approvedSetupActivities(catalog,records)).toThrow('shared Review changed');
   expect(()=>requireSetupActivity(catalog,cid,saved.key,opened)).toThrow('changed while this form was open');
   expect(commands).toEqual([]);
+});
+
+test.each([true,false])('unknown custom interval stays unselected and cannot save an invented schedule; saved=%s',saved=>{
+  const row=inspect.entries('cis').items.find(row=>!!row.r===saved&&row.ids.length);
+  const activity=catalog.activities.find(activity=>activity.activity_id===row.key);
+  activity.cadence='custom';activity.custom_days=null;
+  if(saved){
+    const review=records.reviews.find(review=>review.review_id===activity.review_id);
+    review.recurrence='custom';review.custom_recurrence_days=null;
+    const state=page.snapshot();overlayApprovedV3Work(state,records,{clientId:cid,sourceId});page.apply(state);inspect.entries('cis');
+  }
+  const context=inspect.cadenceContext(row.key);expect(context.frequency).toBe('');
+  inspect.open(row.key);const select=document.getElementById('ivs-d-cad');
+  expect(select.selectedIndex).toBe(-1);
+  expect(Array.from(select.options).some(option=>option.value==='D:null')).toBe(false);
+  expect(document.getElementById('ivs-d-cadh').innerHTML).toBe(context.hint);
+  const responsibility=document.getElementById('ivs-d-resp');if(responsibility)responsibility.value='iv';
+  document.getElementById('ivs-d-no').value='876543';document.getElementById('ivs-d-due').value='2026-12-01';
+  document.querySelector('[data-action="ivs-save"]').click();
+  expect(document.getElementById('ivs-d-err').textContent).toBe('Choose a recurring schedule.');expect(commands).toEqual([]);
+  // Annually has an empty source value, so require an actual selected option
+  // rather than treating the select's unset empty value as an annual choice.
+  select.value='';document.querySelector('[data-action="ivs-save"]').click();
+  expect(commands).toHaveLength(1);expect(commands[0].args[2].plan.cadence).toBe('');
+});
+
+test.each([true,false])('valid custom45 remains exact in the popup and guided defaults; saved=%s',saved=>{
+  const row=inspect.entries('cis').items.find(row=>!!row.r===saved&&row.ids.length);
+  const activity=catalog.activities.find(activity=>activity.activity_id===row.key);
+  activity.cadence='custom';activity.custom_days=45;
+  if(saved){
+    const review=records.reviews.find(review=>review.review_id===activity.review_id);
+    review.recurrence='custom';review.custom_recurrence_days=45;
+    const state=page.snapshot();overlayApprovedV3Work(state,records,{clientId:cid,sourceId});page.apply(state);inspect.entries('cis');
+  }
+  expect(inspect.cadenceContext(row.key).frequency).toBe('Every 45 days');inspect.open(row.key);
+  const select=document.getElementById('ivs-d-cad');expect(select.value).toBe('D:45');
+  expect(Array.from(select.selectedOptions).map(option=>option.textContent)).toEqual(['Every 45 days']);
+  const responsibility=document.getElementById('ivs-d-resp');if(responsibility)responsibility.value='iv';
+  document.getElementById('ivs-d-no').value='876543';document.getElementById('ivs-d-due').value='2026-12-01';
+  document.querySelector('[data-action="ivs-save"]').click();expect(commands).toHaveLength(1);
+  expect(commands[0].args[2].plan.cadence).toBe('D:45');
 });
 
 test('an uncreated guidance activity is adopted only at native assessment Save, with exact ticket, schedule and tools',async()=>{

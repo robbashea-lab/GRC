@@ -85,7 +85,15 @@ test('checkpoint-only changes are saved, unaffected clients are skipped, and a p
   applyGlobalChanges.mockResolvedValue({didWrite:false,message:''});
   applyClientChanges.mockImplementation(async context=>({clientId:context.clientId,identityMaps:context.identityMaps,handled:{}}));
   applyRegisterChanges.mockResolvedValue({handled:{}});applyCmmcChanges.mockResolvedValue({handled:{}});applyWorkChanges.mockResolvedValue({handled:{}});
+  records.reviews[0].next_review_date='2027-12-01T00:00:00';records.reviews[1].next_review_date=null;
+  records.reviews[2].source_record_id='synthetic-ambiguous-preview';records.reviews[3].source_record_id='synthetic-ambiguous-preview';
   const controller=await startNativeWorkspace(page,api);
+  expect(callbacks.reviewNextCycle('brawndo',records.reviews[0].review_id)).toBe('2027-12-01T00:00:00');
+  expect(callbacks.reviewNextCycle('brawndo',records.reviews[0].source_record_id)).toBe('2027-12-01T00:00:00');
+  expect(callbacks.reviewNextCycle('brawndo',records.reviews[1].review_id)).toBeNull();
+  expect(callbacks.reviewNextCycle('prestige',records.reviews[0].review_id)).toBeUndefined();
+  expect(callbacks.reviewNextCycle('brawndo','missing-native-review')).toBeUndefined();
+  expect(callbacks.reviewNextCycle('brawndo','synthetic-ambiguous-preview')).toBeNull();
   callbacks.persist(clone(current),'brawndo');await controller.flush();
   expect(applyClientChanges).not.toHaveBeenCalled();expect(page.finish).not.toHaveBeenCalled();
   const reverted=clone(current);reverted.clients[0].name='Temporary edit';

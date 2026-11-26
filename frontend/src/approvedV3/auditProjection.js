@@ -11,7 +11,8 @@ export function overlayNativeAudit(state,records,{clientId,sourceId,userName}) {
   state.audit=[...retained,...events.map(row=>({i:0,t:new Date(row.at),client:sourceId,
     user:row.user_name || userName(row.user_id) || 'Unknown user',action:row.action,
     entity:categories[row.entity_type] || row.entity_type,title:row.entity_name || row.entity_id || '',
-    eid:row.entity_id,native:true,nativeLogId:row.log_id}))]
+    eid:row.entity_id,native:true,nativeLogId:row.log_id,nativeClientId:row.client_id,
+    nativeUserId:row.user_id,nativeEntityType:row.entity_type,nativeOutcome:row.outcome??null}))]
     .sort((a,b)=>new Date(b.t)-new Date(a.t)).map((row,i)=>({...row,i}));
   const identities=new Map();
   for(const [table,idField,kind,label] of [

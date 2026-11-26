@@ -380,8 +380,10 @@ function overlayClientWork(view, records, ctx) {
       const projection = {...prev,id,kind:'rev',title:row.title,type,description:row.scope || '',notes:row.notes || '',
         owner:nameOf(row.owner_id,row.owner_name || row.source_owner),due:calendarDate(row.due_date),
         cad:cadenceCode(row),st:({in_progress:'In progress',needs_scheduling:'Needs scheduling',cancelled:'Cancelled'})[row.status] || 'Not started',
-        anchor:prev.anchor || calendarDate(row.recurrence_due_date || row.due_date), monthEnd:!!row.schedule_anchor?.month_end,
-        occurrenceSequence:(prev.occurrenceSequence || 0)+advanced,cycleIndex:(prev.cycleIndex || 0)+advanced,
+        // Native dates already describe the current recurrence. Historical or
+        // optimistic source completions must not advance that cycle a second time.
+        anchor:calendarDate(row.recurrence_due_date || row.due_date), monthEnd:!!row.schedule_anchor?.month_end,
+        occurrenceSequence:(prev.occurrenceSequence || 0)+advanced,cycleIndex:0,
         occurrenceId,nativeOccurrenceId:nativeOccurrence,nativeId:row.review_id,link:sourceLink(row),supportMappings,
         basis:row.source_basis || row.governance_context?.rationale || prev.basis || '',basisCode:row.source_basis_code || prev.basisCode || 'O'};
       if(row.activity_setup) Object.assign(projection,{cwTitle:row.activity_setup.recurring_ticket_summary || '',

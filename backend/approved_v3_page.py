@@ -25,6 +25,51 @@ window.GoverNaraNativePage=(function(){
     "Abuse protection":"Authentication endpoints allow 30 requests per source IP and endpoint per minute. Excess requests are rejected. Failed-attempt account lockout is not available."
   };
   SECURITY.forEach(function(card){if(nativeSecurityDescriptions[card[0]])card[1]=nativeSecurityDescriptions[card[0]];});
+  // Page the loaded summary only. The native Audit Log retains full history.
+  var sourceAuditRender=renderAudit,sourceAuditDrawer=openAuditDrawer,nativeAuditPage=1,nativeAuditFilters=null;
+  function auditActor(event){return USERS.find(function(user){return event.nativeUserId&&user.nativeUserId===event.nativeUserId;});}
+  renderAudit=function(){
+    var matches=auditFiltered(),filters=JSON.stringify(S.al),size=50;
+    if(filters!==nativeAuditFilters){nativeAuditPage=1;nativeAuditFilters=filters;}
+    var pages=Math.max(1,Math.ceil(matches.length/size));nativeAuditPage=Math.max(1,Math.min(nativeAuditPage,pages));
+    var start=(nativeAuditPage-1)*size,shown=matches.slice(start,start+size),sourceFiltered=auditFiltered;
+    // Reuse the approved filter controls, row markup and View identities.
+    try{auditFiltered=function(){return shown;};sourceAuditRender();}finally{auditFiltered=sourceFiltered;}
+    Array.from(document.querySelectorAll('#al-table .gt-row')).forEach(function(row,index){
+      var event=shown[index];if(!event.native)return;
+      var actor=auditActor(event),email=row.children[2].querySelector('.sub');
+      if(email)email.textContent=actor&&actor.email||'';
+    });
+    var footer=document.querySelector('#al-table .gt-foot'),count=matches.length?'Showing '+(start+1)+'–'+Math.min(start+size,matches.length)+' of '+matches.length+' loaded events':'Showing 0 loaded events';
+    footer.innerHTML='<span title="Recent native events and retained reference history. Open Existing records → Audit Log for the full native audit.">'+count+'</span><span class="pager">'+
+      '<button class="ghost sm" type="button" data-action="native-audit-page" data-val="'+(nativeAuditPage-1)+'"'+(nativeAuditPage<=1?' disabled':'')+'>Previous</button>'+
+      '<span>Page '+nativeAuditPage+' of '+pages+'</span><button class="ghost sm" type="button" data-action="native-audit-page" data-val="'+(nativeAuditPage+1)+'"'+(nativeAuditPage>=pages?' disabled':'')+'>Next</button></span>';
+  };
+  document.addEventListener('click',function(event){
+    var button=event.target.closest&&event.target.closest('[data-action="native-audit-page"]');
+    if(!button||!button.closest('#al-table')||S.route!=='audit-log')return;
+    event.preventDefault();event.stopImmediatePropagation();
+    var page=Number(button.dataset.val);if(button.disabled||!Number.isInteger(page))return;
+    nativeAuditPage=page;renderAudit();
+  },true);
+  openAuditDrawer=function(index){
+    var result=sourceAuditDrawer(index),event=AUDIT.find(function(row){return row.i===index;});
+    if(!event||!event.native)return result;
+    var drawer=$('drawer'),missing='Not included in this summary';
+    function detail(label,value){var term=Array.from(drawer.querySelectorAll('dt')).find(function(row){return row.textContent===label;});
+      if(term)term.nextElementSibling.textContent=value==null||value===''?missing:String(value);}
+    detail('RAW CODE',event.action);detail('OUTCOME',event.nativeOutcome);detail('CLIENT ID',event.nativeClientId);detail('ENTITY ID',event.eid);
+    detail('PERFORMED BY',event.user);
+    var actor=auditActor(event),by=Array.from(drawer.querySelectorAll('dt')).find(function(row){return row.textContent==='PERFORMED BY';});
+    var identifier=actor&&actor.email||event.nativeUserId;
+    if(by&&identifier){var sub=document.createElement('div');sub.className='sub';sub.textContent=identifier;by.nextElementSibling.appendChild(sub);}
+    var metadata={native:true,log_id:event.nativeLogId,client_id:event.nativeClientId,user_id:event.nativeUserId,
+      action:event.action,entity_type:event.nativeEntityType,entity_id:event.eid};
+    if(event.nativeOutcome!=null)metadata.outcome=event.nativeOutcome;
+    drawer.querySelector('.code').textContent=JSON.stringify(metadata,null,2);
+    drawer.querySelector('.m-head .sub').textContent='Native audit summary. Full event details are available in Existing records → Audit Log.';
+    return result;
+  };
   var sourceRenderAccount=renderAccount;
   renderAccount=function(){
     sourceRenderAccount();
@@ -70,7 +115,15 @@ window.GoverNaraNativePage=(function(){
   var sourceSetupEntries=v34SetupEntries,sourceSetupItems=ivsItemsAll;
   function nativeSetupRows(c){return callbacks&&callbacks.setupActivities?callbacks.setupActivities(c.id):null;}
   function nativeSetupIdentity(a){var identity={};['client_id','activity_id','review_id','source_review_id','expected_updated_at','expected_client_updated_at'].forEach(function(k){identity[k]=a[k]===undefined?null:a[k];});return identity;}
-  function nativeSetupCadence(a){return a.cadence==='custom'?'D:'+a.custom_days:{monthly:'M',quarterly:'Q',semiannual:'S',annual:''}[a.cadence];}
+  function nativeSetupCadence(a){return a.cadence==='custom'?(Number.isInteger(a.custom_days)&&a.custom_days>=1&&a.custom_days<=3660?'D:'+a.custom_days:undefined):{monthly:'M',quarterly:'Q',semiannual:'S',annual:''}[a.cadence];}
+  var sourceConnectedNext=connectedNext;
+  connectedNext=function(review){
+    if(review.nativeId&&!review.doneFlag&&callbacks&&callbacks.reviewNextCycle){
+      var value=callbacks.reviewNextCycle(S.clientId,review.nativeId);
+      if(value!==undefined){var date=value===null?null:new Date(String(value).slice(0,10)+'T00:00:00');return connectedDate(date)?date:null;}
+    }
+    return sourceConnectedNext.apply(this,arguments);
+  };
   v34SetupEntries=function(c){
     var rows=nativeSetupRows(c);if(rows===null)return sourceSetupEntries(c);
     var work=buildWork(c.id);
@@ -104,7 +157,12 @@ window.GoverNaraNativePage=(function(){
     sourceSetupDialog(c,key);var x=ivsFind(c,key);if(!x||!x.nativeActivity)return;
     S.coordSetupDraft.nativeActivity=nativeSetupIdentity(x.nativeActivity);
     var a=x.nativeActivity,select=$('ivs-d-cad'),cad=nativeSetupCadence(a);
-    if(select&&cad!==undefined){if(!Array.from(select.options).some(function(o){return o.value===cad;}))select.add(new Option(coordFrequency(cad)||cad,cad));select.value=cad;}
+    if(select){
+      Array.from(select.options).forEach(function(option){if(/^D:/.test(option.value)&&(!/^D:[1-9]\d*$/.test(option.value)||Number(option.value.slice(2))>3660))option.remove();});
+      if(cad===undefined)select.selectedIndex=-1;
+      else{if(!Array.from(select.options).some(function(o){return o.value===cad;}))select.add(new Option(coordFrequency(cad)||cad,cad));select.value=cad;}
+      $('ivs-d-cadh').innerHTML=ivsCadHint(c,x,cad);
+    }
     if(!x.r&&a.first_next_due)$('ivs-d-due').value=a.first_next_due;
   };
   ivsSave=function(c,key){
@@ -121,6 +179,7 @@ window.GoverNaraNativePage=(function(){
       if(covIV(responsibility)){
         plan.ticket=coordTicket($('ivs-d-no').value);plan.url=coordUrl($('ivs-d-url').value);
         plan.title=$('ivs-d-sum').value.trim().slice(0,255);plan.notes=$('ivs-d-notes').value.trim().slice(0,2000);
+        if($('ivs-d-cad').selectedIndex<0)throw Error('Choose a recurring schedule.');
         plan.cadence=$('ivs-d-cad').value;var next=coordDate($('ivs-d-due').value,'next review');
         if(!plan.ticket||!next||CONNECTED.validateCadence(plan.cadence).unit==='once')throw Error('Record the recurring ticket, schedule and next due date.');
         plan.next=isoDate(next);

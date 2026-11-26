@@ -120,6 +120,13 @@ test.each(cases)('SPM chosen $label retains native answers and the six-program R
     expect(completed).toBe(true);
     expect(writes.filter(write=>write.endpoint.endsWith('/complete'))).toHaveLength(1);
     expect(document.getElementById('dlg-scrim').hidden).toBe(true);
+    const activeRow=document.querySelector('[data-action="open-rev"][data-id="'+rid+'"]');
+    const savedReview=native.after_records.reviews.find(row=>row.review_id===rid);
+    const nativeDue=new Date(savedReview.due_date.slice(0,10)+'T00:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
+    expect(activeRow.children[3].textContent).toContain(nativeDue);
+    const nextPreview=new Date(savedReview.next_review_date.slice(0,10)+'T00:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
+    if(exerciseSetup)expect(nextPreview).toBe('Dec 1, 2027');
+    expect(activeRow.textContent).toContain('Next cycle '+nextPreview);
     expect(page.snapshot().work[sourceId].hist.some(row=>row.nativeOccurrenceId===native.guide.occurrence_id)).toBe(true);
   }finally{
     dom.window.close();

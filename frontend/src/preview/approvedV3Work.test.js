@@ -200,6 +200,23 @@ test('a moved calendar occurrence retains its recurrence anchor and a new client
   for(const table of ['reviews','tasks','findings','evidence']) expect(db[table]).toEqual([]);
 });
 
+test.each([null,'2027-06-01'])('native refresh aligns source cycle metadata without advancing saved dates or calendar moves (%s)',recurrenceDue=>{
+  const src=fixture(),{db}=convert(src),row=db.reviews[0],view=JSON.parse(JSON.stringify(src));
+  row.due_date=recurrenceDue?'2027-06-05':'2027-06-01';row.recurrence_due_date=recurrenceDue;
+  row.recurrence='semiannual';row.schedule_anchor={day:1,month_end:false};
+  Object.assign(view.work.a.revs[0],{due:{$date:'2027-06-01T00:00:00.000Z'},anchor:{$date:'2024-06-01T00:00:00.000Z'},cycleIndex:9});
+  const nativeBefore=JSON.stringify(db.reviews);
+  overlayApprovedV3Work(view,db,ctx);
+  const current=view.work.a.revs[0];
+  expect(current).toMatchObject({cycleIndex:0,due:{$date:(recurrenceDue?'2027-06-05':'2027-06-01')+'T00:00:00.000Z'},
+    anchor:{$date:'2027-06-01T00:00:00.000Z'},monthEnd:false});
+  const historyIds=view.work.a.hist.map(row=>row.nativeOccurrenceId);
+  overlayApprovedV3Work(view,db,ctx);
+  expect(view.work.a.revs[0].cycleIndex).toBe(0);
+  expect(view.work.a.hist.map(row=>row.nativeOccurrenceId)).toEqual(historyIds);
+  expect(JSON.stringify(db.reviews)).toBe(nativeBefore);
+});
+
 test('a new client’s first scheduled date is usable by the live calendar and the real submitter survives reload',()=>{
   const src=fixture(),{db}=convert(src);
   const view={...src,work:{a:{revs:[],hist:[],acts:[],done:[],findings:[]}}};

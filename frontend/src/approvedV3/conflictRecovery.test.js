@@ -4,6 +4,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import fixture from '../../../shared/fixtures/approvedV3Scenario.json';
 import {applyGlobalChanges,overlayGlobalRecords} from './adminCommands';
+import {setupActivities} from '../preview/r4ServicesTools';
 
 // Import the controller without automatically starting its browser entry point.
 global.window={};
@@ -47,6 +48,11 @@ test('a recovered conflict retains the operator draft without silently replacing
       if(endpoint==='/users')return {data:[clone(actor)]};
       if(endpoint==='/service-catalog')return {data:{tools:[]}};
       if(endpoint==='/evidence/catalog')return {data:{items:[],total:0,page_size:100}};
+      if(endpoint==='/clients/'+clientId+'/iv-setup'){
+        const client=records.clients.find(row=>row.client_id===clientId),activities=setupActivities(records,client);
+        return {data:{client_id:clientId,expected_client_updated_at:client.updated_at??null,activities,
+          outstanding_count:activities.filter(row=>row.provider_relevant&&!row.internal&&['todo','decide'].includes(row.state)).length}};
+      }
       if(endpoint.endsWith('/records'))return {data:{client_id:clientId,records:clone(records)}};
       throw Error('Unexpected read '+endpoint);
     }),patch:jest.fn(async(endpoint,body)=>{

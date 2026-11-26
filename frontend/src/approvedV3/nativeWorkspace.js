@@ -354,6 +354,12 @@ export async function startNativeWorkspace(page, transport=api) {
       const cid=identityMaps?.clientIds?.[sourceId],records=nativeRecords?.[cid];
       return records?approvedSetupActivities(records.setupCatalog,records):null;
     },
+    reviewNextCycle:(sourceId,reviewId)=>{
+      const cid=identityMaps?.clientIds?.[sourceId],rows=(nativeRecords?.[cid]?.reviews||[]).filter(row=>row.client_id===cid);
+      const exact=rows.filter(row=>row.review_id===reviewId),matches=exact.length?exact:
+        rows.filter(row=>String(row.source_record_id??row.review_id)===String(reviewId));
+      return matches.length===1?matches[0].next_review_date??null:matches.length?null:undefined;
+    },
     onboardingPlan:(rows,draft)=>{
       try{return approvedOnboardingPlan(rows,draft,baseline?.onboarding?.[page.context().sourceId]);}
       catch(error){

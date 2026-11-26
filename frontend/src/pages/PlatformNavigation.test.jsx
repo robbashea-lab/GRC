@@ -84,6 +84,8 @@ test('default client directory preserves the authorized cohort, sorting and exac
   expect(dialog.querySelector('.m-title').textContent).toBe(mockPortfolio.clients[0].name);
   expect(mockSwitch).not.toHaveBeenCalled();expect(mockNavigate).not.toHaveBeenCalled();
   await click(dialog.querySelector('[aria-label="Close implementation preview"]'));
+  // FocusScope dispatches close autofocus on its next timer turn.
+  await act(async()=>new Promise(resolve=>setTimeout(resolve,0)));
   expect(document.activeElement).toBe(opener);
   expect(api.post).not.toHaveBeenCalled();expect(api.patch).not.toHaveBeenCalled();
 });
