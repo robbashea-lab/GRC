@@ -143,7 +143,8 @@ module.exports.verifyReviewReport = async function verifyReviewReport({page, rou
   const start = page.locator('#rp-start'), end = page.locator('#rp-end');
   if (completedOn > await end.inputValue()) await end.fill(completedOn);
   if (completedOn < await start.inputValue()) await start.fill(completedOn);
-  assert.ok(await start.inputValue() <= completedOn && await end.inputValue() >= completedOn,
+  const periodStart = await start.inputValue(), periodEnd = await end.inputValue();
+  assert.ok(periodStart <= completedOn && periodEnd >= completedOn,
     'The selected report period must contain the saved completion.');
   await page.getByText('Single reports', {exact:true}).click();
   const workbook = 'Review-schedule-and-log.xlsx';
@@ -155,6 +156,9 @@ module.exports.verifyReviewReport = async function verifyReviewReport({page, rou
     register.getByRole('button', {name:'Download', exact:true}).click()
   ]);
   assert.ok(response.ok(), 'The native report delivery must be recorded successfully.');
+  const request = response.request().postDataJSON();
+  assert.equal(request.period_start, periodStart);
+  assert.equal(request.period_end, periodEnd);
   const delivery = await response.json();
   const bytes = await readFile(await download.path());
   const sha256 = createHash('sha256').update(bytes).digest('hex');
@@ -171,5 +175,5 @@ module.exports.verifyReviewReport = async function verifyReviewReport({page, rou
   assert.ok(historyRows[0].includes('>'+due) && historyRows[0].includes('>Completed'));
   assert.equal(scheduleRows.length, 1, 'Report schedule must contain the exact Review series once.');
   assert.ok(scheduleRows[0].includes('>'+next), 'The reported next due date must match Calendar.');
-  return {clientId, framework:'cis-ig1', deliveryId:delivery.delivery_id, occurrence, next, sha256};
+  return {clientId, framework:'cis-ig1', deliveryId:delivery.delivery_id, occurrence, next, periodStart, periodEnd, sha256};
 };
