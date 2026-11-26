@@ -1,8 +1,9 @@
 import {approvedV3Records,approvedV3IdentityMaps,frameworkKeys,sourceHash,nativeSocCategories} from '../preview/approvedV3Records';
 import baselineCatalog from '@catalogs/onboardingCatalog.json';
-import {activePlans} from '../lib/frameworks';
+import {CATALOGS,sharedFrameworkPlans,reviewConfig} from '../lib/frameworks';
 import {setupDraft} from '../lib/r4ServicesTools';
 import {serviceFormFields} from '../preview/approvedV3Registers';
+import {cadencePatch} from './workCommands';
 
 const equal=(a,b)=>JSON.stringify(a??null)===JSON.stringify(b??null);
 const pick=(row,keys)=>Object.fromEntries(keys.filter(k=>Object.hasOwn(row||{},k)).map(k=>[k,row[k]]));
@@ -60,8 +61,53 @@ function assignNewRegisterKeys(before,after,sourceId,cid,maps) {
   }
 }
 
-function intakeState(source,client,previous) {
-  const draft=source.onboarding?.[client.id]||{},policies={},reviews=[],framework_reviews={};
+function sharedReviewTitles(plan) {
+  const equivalents=plan.baseline_key?Object.values(CATALOGS).flatMap(catalog=>catalog.review_plans)
+    .filter(other=>other.baseline_key===plan.baseline_key):[];
+  return new Set([...plan.drivers,...equivalents].flatMap(driver=>[driver.title,driver.ig3_title,driver.level_one_title])
+    .filter(Boolean).map(title=>title.toLowerCase()));
+}
+
+function sharedReviewConfigurations(draft,scope,priorDraft) {
+  const framework_reviews={};
+  for(const plan of sharedFrameworkPlans(scope)) {
+    const titles=sharedReviewTitles(plan);
+    const entries=Object.entries(draft.rev||{}).filter(([title])=>titles.has(title.toLowerCase()));
+    const old=title=>priorDraft?.rev?.[title];
+    const one=values=>{
+      if(values.some(value=>!equal(value,values[0])))conflict('Choose one cadence and first due date for shared Review: '+plan.title);
+      return values[0];
+    };
+    const cadence=entry=>({recurrence:entry.cad,...(entry.cad==='custom'?{custom_recurrence_days:Number(entry.days)}:{})});
+    const changedEnabled=entries.filter(([title,entry])=>old(title)&&!!entry.inc!==!!old(title).inc);
+    const enabled=one((changedEnabled.length?changedEnabled:entries).map(([,entry])=>!!entry.inc))||false;
+    let config={enabled};
+    if(enabled){
+      const explicit=entries.filter(([,entry])=>entry._auto===false||entry.cad==='custom');
+      const changed=explicit.filter(([title,entry])=>!equal(cadence(entry),old(title)&&cadence(old(title))));
+      const chosen=changed.length?changed:explicit;
+      const automatic=entries.map(([,entry])=>cadence(entry));
+      const defaults=reviewConfig(scope,plan);
+      const schedule=chosen.length?one(chosen.map(([,entry])=>cadence(entry))):
+        automatic.every(value=>equal(value,automatic[0]))?automatic[0]:{recurrence:defaults.recurrence,
+          ...(defaults.recurrence==='custom'?{custom_recurrence_days:defaults.custom_recurrence_days}:{})};
+      const changedDates=entries.filter(([title,entry])=>old(title)&&(entry.due||'')!==(old(title).due||''));
+      const dates=(changedDates.length?changedDates:entries.filter(([,entry])=>entry.due)).map(([,entry])=>entry.due||'');
+      config={enabled,...schedule,due_date:one(dates)||null};
+      for(const [,entry] of entries){
+        if(entry.cad!==schedule.recurrence||chosen.length)entry._auto=false;
+        entry.cad=schedule.recurrence;entry.due=config.due_date||'';
+        if(schedule.recurrence==='custom')entry.days=schedule.custom_recurrence_days;
+      }
+    }
+    for(const [,entry] of entries)entry.inc=enabled;
+    for(const driver of plan.drivers)framework_reviews[driver.key]={...config};
+  }
+  return framework_reviews;
+}
+
+function intakeState(source,client,previous,priorDraft) {
+  const draft=source.onboarding?.[client.id]||{},policies={},reviews=[];
   const programs=Object.fromEntries(Object.entries(frameworkKeys).map(([key,fk])=>[fk,
     sourceProgram(draft.prog?.[key]) || ((client.progs||[]).some(p=>p.k===key&&!p.retired)?'applies':'does_not_apply')]));
   const settings={};
@@ -77,17 +123,42 @@ function intakeState(source,client,previous) {
     const key=policyMap.get(title.toLowerCase());
     if(key)policies[key]=({have:'yes',missing:'no',unsure:'unsure'})[selection.ans]||'';
   }
-  for(const [fk,response] of Object.entries(programs))if(response==='applies') {
-    for(const plan of activePlans(fk,settings[fk])) {
-      const entry=Object.entries(draft.rev||{}).find(([title])=>title.toLowerCase()===plan.title.toLowerCase())?.[1];
-      framework_reviews[plan.key]=entry?.inc?{enabled:true,recurrence:entry.cad,
-        ...(entry.cad==='custom'?{custom_recurrence_days:Number(entry.days)}:{}),due_date:entry.due||null}:{enabled:false};
-    }
-  }
+  const framework_reviews=sharedReviewConfigurations(draft,{requirements:programs,framework_settings:settings},priorDraft);
   for(const plan of baselineCatalog.reviews)if(draft.gen?.[plan.name]?.inc)reviews.push(plan.key);
   return {...pick(previous,['version']),version:3,step:Math.min(3,Math.max(0,(draft.step||1)-1)),
     completed:!!client.onboarded,requirements:programs,selected_policy_keys:Object.keys(policies),policies,
     framework_settings:settings,framework_reviews,reviews};
+}
+
+export function approvedOnboardingPlan(rows,draft,priorDraft) {
+  const current=JSON.parse(JSON.stringify(draft));
+  const scope={requirements:Object.fromEntries(Object.entries(frameworkKeys).map(([key,fk])=>[fk,sourceProgram(current.prog?.[key])||'does_not_apply'])),
+    framework_settings:{'cis-ig1':{implementation_group:current.ig||1},cmmc:{level:current.cmmc??2}}};
+  const groups=sharedFrameworkPlans(scope),configs=sharedReviewConfigurations(current,scope,priorDraft);
+  const result=[],shared=new Map();
+  for(const row of rows){
+    const titles=[row.t,row.templateKey].filter(Boolean).map(title=>title.toLowerCase());
+    const generic=row.gen&&baselineCatalog.reviews.find(plan=>[plan.name,...(plan.aliases||[])].some(title=>titles.includes(title.toLowerCase())));
+    const matches=groups.filter(plan=>row.gen?generic&&plan.baseline_key===generic.key&&configs[plan.key]?.enabled:
+      [...sharedReviewTitles(plan)].some(title=>titles.includes(title)));
+    if(matches.length>1)conflict('The source Review matches more than one shared activity: '+row.t);
+    const plan=matches[0];
+    if(!plan){result.push({...row});continue;}
+    const config=configs[plan.key];
+    if(!config.enabled)continue;
+    const key=plan.baseline_key||plan.key;
+    if(!shared.has(key)){
+      const merged={...row,cad:config.recurrence,days:config.custom_recurrence_days??row.days,due:config.due_date||'',
+        from:[...(row.from||[])],maps:[...(row.maps||[])]};
+      shared.set(key,merged);result.push(merged);
+    }else{
+      const merged=shared.get(key);
+      merged.from=[...new Set(merged.from.concat(row.from||[]))];
+      const known=new Set(merged.maps.map(map=>JSON.stringify(map)));
+      for(const map of row.maps||[])if(!known.has(JSON.stringify(map))){merged.maps.push(map);known.add(JSON.stringify(map));}
+    }
+  }
+  return result;
 }
 
 function recordPlans(table,prior,next,records,sourceRows,cid) {
@@ -200,7 +271,7 @@ async function saveEnrollment(ctx,prior,next) {
       const current=rowsFor(records,cid,table).find(r=>r[field]===version[field]);
       if(!current||(current.updated_at??null)!==(version.updated_at??null))conflict('An onboarding register changed. Reopen the client.');
     }
-    const state=intakeState(after,is,baseline.state);
+    const state=intakeState(after,is,baseline.state,before.onboarding?.[sourceId]);
     await api.post('/onboarding/baseline',{client_id:cid,state,finalize:completed,
       expected_updated_at:baseline.state.updated_at??null,...(completed?{expected_records:baseline.record_versions}:{})});
     applied.push(completed?'onboarding:complete':'onboarding:draft');
@@ -215,12 +286,40 @@ async function saveEnrollment(ctx,prior,next) {
       }
       const {data:handoff}=await api.get('/onboarding/handoff',{params:{client_id:cid}});
       requireScoped(handoff.client,cid);
+      const groups=sharedFrameworkPlans(state);
       for(const [table,sourceRows] of [['policies',after.programs[sourceId]?.pols||[]],['reviews',after.work[sourceId]?.revs||[]]]) {
         const field=table==='policies'?'policy_id':'review_id';
         const native=rowsFor(handoff.records||{},cid,table);
         for(const row of sourceRows) {
-          const matches=native.filter(r=>r.title?.toLowerCase()===(row.title||row.name||'').toLowerCase());
-          if(matches.length!==1)continue;
+          const titles=[row.title,row.name,row.supportTemplate].filter(Boolean).map(title=>title.toLowerCase());
+          let matches,generic;
+          if(table==='reviews'){
+            const candidates=groups.filter(plan=>[...sharedReviewTitles(plan)].some(title=>titles.includes(title)));
+            if(candidates.length>1)conflict('The source Review matches more than one shared activity. Reopen onboarding.');
+            const group=candidates[0],keys=new Set(group?.drivers.map(driver=>driver.key)||[]);
+            generic=baselineCatalog.reviews.find(plan=>[plan.name,...(plan.aliases||[])].some(title=>titles.includes(title.toLowerCase())));
+            matches=native.filter(saved=>group?keys.has(saved.framework_plan_key)||saved.framework_drivers?.some(driver=>keys.has(driver.framework_plan_key))||
+              group.baseline_key&&saved.baseline_key===group.baseline_key:generic?saved.baseline_key===generic.key:titles.includes(saved.title?.toLowerCase()));
+          }else{
+            const policy=baselineCatalog.policies.find(plan=>[plan.name,...(plan.aliases||[])].some(title=>titles.includes(title.toLowerCase())));
+            matches=native.filter(saved=>policy?saved.baseline_key===policy.key:titles.includes(saved.title?.toLowerCase()));
+          }
+          if(matches.length!==1)conflict('The saved onboarding '+table+' record could not be uniquely verified. Reopen this client.');
+          const selection=generic&&after.onboarding?.[sourceId]?.gen?.[generic.name];
+          if(table==='reviews'&&row.type==='General GRC'&&selection?.inc&&(selection.due||selection.cad&&selection.cad!=='annual')){
+            const path='/reviews/'+encode(matches[0].review_id);
+            const {data:current}=await api.get(path);requireScoped(current,cid,matches[0].review_id,'review_id');
+            const schedule={...cadencePatch(row.cad),due_date:dateOnly(selection.due)};
+            const delta=changed(current,schedule,Object.keys(schedule));
+            if(nonempty(delta)){
+              const {data:saved}=await api.patch(path,{...delta,...versioned(current),
+                expected_occurrence_id:current.current_occurrence_id||'occ_'+current.review_id});
+              requireScoped(saved,cid,current.review_id,'review_id');
+              if(Object.entries(schedule).some(([key,value])=>!equal(key==='due_date'?dateOnly(saved[key]):saved[key],value)))
+                conflict('The saved onboarding Review schedule could not be verified. Reopen this client.');
+              Object.assign(matches[0],saved);applied.push('onboarding-review:'+saved.review_id);
+            }
+          }
           const key=row.wfId||row.id;
           if(key==null)continue;
           remember(maps,cid,table,key,matches[0][field]);handled[table].push(key);

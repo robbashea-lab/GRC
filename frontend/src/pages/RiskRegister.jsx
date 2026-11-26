@@ -25,6 +25,7 @@ import BrawndoDemoRisksOverview,{RiskScoreBar} from '@/components/BrawndoDemoRis
 import {riskCategories,riskTreatments} from '@/lib/brawndoRisks';
 import './BrawndoDemoRisks.css';
 import CisRisksConcept from '@/components/CisRisksConcept';
+import V3WorkspaceHeading from '@/components/V3WorkspaceHeading';
 import '@/components/CisRisksConcept.css';
 import managementRules from '@/lib/managementRules.json';
 import api, { formatError } from "@/lib/api";
@@ -262,7 +263,7 @@ export default function RiskRegister() {
 
   return <BrawndoSurface className={`approved-risk-register${demoPresentation||navigationLoading?' cis-risks-surface':''}`}>
       {navigationLoading ? <section data-testid="risks-navigation-loading" aria-busy={!navigationError}>
-        <BrawndoPageHeader title={`${currentClient?.name||'Client'} Risks`} subtitle="Risk register · current assessed likelihood × impact" renderThemeAction={props=><SurfaceThemeAction {...props} className="bpage-btn"/>}/>
+        <V3WorkspaceHeading clientName={currentClient?.name||'Client'} title="Risks" subtitle="Risk register · current assessed likelihood × impact"/>
         <RegisterLoadError error={navigationError} onRetry={load} name="risks"/>
         {!navigationError&&<p role="status">Loading risks…</p>}
       </section> : demoPresentation ? <CisRisksConcept key={quarterlyChartScope(user,auth.workspaceMode,currentClient)} rows={demoRows} filtered={filtered} users={users} matches={matches} view={view} onView={selectConceptView} search={q} onSearch={setQ} table={table} nativeDefaultOrder={nativeDefaultOrder}

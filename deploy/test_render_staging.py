@@ -58,6 +58,8 @@ class HostingTests(unittest.TestCase):
         spec = importlib.util.spec_from_file_location('render_staging_fixture',
             Path(__file__).with_name('render_staging.py'))
         module = importlib.util.module_from_spec(spec)
+        # Match the hosted entrypoint's backend module path during its imports.
+        self.enterContext(patch.object(sys, 'path', [str(ROOT / 'backend'), *sys.path]))
         with patch.dict(sys.modules, {'server': SimpleNamespace(
                 app=api, get_current_user=self.auth_server.get_current_user)}), \
              patch.dict(os.environ, {
@@ -245,7 +247,8 @@ class EnvironmentGuardTests(unittest.TestCase):
                     spec = importlib.util.spec_from_file_location('render_staging_fixture',
                         Path(__file__).with_name('render_staging.py'))
                     module = importlib.util.module_from_spec(spec)
-                    with patch.dict(sys.modules, {'server': SimpleNamespace(app=api, get_current_user=None)}), \
+                    with patch.object(sys, 'path', [str(ROOT / 'backend'), *sys.path]), \
+                         patch.dict(sys.modules, {'server': SimpleNamespace(app=api, get_current_user=None)}), \
                          patch.dict(os.environ, environment, clear=True):
                         spec.loader.exec_module(module)
                     self.assertIs(module.app, api)

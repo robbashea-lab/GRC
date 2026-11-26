@@ -69,13 +69,17 @@ async function run(){
     }),hash);};
     const action=(name,id)=>page.locator('[data-action="'+name+'"]'+(id?'[data-id="'+id+'"]':'')).filter({visible:true}).first();
     const settle=async()=>{await delay(225);await page.waitForFunction(()=>document.body.getAttribute('aria-busy')!=='true');};
-    const reload=async()=>{await page.reload();await ready();};
+    const assertSuccessfulSaves=async()=>{
+      const rejected=await page.evaluate(()=>(window.qaNativeSaves||[]).filter(result=>result[0]===false));
+      assert.deepEqual(rejected,[],'Every requested native save must succeed: '+JSON.stringify(rejected));
+    };
+    const reload=async()=>{await assertSuccessfulSaves();await page.reload();await ready();};
     const field=id=>page.locator('#f-'+id);
     const getRevision=async id=>(await records()).reviews.find(row=>row.review_id===id);
     const issues=[];
     async function workflow(label,exercise) {
       if(selectedCase && selectedCase!==label)return;
-      try {await exercise();}
+      try {await exercise();await assertSuccessfulSaves();}
       catch(error) {
         const issue={label,message:error.message,stack:error.stack,url:page.url(),visible:(await page.locator('body').innerText()).slice(-1600),
           saves:await page.evaluate(()=>window.qaNativeSaves||[])};
@@ -102,6 +106,7 @@ async function run(){
       const page=window.GoverNaraNativePage;if(!page)return;const finish=page.finish;window.qaNativeSaves=[];
       page.finish=(...args)=>{window.qaNativeSaves.push(args);return finish(...args);};
     }));
+    await reload();
     const original=await snapshot();assert.equal(original.clients.length,8);
     receipt.calendarWidths={};
     for(const client of original.clients){
@@ -185,7 +190,8 @@ async function run(){
     });
     await runAdditional({page,action,field,route,settle,reload,snapshot,api,records,waitFor,workflow});
     if(issues.length){receipt.issues=issues;throw Error(issues.map(issue=>issue.label+': '+issue.message).join('\n'));}
-    assert.deepEqual(pageErrors,[]);receipt.externalOriginsBlocked=[...new Set(external)];receipt.result=selectedCase?'partial-pass':'pass';
+    assert.deepEqual(pageErrors,[]);assert.deepEqual(failures,[]);
+    receipt.externalOriginsBlocked=[...new Set(external)];receipt.result=selectedCase?'partial-pass':'pass';
   }catch(error){
     receipt.result='fail';receipt.error=error.message;receipt.stack=error.stack;receipt.apiFailures=failures;receipt.pageErrors=pageErrors;
     if(page&&!page.isClosed())receipt.visible=await page.locator('body').innerText().then(value=>value.slice(-1350)).catch(()=>'');
@@ -250,13 +256,21 @@ async function runAdditional({page,action,field,route,settle,reload,snapshot,api
   const count=await answers.count();assert.ok(count>0);
   for(let index=0;index<count;index++){await answers.nth(index).click();await settle();}
   await action('onb-next').click();await settle();await action('onb-next').click();await settle();
-  await action('onb-complete').click();await settle();await reload();
+  const planned=Number(await page.locator('.onb-rail .onb-r').filter({hasText:'Recurring Reviews'}).locator('b.num').innerText());
+  assert.equal(planned,33,'The wizard previews the shared activities that will actually be created.');
   const saved=(await api('/clients')).find(c=>c.name==='Browser QA multi-framework client');assert.ok(saved);
+  await action('onb-complete').click();
+  await waitFor(async()=>(await records(saved.client_id)).clients[0].onboarding_baseline?.completed===true,
+    'The six-framework onboarding did not finalize its saved native baseline.',45000);
+  await settle();await reload();
   const data=await records(saved.client_id),frameworks=new Set(data.framework_assessments.map(a=>a.framework_key));
   assert.deepEqual([...frameworks].sort(),['cis-ig1','cmmc','hipaa','iso-27001','nist-csf-2','soc-2']);
   assert.equal(data.framework_assessments.filter(a=>a.framework_key==='cis-ig1').length,153);
   assert.equal(data.framework_assessments.filter(a=>a.framework_key==='cmmc').length,110);
   assert.ok(data.policies.length>0&&data.reviews.length>0);
+  assert.equal(data.reviews.length,33,'The six-framework baseline has one series per selected shared activity.');
+  assert.equal(data.reviews.flatMap(review=>review.framework_drivers||[]).filter(driver=>driver.framework_driver_active!==false).length,62);
+  receipt.multiFramework={plannedReviews:planned,reviews:data.reviews.length,frameworkLinks:62,frameworks:[...frameworks].sort()};
   const projected=(await snapshot()).clients.find(c=>c.id===client.id);
   assert.equal(projected.onboarded,true);assert.equal(projected.progs.filter(p=>!p.retired).length,6);
   for(const program of projected.progs.filter(p=>!p.retired)){

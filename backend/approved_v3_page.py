@@ -8,6 +8,14 @@ PAGE_HOOK = r"""
 /* Native integration preserves the approved rendering functions and layout. */
 window.GoverNaraNativePage=(function(){
   var callbacks=null, importing=false, editing=false;
+  var nativeViewRevision=0,sourceOpenDialog=openDlg;
+  var staleFormMessage='Saved records changed. Reopen this item to review the latest values before saving. Your draft remains here until you close it.';
+  openDlg=function(){
+    var result=sourceOpenDialog.apply(this,arguments);
+    document.getElementById('dlg').dataset.nativeViewRevision=String(nativeViewRevision);
+    return result;
+  };
+  function staleDialog(){return document.getElementById('dlg').dataset.nativeViewRevision!==String(nativeViewRevision);}
   // Describe enforced native behavior, retaining the approved cards and icons.
   var nativeSecurityDescriptions={
     "Authentication":"Sign in with an approved email account and password. Invalid credentials return a generic error. Accounts must be active. Platform MFA and automatic account disabling for inactivity are not available.",
@@ -193,6 +201,11 @@ window.GoverNaraNativePage=(function(){
     return state;
   }
   var completionForm=null;
+  var sourceOnboardingPlan=onbRevPlan;
+  onbRevPlan=function(draft){
+    var rows=sourceOnboardingPlan(draft);
+    return callbacks&&callbacks.onboardingPlan?callbacks.onboardingPlan(rows,draft):rows;
+  };
   var sourceContactAccess=connectedContactAccess;
   connectedContactAccess=function(cid){
     // Native contact access is resolved by the saved account link, never an email guess.
@@ -356,6 +369,13 @@ window.GoverNaraNativePage=(function(){
   function busy(){return editing||!!(callbacks&&callbacks.busy());}
   document.addEventListener('click',function(event){
     var el=event.target.closest?.('[data-action]');if(!callbacks||!el)return;
+    // Direct dialogs do not use formDlg (for example client access and setup).
+    // A refreshed save token must never authorize their still-stale inputs.
+    var dialogWrites=['save-client','do-archive','save-user','save-account','save-role','save-access','u-enable','do-disable',
+      'mwf-save','ivs-save','ivs-area-save','svc-tools-save'];
+    if(el.closest('#dlg')&&dialogWrites.includes(el.dataset.action)&&staleDialog()){
+      event.preventDefault();event.stopImmediatePropagation();originalToast(staleFormMessage);return;
+    }
     var action=el.dataset.action,blocked={'ac-pwd':'Change the password in Existing records → My Account. This password form has not been submitted.',
       'u-pwd':'Open Existing records → Users & Access for authorized account recovery.',
       'demo-clear-ev':'Signed-in evidence is managed in the client Evidence Library.',
@@ -410,8 +430,9 @@ window.GoverNaraNativePage=(function(){
   };
   var originalForm=formDlg;
   formDlg=function(){
-    var args=Array.prototype.slice.call(arguments), save=args[4];
+    var args=Array.prototype.slice.call(arguments),save=args[4],openedRevision=nativeViewRevision;
     if(typeof save==="function")args[4]=function(values){
+      if(openedRevision!==nativeViewRevision)return staleFormMessage;
       editing=true;
       try {
         var error=save(values);
@@ -431,6 +452,7 @@ window.GoverNaraNativePage=(function(){
     apply:function(state,reconcile){
       importing=true;
       try {
+        nativeViewRevision++;
         var x=connectedClone(state);
         if(reconcile)x=reconcile(connectedState(),x);
         CLIENTS=x.clients;WORK=x.work;PGM=x.programs;CL=x.records;REG=x.reg;DASH=x.dash;

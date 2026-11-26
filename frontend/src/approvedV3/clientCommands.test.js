@@ -3,7 +3,9 @@ import {previewAdapter} from '../preview/adapter';
 import {freshApprovedDemo} from '../preview/approvedV3Demo';
 import scenario from '../../../shared/fixtures/approvedV3Scenario.json';
 import {overlayApprovedClientAssessments,approvedV3IdentityMaps,sourceHash} from '../preview/approvedV3Records';
-import {applyClientChanges} from './clientCommands';
+import {applyClientChanges,approvedOnboardingPlan} from './clientCommands';
+import {applyWorkChanges} from './workCommands';
+import baselineCatalog from '@catalogs/onboardingCatalog.json';
 
 const clone=v=>JSON.parse(JSON.stringify(v));
 const cid='v3sample_brawndo',sourceId='brawndo';
@@ -90,17 +92,115 @@ test('a new multi-program client goes through native onboarding and receives act
   }
   ctx.after.clients.at(-1).onboarded=true;
   ctx.after.onboarding[id]={step:4,prog:{cis:'applies',nist:'applies',iso:'applies',soc:'applies',hipaa:'applies',cmmc:'applies'},
-    ig:1,cmmc:1,pol:{},rev:{},gen:{}};
+    ig:3,cmmc:2,pol:Object.fromEntries(baselineCatalog.policies.map(policy=>[policy.name,{inc:true,ans:'unsure'}])),
+    rev:{'Account Authorization & Access Review':{inc:true,cad:'quarterly',due:'2027-02-01'},
+      'Vulnerability & Remediation Process Review':{inc:true,cad:'monthly',due:''},
+      'Vulnerability Governance Review':{inc:true,cad:'quarterly',due:''},
+      'Vulnerability scan and remediation review':{inc:true,cad:'monthly',due:''}},gen:{}};
+  ctx.after.work[id].revs=[
+    {id:'source-access-a',title:'Account Authorization & Access Review',supportTemplate:'Account Authorization & Access Review',cad:'Q',due:'2027-02-01',onb:true,kind:'rev'},
+    {id:'source-access-b',title:'Access Rights Review',supportTemplate:'Access Rights Review',cad:'Q',due:'2027-02-01',onb:true,kind:'rev'},
+    {id:'source-vulnerability',title:'Vulnerability Governance Review',supportTemplate:'Vulnerability Governance Review',cad:'M',due:null,onb:true,kind:'rev'},
+  ];
   // Each approved form submission carries its own transport receipt.
   api.defaults.headers.common['Idempotency-Key']='approved-v3-onboarding-finalize';
   api.defaults.headers['Idempotency-Key']='approved-v3-onboarding-finalize';
+  const post=jest.spyOn(api,'post');
   const result=await applyClientChanges(ctx);
   expect(result.applied).toContain('onboarding:complete');
   const handoff=(await api.get('/onboarding/handoff',{params:{client_id:ctx.clientId}})).data;
   expect(handoff.completed).toBe(true);
   expect(new Set(handoff.records.framework_assessments.map(a=>a.framework_key))).toEqual(new Set(['cis-ig1','nist-csf-2','iso-27001','soc-2','hipaa','cmmc']));
   expect(handoff.records.framework_assessments.every(a=>a.client_id===ctx.clientId&&a.status==='not_assessed')).toBe(true);
+  const savedReviews=(await api.get('/reviews',{params:{client_id:ctx.clientId}})).data;
+  const access=savedReviews.filter(review=>review.framework_drivers?.some(driver=>driver.framework_plan_key==='account-authorization'));
+  expect(access).toHaveLength(1);
+  expect(access[0]).toMatchObject({recurrence:'quarterly',due_date:'2027-02-01'});
+  expect(new Set(access[0].framework_drivers.map(driver=>driver.framework_key))).toEqual(new Set(['cis-ig1','nist-csf-2','iso-27001','soc-2','cmmc','hipaa']));
+  const vulnerability=savedReviews.filter(review=>review.framework_drivers?.some(driver=>driver.framework_plan_key==='vulnerability-remediation'));
+  expect(vulnerability).toHaveLength(1);expect(vulnerability[0]).toMatchObject({recurrence:'monthly',due_date:null});
+  expect(new Set(vulnerability[0].framework_drivers.map(driver=>driver.framework_key))).toEqual(new Set(['cis-ig1','nist-csf-2','soc-2','cmmc']));
+  expect(ctx.after.onboarding[id].rev['Vulnerability Governance Review']).toMatchObject({cad:'monthly',_auto:false});
+  expect(result.handled.reviews).toEqual(expect.arrayContaining(['source-access-a','source-access-b','source-vulnerability']));
+  expect(result.identityMaps.recordIds[ctx.clientId].reviews['source-access-a']).toBe(access[0].review_id);
+  expect(result.identityMaps.recordIds[ctx.clientId].reviews['source-access-b']).toBe(access[0].review_id);
+  await applyWorkChanges({...ctx,identityMaps:result.identityMaps,handled:result.handled});
+  expect(post.mock.calls.filter(([route])=>route==='/reviews')).toEqual([]);
 },20000);
+
+test('contradictory source schedules for the same shared review fail before native writes',async()=>{
+  const ctx=context();ctx.before.clients.find(client=>client.id===sourceId).onboarded=false;
+  ctx.after.clients.find(client=>client.id===sourceId).onboarded=true;
+  ctx.after.onboarding[sourceId]={step:4,prog:{cis:'applies',nist:'applies',iso:'applies',soc:'applies',hipaa:'applies',cmmc:'applies'},
+    ig:3,cmmc:2,pol:{},rev:{
+      'Account Authorization & Access Review':{inc:true,cad:'quarterly',due:'2027-02-01',_auto:false},
+      'Access Entitlement Review':{inc:true,cad:'annual',due:'2027-03-01',_auto:false},
+    },gen:{}};
+  ctx.api={get:jest.fn(async()=>({data:{state:ctx.records.clients.find(client=>client.client_id===cid).onboarding_baseline,record_versions:{}}})),
+    post:jest.fn(),patch:jest.fn()};
+  await expect(applyClientChanges(ctx)).rejects.toThrow('Choose one cadence and first due date for shared Review');
+  expect(ctx.api.post).not.toHaveBeenCalled();expect(ctx.api.patch).not.toHaveBeenCalled();
+});
+
+test.each([{cad:'custom',days:45,due:'2027-06-01',code:'D:45',writes:1},
+  {cad:'annual',days:30,due:'',code:'A',writes:0}])('generic onboarding preserves $cad scheduling without extra default writes',async selection=>{
+  const ctx=context(),api=axios.create({adapter:previewAdapter,headers:{'Idempotency-Key':'generic-create-'+selection.cad}});
+  await api.post('/demo/enter');ctx.api=api;
+  const created=(await api.post('/clients',{name:'Generic onboarding client',status:'onboarding',environment:'Demo'})).data;
+  const id='generic-onboarding',client={id,name:created.name,status:'Onboarding',isNew:true,onboarded:false,progs:[]};
+  ctx.clientId=created.client_id;ctx.sourceId=id;ctx.records.clients.push({...created,source_client_id:id});ctx.identityMaps.clientIds[id]=created.client_id;
+  for(const state of [ctx.before,ctx.after]){
+    state.clients.push(clone(client));state.records[id]={contacts:[],systems:[],ai:[]};state.profile[id]={empty:true};state.own[id]={};
+    state.programs[id]={risks:[],vendors:[],pols:[]};state.work[id]={revs:[],acts:[],done:[],hist:[]};
+  }
+  ctx.after.clients.at(-1).onboarded=true;
+  ctx.after.onboarding[id]={step:4,prog:{},pol:{},rev:{},gen:{'Risk Assessment':{inc:true,...selection}}};
+  ctx.after.work[id].revs=[{id:'source-generic-review',title:'Risk Assessment',supportTemplate:'Risk Assessment',type:'General GRC',
+    cad:selection.code,due:selection.due||null,onb:true,kind:'rev'}];
+  api.defaults.headers.common['Idempotency-Key']='generic-finalize-'+selection.cad;
+  api.defaults.headers['Idempotency-Key']='generic-finalize-'+selection.cad;
+  const patch=jest.spyOn(api,'patch'),result=await applyClientChanges(ctx);
+  const reviewId=result.identityMaps.recordIds[ctx.clientId].reviews['source-generic-review'];
+  const saved=(await api.get('/reviews/'+reviewId)).data;
+  expect(saved.due_date).toBe(selection.due||null);
+  expect(saved.recurrence).toBe(selection.writes?selection.cad:null);
+  if(selection.writes)expect(saved.custom_recurrence_days).toBe(45);
+  expect(patch).toHaveBeenCalledTimes(selection.writes);
+  if(selection.writes)expect(patch.mock.calls[0][1]).toMatchObject({expected_updated_at:expect.any(String),
+    expected_occurrence_id:saved.current_occurrence_id});
+  await applyWorkChanges({...ctx,identityMaps:result.identityMaps,handled:result.handled});
+  expect((await api.get('/reviews',{params:{client_id:ctx.clientId}})).data).toHaveLength(1);
+},20000);
+
+test('onboarding preview merges declared aliases without changing source choices or unrelated activities',()=>{
+  const draft={prog:{cis:'applies',nist:'applies',iso:'applies',soc:'applies',hipaa:'applies',cmmc:'applies'},ig:3,cmmc:2,
+    rev:{'Account Authorization & Access Review':{inc:true,cad:'quarterly',due:'2027-02-01'},
+      'Access Rights Review':{inc:true,cad:'quarterly',due:''},
+      'Vulnerability & Remediation Process Review':{inc:true,cad:'monthly',due:''},
+      'Vulnerability Governance Review':{inc:true,cad:'quarterly',due:''}}};
+  const rows=Object.entries(draft.rev).map(([t,entry],index)=>({t,templateKey:t,cad:entry.cad,due:entry.due,days:30,
+    from:[index%2?'NIST CSF 2.0':'CIS IG3'],maps:[{k:index%2?'nist':'cis',ids:String(index)}],gen:false}));
+  rows.push({t:'Independent general review',cad:'annual',due:'2027-05-01',gen:true},
+    {t:'Unrecognized source activity',cad:'semiannual',due:'',gen:false});
+  const original=clone({rows,draft}),plan=approvedOnboardingPlan(rows,draft);
+  expect(plan).toHaveLength(4);
+  expect(plan[0]).toMatchObject({t:'Account Authorization & Access Review',cad:'quarterly',due:'2027-02-01',
+    from:['CIS IG3','NIST CSF 2.0'],maps:[{k:'cis',ids:'0'},{k:'nist',ids:'1'}]});
+  expect(plan[1]).toMatchObject({t:'Vulnerability & Remediation Process Review',cad:'monthly',due:''});
+  expect(plan.slice(2)).toEqual(rows.slice(4));
+  expect({rows,draft}).toEqual(original);
+});
+
+test('a single latest operator schedule updates every shared alias in the onboarding preview',()=>{
+  const previous={prog:{cis:'applies',nist:'applies'},ig:3,rev:{
+    'Account Authorization & Access Review':{inc:true,cad:'quarterly',due:'2027-02-01',_auto:false},
+    'Access Rights Review':{inc:true,cad:'quarterly',due:'2027-02-01',_auto:false}}};
+  const draft=clone(previous);Object.assign(draft.rev['Access Rights Review'],{cad:'custom',days:21,due:'2027-06-01'});
+  const rows=Object.entries(draft.rev).map(([t,entry])=>({t,templateKey:t,cad:entry.cad,due:entry.due,days:entry.days,gen:false}));
+  const plan=approvedOnboardingPlan(rows,draft,previous);
+  expect(plan).toHaveLength(1);expect(plan[0]).toMatchObject({cad:'custom',days:21,due:'2027-06-01'});
+  expect(draft.rev['Account Authorization & Access Review'].cad).toBe('quarterly');
+});
 
 test('an adopted interview preserves the source revision, implementation, item and selected recurring ticket in one assessment command',async()=>{
   const ctx=context(),key='brawndo|cis:8.1|1.1',aid=ctx.identityMaps.recordIds[cid].framework_assessments['cis-ig1|1.1'];

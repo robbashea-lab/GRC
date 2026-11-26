@@ -6,10 +6,31 @@ import unittest
 import httpx
 
 import approved_v3
+from framework_catalog import active_definitions
+import shared_review_plans
 import test_approved_v3 as portfolio_fixture
+
+# The fixture imports the native server under its isolated Mongo/env bindings.
+from routes.onboarding import BASELINE_CATALOG
 
 
 server = portfolio_fixture.server
+
+
+def all_program_onboarding_state():
+    """Native equivalent of the source's all-program, 17 Unsure policy intake."""
+    state = {'version': 3, 'step': 3, 'completed': True,
+             'policies': {policy['key']: 'unsure' for policy in BASELINE_CATALOG['policies']},
+             'selected_policy_keys': [policy['key'] for policy in BASELINE_CATALOG['policies']],
+             'requirements': {key: 'applies' for key in shared_review_plans.CATALOGS},
+             'framework_settings': {'cis-ig1': {'implementation_group': 3}, 'cmmc': {'level': 2}},
+             'framework_reviews': {}, 'reviews': []}
+    for plan in shared_review_plans.selected_plans(state):
+        config = shared_review_plans.shared_config({**state, 'framework_reviews': {}}, plan)
+        state['framework_reviews'][plan['key']] = {'enabled': config['enabled'], 'recurrence': config['recurrence'], 'due_date': None}
+        if config['recurrence'] == 'custom':
+            state['framework_reviews'][plan['key']]['custom_recurrence_days'] = config['custom_recurrence_days']
+    return state
 
 
 class ApprovedV3LifecycleTests(unittest.IsolatedAsyncioTestCase):
@@ -146,3 +167,79 @@ class ApprovedV3LifecycleTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(retained.status_code, 200, retained.text)
         self.assertEqual(retained.json()['total'], before.json()['total'])
         self.assertTrue(all(row['client_id'] == client_id for row in retained.json()['items']))
+
+    async def test_all_six_program_onboarding_keeps_one_schedule_per_shared_review_and_rejects_conflicts(self):
+        created = await self.client.post('/api/clients', headers={'Idempotency-Key': 'all-program-client'},
+                                         json={'name': 'Synthetic all-program intake', 'assigned_owner_id': 'owner'})
+        self.assertEqual(created.status_code, 200, created.text)
+        client_id = created.json()['client_id']
+        loaded = await self.client.get('/api/onboarding/baseline', params={'client_id': client_id})
+        self.assertEqual(loaded.status_code, 200, loaded.text)
+        state = all_program_onboarding_state()
+        plans = shared_review_plans.selected_plans(state)
+        user_access = [plan for plan in plans if plan.get('baseline_key') == 'user-access']
+        self.assertEqual({plan['framework_key'] for plan in user_access}, set(state['requirements']))
+        bad_state = deepcopy(state)
+        bad_state['framework_reviews'][user_access[-1]['key']]['enabled'] = False
+        body = {'client_id': client_id, 'state': bad_state, 'finalize': True,
+                'expected_updated_at': loaded.json()['state'].get('updated_at'),
+                'expected_records': loaded.json()['record_versions']}
+        rejected = await self.client.post('/api/onboarding/baseline', headers={'Idempotency-Key': 'conflicting-shared-intake'}, json=body)
+        self.assertEqual(rejected.status_code, 422, rejected.text)
+        self.assertIn('Choose one cadence and first due date for shared Review', rejected.text)
+        for table in ('policies', 'requirements', 'reviews', 'framework_assessments'):
+            self.assertEqual(await self.db[table].count_documents({'client_id': client_id}), 0, table)
+        self.assertFalse((await self.db.clients.find_one({'client_id': client_id})).get('onboarding_baseline', {}).get('completed'))
+
+        # The source's individual NIST default was quarterly while CIS/CMMC
+        # proposed monthly for this same activity. That disagreement must be
+        # reconciled by the adapter before submission, never by weakening native validation.
+        cadence_conflict = deepcopy(state)
+        nist_vulnerability = next(plan for plan in plans if plan['framework_key'] == 'nist-csf-2'
+                                  and plan.get('baseline_key') == 'vulnerability')
+        cadence_conflict['framework_reviews'][nist_vulnerability['key']]['recurrence'] = 'quarterly'
+        body['state'] = cadence_conflict
+        rejected = await self.client.post('/api/onboarding/baseline', headers={'Idempotency-Key': 'conflicting-cadence-intake'}, json=body)
+        self.assertEqual(rejected.status_code, 422, rejected.text)
+        self.assertIn('Choose one cadence and first due date for shared Review', rejected.text)
+        for table in ('policies', 'requirements', 'reviews', 'framework_assessments'):
+            self.assertEqual(await self.db[table].count_documents({'client_id': client_id}), 0, table)
+
+        body['state'] = state
+        accepted = await self.client.post('/api/onboarding/baseline', headers={'Idempotency-Key': 'consistent-shared-intake'}, json=body)
+        self.assertEqual(accepted.status_code, 200, accepted.text)
+        saved = await self.db.clients.find_one({'client_id': client_id})
+        self.assertTrue(saved['onboarding_baseline']['completed'])
+        self.assertEqual(saved['framework_settings']['cis-ig1']['implementation_group'], 3)
+        self.assertEqual(saved['framework_settings']['cmmc']['level'], 2)
+        policies = await self.db.policies.find({'client_id': client_id}, {'_id': 0}).to_list(None)
+        self.assertEqual(len(policies), 17)
+        self.assertTrue(all(policy['presence'] == 'needs_confirmation' and policy['status'] == 'needs_verification' for policy in policies))
+        reviews = await self.db.reviews.find({'client_id': client_id}, {'_id': 0}).to_list(None)
+        enabled_plans = [plan for plan in plans if state['framework_reviews'][plan['key']]['enabled']]
+        groups = {plan.get('baseline_key') or plan['key'] for plan in enabled_plans}
+        represented = {plan.get('baseline_key') for plan in enabled_plans}
+        generic = set(state['reviews']) - represented
+        self.assertEqual(len(reviews), len(groups) + len(generic))
+        self.assertTrue(all(review['status'] == 'needs_scheduling' and not review.get('due_date') for review in reviews))
+        for plan in plans:
+            linked = [review for review in reviews if any(driver['framework_plan_key'] == plan['key']
+                      for driver in shared_review_plans.active_mappings(review))]
+            self.assertEqual(len(linked), 1 if state['framework_reviews'][plan['key']]['enabled'] else 0, plan['key'])
+            if not linked:
+                continue
+            self.assertEqual(linked[0]['recurrence'], state['framework_reviews'][plan['key']]['recurrence'])
+            if state['framework_reviews'][plan['key']]['recurrence'] == 'custom':
+                self.assertEqual(linked[0]['custom_recurrence_days'], state['framework_reviews'][plan['key']]['custom_recurrence_days'])
+        shared_access = [review for review in reviews if any(driver['framework_plan_key'] == user_access[0]['key']
+                         for driver in shared_review_plans.active_mappings(review))]
+        self.assertEqual(len(shared_access), 1)
+        self.assertEqual(shared_access[0]['recurrence'], 'quarterly')
+        self.assertEqual(len(shared_review_plans.active_mappings(shared_access[0])), 6)
+        for framework in state['requirements']:
+            assessments = await self.db.framework_assessments.find({'client_id': client_id, 'framework_key': framework}, {'_id': 0}).to_list(None)
+            self.assertEqual(len(assessments), len(active_definitions(framework, state['framework_settings'].get(framework, {}))))
+            self.assertTrue(all(row['status'] == 'not_assessed' and not row.get('implementation') for row in assessments))
+        replay = await self.client.post('/api/onboarding/baseline', headers={'Idempotency-Key': 'consistent-shared-intake'}, json=body)
+        self.assertEqual(replay.status_code, 200, replay.text)
+        self.assertEqual(await self.db.reviews.count_documents({'client_id': client_id}), len(reviews))

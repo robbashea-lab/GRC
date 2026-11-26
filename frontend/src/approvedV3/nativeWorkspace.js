@@ -4,7 +4,7 @@ import {stableJson} from '../lib/stableJson';
 import {approvedV3IdentityMaps, overlayApprovedClientAssessments,approvedHipaaSupplement} from '../preview/approvedV3Records';
 import {overlayApprovedV3Work} from '../preview/approvedV3Work';
 import {overlayApprovedV3Registers} from '../preview/approvedV3Registers';
-import {applyClientChanges} from './clientCommands';
+import {applyClientChanges,approvedOnboardingPlan} from './clientCommands';
 import {applyRegisterChanges} from './registerCommands';
 import {applyWorkChanges} from './workCommands';
 import {prepareReviewGuide, downloadApprovedEvidence,loadApprovedEvidenceCatalog,downloadApprovedEvidenceArchive} from './workGuidance';
@@ -319,6 +319,14 @@ export async function startNativeWorkspace(page, transport=api) {
 
   page.configure({
     hipaaSupplement:approvedHipaaSupplement,
+    onboardingPlan:(rows,draft)=>{
+      try{return approvedOnboardingPlan(rows,draft,baseline?.onboarding?.[page.context().sourceId]);}
+      catch(error){
+        if(error.status!==409)throw error;
+        // Keep conflicting drafts editable; the native save still rejects them.
+        status(formatError(error));return rows;
+      }
+    },
     busy:()=>saving || !!pending,
     command:(name,args)=>captured.push({name,args}),
     persist:(state,sourceId)=>{

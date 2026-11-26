@@ -6,7 +6,7 @@ import {applyCmmcChanges} from './cmmcCommands';
 import {loadGlobalRecords,applyGlobalChanges} from './adminCommands';
 import fixture from '../../../shared/fixtures/approvedV3Scenario.json';
 
-jest.mock('./clientCommands',()=>({applyClientChanges:jest.fn()}));
+jest.mock('./clientCommands',()=>({applyClientChanges:jest.fn(),approvedOnboardingPlan:jest.fn(rows=>rows)}));
 jest.mock('./registerCommands',()=>({applyRegisterChanges:jest.fn()}));
 jest.mock('./workCommands',()=>({applyWorkChanges:jest.fn()}));
 jest.mock('./cmmcCommands',()=>({applyCmmcChanges:jest.fn(),overlayCmmcWorkbook:jest.fn(),downloadApprovedCmmc:jest.fn()}));

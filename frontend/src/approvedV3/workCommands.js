@@ -19,7 +19,7 @@ const keyText=value=>text(value).replace(/\s+/g,' ');
 const same=(a,b)=>JSON.stringify(a)===JSON.stringify(b);
 const allTasks=work=>[...list(work.acts),...list(work.done)];
 
-function cadencePatch(value) {
+export function cadencePatch(value) {
   if (Object.hasOwn(recurring,value)) return {recurrence:recurring[value],custom_recurrence_days:null};
   const days=value?.unit==='days' ? Number(value.interval) : Number(/^D:(\d+)$/.exec(value)?.[1]);
   if (Number.isInteger(days) && days>0 && days<=3660) return {recurrence:'custom',custom_recurrence_days:days};

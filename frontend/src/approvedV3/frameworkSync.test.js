@@ -10,6 +10,7 @@ import {activeDefinitions} from '../lib/frameworks';
 import {serviceCatalog} from '../lib/r4ServicesTools';
 import {overlayGlobalRecords} from './adminCommands';
 import {overlayNativeAudit} from './auditProjection';
+import {approvedOnboardingPlan} from './clientCommands';
 
 // Load the comparison without starting the browser entry point in this Node test.
 global.window={};
@@ -30,6 +31,11 @@ function openPage(){
     g.stage='draft';g.draft='Inventory is maintained in the saved client tool.\\n\\nItems requiring confirmation\\n- Confirm the next completed review.';
     g.proposalKey=itemKey(c,it.id);g.proposalRevision=it.mwfRevision||0;g.proposalScope=MWF.scopeFingerprint(c);g.ack=true;
     S.itemTab='assess';renderItem();gnGuideSession.key=itemKey(c,it.id);gnGuideDraw();
+  };
+  window.prepareMultiFrameworkOnboardingFixture=function(id){
+    var c=byId(id),o=onbState(c);o.prog={cis:'applies',nist:'applies',iso:'applies',soc:'applies',hipaa:'applies',cmmc:'applies'};
+    o.ig=3;o.cmmc=2;onbPols(o).forEach(function(p){o.pol[p[0]].ans='unsure';});onbRevs(o);o.step=4;
+    renderOnboarding(c);return onbRevPlan(o);
   };`;
   return new JSDOM(html.replace(marker,'p16Initialize();\n'+hook+'\n'+fixture+'\nif (!location.hash)'),{
     url:'https://governara.example.test/#portfolio',runScripts:'dangerously',virtualConsole:new VirtualConsole()});
@@ -194,6 +200,27 @@ test('a completed new client with no security profile reopens its profile after 
     page.apply(wireView(page.snapshot()),reconcileView);
     expect(page.snapshot().profile[id].v2.areas).toEqual({});
     expect(page.snapshot().onboarding[id].step).toBe(4);
+  }finally{dom.window.close();}
+},30000);
+
+test('the actual six-framework onboarding preview shows thirty-three shared activities',async()=>{
+  const dom=openPage();
+  try{
+    const page=dom.window.GoverNaraNativePage,id='qa-shared-onboarding',clientId='native-qa-shared-onboarding';
+    const state=page.snapshot(),client={id,name:'Shared onboarding client',isNew:true,onboarded:false,status:'Onboarding',progs:[]};
+    state.clients.push(client);
+    const records={clients:[{client_id:clientId,source_client_id:id,name:client.name,status:'onboarding',profile:{}}],requirements:[],users:[],contacts:[],assets:[],framework_assessments:[]};
+    page.configure({hipaaSupplement:approvedHipaaSupplement,busy:()=>false,persist:()=>true,command:()=>{},onboardingPlan:approvedOnboardingPlan});
+    page.actor({user_id:'qa-operator',name:'QA Operator',email:'qa@example.test',role:'super_admin'},state.clients.map(c=>c.id));
+    page.prepareClient(state,id,records);overlayApprovedClientAssessments(state,records);page.apply(wireView(state),reconcileView);
+    dom.window.location.hash='client-'+id+'-profile';await nextRoute(dom.window);
+    const plan=dom.window.prepareMultiFrameworkOnboardingFixture(id);
+    expect(plan).toHaveLength(33);
+    expect(dom.window.document.querySelector('#v-client .onb-rail').textContent).toMatch(/Recurring Reviews\s*33/);
+    const access=plan.filter(row=>row.t==='Account Authorization & Access Review');
+    expect(access).toHaveLength(1);expect(new Set(access[0].maps.map(map=>map.k))).toEqual(new Set(['cis','nist','iso','soc','cmmc','hipaa']));
+    expect(plan.find(row=>row.t==='Vulnerability & Remediation Process Review').cad).toBe('monthly');
+    expect(Object.values(page.snapshot().onboarding[id].pol).filter(policy=>policy.ans==='unsure')).toHaveLength(17);
   }finally{dom.window.close();}
 },30000);
 
