@@ -5,7 +5,7 @@ services:
     runtime: docker
     plan: free
     region: virginia
-    branch: main
+    branch: codex/staging-signed-in-v3-20261124
     dockerfilePath: ./deploy/RenderStaging.Dockerfile
     dockerContext: .
     autoDeployTrigger: checksPass
