@@ -257,6 +257,18 @@ jobs:
                      for suite in result.iter('testsuite') for field in ('errors', 'failures', 'skipped'))
 
 
+      - name: Verify native workflows in all v3 framework scopes
+        id: v3-framework-matrix
+        if: >-
+          (github.event_name == 'pull_request' && github.base_ref == 'codex/staging-signed-in-v3-20261124') ||
+          ((github.event_name == 'push' || github.event_name == 'workflow_dispatch') &&
+           github.ref == 'refs/heads/codex/staging-signed-in-v3-20261124')
+        continue-on-error: ${{ github.event_name == 'pull_request' && github.base_ref == 'codex/staging-signed-in-v3-20261124' }}
+        run: python scripts/qa_native_inventory.py --matrix-only --mongo-url mongodb://127.0.0.1:27018
+      - name: Flag advisory v3 framework findings
+        if: steps.v3-framework-matrix.outcome == 'failure' && github.event_name == 'pull_request'
+        run: echo "::warning::The advisory v3 framework workflow matrix failed. Review the preceding step."
+
   image-audit:
     name: Staging image audit
     runs-on: ubuntu-24.04

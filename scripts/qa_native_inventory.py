@@ -17,6 +17,7 @@ import sys
 import tempfile
 import time
 from datetime import date, timedelta
+from urllib.parse import urlsplit
 
 import httpx
 from pymongo import MongoClient
@@ -87,28 +88,54 @@ async def check_enrollment_matrix(get, post, call, owner, reauthenticate):
             body = {'status': 'addressed', 'implementation': narrative,
                     'expected_last_assessed': row.get('last_saved') or row.get('last_assessed')}
             saved = await call('PATCH', record, json=body)
-            assert saved['assessed_by'] == owner and saved['assessment_history'], (label, key)
+            history = saved['assessment_history']
+            assert saved['assessed_by'] == owner and history[:-1] == row['assessment_history'], (label, key)
+            assert len(history) == len(row['assessment_history']) + 1
+            assert (history[-1]['status'], history[-1]['implementation'], history[-1]['by']) == ('addressed', narrative, owner)
             saved_again = await get(record)
             assert saved_again['implementation'] == narrative and saved_again['status'] == 'addressed'
+            sample = f'Synthetic evidence for {label}, {program_label}.'.encode()
+            evidence = await post('/evidence', {
+                'client_id': cid, 'filename': 'assessment-scope.txt', 'mime_type': 'text/plain',
+                'content_base64': base64.b64encode(sample).decode('ascii'),
+                'linked_type': 'framework_assessment', 'linked_id': row['framework_assessment_id'],
+            })
+            assert evidence['sha256'] == hashlib.sha256(sample).hexdigest()
             after = await counts()
             assert after[key]['addressed'] == before[key]['addressed'] + 1
             assert after[key]['not_assessed'] == before[key]['not_assessed'] - 1
             assert all(before[other] == after[other] for other in before if other != key)
             before = after
-            retained.append((cid, key, record, narrative))
+            retained.append((cid, key, record, narrative, history, evidence['evidence_id'], sample))
         print(f'PASS fresh enrollment, native save and portfolio scope: {label}', flush=True)
     await reauthenticate()
     assert len({r[2] for r in retained}) == len(retained)
-    for cid, key, path, narrative in retained:
+    audit_by_client = {}
+    for cid, key, path, narrative, history, evidence_id, sample in retained:
         row = await get(path)
         assert (row['client_id'], row['framework_key'], row['implementation'], row['status']) == (cid, key, narrative, 'addressed')
+        assert row['assessment_history'] == history and row['assessed_by'] == owner
+        linked = (await get(path + '/related'))['evidence']
+        assert [(file['client_id'], file['evidence_id']) for file in linked] == [(cid, evidence_id)]
+        downloaded = await get('/evidence/' + evidence_id + '/download')
+        if isinstance(downloaded, dict):
+            downloaded = base64.b64decode(downloaded['content_base64'])
+        assert downloaded == sample, (cid, key)
+        if cid not in audit_by_client:
+            audit_by_client[cid] = (await get('/audit-logs', client_id=cid, page_size=200))['items']
+        expected = {
+            (row['framework_assessment_id'], 'Framework assessment updated', owner),
+            (evidence_id, 'upload', owner),
+        }
+        events = [(event['entity_id'], event['action'], event['user_id']) for event in audit_by_client[cid]]
+        assert all(events.count(event) == 1 for event in expected), (cid, key)
         position = next(p['current'] for p in (await get('/portfolio/reporting/overview', client_ids=cid))['programs'] if p['framework_key'] == key)
         assert position['implemented'] == 1
-    print('PASS fresh-login isolation across 10 separately created clients and 15 enrollments', flush=True)
+    print('PASS fresh-login assessment history, linked evidence bytes and audit across 10 clients and 15 enrollments', flush=True)
     return retained[-1][0], retained[-1][2]
 
 
-async def check_pilot(app, owner_password, sample_report):
+async def check_pilot(app, owner_password, sample_report, *, matrix_only=False):
     async with httpx.AsyncClient(transport=httpx.ASGITransport(app=app), base_url=ORIGIN,
                                  headers={'Origin': ORIGIN}, timeout=60) as client:
         async def call(method, path, *, expected=200, **kwargs):
@@ -143,6 +170,30 @@ async def check_pilot(app, owner_password, sample_report):
         reviewer = (await post('/users', {'name': 'Independent reviewer', 'email': reviewer_email,
                                  'role': 'platform_admin', 'client_ids': [cid], 'password': reviewer_password}))['user']['user_id']
         assert owner != reviewer
+
+        async def first_reviewer_login():
+            nonlocal reviewer_password
+            await login(reviewer_email, reviewer_password)
+            permanent_password = secrets.token_urlsafe(32)
+            await call('PATCH', '/me/password', json={'current_password': reviewer_password, 'new_password': permanent_password})
+            reviewer_password = permanent_password
+            await login(reviewer_email, reviewer_password)
+
+        async def check_programs_and_scope(path):
+            async def fresh_owner_session():
+                await logout()
+                await login(owner_email, owner_password)
+            foreign_client, foreign_record = await check_enrollment_matrix(get, post, call, owner, fresh_owner_session)
+            await logout()
+            if matrix_only:
+                await first_reviewer_login()
+            else:
+                await login(reviewer_email, reviewer_password)
+            await call('GET', foreign_record, expected=403)
+            await call('GET', '/portfolio/reporting/overview', expected=403, params={'client_ids': foreign_client})
+            assert (await get(path))['client_id'] == cid
+            print('PASS assigned reviewer retains access to own client and is denied the other client and portfolio', flush=True)
+
         await enroll(get, post, cid, {'cis-ig1': {'implementation_group': 1}},
                      review_choices={'asset-inventory': {'enabled': False}})
         workspace = await get('/frameworks/cis-ig1', client_id=cid)
@@ -150,6 +201,9 @@ async def check_pilot(app, owner_password, sample_report):
         source = next(row for row in workspace['assessments'] if row['definition_id'] == '1.1')
         aid = source['framework_assessment_id']
         path = '/framework_assessments/' + aid
+        if matrix_only:
+            await check_programs_and_scope(path)
+            return
         services_path = '/clients/' + cid + '/services'
         setup_path = '/clients/' + cid + '/iv-setup'
         services = await get(services_path)
@@ -240,11 +294,7 @@ async def check_pilot(app, owner_password, sample_report):
         assert original['completed_by'] == owner and (await get(finding_path))['status'] == 'remediated'
         await decision('validate', 'Worker cannot validate own submission.', 403)
         await logout()
-        await login(reviewer_email, reviewer_password)
-        permanent_password = secrets.token_urlsafe(32)
-        await call('PATCH', '/me/password', json={'current_password': reviewer_password, 'new_password': permanent_password})
-        reviewer_password = permanent_password
-        await login(reviewer_email, reviewer_password)
+        await first_reviewer_login()
         rejected = await decision('reject', 'Independent sample still lacks an asset class.')
         replacement = rejected['primary_task_id']
         assert rejected['status'] == 'in_remediation' and replacement != tid and (await get('/tasks/' + tid))['status'] == 'done'
@@ -282,27 +332,62 @@ async def check_pilot(app, owner_password, sample_report):
         events = {(r['entity_id'], r['action'], r['user_id']) for r in audit}
         assert {(fid, 'validate', reviewer), (fid, 'reject', reviewer), (eid, 'upload', owner), (cid, 'generate', owner)} <= events
         print('PASS fresh login, preserved assessment, linked history, calendar, evidence bytes, framework PDF, audit actors', flush=True)
-        async def fresh_owner_session():
-            await logout()
-            await login(owner_email, owner_password)
-        foreign_client, foreign_record = await check_enrollment_matrix(get, post, call, owner, fresh_owner_session)
-        await logout()
-        await login(reviewer_email, reviewer_password)
-        await call('GET', foreign_record, expected=403)
-        await call('GET', '/portfolio/reporting/overview', expected=403, params={'client_ids': foreign_client})
-        assert (await get(path))['client_id'] == cid
-        print('PASS assigned reviewer retains access to own client and is denied the other client and portfolio', flush=True)
+        await check_programs_and_scope(path)
+
+
+def run_check(check, uri, database_name, sample_report, matrix_only):
+    from password_policy import hash_password
+    password = secrets.token_urlsafe(32)
+    os.environ.update(APP_ENV='test', MONGO_URL=uri, DB_NAME=database_name, JWT_SECRET=secrets.token_urlsafe(48),
+                      ADMIN_EMAIL='owner@example.org', ADMIN_PASSWORD_HASH=hash_password(password),
+                      APP_BASE_URL=ORIGIN, CORS_ORIGINS=ORIGIN, RUN_LEGACY_MIGRATIONS='false')
+    import server
+    logging.getLogger('httpx').setLevel(logging.WARNING)
+
+    async def run():
+        async with server.app.router.lifespan_context(server.app):
+            if matrix_only:
+                await check_pilot(server.app, password, None, matrix_only=True)
+            else:
+                await check(server.app, password, sample_report)
+    asyncio.run(run())
 
 
 def main(check=check_pilot):
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('mongod', type=Path)
+    parser.add_argument('mongod', nargs='?', type=Path)
+    parser.add_argument('--mongo-url', help='Explicit mongodb://127.0.0.1:PORT origin for the disposable CI replica set')
+    parser.add_argument('--matrix-only', action='store_true', help='Run the nine workflow scopes and the six-program client')
     parser.add_argument('--sample-report', type=Path, help='Write the synthetic CIS PDF for independent inspection')
     args = parser.parse_args()
     if not __debug__:
         parser.error('Run with assertions enabled')
     if (ROOT / 'backend' / '.env').exists():
         parser.error('Use an isolated checkout without backend/.env')
+    if (args.mongod is None) == (args.mongo_url is None):
+        parser.error('Provide either the mongod executable or --mongo-url')
+    if args.matrix_only and (check is not check_pilot or args.sample_report):
+        parser.error('--matrix-only selects the native inventory matrix alone')
+    if args.mongo_url and not args.matrix_only:
+        parser.error('--mongo-url is for the matrix on an isolated CI replica set')
+    if args.mongo_url:
+        parsed = urlsplit(args.mongo_url)
+        if (parsed.scheme != 'mongodb' or parsed.hostname != '127.0.0.1' or not parsed.port
+                or parsed.username or parsed.password or parsed.path not in ('', '/') or parsed.query or parsed.fragment):
+            parser.error('Use an explicit loopback MongoDB origin without credentials, database or query options')
+        uri = args.mongo_url.rstrip('/') + '/?directConnection=true&serverSelectionTimeoutMS=4000'
+        name = 'test_grc_quality_v3_' + secrets.token_hex(16)
+        with MongoClient(uri) as mongo:
+            primary = mongo.admin.command('hello')
+            if not primary.get('setName') or not primary.get('isWritablePrimary'):
+                parser.error('Use an already-elected disposable loopback replica set')
+            if name in mongo.list_database_names():
+                raise RuntimeError('Generated verification database already exists')
+            try:
+                run_check(check, uri, name, args.sample_report, args.matrix_only)
+            finally:
+                mongo.drop_database(name)
+        return
     with tempfile.TemporaryDirectory(prefix='governara-inventory-') as temp:
         with socket.socket() as candidate:
             candidate.bind(('127.0.0.1', 0))
@@ -334,17 +419,7 @@ def main(check=check_pilot):
                 if attempt == 99:
                     raise TimeoutError('The disposable replica set did not elect its primary')
                 time.sleep(.25)
-            from password_policy import hash_password
-            password = secrets.token_urlsafe(32)
-            os.environ.update(APP_ENV='test', MONGO_URL=uri, DB_NAME='test_inventory_pilot', JWT_SECRET=secrets.token_urlsafe(48),
-                        ADMIN_EMAIL='owner@example.org', ADMIN_PASSWORD_HASH=hash_password(password),
-                        APP_BASE_URL=ORIGIN, CORS_ORIGINS=ORIGIN, RUN_LEGACY_MIGRATIONS='false')
-            import server
-            logging.getLogger('httpx').setLevel(logging.WARNING)
-            async def run():
-                async with server.app.router.lifespan_context(server.app):
-                    await check(server.app, password, args.sample_report)
-            asyncio.run(run())
+            run_check(check, uri, 'test_inventory_pilot', args.sample_report, args.matrix_only)
         finally:
             if proc.poll() is None:
                 try:
