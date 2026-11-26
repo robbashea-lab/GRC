@@ -106,17 +106,21 @@ async def check_enrollment_matrix(get, post, call, owner, reauthenticate):
             assert after[key]['not_assessed'] == before[key]['not_assessed'] - 1
             assert all(before[other] == after[other] for other in before if other != key)
             before = after
-            retained.append((cid, key, record, narrative, history, evidence['evidence_id']))
+            retained.append((cid, key, record, narrative, history, evidence['evidence_id'], sample))
         print(f'PASS fresh enrollment, native save and portfolio scope: {label}', flush=True)
     await reauthenticate()
     assert len({r[2] for r in retained}) == len(retained)
     audit_by_client = {}
-    for cid, key, path, narrative, history, evidence_id in retained:
+    for cid, key, path, narrative, history, evidence_id, sample in retained:
         row = await get(path)
         assert (row['client_id'], row['framework_key'], row['implementation'], row['status']) == (cid, key, narrative, 'addressed')
         assert row['assessment_history'] == history and row['assessed_by'] == owner
         linked = (await get(path + '/related'))['evidence']
         assert [(file['client_id'], file['evidence_id']) for file in linked] == [(cid, evidence_id)]
+        downloaded = await get('/evidence/' + evidence_id + '/download')
+        if isinstance(downloaded, dict):
+            downloaded = base64.b64decode(downloaded['content_base64'])
+        assert downloaded == sample, (cid, key)
         if cid not in audit_by_client:
             audit_by_client[cid] = (await get('/audit-logs', client_id=cid, page_size=200))['items']
         expected = {
@@ -127,7 +131,7 @@ async def check_enrollment_matrix(get, post, call, owner, reauthenticate):
         assert all(events.count(event) == 1 for event in expected), (cid, key)
         position = next(p['current'] for p in (await get('/portfolio/reporting/overview', client_ids=cid))['programs'] if p['framework_key'] == key)
         assert position['implemented'] == 1
-    print('PASS fresh-login assessment history, linked evidence and audit across 10 clients and 15 enrollments', flush=True)
+    print('PASS fresh-login assessment history, linked evidence bytes and audit across 10 clients and 15 enrollments', flush=True)
     return retained[-1][0], retained[-1][2]
 
 
