@@ -1,6 +1,6 @@
 # GoverNara v3.0 native workflow handoff
 
-## Native integration candidate, November 26
+## Live native integration on staging, November 26
 
 Branch: `codex/staging-signed-in-v3-20261124`, based on `d1d6beb55009cb63db534344dcc7e3bd5e25a168`. Robb authorized staging implementation of the complete approved portfolio alongside retained records. The unchanged reference remains `frontend/public/visual-preview.html`, SHA-256 `5bb03e1219276a01459f2a44be6da44dce71271feb8a17c15a2083e6db397db9`.
 
@@ -16,7 +16,11 @@ Access scope is deliberate: this entry is for authorized internal administrators
 
 Local verification on November 26: optimized authenticated build; focused adapter/domain tests; isolated native hosting/import/guide/report/evidence tests; actual signed-in compiled browser using a disposable database. The browser opened all eight client calendars at desktop and phone widths, saved/moved the same occurrence through reload, created/edited an action, rejected unanswered review completion, uploaded/downloaded identical evidence bytes, saved profile notes, downloaded the native SPRS workbook and completed a new client's onboarding with generated policies/reviews. Receipts are in the sibling `governara-v3-qa` directory, particularly `native-browser-final-20261126-c.json`. The fixture browser substitutes in-memory Mongo and serial workbook reads; real replica-set snapshot durability is a separate existing gate. Full platform/security QA and product-owner acceptance remain open.
 
-The candidate is not a claim of deployment. Verify the delivered commit and Render live deployment separately and record the receipt below. The prior live build before this candidate is `d1d6beb5`, deployment `dep-dc30d8m1egvs738279l0`. No production release or main merge is authorized here.
+Deployment receipt: product commit `fbc4fd5c77b72b1ed6480db48c074cbdda231c63` is Live on the existing Render service `srv-db1s0cugekts73f72reg`, deployment `dep-dc43fup5efls73cv70jg`, finished `2026-11-26T13:47:56Z`. It was manually deployed by exact SHA; the service branch remains main with Auto-Deploy off. No production release or main merge occurred. The earlier live build was `d1d6beb5`, deployment `dep-dc30d8m1egvs738279l0`.
+
+Hosted checks: public health returned 200; the served reference retained the approved SHA above. The Linux-built integration bundle returned 200 with SHA-256 `805893cdd4aceb22bb9c99d331b12f3fbf59a665d3e4d9688ae2496ec130089f`; its hash differs from the local Windows build and is recorded separately. A real existing administrator session loaded all eight imported clients. Sign out followed by normal saved-credential sign-in opened the approved portfolio with Glass ’07, the real actor and eight clients. All eight live Calendar links showed the correct client and a 969px grid inside a 981px workspace at the observed browser width. Existing records showed all 16 clients (the prior eight plus the approved eight). The browser was left on the approved portfolio after fresh sign-in, with no observed console errors in the inspected window. Hosted native mutation/recovery and full platform/security acceptance were not repeated; workflow mutation checks above used the disposable local database. No CI run was reported for this commit (the branch is outside the workflow's push trigger). Full qualification remains separate.
+
+The user-facing staging link is https://omnisciente-staging.onrender.com/login. The next step is Robb's visual/workflow review, followed by the deferred full QA campaign. Preserve the source and all records while addressing confirmed review findings.
 
 ## Historical exact HTML staging delivery, November 24
 
