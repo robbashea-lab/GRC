@@ -8,13 +8,13 @@ import {toast} from "sonner";
 import mockFixtures from "@/preview/fixtures.json";
 
 const mockNavigate = jest.fn(), mockSwitch = jest.fn(), mockRefresh = jest.fn();
-let mockUser;
+let mockUser,mockSearch;
 jest.mock("@/context/AuthContext", () => ({ useAuth: () => ({ user: mockUser, logout: jest.fn() }) }));
 let mockClients;
 jest.mock("@/context/OrgContext", () => ({ useOrg: () => ({ clients: mockClients, switchClient: mockSwitch, refresh: mockRefresh }) }));
 jest.mock("@/components/NotificationBell", () => () => null);
 jest.mock("@/lib/api", () => ({ __esModule: true, default: { get: jest.fn(), post: jest.fn(), patch: jest.fn() }, PREVIEW_MODE: false, formatError: e => e.message }));
-jest.mock("react-router-dom", () => ({ useNavigate: () => mockNavigate, useLocation: () => ({ pathname: "/clients" }), Outlet: () => null, Link: ({children,to,...props})=><a href={to} {...props}>{children}</a>, NavLink: ({ children, to }) => <a href={to}>{typeof children === "function" ? children({ isActive: false }) : children}</a> }), { virtual: true });
+jest.mock("react-router-dom", () => ({ useNavigate: () => mockNavigate, useLocation: () => ({ pathname: "/clients",search:mockSearch }), Outlet: () => null, Link: ({children,to,...props})=><a href={to} {...props}>{children}</a>, NavLink: ({ children, to }) => <a href={to}>{typeof children === "function" ? children({ isActive: false }) : children}</a> }), { virtual: true });
 
 const AT = '2026-10-13T12:00:00Z';
 const position = (implemented, denominator) => ({availability: 'available', measure_version: 'native-implementation-v1', implemented, denominator,
@@ -33,6 +33,7 @@ beforeAll(() => {Object.defineProperty(global, 'crypto', {configurable:true,valu
 beforeEach(() => {
   global.IS_REACT_ACT_ENVIRONMENT = true;
   sessionStorage.clear();
+  mockSearch='?view=ledger';
   window.scrollTo=jest.fn();
   mockUser = {...mockFixtures.responses["/auth/me"]};
   mockClients = mockFixtures.responses["/clients"];
@@ -67,7 +68,25 @@ const change = async (node, value) => {
 const click = async node => { expect(node).toBeTruthy(); await act(async () => node.click()); };
 const select = async (label,value) => { const node=[...container.querySelectorAll('select')].find(select=>select.getAttribute('aria-label')===label||[...select.labels].some(item=>[...item.childNodes].filter(node=>node.nodeType===Node.TEXT_NODE).map(node=>node.textContent).join('').trim()===label)); expect(node).toBeTruthy(); await act(async()=>{node.value=value;node.dispatchEvent(new Event('change',{bubbles:true}));}); };
 const scopeButton = label => [...container.querySelectorAll('[aria-label="Scope"] button')].find(node=>node.textContent===label);
-const visibleClients = () => [...container.querySelectorAll('.ep-row')].map(node=>node.dataset.clientId);
+const visibleClients = () => [...container.querySelectorAll('.ep-row,.portfolio-directory-row')].map(node=>node.dataset.clientId);
+
+test('default client directory preserves the authorized cohort, sorting and exact overview opener',async()=>{
+  mockSearch='';await render(<ClientDirectory/>);
+  expect([...container.querySelectorAll('.portfolio-directory thead th')].map(node=>node.textContent)).toEqual(['Client','Frameworks','GRC lead','Industry']);
+  expect(visibleClients()).toEqual([...mockPortfolio.clients].sort((a,b)=>a.name.localeCompare(b.name)).map(client=>client.client_id));
+  expect([...container.querySelector('select[aria-label="Sort clients"]').options].map(option=>option.value)).toEqual(['name','name-desc']);
+  await select('Sort clients','name-desc');
+  expect(visibleClients()).toEqual([...mockPortfolio.clients].sort((a,b)=>b.name.localeCompare(a.name)).map(client=>client.client_id));
+  await click(scopeButton('Assigned to me'));
+  expect(visibleClients()).toEqual([mockPortfolio.clients[0].client_id]);
+  const opener=container.querySelector('.portfolio-client-open');opener.focus();await click(opener);
+  const dialog=document.querySelector('[data-testid="enhanced-portfolio-history"]');
+  expect(dialog.querySelector('.m-title').textContent).toBe(mockPortfolio.clients[0].name);
+  expect(mockSwitch).not.toHaveBeenCalled();expect(mockNavigate).not.toHaveBeenCalled();
+  await click(dialog.querySelector('[aria-label="Close implementation preview"]'));
+  expect(document.activeElement).toBe(opener);
+  expect(api.post).not.toHaveBeenCalled();expect(api.patch).not.toHaveBeenCalled();
+});
 
 test("standard enhanced Portfolio preserves native All/Mine scope and its shared sidebar", async () => {
   mockClients=mockPortfolio.clients;

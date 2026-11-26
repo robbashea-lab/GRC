@@ -78,7 +78,7 @@ test('real router query removal closes once and deliberate later navigation can 
 
 test('ordinary row entry without an id query closes once without starting a linked read',async()=>{
   await render('/risks?client_id=demo_brawndo&view=all_active');
-  await click([...host.querySelectorAll('tbody button')].find(button=>button.textContent==='Existing recovery risk'));
+  await click([...host.querySelectorAll('.risk-table tbody button')].find(button=>button.textContent==='Existing recovery risk'));
   expect(linked().dataset.id).toBe('risk-a');
   await click(linked().querySelector('button'));
   expect(linked()).toBeNull();expect(linkReads()).toHaveLength(0);
@@ -89,7 +89,7 @@ test.each(['resolve','reject'])('a dismissed pending linked read cannot %s back 
   const pending=deferred(),original=api.get.getMockImplementation();
   api.get.mockImplementation((path,...args)=>path==='/risks/risk-a'?pending.promise:original(path,...args));
   await render();
-  await click([...host.querySelectorAll('tbody button')].find(button=>button.textContent==='Existing other risk'));
+  await click([...host.querySelectorAll('.risk-table tbody button')].find(button=>button.textContent==='Existing other risk'));
   expect(linked().dataset.id).toBe('risk-b');
   expect(api.get.mock.calls.find(([path])=>path==='/risks/risk-a')[1].signal.aborted).toBe(true);
   mockDelayNavigation=true;await click(linked().querySelector('button'));
@@ -130,7 +130,7 @@ test('wrong-client query and response retain native refusal rather than opening 
 test('a row opening supersedes an unresolved linked read even if its transport resolves after cancellation',async()=>{
   const pending=deferred(),original=api.get.getMockImplementation();
   api.get.mockImplementation((path,...args)=>path==='/risks/risk-a'?pending.promise:original(path,...args));
-  await render();await click([...host.querySelectorAll('tbody button')].find(button=>button.textContent==='Existing other risk'));
+  await render();await click([...host.querySelectorAll('.risk-table tbody button')].find(button=>button.textContent==='Existing other risk'));
   expect(linked().dataset.id).toBe('risk-b');await act(async()=>pending.resolve({data:risk}));
   expect(linked().dataset.id).toBe('risk-b');
 });
@@ -144,7 +144,7 @@ test.each(['risks','tasks'].flatMap(kind=>['resolve','reject'].map(outcome=>[kin
     :path==='/tasks'?Promise.resolve({data:kind==='tasks'?[task]:[]}):original(path,...args));
   await render();
   const title=kind==='risks'?otherRisk.title:task.title;
-  await click([...host.querySelectorAll('.agenda-entry')].find(button=>button.textContent.includes(title)));
+  await click([...host.querySelectorAll('.v3-quarter-ledger .tl-item')].find(button=>button.textContent.includes(title)));
   expect(api.get.mock.calls.find(([path])=>path==='/risks/risk-a')[1].signal.aborted).toBe(true);
   await act(async()=>chosen.resolve({data:kind==='risks'?otherRisk:task}));
   expect(linked().dataset).toMatchObject({kind,id:kind==='risks'?'risk-b':'selected-task'});

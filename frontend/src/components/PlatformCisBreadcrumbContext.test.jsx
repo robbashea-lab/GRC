@@ -64,7 +64,7 @@ test('same-control selection and Next retain their complete breadcrumb and origi
 });
 
 test('a filtered result keeps its existing view breadcrumb and selected safeguard behavior',async()=>{
-  await render();await click([...container.querySelectorAll('.bcis-legend button')].find(button=>button.textContent.startsWith('Not assessed')));
+  await render();await click(container.querySelector('.gn-ring-card[data-status="A"]'));
   expect(crumbs()).toEqual(['CIS IG2','Not yet assessed']);const before=tableIds();expect(before).toEqual(['requirement-1.1']);
   await click(background().querySelector('[data-testid="requirement-1.1"]'));expect(crumbs()).toEqual(['CIS IG2','Not yet assessed','Safeguard 1.1']);expect(tableIds()).toEqual(before);
 });

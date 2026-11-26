@@ -56,19 +56,22 @@ test('missing, ambiguous, or unexplained checklist results never become default 
   expect(()=>nativeReviewCompletion(guide,details,'different')).toThrow('occurrence changed');
 });
 
-test('an assessment finding uses the primary remediation action returned by the native workflow',async()=>{
+test.each(['Low','Medium','High','Critical'])('an assessment finding preserves %s priority and the primary action identity returned by the native workflow',async priority=>{
   const args=input();
   args.records.framework_assessments=[{client_id:'c',framework_assessment_id:'b-1.1',definition_id:'1.1',framework_key:'cis-ig1'},
     {client_id:'other',framework_assessment_id:'other-1.1',definition_id:'1.1',framework_key:'cis-ig1'}];
   args.after.work.s.findings.push({id:'new-f',title:'Inventory missing',actionIds:['new-t'],fromItem:'1.1',fromProgram:'cis:8.1'});
-  args.after.work.s.acts.push({id:'new-t',findingId:'new-f',title:'Collect inventory',owner:'One',pri:'High',st:'Open',due:'2026-12-01'});
+  args.after.work.s.acts.push({id:'new-t',findingId:'new-f',title:'Collect inventory',owner:'One',pri:priority,st:'Open',due:'2026-12-01'});
   args.api.post.mockResolvedValue({data:{client_id:'c',finding_id:'saved-f',primary_task_id:'saved-t'}});
-  const {identityMaps}=await applyWorkChanges(args);
+  const {identityMaps,handled}=await applyWorkChanges(args);
   expect(args.api.post).toHaveBeenCalledTimes(1);
   expect(args.api.post.mock.calls[0][0]).toBe('/framework_assessments/b-1.1/findings');
   expect(args.api.post.mock.calls[0][1]).toMatchObject({title:'Inventory missing',remediation_title:'Collect inventory',
-    due_date:'2026-12-01',owner_id:'u',request_id:expect.any(String)});
+    due_date:'2026-12-01',owner_id:'u',severity:priority.toLowerCase(),request_id:expect.any(String)});
   expect(identityMaps.recordIds.c.findings['new-f']).toBe('saved-f');
+  expect(identityMaps.recordIds.c.tasks['new-t']).toBe('saved-t');
+  args.handled=handled;await applyWorkChanges(args);
+  expect(args.api.post).toHaveBeenCalledTimes(1);
   expect(identityMaps.recordIds.c.tasks['new-t']).toBe('saved-t');
 });
 

@@ -17,6 +17,7 @@ jest.mock('./adminCommands',()=>({
   overlayGlobalRecords:jest.fn(),applyGlobalChanges:jest.fn(async()=>({didWrite:false,message:''})),
 }));
 jest.mock('./reportDownloads',()=>({createApprovedReportDownloader:()=>jest.fn()}));
+jest.mock('./setupActivities',()=>({loadApprovedSetupCatalog:async()=>({activities:[]}),approvedSetupActivities:()=>[]}));
 
 const clone=x=>JSON.parse(JSON.stringify(x));
 const cid='v3sample_brawndo',actor={user_id:'actual-owner',name:'Actual owner',email:'actual@example.test',role:'super_admin'};

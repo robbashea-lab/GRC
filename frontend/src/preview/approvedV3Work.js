@@ -443,11 +443,15 @@ function overlayClientWork(view, records, ctx) {
         new Date(d.at)>=new Date(row.completed_at));
       const pending=row.status==='done' && finding && !returned && !['closed','accepted'].includes(finding.status);
       const st=pending ? 'Pending validation' : reverseTaskStatus[row.status] || row.status;
-      const assessment=lookup('framework_assessments',row.framework_assessment_id,'framework_assessment_id');
+      // Native Finding remediation stores the origin on its Finding rather than
+      // duplicating it on the primary task. Resolve that exact scoped relation.
+      const assessment=lookup('framework_assessments',row.framework_assessment_id || finding?.framework_assessment_id,'framework_assessment_id');
       const fromProgram=sourceProgramKeys[assessment?.framework_key] || null;
+      // Pair creation can store its shared description on the Finding only;
+      // an explicitly empty native Action description still takes precedence.
       const item={...prev,id,nativeId:row.task_id,kind:'act',title:row.title,st,
         pri:titleCase(row.priority || ''),due:calendarDate(row.due_date),owner:nameOf(row.assignee_id,row.assignee_name || row.source_owner),
-        source:row.source || titleCase(row.source_type || 'Manual'),origin:prev.origin || '',detail:row.description || '',
+        source:row.source || titleCase(row.source_type || 'Manual'),origin:prev.origin || '',detail:row.description ?? finding?.description ?? '',
         findingId:finding ? nativeKey(finding,'finding_id') : null,
         vendorId:sourceIdFor('vendors',row.vendor_id,'vendor_id'),
         fromRev:sourceIdFor('reviews',row.review_id,'review_id'),

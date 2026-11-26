@@ -766,9 +766,9 @@ html[data-native-standard] .ui-dialog.client-organization-dialog {
 html[data-native-standard] .client-organization-header {padding:20px 48px 20px 24px;border-bottom:1px solid var(--divider);background:var(--surface-header);text-align:left}
 html[data-native-standard] .client-organization-fields {display:grid;gap:16px;padding:20px 24px 24px;overflow:auto;min-height:0}
 html[data-native-standard] .client-organization-footer {padding:14px 24px;flex-shrink:0;border-top:1px solid var(--divider);background:var(--surface-header)}
-.client-field-pair {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+html[data-native-standard] .client-field-pair {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
 @media (max-width:560px) {
-  .client-field-pair {grid-template-columns:minmax(0,1fr)}
+  html[data-native-standard] .client-field-pair {grid-template-columns:minmax(0,1fr)}
 }
 .native-standard.native-standard.native-standard :is(.page-header,.bpage-head,.bd-header) { margin-bottom:17px; gap:16px 24px; }
 .native-standard.native-standard.native-standard :is(.page-header h1,.bpage-head h1,.bd-header h1,.crr-root h1,.cia-page h1,.cis-risks-concept h1,.bdcal h1,.brawndo-additional h1,.airf-page h1) { font:600 38px/1.07 var(--font); letter-spacing:-.055em; color:var(--text); }

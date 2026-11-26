@@ -1,6 +1,7 @@
 import {demoCurrentPositions,captureDemoReporting,compactPortfolioReporting,restorePortfolioReporting,readPortfolioStore,readPortfolioStorePair,writePortfolioStore} from './portfolioReporting';
 import * as codec from './demoStorageCodec';
-import * as canonical from './commandRequests';
+// Observe the serializer authority, not its non-configurable re-export.
+import * as canonical from '../lib/stableJson';
 import {activeDefinitions,frameworkCatalog} from '../lib/frameworks';
 
 
@@ -44,7 +45,7 @@ test.each(['v1','v2-string','v2-object'])('%s restores expanded native JSON with
 });
 
 test('untouched vectors canonicalize each unique immutable row once at compact and preserve first encounter order',()=>{
-  const serialize=jest.spyOn(canonical,'stable');
+  const serialize=jest.spyOn(canonical,'stableJson');
   const saved=packed(),restored=restorePortfolioReporting(saved),first=provenance(restored);
   expect(serialize).not.toHaveBeenCalled();
   const getter=Object.getOwnPropertyDescriptor(first,'source_references').get;
@@ -169,7 +170,7 @@ test('first native read proves canonical row text and repeated reads retain no n
   expect(saved).toBe(storage.getItem('demo'));
   expect(Object.isFrozen(db)).toBe(false);
   db.clients.push({client_id:'unsaved'});
-  const serialize=jest.spyOn(JSON,'stringify'),canonicalize=jest.spyOn(canonical,'stable');
+  const serialize=jest.spyOn(JSON,'stringify'),canonicalize=jest.spyOn(canonical,'stableJson');
   readPortfolioStore(saved);
   expect(rowSerializations(serialize).length).toBeGreaterThan(0);
   serialize.mockClear();
@@ -193,7 +194,7 @@ test('external rows reuse normalization on exact bytes but cannot claim canonica
   external.portfolio_reporting.source_records[0].canonicalKnown=true;
   const saved=JSON.stringify(external);
   readPortfolioStore(saved);
-  const serialize=jest.spyOn(JSON,'stringify'),canonicalize=jest.spyOn(canonical,'stable');
+  const serialize=jest.spyOn(JSON,'stringify'),canonicalize=jest.spyOn(canonical,'stableJson');
   const second=readPortfolioStore(saved);
   expect(rowSerializations(serialize)).toHaveLength(0);
   compactPortfolioReporting(second);
@@ -285,7 +286,7 @@ test.each(['root','history','array-prototype'])('custom %s toJSON keeps normal w
   }finally{
     if(descriptor)Object.defineProperty(Array.prototype,'toJSON',descriptor);else delete Array.prototype.toJSON;
   }
-  const restored=readPortfolioStore(saved),canonicalize=jest.spyOn(canonical,'stable');
+  const restored=readPortfolioStore(saved),canonicalize=jest.spyOn(canonical,'stableJson');
   compactPortfolioReporting(restored);
   expect(canonicalize).not.toHaveBeenCalled();
   expect(restored.case_marker).toBe('custom-json-'+kind);
@@ -447,7 +448,7 @@ test.each([
   fixture.portfolio_reporting.source_vectors=[[0],[0],[]];
   const saved=JSON.stringify(fixture);
   const expected=compactPortfolioReporting(restorePortfolioReporting(codec.decodeDemoStore(saved)));
-  const actual=readPortfolioStore(saved),canonicalize=jest.spyOn(canonical,'stable');
+  const actual=readPortfolioStore(saved),canonicalize=jest.spyOn(canonical,'stableJson');
   const compacted=compactPortfolioReporting(actual);
   expect(JSON.stringify(compacted)).toBe(JSON.stringify(expected));
   expect(canonicalize).toHaveBeenCalledTimes(alreadyCanonical?0:1);
@@ -791,7 +792,7 @@ test('valid deeply nested pooled scope remains readable when optional canonical 
 });
 
 test('private canonical vectors preserve repeated rows and full native output without consuming their accessor',()=>{
-  const source=packed();source.portfolio_reporting.source_records=source.portfolio_reporting.source_records.map(row=>JSON.parse(canonical.stable(row)));
+  const source=packed();source.portfolio_reporting.source_records=source.portfolio_reporting.source_records.map(row=>JSON.parse(canonical.stableJson(row)));
   const json=JSON.stringify(source),owned=readPortfolioStore(json),plain=restorePortfolioReporting(JSON.parse(json));
   const getter=Object.getOwnPropertyDescriptor(provenance(owned),'source_references').get;
   expect(JSON.stringify(compactPortfolioReporting(owned))).toBe(JSON.stringify(compactPortfolioReporting(plain)));
@@ -800,7 +801,7 @@ test('private canonical vectors preserve repeated rows and full native output wi
 });
 
 test.each(['map','species','serializer'])('canonical vector admission preserves modified %s callbacks and complete output',kind=>{
-  const source=packed();source.portfolio_reporting.source_records=source.portfolio_reporting.source_records.map(row=>JSON.parse(canonical.stable(row)));
+  const source=packed();source.portfolio_reporting.source_records=source.portfolio_reporting.source_records.map(row=>JSON.parse(canonical.stableJson(row)));
   const json=JSON.stringify(source),owned=readPortfolioStore(json),plain=restorePortfolioReporting(JSON.parse(json));
   const owner=kind==='map'?Array.prototype:kind==='species'?Array:Object.prototype;
   const key=kind==='map'?'map':kind==='species'?Symbol.species:'toJSON';
@@ -818,7 +819,7 @@ test.each(['map','species','serializer'])('canonical vector admission preserves 
 
 test('mixed private vectors retain noncanonical unknown fields and repeated row multiplicity through the fallback',()=>{
   const source=packed();
-  source.portfolio_reporting.source_records[0]=JSON.parse(canonical.stable(source.portfolio_reporting.source_records[0]));
+  source.portfolio_reporting.source_records[0]=JSON.parse(canonical.stableJson(source.portfolio_reporting.source_records[0]));
   source.portfolio_reporting.source_records[1]=JSON.parse('{"z":{"unknown":"日本語","__proto__":{"retained":true}},"id":"b","a":[null,{"z":2,"a":1}]}');
   const json=JSON.stringify(source),owned=readPortfolioStore(json),plain=restorePortfolioReporting(JSON.parse(json));
   const expected=compactPortfolioReporting(plain),actual=compactPortfolioReporting(owned);
@@ -933,7 +934,7 @@ test.each(['integer','push','freeze'])('request pair falls back before skipping 
 
 test.each(['map','find'])('request fork retains one ordinary restore when %s callbacks are installed',method=>{
   const source=packed();
-  source.portfolio_reporting.identities=[{program_id:'c:cis-ig1',scopes:[canonical.stable({framework_key:'cis-ig1',definition_ids:['1.1'],enrollment_ids:[]})],head:null}];
+  source.portfolio_reporting.identities=[{program_id:'c:cis-ig1',scopes:[canonical.stableJson({framework_key:'cis-ig1',definition_ids:['1.1'],enrollment_ids:[]})],head:null}];
   for(const row of source.portfolio_reporting.snapshots)row.current._portfolio_scope_index=0;
   for(const row of source.portfolio_reporting.scope_events){row.before._portfolio_scope_index=0;row.after._portfolio_scope_index=0;}
   const saved=JSON.stringify(source),native=Array.prototype[method];let calls=0;

@@ -4,6 +4,7 @@ import {CATALOGS,sharedFrameworkPlans,reviewConfig} from '../lib/frameworks';
 import {setupDraft} from '../lib/r4ServicesTools';
 import {serviceFormFields} from '../preview/approvedV3Registers';
 import {cadencePatch} from './workCommands';
+import {loadApprovedSetupCatalog,requireSetupActivity} from './setupActivities';
 
 const equal=(a,b)=>JSON.stringify(a??null)===JSON.stringify(b??null);
 const pick=(row,keys)=>Object.fromEntries(keys.filter(k=>Object.hasOwn(row||{},k)).map(k=>[k,row[k]]));
@@ -211,7 +212,7 @@ async function saveSetup(ctx) {
   const {before,after,sourceId,cid,records,api,applied}=ctx;
   const previous=new Map((before.work[sourceId]?.revs||[]).map(r=>[r.id,r]));
   const changes=(after.work[sourceId]?.revs||[]).filter(r=>!ctx.handled.reviews.includes(r.id)&&
-    (previous.has(r.id)?ticketFields.some(k=>!equal(previous.get(r.id)[k],r[k])):r.ivsSetup));
+    (previous.has(r.id)?ticketFields.some(k=>k==='noTicket'?!!previous.get(r.id)[k]!==!!r[k]:!equal(previous.get(r.id)[k],r[k])):r.ivsSetup));
   const oldExclusions=before.profile[sourceId]?.cov?.ivsRemoved||{},exclusions=after.profile[sourceId]?.cov?.ivsRemoved||{};
   const removals=[...new Set([...Object.keys(oldExclusions),...Object.keys(exclusions)])].filter(k=>!equal(oldExclusions[k],exclusions[k]));
   if(!changes.length&&!removals.length)return;
@@ -226,6 +227,9 @@ async function saveSetup(ctx) {
       const matches=data.activities.filter(a=>native?a.review_id===native.review_id:a.title===r.title);
       if(matches.length!==1||native&&matches[0].expected_updated_at!==(native.updated_at??null))
         conflict('The recurring activity or its review changed. Reopen iVenture Setup.');
+      const previousReview=previous.get(r.id),activity=matches[0];
+      const noTicketOnly=previousReview&&!!previousReview.noTicket!==!!r.noTicket&&
+        ticketFields.filter(key=>key!=='noTicket').every(key=>equal(previousReview[key],r[key]));
       const draft=setupDraft(matches[0],data.expected_client_updated_at);
       const cad=({'':'annual',M:'monthly',Q:'quarterly',S:'semiannual',A:'annual'})[r.cad];
       Object.assign(draft,{recurring_ticket_number:r.cwRec||'',recurring_ticket_url:r.cwUrl||'',recurring_ticket_summary:r.cwTitle||'',
@@ -234,9 +238,17 @@ async function saveSetup(ctx) {
       if(r.noTicket)draft.no_ticket=true;
       const area=after.services?.[sourceId]?.areas?.[draft.area_id];
       if(area?.resp&&area.resp!=='un')draft.responsibility=area.resp;
-      await api.post(route,draft);applied.push('setup:'+matches[0].activity_id);
+      if(noTicketOnly){
+        // The checkbox delegates this governance Review to the SPM. Technical
+        // service responsibility stays unchanged; no fictitious PSA ticket is needed.
+        await api.post(route+'/exclusion/'+encode(activity.activity_id),{
+          expected_updated_at:activity.expected_updated_at??null,expected_client_updated_at:data.expected_client_updated_at??null,
+          excluded:!!r.noTicket,kind:r.noTicket?'spm':null,note:''});
+      }else await api.post(route,draft);
+      applied.push('setup:'+matches[0].activity_id);
       const {data:updated}=await api.get(route),saved=updated.activities.find(a=>a.activity_id===draft.activity_id);
-      if(updated.client_id!==cid||!saved?.review_id||String(saved.setup?.recurring_ticket_number||'')!==String(draft.recurring_ticket_number))
+      if(updated.client_id!==cid||!saved?.review_id||
+          (noTicketOnly?!!saved.setup?.no_ticket!==!!r.noTicket:String(saved.setup?.recurring_ticket_number||'')!==String(draft.recurring_ticket_number)))
         conflict('The saved ticket did not match the current review. Reopen iVenture Setup.');
       remember(ctx.maps,cid,'reviews',r.id,saved.review_id);ctx.handled.reviews.push(r.id);
       ctx.version=updated.expected_client_updated_at??null;
@@ -386,6 +398,16 @@ async function sourceCoordination(ctx,row,key) {
   const route='/framework_assessments/'+encode(row.framework_assessment_id)+'/service-context';
   const {data:context}=await api.get(route);
   if(context.client_id!==cid||context.expected_client_updated_at!==ctx.version)conflict('The assessment’s shared setup changed. Reopen its interview.');
+  const explicit=answer._coord?.nativeActivity;
+  if(explicit) {
+    if(reviewKey!==explicit.opened?.activity_id)conflict('Choose the exact current recurring activity before applying the interview.');
+    const activity=requireSetupActivity({...context,activities:context.candidates},cid,reviewKey,explicit.opened);
+    const body=setupActivityBody(activity,ctx.version,explicit.plan);
+    delete body.responsibility;
+    body.ticket_confirmed=!!answer.ticket&&answer._coord?.defaults?.ticket===undefined;
+    addCoordinationTools(body,tools,sourceProfile,oldProfile,context,answer,activity);
+    return {body,route,reviewKey:sourceActivityReviewKey(ctx,activity)||reviewKey,activity};
+  }
   const sourceReview=after.work[sourceId]?.revs.find(r=>String(r.id)===String(reviewKey));
   const previous=rowsFor(records,cid,'reviews').find(r=>r.review_id===ctx.maps.recordIds[cid]?.reviews?.[reviewKey]||
     String(r.source_record_id??r.review_id)===String(reviewKey));
@@ -402,20 +424,81 @@ async function sourceCoordination(ctx,row,key) {
       custom_days:cadence?null:Number(String(sourceReview.cad).replace(/^D:/,'')),
       ticket_confirmed:!!answer.ticket&&answer._coord?.defaults?.ticket===undefined});
   }
-  if(tools.length) {
-    const areas=Object.entries(sourceProfile?.areas||{}).filter(([id,area])=>
-      tools.every(tool=>area.tools.includes(tool))&&!equal(oldProfile?.areas?.[id]?.tools,area.tools));
-    const area=areas.length===1?areas[0][0]:activity?.area_id;
-    if(!area&&areas.length)conflict('Choose the exact client service area before linking tools.');
-    if(area) {
-      body.area_id=area;body.tool_ids=tools;
-      const known=new Set(context.catalog.concat(context.services?.custom_tools||[]).map(tool=>tool.tool_id));
-      const created=new Set((answer._customTools||[]).map(tool=>tool.id));
-      body.custom_tools=serviceFormFields(sourceProfile).custom_tools.filter(tool=>tools.includes(tool.tool_id)&&created.has(tool.tool_id)&&!known.has(tool.tool_id));
-    }
-  }
+  addCoordinationTools(body,tools,sourceProfile,oldProfile,context,answer,activity);
   return activity||body.area_id?{body,route,reviewKey,activity}:null;
 }
+
+function addCoordinationTools(body,tools,sourceProfile,oldProfile,context,answer,activity) {
+  if(!tools.length)return;
+  const areas=Object.entries(sourceProfile?.areas||{}).filter(([id,area])=>
+    tools.every(tool=>area.tools.includes(tool))&&!equal(oldProfile?.areas?.[id]?.tools,area.tools));
+  const area=areas.length===1?areas[0][0]:activity?.area_id;
+  if(!area&&areas.length)conflict('Choose the exact client service area before linking tools.');
+  if(!area)return;
+  body.area_id=area;body.tool_ids=tools;
+  const known=new Set(context.catalog.concat(context.services?.custom_tools||[]).map(tool=>tool.tool_id));
+  const created=new Set((answer._customTools||[]).map(tool=>tool.id));
+  body.custom_tools=serviceFormFields(sourceProfile).custom_tools.filter(tool=>tools.includes(tool.tool_id)&&created.has(tool.tool_id)&&!known.has(tool.tool_id));
+}
+
+function setupActivityBody(activity,clientVersion,plan) {
+  const body=setupDraft(activity,clientVersion);
+  if(plan.responsibility)body.responsibility=plan.responsibility;
+  if(plan.area_id)body.area_id=plan.area_id;
+  if(plan.hasTicket!==false&&Object.hasOwn(plan,'ticket'))body.recurring_ticket_number=plan.ticket;
+  if(plan.hasUrl!==false&&Object.hasOwn(plan,'url'))body.recurring_ticket_url=plan.url;
+  if(plan.hasTitle!==false&&Object.hasOwn(plan,'title'))body.recurring_ticket_summary=plan.title;
+  if(plan.notes!==undefined)body.notes=plan.notes;
+  if(plan.next)body.first_next_due=plan.next;
+  if(plan.cadence!==null&&plan.cadence!==undefined)Object.assign(body,cadencePatch(plan.cadence));
+  // cadencePatch uses the Review resource's field names.
+  if(body.recurrence){body.cadence=body.recurrence;delete body.recurrence;}
+  if(Object.hasOwn(body,'custom_recurrence_days')){body.custom_days=body.custom_recurrence_days;delete body.custom_recurrence_days;}
+  return body;
+}
+
+function sourceActivityReviewKey(ctx,activity) {
+  if(!activity.review_id)return null;
+  const row=rowsFor(ctx.records,ctx.cid,'reviews').find(row=>row.review_id===activity.review_id);
+  if(!row||(row.updated_at??null)!==(activity.expected_updated_at??null))conflict('The saved shared Review changed. Reload the client.');
+  return String(row.source_record_id??row.review_id);
+}
+
+async function saveSetupActivities(ctx) {
+  for(const command of ctx.commands.filter(row=>['saveSetupActivity','saveSetupExclusion'].includes(row.name))) {
+    const [sourceId,activityId,request]=command.args;
+    if(sourceId!==ctx.sourceId)conflict('Reopen the current client.');
+    const catalog=await loadApprovedSetupCatalog({api:ctx.api,clientId:ctx.cid});
+    const activity=requireSetupActivity(catalog,ctx.cid,activityId,request?.opened);
+    const sourceReview=sourceActivityReviewKey(ctx,activity);
+    if(catalog.expected_client_updated_at!==ctx.version)conflict('The client changed. Reopen its setup form.');
+    if(command.name==='saveSetupExclusion'){
+      const route='/clients/'+encode(ctx.cid)+'/iv-setup';
+      await ctx.api.post(route+'/exclusion/'+encode(activityId),{
+        expected_updated_at:activity.expected_updated_at??null,expected_client_updated_at:ctx.version,
+        excluded:request.excluded,...(request.excluded?{kind:request.kind,note:request.note||''}:{})});
+      const updated=await loadApprovedSetupCatalog({api:ctx.api,clientId:ctx.cid});
+      const saved=updated.activities.find(row=>row.activity_id===activityId);
+      if(!saved||!!saved.exclusion!==request.excluded)conflict('The saved setup decision could not be verified. Reopen iVenture Setup.');
+      if(sourceReview)ctx.handled.reviews.push(sourceReview);
+      ctx.version=updated.expected_client_updated_at??null;ctx.applied.push('setup:'+activityId);continue;
+    }
+    const body=setupActivityBody(activity,ctx.version,request.plan);
+    await ctx.api.post('/clients/'+encode(ctx.cid)+'/iv-setup',body);
+    const updated=await loadApprovedSetupCatalog({api:ctx.api,clientId:ctx.cid});
+    // A newly created activity changes from plan/shared identity to Review
+    // identity. Match its complete declared driver identity, never its title.
+    const drivers=driverIdentity(activity.drivers);
+    const matches=updated.activities.filter(row=>activity.review_id?row.review_id===activity.review_id:driverIdentity(row.drivers)===drivers);
+    if(matches.length!==1||['iv','co'].includes(body.responsibility)&&(!matches[0].review_id||
+        String(matches[0].setup?.recurring_ticket_number||'')!==String(body.recurring_ticket_number)))
+      conflict('The saved recurring activity could not be verified. Reopen iVenture Setup.');
+    if(sourceReview&&matches[0].review_id){remember(ctx.maps,ctx.cid,'reviews',sourceReview,matches[0].review_id);ctx.handled.reviews.push(sourceReview);}
+    ctx.version=updated.expected_client_updated_at??null;ctx.applied.push('setup:'+matches[0].activity_id);
+  }
+}
+
+const driverIdentity=drivers=>JSON.stringify(drivers.map(row=>[row.framework_key,row.framework_plan_key]).sort((a,b)=>JSON.stringify(a).localeCompare(JSON.stringify(b))));
 
 async function saveStandaloneItems(ctx,saved,ops) {
   let revision=saved.items_revision||0;
@@ -554,6 +637,7 @@ export async function applyClientChanges({before,after,records,clientId,sourceId
     await saveEnrollment(ctx,prior,next);
     await saveGuides(ctx);
     await saveAssessments(ctx,prior,next);
+    await saveSetupActivities(ctx);
     await saveSetup(ctx);
     client.updated_at=ctx.version;
     return {clientId:cid,sourceId,identityMaps:maps,applied,handled};

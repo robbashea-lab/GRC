@@ -237,3 +237,24 @@ test('iVenture setup changes the existing inventory review and the native CIS 1.
   const contextRead=(await api.get('/framework_assessments/'+aid+'/service-context')).data;
   expect(contextRead.candidates.find(a=>a.review_id===id)).toMatchObject({cadence:'semiannual',setup:{recurring_ticket_number:'716824'}});
 });
+
+test.each([true,false])('the inline NoTicket decision=%s uses the native SPM exclusion/restore without altering technical responsibility',async decision=>{
+  const ctx=context(),before=ctx.before.work.brawndo.revs.find(row=>row.title==='Enterprise Asset Inventory Review');
+  const review=ctx.after.work.brawndo.revs.find(row=>row.id===before.id);
+  before.noTicket=!decision;review.noTicket=decision;
+  const native=ctx.records.reviews.find(row=>row.review_id===ctx.identityMaps.recordIds[cid].reviews[review.id]);
+  native.updated_at='review-v1';
+  let saved=false;
+  const activity={activity_id:'review:'+native.review_id,review_id:native.review_id,title:review.title,area_id:'endpoint',
+    responsibility:'iv',expected_updated_at:'review-v1',setup:{no_ticket:!decision}};
+  ctx.api.get=jest.fn(async()=>({data:{client_id:cid,expected_client_updated_at:saved?'client-v2':null,
+    activities:[{...activity,setup:{no_ticket:saved?decision:!decision},exclusion:decision&&saved?{kind:'spm'}:null}]}}));
+  ctx.api.post=jest.fn(async()=>{saved=true;return {data:{ok:true}};});ctx.api.patch=jest.fn();
+  const sourceServices=clone(ctx.after.services.brawndo);
+  const result=await applyClientChanges(ctx);
+  expect(ctx.api.post.mock.calls).toEqual([['/clients/'+cid+'/iv-setup/exclusion/'+encodeURIComponent(activity.activity_id),{
+    expected_updated_at:'review-v1',expected_client_updated_at:null,excluded:decision,kind:decision?'spm':null,note:''}]]);
+  expect(ctx.api.patch).not.toHaveBeenCalled();
+  expect(ctx.after.services.brawndo).toEqual(sourceServices);
+  expect(result.handled.reviews).toContain(review.id);
+});

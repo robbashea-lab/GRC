@@ -160,6 +160,36 @@ test('a partial native response cannot clear active work or overwrite another cl
   expect(JSON.stringify(src)).toBe(before);
 });
 
+test.each([
+  ['cis-ig1','cis:8.1','1.1'],['soc-2','soc:2017-2022','CC1.1'],
+  ['iso-27001','iso:27001-2022','4.1'],['hipaa','hipaa:45cfr164','164.308(a)(1)(i)'],
+  ['nist-csf-2','nist:csf2.0','GV.OC-01'],['cmmc','cmmc:800171r2','3.1.1'],
+])('%s Finding remediation inherits the exact native origin and retains independent validation across reloads', (framework,program,definition)=>{
+  const view={work:{a:{revs:[],hist:[],acts:[],done:[],findings:[]}}};
+  const assessment={client_id:tenant,framework_assessment_id:'origin',framework_key:framework,definition_id:definition,status:'not_assessed'};
+  const finding={client_id:tenant,finding_id:'native-finding',framework_assessment_id:'origin',title:'Synthetic gap',description:'Synthetic authored gap context',status:'in_remediation'};
+  // Native Finding creation links its primary Action by finding_id, without
+  // copying framework_assessment_id onto the task.
+  const task={client_id:tenant,task_id:'native-task',finding_id:'native-finding',priority:'high',title:'Synthetic corrective action',status:'open'};
+  const records={reviews:[],findings:[finding],tasks:[task],evidence:[],framework_assessments:[assessment,
+    {...assessment,client_id:'foreign',framework_assessment_id:'foreign-origin',definition_id:'foreign-definition'}]};
+  overlayApprovedV3Work(view,records,ctx);
+  expect(view.work.a.findings).toHaveLength(1);
+  expect(view.work.a.findings[0]).toMatchObject({id:'native-finding',fromItem:definition,fromProgram:program,actionIds:['native-task']});
+  expect(view.work.a.acts[0]).toMatchObject({id:'native-task',findingId:'native-finding',fromItem:definition,fromProgram:program,pri:'High',detail:'Synthetic authored gap context',frameworkLinks:[{program,ref:definition}]});
+  task.description='';overlayApprovedV3Work(view,records,ctx);
+  expect(view.work.a.acts[0].detail).toBe(''); // A deliberately cleared task description stays cleared.
+  task.status='done';finding.status='remediated';
+  overlayApprovedV3Work(view,records,ctx);
+  expect(view.work.a.acts[0]).toMatchObject({id:'native-task',st:'Pending validation',fromItem:definition});expect(view.work.a.done).toEqual([]);
+  finding.status='closed';
+  const reloaded=JSON.parse(JSON.stringify(view));overlayApprovedV3Work(reloaded,records,ctx);
+  expect(reloaded.work.a.acts).toEqual([]);expect(reloaded.work.a.done).toHaveLength(1);
+  expect(reloaded.work.a.done[0]).toMatchObject({id:'native-task',st:'Completed',fromItem:definition,fromProgram:program});
+  expect(reloaded.work.a.findings[0]).toMatchObject({id:'native-finding',st:'Closed',actionIds:['native-task']});
+  expect(assessment.status).toBe('not_assessed');
+});
+
 test('a moved calendar occurrence retains its recurrence anchor and a new client starts with empty work',()=>{
   const src=fixture();
   src.work.a.revs=[{...baseReview,cycleIndex:0,anchor:'2026-10-31',due:'2026-11-02'}];

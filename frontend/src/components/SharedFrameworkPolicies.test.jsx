@@ -23,7 +23,7 @@ test.each([
   api.get.mockResolvedValue({data:{assessments:[{...assessment,client_id:'foreign',framework_assessment_id:'foreign'},assessment]}});
   await act(async()=>root.render(<Policies clientId={clientId} clientName="Synthetic" rows={rows} reviews={[annual]} programs={[framework]}
     onOpen={onOpen} onOpenReview={onOpenReview} onAlignment={onAlignment}/>));
-  expect(host.querySelector('.pc-mapping').textContent).toBe(`Mapped to ${label}: 1 of 2`);
+  expect(host.querySelector('.npc-mapping').textContent).toBe(`Mapped to ${label} 1 of 2`);
   expect(host.querySelectorAll('[role=columnheader]')[1].textContent).toBe(`${label} ${unit}`);
   expect(host.querySelector('.bap-alignment').textContent).toContain(`Supports ${label}`);
   expect(host.textContent).not.toContain('CIS');
@@ -42,7 +42,7 @@ test('mixed-framework mapped view counts a policy once while retaining each nati
   const assessment={client_id:clientId,framework_key:'soc-2',definition_id:'CC1.1',related_links:[{kind:'policies',id:custom.policy_id}]};
   await act(async()=>root.render(<Policies clientId={clientId} rows={[mapped,unmapped,custom]} programs={['cis-ig1','iso-27001','soc-2']}
     assessments={[assessment]} cisGroup={1} view="mapped"/>));
-  expect(host.querySelector('.pc-mapping').textContent).toBe('Framework-mapped: 2 of 3');
+  expect(host.querySelector('.npc-mapping').textContent).toBe('Framework-mapped 2 of 3');
   expect(host.querySelectorAll('[role=columnheader]')[1].textContent).toBe('Framework alignment');
   expect(host.querySelectorAll('.bap-row[data-testid]')).toHaveLength(2);
   const alignment=host.querySelector('.bap-alignment').textContent;
@@ -53,16 +53,16 @@ test('mixed-framework mapped view counts a policy once while retaining each nati
 test.each(['iso-27001','soc-2'])('empty %s client retains native annual Review and reports healthy zero mapping',async framework=>{
   const onOpenReview=jest.fn();
   await act(async()=>root.render(<Policies clientId={clientId} rows={[]} programs={[framework]} reviews={[annual]} onOpenReview={onOpenReview}/>));
-  expect(host.querySelector('.pc-mapping strong').textContent).toBe('0 of 0');
-  expect(host.querySelector('.pc-mapping').disabled).toBe(false);
+  expect(host.querySelector('.npc-mapping strong').textContent).toBe('0 of 0');
+  expect(host.querySelector('.npc-mapping').disabled).toBe(false);
   await act(async()=>host.querySelector('.bapv-link').click());expect(onOpenReview).toHaveBeenCalledWith(annual);
   expect(api.post).not.toHaveBeenCalled();expect(api.patch).not.toHaveBeenCalled();expect(api.delete).not.toHaveBeenCalled();
 });
 
 test('unavailable target alignment keeps the native framework label but never claims zero coverage',async()=>{
   await act(async()=>root.render(<Policies clientId={clientId} rows={[mapped]} programs={['iso-27001']} alignmentError="Alignment unavailable"/>));
-  expect(host.querySelector('.pc-mapping').textContent).toBe('Mapped to ISO 27001: —');
-  expect(host.querySelector('.pc-mapping').disabled).toBe(true);
+  expect(host.querySelector('.npc-mapping').textContent).toBe('Mapped to ISO 27001 —');
+  expect(host.querySelector('.npc-mapping').disabled).toBe(true);
   expect(host.querySelector('.bap-alignment').textContent).toBe('Alignment unavailable');
 });
 
@@ -73,7 +73,7 @@ test.each(['iso-27001','soc-2'])('retained %s mapped filter with missing source 
   expect(host.querySelector('.bapv-empty[role=alert]').textContent).toContain('Policy mappings unavailable');
   expect(host.querySelector('.bapv-summary [role=status]').textContent).toBe('Policy mapping counts unavailable.');
   expect(host.textContent).not.toContain('No policies match');expect(host.textContent).not.toContain('Showing 0');expect(host.textContent).not.toContain('CIS');
-  expect(host.querySelector('.pc-mapping strong').textContent).toBe('—');
+  expect(host.querySelector('.npc-mapping strong').textContent).toBe('—');
   expect(host.querySelector('[data-testid=additional-policy-metric-approved] strong').textContent).toBe('1');
   await act(async()=>host.querySelector('.bapv-empty button').click());expect(onClear).toHaveBeenCalledTimes(1);
   await act(async()=>root.render(<Policies {...props} view=""/>));

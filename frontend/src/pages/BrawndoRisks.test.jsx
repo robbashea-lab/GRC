@@ -42,7 +42,7 @@ test('retained significant-risk deep link exposes its native scope in common fil
  mockSearch='?view=significant';mockUser.workspace_mode='standard';
  await act(async()=>root.render(<RiskRegister/>));
  expect(container.querySelector('[data-testid="cis-risks-concept"]')).not.toBeNull();
- expect(container.querySelector('tbody').textContent).not.toContain('Undated risk');
+ expect(container.querySelector('.risk-table tbody').textContent).not.toContain('Undated risk');
  await openFilters();
  const significant=container.querySelector('[data-testid="risk-view-significant"]');
  expect(significant.textContent).toBe('High or critical');expect(significant.getAttribute('aria-pressed')).toBe('true');
@@ -50,7 +50,7 @@ test('retained significant-risk deep link exposes its native scope in common fil
  await click(container.querySelector('#clearFilters'));
  expect(container.querySelector('[data-testid="risk-view-all_active"]').getAttribute('aria-pressed')).toBe('true');
  expect(container.querySelector('#clearFilters')).toBeNull();
- expect(container.querySelector('tbody').textContent).toContain('Undated risk');
+ expect(container.querySelector('.risk-table tbody').textContent).toContain('Undated risk');
  expectNoProgramCommands();expect(api.post).not.toHaveBeenCalled();
 });
 test('common presentation retains native filters and client isolation without inventing enrollment',async()=>{
@@ -60,8 +60,8 @@ test('common presentation retains native filters and client isolation without in
  expect([...container.querySelectorAll('[aria-label="Risk views"] button')].map(b=>b.textContent)).toEqual(['All active','High or critical','In treatment','Accepted','Review due in 30 days','Critical','High','Due for Review']);
  expect(container.querySelector('[data-testid="risk-view-closed"]')).not.toBeNull();
  await click(container.querySelector('[data-testid="risk-view-review_due"]'));
- expect(container.querySelector('tbody').textContent).toContain('Late risk');
- expect(container.querySelector('tbody').textContent).not.toContain('Undated risk');
+ expect(container.querySelector('.risk-table tbody').textContent).toContain('Late risk');
+ expect(container.querySelector('.risk-table tbody').textContent).not.toContain('Undated risk');
  await click(container.querySelector('[data-testid="risk-view-high"]'));
  expect(container.querySelectorAll('#actionRows tr')).toHaveLength(1);
  expect(container.querySelector('.score-badge').textContent).toBe('12 · High');
@@ -69,7 +69,7 @@ test('common presentation retains native filters and client isolation without in
  mockClient='future_client';rememberClient(mockClient);mockUser.workspace_mode='standard';rows=rows.map(r=>({...r,client_id:mockClient,category:'operational'}));
  await act(async()=>root.render(<RiskRegister/>));
  expect(container.querySelector('.approved-risk-register')).not.toBeNull();
- expect(container.querySelector('tbody').textContent).not.toContain('Operational');
+ expect(container.querySelector('.risk-table tbody').textContent).not.toContain('Operational');
  expect(container.querySelectorAll('.risk-table thead th')).toHaveLength(6);
  const activeSummary=[...container.querySelectorAll('[aria-label="Risk summaries"] button')].find(node=>node.querySelector('.klabel')?.textContent==='Active risks');
  expect(activeSummary.querySelector('strong').textContent).toBe('2');

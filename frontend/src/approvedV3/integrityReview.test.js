@@ -81,6 +81,70 @@ test('finishing an archive cannot close a different unsaved dialog in the same c
   }finally{dom.window.close();}
 });
 
+test('the completion footer describes validation only for the exact linked Finding action',()=>{
+  const dom=openPage('client-brawndo-actions');
+  try{
+    const page=dom.window.GoverNaraNativePage,state=page.snapshot(),command=jest.fn();
+    const actor={user_id:'owner',name:'Operator',email:'owner@example.test',role:'super_admin',status:'active'};
+    const work=state.work.brawndo;
+    work.findings.push({id:'qa-finding',title:'Confirmed gap',st:'Open',actionIds:['qa-finding-action']});
+    for(const [id,findingId] of [['qa-finding-action','qa-finding'],['qa-manual-action',null]])
+      work.acts.push({id,title:'Action '+id,source:'Manual',findingId,owner:actor.name,st:'Open',kind:'act',
+        due:work.acts[0].due,pri:'Medium',detail:'Recorded work',evidence:[]});
+    page.configure({busy:()=>false,command,persist:()=>true});
+    page.actor(actor,state.clients.map(client=>client.id));page.apply(state);
+    for(const [id,label] of [['qa-finding-action','Submit for validation'],['qa-manual-action','Complete and close']]){
+      dom.window.document.querySelector('[data-action="open-act"][data-id="'+id+'"]').click();
+      dom.window.document.querySelector('#drawer [data-action="act-complete-dlg"]').click();
+      expect(dom.window.document.querySelector('#dlg [data-action="dlg-run"]').textContent).toBe(label);
+      expect(page.snapshot().work.brawndo.acts.find(row=>row.id===id).st).toBe('Open');
+      dom.window.document.querySelector('#dlg [data-action="dlg-close"]').click();
+      dom.window.document.querySelector('#drawer [data-action="drawer-close"]').click();
+    }
+    expect(command).not.toHaveBeenCalled();
+  }finally{dom.window.close();}
+});
+
+test('audit-only readback preserves an open operator draft and its valid Save',()=>{
+  const dom=openPage('client-brawndo-policies');
+  try{
+    const page=dom.window.GoverNaraNativePage,state=page.snapshot(),persist=jest.fn(()=>true);
+    const actor={user_id:'owner',name:'Operator',email:'owner@example.test',role:'super_admin',status:'active'};
+    page.configure({busy:()=>false,command:()=>{},persist});
+    page.actor(actor,state.clients.map(client=>client.id));page.apply(state);
+    const policy=page.snapshot().programs.brawndo.pols[0];
+    [...dom.window.document.querySelectorAll('[data-action="open-pol"]')].find(node=>node.dataset.id===policy.name).click();
+    dom.window.document.querySelector('#drawer [data-action="pol-description"]').click();
+    const input=dom.window.document.getElementById('f-description');input.value='Operator draft survives audit readback';
+    persist.mockClear();
+    page.audit(state.audit.concat([{i:999,t:{$date:'2026-11-26T17:00:00Z'},client:'brawndo',user:actor.name,
+      action:'prepare-export',entity:'cmmc_workbook',title:'Synthetic SSP export',eid:'native-client',native:true,nativeLogId:'native-export'}]),state.activity);
+    expect(input.value).toBe('Operator draft survives audit readback');
+    expect(dom.window.document.getElementById('dlg-scrim').hidden).toBe(false);expect(persist).not.toHaveBeenCalled();
+    dom.window.document.querySelector('#dlg [data-action="dlg-run"]').click();
+    expect(persist).toHaveBeenCalled();
+    expect(page.snapshot().programs.brawndo.pols.find(row=>row.wfId===policy.wfId).description).toBe('Operator draft survives audit readback');
+  }finally{dom.window.close();}
+});
+
+test('audit-only readback adds native actions and preserves the current Audit filter',()=>{
+  const dom=openPage('audit-log');
+  try{
+    const page=dom.window.GoverNaraNativePage,state=page.snapshot();
+    page.configure({busy:()=>false,command:()=>{},persist:()=>true});
+    page.actor({user_id:'owner',name:'Operator',email:'owner@example.test',role:'super_admin',status:'active'},state.clients.map(client=>client.id));
+    page.apply(state);
+    const entries=state.audit.concat([{i:999,t:{$date:'2026-11-26T17:00:00Z'},client:'brawndo',user:'Operator',
+      action:'prepare-export',entity:'cmmc_workbook',title:'Synthetic SSP export',eid:'native-client',native:true,nativeLogId:'native-export'}]);
+    page.audit(entries,state.activity);
+    const filter=dom.window.document.getElementById('al-action');
+    expect([...filter.options].some(option=>option.value==='prepare-export')).toBe(true);
+    filter.value='prepare-export';filter.dispatchEvent(new dom.window.Event('change',{bubbles:true}));
+    page.audit(entries,state.activity);
+    expect(dom.window.document.getElementById('al-action').value).toBe('prepare-export');
+  }finally{dom.window.close();}
+});
+
 test('the real access dialog retains a native client lead while revoking account membership',async()=>{
   const dom=openPage();
   try{

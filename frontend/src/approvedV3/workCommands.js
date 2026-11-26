@@ -232,7 +232,9 @@ export async function applyWorkChanges({before,after,records,clientId,sourceId,a
     const assessment=assessmentFor(finding.fromItem ? finding : action);
     if(!action?.title || !finding.title) throw Error('A finding requires both a finding title and a corrective action title.');
     const body={title:finding.title,remediation_title:action.title,owner_id:owner(action.owner),due_date:rawDate(action.due)};
-    if(finding.severity) body.severity=String(finding.severity).toLowerCase();
+    // The approved single Priority choice belongs to the Finding/action pair;
+    // the native primary action inherits the Finding's severity at creation.
+    body.severity=String(finding.severity || action.pri || 'medium').toLowerCase();
     if(finding.description || action.detail) body.description=finding.description || action.detail;
     let path;
     if(review) {

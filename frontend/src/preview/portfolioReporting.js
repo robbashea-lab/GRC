@@ -43,6 +43,9 @@ const scopeConstructor=Object.getOwnPropertyDescriptor(Array.prototype,'construc
 const scopeSpecies=Object.getOwnPropertyDescriptor(Array,Symbol.species).get;
 const sourceMap=Array.prototype.map,sourceFind=Array.prototype.find;
 const sourcePush=Array.prototype.push,sourceFreeze=Object.freeze,sourceInteger=Number.isInteger;
+const sourceArrayMappingUnchanged=()=>Object.getOwnPropertyDescriptor(Array.prototype,'map')?.value===sourceMap
+  &&Object.getOwnPropertyDescriptor(Array.prototype,'constructor')?.value===scopeConstructor
+  &&Object.getOwnPropertyDescriptor(Array,Symbol.species)?.get===scopeSpecies;
 const restoredScopes=new WeakMap();
 const scopeSerializationUnchanged=()=>stable===scopeStable
   &&Object.getOwnPropertyDescriptor(JSON,'parse')?.value===scopeParse
@@ -206,7 +209,7 @@ function compactPortfolioReportingCore(db){
     return index;
   };
   const canonicalRow=metadata=>{
-    if(metadata.canonicalKnown&&!customJSON({})&&!customJSON([]))return metadata.json;
+    if(metadata.canonicalKnown&&sourceArrayMappingUnchanged()&&!customJSON({})&&!customJSON([]))return metadata.json;
     if(!canonicalRows.has(metadata.json))canonicalRows.set(metadata.json,stable(JSON.parse(metadata.json)));
     return canonicalRows.get(metadata.json);
   };
@@ -215,9 +218,7 @@ function compactPortfolioReportingCore(db){
     // Only private frozen metadata can bypass per-row serializer checks. Native
     // map/species perform no caller work between this check and reading strings.
     if(Object.getPrototypeOf(rows)!==Array.prototype
-      ||Object.getOwnPropertyDescriptor(Array.prototype,'map')?.value!==sourceMap
-      ||Object.getOwnPropertyDescriptor(Array.prototype,'constructor')?.value!==scopeConstructor
-      ||Object.getOwnPropertyDescriptor(Array,Symbol.species)?.get!==scopeSpecies
+      ||!sourceArrayMappingUnchanged()
       ||customJSON({})||customJSON([]))return null;
     for(let i=0;i<rows.length;i++)if(!rows[i].canonicalKnown)return null;
     return rows.map(metadata=>metadata.json);

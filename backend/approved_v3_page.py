@@ -65,6 +65,141 @@ window.GoverNaraNativePage=(function(){
   var closeDialogPending=false, closeDrawerPending=false, pendingMessage="";
   var nativeActor=null;
   var sourceMakeProgram=makeProg;
+  // Native activities already merge declared framework drivers. Do not append
+  // mockup template aliases to that canonical catalog or create source Reviews.
+  var sourceSetupEntries=v34SetupEntries,sourceSetupItems=ivsItemsAll;
+  function nativeSetupRows(c){return callbacks&&callbacks.setupActivities?callbacks.setupActivities(c.id):null;}
+  function nativeSetupIdentity(a){var identity={};['client_id','activity_id','review_id','source_review_id','expected_updated_at','expected_client_updated_at'].forEach(function(k){identity[k]=a[k]===undefined?null:a[k];});return identity;}
+  function nativeSetupCadence(a){return a.cadence==='custom'?'D:'+a.custom_days:{monthly:'M',quarterly:'Q',semiannual:'S',annual:''}[a.cadence];}
+  v34SetupEntries=function(c){
+    var rows=nativeSetupRows(c);if(rows===null)return sourceSetupEntries(c);
+    var work=buildWork(c.id);
+    return rows.map(function(a){
+      var r=a.source_review_id?work.revs.find(function(row){return String(row.id)===a.source_review_id;}):null;
+      if(a.review_id&&!r)throw Error('Reload the saved shared Review before setting up this activity.');
+      var maps=v34SetupMaps(c,a.source_mappings),current=regFor(c),ids=[];
+      maps.filter(function(m){return m.k===current.kind;}).forEach(function(m){ids=ids.concat(m.supportIds);});
+      var topic=REV_TOPICS.find(function(t){return t.k===a.template_id;})||{k:a.template_id, purpose:''};
+      topic=Object.assign({},topic,{areas:a.area_ids.slice()});
+      var primary=a.area_id,area=Object.assign({},svcArea(c.id,primary),{resp:a.responsibility});
+      return {key:a.activity_id,r:r,e:{t:{t:a.title,d:a.cadence,days:a.custom_days},T:topic,maps:maps,excluded:false},
+        T:topic,title:a.title,prim:primary,main:a.area_ids[0],A:area,ids:p16SortIds(uniq(ids)),maps:maps,
+        fws:uniq(maps.map(function(m){return m.fw;})),fwLab:uniq(maps.map(function(m){return m.fw;})).join(' · '),
+        tk:ivsTicketNo(a.setup&&a.setup.recurring_ticket_number),st:a.state,
+        rem:a.exclusion?Object.assign({why:a.exclusion.reason},a.exclusion):null,
+        removalKeys:[a.activity_id],mappingNeedsValidation:false,nativeActivity:connectedClone(a)};
+    });
+  };
+  ivsItemsAll=function(c){
+    if(nativeSetupRows(c)===null)return sourceSetupItems(c);
+    var items=[],notIv=[],spm=[];
+    v34SetupEntries(c).forEach(function(x){if(x.nativeActivity.internal)spm.push(x.title);
+      else if(!x.nativeActivity.provider_relevant)notIv.push({title:x.title,prim:x.prim,resp:x.A.resp});else items.push(x);});
+    var order=SVC_AREAS.map(function(a){return a[0];});
+    items.sort(function(a,b){return order.indexOf(a.prim)-order.indexOf(b.prim)||a.title.localeCompare(b.title)||a.key.localeCompare(b.key);});
+    return {items:items,notIv:notIv,spm:spm,fwLab:progsLive(c).map(function(p){return p16ProgLabel(c,p);}).join(' · ')};
+  };
+  var sourceSetupDialog=ivsItemDlg,sourceSetupSave=ivsSave;
+  ivsItemDlg=function(c,key){
+    sourceSetupDialog(c,key);var x=ivsFind(c,key);if(!x||!x.nativeActivity)return;
+    S.coordSetupDraft.nativeActivity=nativeSetupIdentity(x.nativeActivity);
+    var a=x.nativeActivity,select=$('ivs-d-cad'),cad=nativeSetupCadence(a);
+    if(select&&cad!==undefined){if(!Array.from(select.options).some(function(o){return o.value===cad;}))select.add(new Option(coordFrequency(cad)||cad,cad));select.value=cad;}
+    if(!x.r&&a.first_next_due)$('ivs-d-due').value=a.first_next_due;
+  };
+  ivsSave=function(c,key){
+    var x=ivsFind(c,key);if(!x||!x.nativeActivity)return sourceSetupSave(c,key);
+    var opened=S.coordSetupDraft,a=opened&&opened.nativeActivity;
+    try{
+      if(busy())throw Error('Wait for the current save to finish.');
+      if(staleDialog()||!a||opened.client!==c.id||opened.key!==key||opened.profile!==JSON.stringify(svcProf(c.id))||
+          JSON.stringify(a)!==JSON.stringify(nativeSetupIdentity(x.nativeActivity)))throw Error(staleFormMessage);
+      CONNECTED.assertWritable(c.id);
+      var responsibility=$('ivs-d-resp')?$('ivs-d-resp').value:x.nativeActivity.responsibility;
+      if(!SVC_RESP_NAME[responsibility]||responsibility==='un')throw Error('Choose who runs this service area.');
+      var plan={responsibility:responsibility,area_id:x.nativeActivity.area_id};
+      if(covIV(responsibility)){
+        plan.ticket=coordTicket($('ivs-d-no').value);plan.url=coordUrl($('ivs-d-url').value);
+        plan.title=$('ivs-d-sum').value.trim().slice(0,255);plan.notes=$('ivs-d-notes').value.trim().slice(0,2000);
+        plan.cadence=$('ivs-d-cad').value;var next=coordDate($('ivs-d-due').value,'next review');
+        if(!plan.ticket||!next||CONNECTED.validateCadence(plan.cadence).unit==='once')throw Error('Record the recurring ticket, schedule and next due date.');
+        plan.next=isoDate(next);
+      }
+      callbacks.command('saveSetupActivity',[c.id,a.activity_id,{opened:a,plan:plan}]);
+      connectedPersist();closeDlg();S.coordSetupDraft=null;toast(covIV(responsibility)?'Recurring activity setup saved. Assessments and Reviews now use the same ticket and schedule.':'Responsibility saved. No iVenture ticket is needed for this area.');
+    }catch(error){return ivsErr(error.message);}
+  };
+  var sourceSetupRemove=ivsRemoveDlg,sourceSetupRestore=ivsRestore;
+  ivsRemoveDlg=function(c,key){
+    var x=ivsFind(c,key);if(!x||!x.nativeActivity)return sourceSetupRemove(c,key);
+    var opened=nativeSetupIdentity(x.nativeActivity),sourceForm=formDlg;
+    formDlg=function(){
+      var args=Array.from(arguments);
+      args[4]=function(values){
+        try{
+          CONNECTED.assertWritable(c.id);
+          var current=ivsFind(c,key);if(S.clientId!==c.id||!current||JSON.stringify(opened)!==JSON.stringify(nativeSetupIdentity(current.nativeActivity)))throw Error(staleFormMessage);
+          if(!['spm','client','na'].includes(values.why))throw Error('Choose a reason for removing this activity from Setup.');
+          callbacks.command('saveSetupExclusion',[c.id,key,{opened:opened,excluded:true,kind:values.why,note:String(values.note||'').trim().slice(0,2000)}]);
+          connectedPersist();toast(x.title+' removed from iVenture Setup. Restore it under Removed.');return null;
+        }catch(error){return error.message;}
+      };
+      return sourceForm.apply(this,args);
+    };
+    try{return sourceSetupRemove(c,key);}finally{formDlg=sourceForm;}
+  };
+  ivsRestore=function(c,key){
+    var x=ivsFind(c,key);if(!x||!x.nativeActivity)return sourceSetupRestore(c,key);
+    try{
+      if(busy())return;CONNECTED.assertWritable(c.id);
+      callbacks.command('saveSetupExclusion',[c.id,key,{opened:nativeSetupIdentity(x.nativeActivity),excluded:false}]);
+      connectedPersist();toast(x.title+' is back on the setup list.');
+    }catch(error){originalToast(error.message);}
+  };
+  var sourceCoordSelection=coordSelection,sourceCoordStage=coordStageAssessment,sourceCoordWrite=coordWriteActivity,sourceCoordSave=coordSaveAssessment;
+  coordSelection=function(c,it,answers){
+    var choices=coordCandidates(c,it),legacy=answers.reviewTarget&&choices.filter(function(x){return x.nativeActivity&&x.nativeActivity.legacy_keys.indexOf(answers.reviewTarget)>=0;});
+    if(legacy&&legacy.length===1){
+      var old=answers.reviewTarget,meta=answers._coord;
+      answers.reviewTarget=legacy[0].key;
+      if(meta&&meta.defaults&&meta.defaults.reviewTarget===JSON.stringify(old))meta.defaults.reviewTarget=JSON.stringify(answers.reviewTarget);
+      if(meta&&meta.source&&meta.source.key===old)meta.source.key=answers.reviewTarget;
+    }
+    var found=sourceCoordSelection(c,it,answers);if(found)return found;
+    if(answers.reviewTarget&&!(answers._coord&&answers._coord.committed&&answers._coord.source&&answers.reviewTarget===answers._coord.source.key))return null;
+    var binding=(svcProf(c.id).assessmentReviews||{})[itemKey(c,it.id)];
+    return choices.find(function(x){return x.nativeActivity&&(x.key===binding||
+      (!answers.reviewTarget||answers._coord&&answers._coord.committed)&&x.nativeActivity.assessment_bindings.some(function(b){return b.k===regFor(c).kind&&b.id===it.id;}));})||null;
+  };
+  coordStageAssessment=function(c,it,answers){
+    var plan=sourceCoordStage(c,it,answers),x=plan.key&&coordEntry(c,plan.key);
+    if(x&&x.nativeActivity)plan.nativeActivity=nativeSetupIdentity(x.nativeActivity);return plan;
+  };
+  coordWriteActivity=function(c,x,plan,origin){
+    if(!x.nativeActivity)return sourceCoordWrite(c,x,plan,origin);
+    if(!plan.nativeActivity||JSON.stringify(plan.nativeActivity)!==JSON.stringify(nativeSetupIdentity(x.nativeActivity)))throw Error(staleFormMessage);
+    // A reference satisfies the source coordination return contract. It is
+    // never inserted into WORK; native persistence creates the actual Review.
+    return {id:x.key,revision:x.nativeActivity.expected_updated_at};
+  };
+  coordSaveAssessment=function(c,it,draft){
+    var tx=sourceCoordSave(c,it,draft),plan=draft.coordination;
+    if(plan&&plan.nativeActivity){
+      var key=itemKey(c,it.id),saved=GUIDE_SAVED[key],live=gState(c,it).ans;
+      var fields=['ticket','url','title','hasTicket','hasUrl','hasTitle','ticketConfirmed','cadence','next','notes'];
+      var activityPlan={};fields.forEach(function(k){if(plan[k]!==undefined)activityPlan[k]=plan[k];});
+      saved.ans._coord.nativeActivity={opened:connectedClone(plan.nativeActivity),plan:activityPlan};
+      live.reviewTarget=plan.key;saved.ans.reviewTarget=plan.key;
+      live._coord.source={key:plan.key,reviewId:plan.reviewId,revision:plan.revision};
+      saved.ans._coord.source=connectedClone(live._coord.source);
+    }
+    return tx;
+  };
+  var sourceCoordContext=coordContext;
+  coordContext=function(c,it,answers){var context=sourceCoordContext(c,it,answers),x=context.entry;
+    if(x&&x.nativeActivity&&!x.r){context.frequency=coordFrequency(nativeSetupCadence(x.nativeActivity))||'';context.next=x.nativeActivity.first_next_due||'';}
+    return context;
+  };
   makeProg=function(){
     var program=sourceMakeProgram.apply(this,arguments);
     if(program.k==='hipaa'&&callbacks&&callbacks.hipaaSupplement)
@@ -431,6 +566,10 @@ window.GoverNaraNativePage=(function(){
   var originalForm=formDlg;
   formDlg=function(){
     var args=Array.prototype.slice.call(arguments),save=args[4],openedRevision=nativeViewRevision;
+    if(args[0]==='Complete work'&&S.drCur?.kind==='act'){
+      var action=(WORK[S.clientId]?.acts||[]).find(function(row){return row.id===S.drCur.id;});
+      if(action?.findingId)args[3]='Submit for validation';
+    }
     if(typeof save==="function")args[4]=function(values){
       if(openedRevision!==nativeViewRevision)return staleFormMessage;
       editing=true;
@@ -449,6 +588,10 @@ window.GoverNaraNativePage=(function(){
     snapshot:function(){return connectedClone(connectedState());},
     context:function(){var c=byId(S.clientId);return {sourceId:S.clientId,program:c&&c.activeProg};},
     configure:function(options){callbacks=options;bindCommands();},
+    audit:function(entries,activity){
+      AUDIT=connectedClone(entries);ACTLOG=scopedActivity(connectedClone(activity));
+      if(S.route==='audit-log')renderAudit();
+    },
     apply:function(state,reconcile){
       importing=true;
       try {

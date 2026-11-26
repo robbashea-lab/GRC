@@ -15,14 +15,15 @@ const rows = Object.freeze([
   Object.freeze({policy_id:'missing',client_id:'client',title:'Missing record',status:'draft',presence:'reported_missing'}),
 ]);
 
-test('three cards preserve Robb-approved native grouping and totals independent of visible rows',async()=>{
+test('status summary preserves native grouping, counts and shares independent of visible rows',async()=>{
   const onView=jest.fn();
   await act(async()=>root.render(<Policies clientId="client" rows={rows} filteredRows={[]} onView={onView}/>));
-  expect(container.querySelectorAll('.pc-status-card')).toHaveLength(3);
+  expect(container.querySelectorAll('.npc-summary .npc-stat')).toHaveLength(3);
   expect(container.querySelector('[data-testid="additional-policy-metric-approved"] strong').textContent).toBe('1');
   expect(container.querySelector('[data-testid="additional-policy-metric-awaiting"] strong').textContent).toBe('2');
   expect(container.querySelector('[data-testid="additional-policy-metric-missing"] strong').textContent).toBe('1');
-  expect(container.querySelector('.pc-approval-track span').style.width).toBe('25%');
+  expect(container.querySelector('[data-testid="additional-policy-metric-approved"] .npc-stat-share').textContent).toBe('25%');
+  expect(container.querySelector('.npc-meta strong').textContent).toBe('4 policies');
   await act(async()=>container.querySelector('[data-testid="additional-policy-metric-awaiting"]').click());
   expect(onView).toHaveBeenCalledWith('awaiting');
   expect(container.textContent).toContain('Showing 0 of 4 policies');
@@ -43,8 +44,9 @@ test('zero-policy client can open its canonical annual Review, never an individu
 
 test.each([{loading:true},{error:'Request failed'}])('unavailable population never reports zero or full approval: %j',async state=>{
   await act(async()=>root.render(<Policies clientId="client" rows={[]} {...state}/>));
-  expect([...container.querySelectorAll('.pc-card-copy strong')].map(node=>node.textContent)).toEqual(['—','—','—']);
-  expect(container.querySelector('.pc-approval-track').getAttribute('aria-label')).toBe('Policy status unavailable');
+  expect([...container.querySelectorAll('.npc-stat-count')].map(node=>node.textContent)).toEqual(['—','—','—']);
+  expect(container.querySelector('.npc-content [role="status"]').textContent).toBe('Policy status unavailable.');
+  expect([...container.querySelectorAll('.npc-stat-share')].map(node=>node.textContent)).toEqual(['—','—','—']);
   expect(container.textContent).not.toContain('0 of 0');
   expect(container.querySelector('.bapv-summary').textContent).not.toContain('Showing 0');
 });

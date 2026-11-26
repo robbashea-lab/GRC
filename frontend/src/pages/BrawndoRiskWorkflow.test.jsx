@@ -108,7 +108,8 @@ test('organization loading withholds creation until the matching client context 
   await act(async()=>root.render(<RiskRegister/>));
   const frame=container.querySelector('[data-testid="risks-navigation-loading"]');
   expect(frame?.querySelector('[role="status"]')?.textContent).toContain('Loading risks');
-  expect(container.querySelector('h1')?.textContent).toBe('Brawndo Risks');
+  expect(container.querySelector('h1')?.textContent).toBe('Risks');
+  expect(frame.querySelector('.eyebrow')?.textContent).toBe('Client workspace · Brawndo');
   expect(container.querySelector('[data-testid="new-risk"]')).toBeNull();
   expect(container.querySelector('table,[role="table"]')).toBeNull();
   expect(document.querySelector('[data-testid="new-risk-dialog"]')).toBeNull();

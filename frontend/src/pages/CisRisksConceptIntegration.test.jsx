@@ -32,7 +32,7 @@ const click = node => act(async () => { expect(node).toBeTruthy(); node.click();
 const concept = () => host.querySelector('[data-testid="cis-risks-concept"]');
 const riskDrawer = () => document.querySelector('[data-testid="risks-drawer"]');
 const actionDrawer = () => document.querySelector('[data-testid="remediation-ticket-drawer"]');
-const rowTitles = () => [...host.querySelectorAll('tbody .risk-title')].map(node => node.textContent);
+const rowTitles = () => [...host.querySelectorAll('.risk-table tbody .risk-title')].map(node => node.textContent);
 const noWrites = () => {
   expect(api.post).not.toHaveBeenCalled();
   expect(api.patch).not.toHaveBeenCalled();
@@ -110,14 +110,14 @@ test.each(cases)('common presentation survives later IG%i %s enrollment without 
   await render();
   expect(concept()).not.toBeNull();
   expect(cisClientProgram(mockOrg.currentClient)).toBeNull();
-  expect(host.querySelector('tbody').textContent).toContain('Native recovery risk');
+  expect(host.querySelector('.risk-table tbody').textContent).toContain('Native recovery risk');
   const enrolled = cisClient(clientId, group);
   mockOrg = {...mockOrg, currentClient: enrolled, clients: [enrolled]};
   await render();
   expect(cisClientProgram(mockOrg.currentClient).implementationGroup).toBe(group);
   expect(concept()).not.toBeNull();
   expect(rowTitles()).toEqual(['Native recovery risk']);
-  await click(host.querySelector('tbody .risk-title'));
+  await click(host.querySelector('.risk-table tbody .risk-title'));
   expect(riskDrawer().textContent).toContain('RISK-019');
   expect(riskDrawer().querySelector('[aria-label="Title"]').value).toBe('Native recovery risk');
   expect(JSON.stringify(risks)).toBe(retained);
@@ -129,7 +129,7 @@ test('a client without CIS enrollment receives common presentation and keeps nat
   risks = [risk()];
   await render();
   expect(concept()).not.toBeNull();
-  expect([...host.querySelectorAll('thead th')].map(node => node.textContent.trim())).toEqual(['Risk', 'Score', 'Owner', 'Status', 'Next review', 'Open risk']);
+  expect([...host.querySelectorAll('.risk-table thead th')].map(node => node.textContent.trim())).toEqual(['Risk', 'Score', 'Owner', 'Status', 'Next review', 'Open risk']);
   expect(host.querySelector('[data-testid="risk-matrix-btn"]').textContent).toContain('Risk scale');
   expect(host.querySelector('.filter-button')).not.toBeNull();
   expect(api.get).toHaveBeenCalledWith('/tasks', expect.objectContaining({params: {client_id: 'demo_dunder'}}));
@@ -137,8 +137,8 @@ test('a client without CIS enrollment receives common presentation and keeps nat
   const nativeContext={...mockAuth, ...mockOrg, pathname: '/risks', selectedClientId: 'demo_dunder', clientId: 'demo_dunder', record: risks[0]};
   expect(brawndoFullRecordEligible(nativeContext)).toBe(true);
   expect(brawndoFullRecordEligible({...nativeContext,record:{...risks[0],client_id:'foreign-client'}})).toBe(false);
-  expect(host.querySelector('tbody .risk-id').textContent).toBe('RISK-001');
-  await click(host.querySelector('tbody .risk-title'));
+  expect(host.querySelector('.risk-table tbody .risk-id').textContent).toBe('RISK-001');
+  await click(host.querySelector('.risk-table tbody .risk-title'));
   // General-GRC records use the same complete native editor without enrolling a program.
   expect(riskDrawer().classList.contains('brawndo-risk-workflow')).toBe(true);
   expect(riskDrawer().querySelector('[aria-label="Title"]').value).toBe('Native recovery risk');
@@ -156,7 +156,7 @@ test('mixed client-wide risks remain available with stable identities and Risk I
   ];
   await render();
   expect(rowTitles()).toEqual(['Organization-wide risk', 'AI model risk', 'Vendor supply risk', 'Manual operational risk']);
-  await click([...host.querySelectorAll('tbody .risk-title')].find(node => node.textContent === 'AI model risk'));
+  await click([...host.querySelectorAll('.risk-table tbody .risk-title')].find(node => node.textContent === 'AI model risk'));
   expect(riskDrawer().textContent).toContain('RISK-002');
   expect(riskDrawer().querySelector('[aria-label="Title"]').value).toBe('AI model risk');
   expect(riskDrawer().querySelector('[aria-label="Category"]').value).toBe('ai_governance');
@@ -194,7 +194,7 @@ test('Owner name sorting uses displayed names for CIS and common client presenta
     sort.dispatchEvent(new Event('change', {bubbles: true}));
   });
   expect(rowTitles()).toEqual(['Risk owned by Ada', 'Risk owned by Zoe']);
-  expect([...host.querySelectorAll('tbody .risk-owner')].map(node => node.textContent)).toEqual(['Ada Native', 'Zoe Native']);
+  expect([...host.querySelectorAll('.risk-table tbody .risk-owner')].map(node => node.textContent)).toEqual(['Ada Native', 'Zoe Native']);
   const ownerControl = host.querySelector('[aria-label="Owner: sort and filter"]');
   expect(ownerControl).not.toBeNull();
   await act(async () => ownerControl.dispatchEvent(new MouseEvent('pointerdown', {bubbles: true, button: 0, ctrlKey: false})));
@@ -208,14 +208,14 @@ test('Owner name sorting uses displayed names for CIS and common client presenta
   await click(host.querySelector('.filter-button'));
   expect(host.querySelector('[aria-label="Assigned Owner: filter"]')).toBeNull();
   expect(host.querySelector('[aria-label="Owner: sort and filter"]')).not.toBeNull();
-  expect([...host.querySelectorAll('tbody .risk-owner')].map(node => node.textContent)).toEqual(['Zoe Native', 'Ada Native']);
+  expect([...host.querySelectorAll('.risk-table tbody .risk-owner')].map(node => node.textContent)).toEqual(['Zoe Native', 'Ada Native']);
   const commonSort = host.querySelector('[aria-label="Sort risks"]');
   await act(async () => {
     Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype, 'value').set.call(commonSort, 'owner_id:asc');
     commonSort.dispatchEvent(new Event('change', {bubbles: true}));
   });
   expect(rowTitles()).toEqual(['Risk owned by Ada', 'Risk owned by Zoe']);
-  expect([...host.querySelectorAll('tbody .risk-owner')].map(node => node.textContent)).toEqual(['Ada Native', 'Zoe Native']);
+  expect([...host.querySelectorAll('.risk-table tbody .risk-owner')].map(node => node.textContent)).toEqual(['Ada Native', 'Zoe Native']);
   noWrites();
 });
 
@@ -244,8 +244,8 @@ test('native status filters retain grouped Open and In Treatment while Retired s
   await click(choice('In Treatment'));
   await click(choice('Retired (legacy)'));
   expect(rowTitles()).toEqual(['Native retired record']);
-  expect(host.querySelector('tbody .risk-status').textContent).toBe('Retired (legacy)');
-  expect(host.querySelector('tbody tr').dataset.riskRow).toBe('status-retired');
+  expect(host.querySelector('.risk-table tbody .risk-status').textContent).toBe('Retired (legacy)');
+  expect(host.querySelector('.risk-table tbody tr').dataset.riskRow).toBe('status-retired');
   expect(host.querySelector('[data-testid="risk-view-active"]').getAttribute('aria-pressed')).toBe('false');
   expect(host.querySelector('[data-testid="risk-count"]').textContent).toBe('1 risk matching this selection');
   await click(choice('Retired (legacy)'));
@@ -302,7 +302,7 @@ test.each(['row', 'matrix'])('%s selection opens the complete existing native Ri
     await click(host.querySelector('.matrix-cell.occupied'));
     expect(riskDrawer()).toBeNull();
     await click(document.querySelector('.date-review'));
-  } else await click(host.querySelector('tbody .risk-title'));
+  } else await click(host.querySelector('.risk-table tbody .risk-title'));
   const drawer = riskDrawer();
   expect(drawer).not.toBeNull();
   expect(drawer.querySelector('[aria-label="Title"]').value).toBe(risks[0].title);
@@ -320,8 +320,10 @@ test('a saved treatment event opens its exact full native Action despite a match
     title: risks[0].title, status: 'open', priority: 'high', due_date: '2026-11-03',
     description: 'Actual saved treatment plan.', resolution: '', source_type: 'risk', source_id: risks[0].risk_id}];
   await render();
-  await click(host.querySelector('[data-event-id="demo_brawndo:action:native-treatment"]'));
-  await click(document.querySelector('.date-review.highlight'));
+  const events=host.querySelectorAll('.v3-quarter-ledger .vd tbody tr');
+  expect(events).toHaveLength(1);
+  expect(events[0].cells[1].textContent).toBe('Treatment action');
+  await click(events[0].querySelector('button'));
   expect(api.get).toHaveBeenCalledWith('/tasks/native-treatment');
   const drawer = actionDrawer();
   expect(drawer).not.toBeNull();
@@ -339,7 +341,7 @@ test('readonly access keeps native record opening while withholding creation and
   await render();
   expect(concept()).not.toBeNull();
   expect(host.querySelector('[data-testid="new-risk"]')).toBeNull();
-  await click(host.querySelector('tbody .risk-title'));
+  await click(host.querySelector('.risk-table tbody .risk-title'));
   expect(riskDrawer().querySelector('[aria-label="Title"]').disabled).toBe(true);
   expect([...riskDrawer().querySelectorAll('button')].find(node => node.textContent === 'Save changes').disabled).toBe(true);
   expect([...riskDrawer().querySelectorAll('button')].some(node => node.textContent === 'Review risk')).toBe(false);
@@ -353,8 +355,8 @@ test('native Closed membership retains distinctly labelled retired records and t
   expect(rowTitles()).toEqual(['Native recovery risk']);
   await click(host.querySelector('[data-testid="risk-view-closed"]'));
   expect(rowTitles()).toEqual(['Historical retired risk', 'Historical closed risk']);
-  expect(host.querySelector('tbody').textContent).toContain('Retired (legacy)');
-  await click(host.querySelector('tbody .risk-title'));
+  expect(host.querySelector('.risk-table tbody').textContent).toContain('Retired (legacy)');
+  await click(host.querySelector('.risk-table tbody .risk-title'));
   expect(riskDrawer().textContent).toContain('RISK-008');
   expect(riskDrawer().querySelector('[aria-label="Title"]').disabled).toBe(true);
   expect([...riskDrawer().querySelectorAll('[role="tab"]')].some(node => node.textContent.startsWith('Review history'))).toBe(true);
@@ -398,7 +400,7 @@ test.each(['actor', 'client', 'mode'])('a pending treatment opener cannot publis
   api.get.mockImplementation(path => path === '/tasks/pending-treatment'
     ? new Promise(resolve => { finishOpen = resolve; }) : nativeRead(path));
   await render();
-  await click(host.querySelector('.agenda-entry'));
+  await click(host.querySelector('.v3-quarter-ledger .tl-item'));
   expect(finishOpen).toBeDefined();
   if (boundary === 'actor') mockAuth = {...mockAuth, user: {...mockAuth.user, user_id: 'replacement-actor'}};
   if (boundary === 'mode') mockAuth = {...mockAuth, workspaceMode: 'standard', user: {...mockAuth.user, workspace_mode: 'standard'}};

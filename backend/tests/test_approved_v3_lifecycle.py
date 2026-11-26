@@ -243,3 +243,168 @@ class ApprovedV3LifecycleTests(unittest.IsolatedAsyncioTestCase):
         replay = await self.client.post('/api/onboarding/baseline', headers={'Idempotency-Key': 'consistent-shared-intake'}, json=body)
         self.assertEqual(replay.status_code, 200, replay.text)
         self.assertEqual(await self.db.reviews.count_documents({'client_id': client_id}), len(reviews))
+
+    async def test_all_program_setup_catalog_adopts_visible_activities_once_and_preserves_native_identity(self):
+        created = await self.client.post('/api/clients', headers={'Idempotency-Key': 'setup-catalog-client'},
+                                         json={'name': 'SYNTHETIC Setup catalog QA', 'assigned_owner_id': 'owner'})
+        self.assertEqual(created.status_code, 200, created.text)
+        cid = created.json()['client_id']
+        baseline = (await self.client.get('/api/onboarding/baseline', params={'client_id': cid})).json()
+        enrolled = await self.client.post('/api/onboarding/baseline', headers={'Idempotency-Key': 'setup-catalog-onboard'},
+            json={'client_id': cid, 'state': all_program_onboarding_state(), 'finalize': True,
+                  'expected_updated_at': baseline['state'].get('updated_at'), 'expected_records': baseline['record_versions']})
+        self.assertEqual(enrolled.status_code, 200, enrolled.text)
+        route = '/api/clients/' + cid + '/iv-setup'
+        initial = (await self.client.get(route)).json()
+        self.assertEqual(len(initial['activities']), 38)
+        self.assertEqual(await self.db.reviews.count_documents({'client_id': cid}), 33)
+        visible = [a for a in initial['activities'] if a['provider_relevant'] and not a['internal']]
+        proposals = [a for a in visible if not a['review_id']]
+        self.assertEqual(len(proposals), 4)
+
+        def drivers(activity):
+            return sorted((d['framework_key'], d['framework_plan_key']) for d in activity['drivers'])
+
+        guidance = proposals[0]
+        saved_ids = set()
+        for index, original in enumerate(visible):
+            with self.subTest(activity=original['activity_id']):
+                current = (await self.client.get(route)).json()
+                activity = next(a for a in current['activities'] if drivers(a) == drivers(original))
+                body = {'activity_id': activity['activity_id'], 'review_id': activity['review_id'],
+                    'expected_updated_at': activity['expected_updated_at'],
+                    'expected_client_updated_at': current['expected_client_updated_at'],
+                    'area_id': activity['area_id'], 'recurring_ticket_number': str(876000 + index),
+                    'recurring_ticket_url': 'https://tickets.example.test/' + str(876000 + index),
+                    'recurring_ticket_summary': 'Synthetic native setup only', 'notes': 'Synthetic QA',
+                    'cadence': 'custom', 'custom_days': 45, 'first_next_due': '2026-12-01', 'ticket_confirmed': True}
+                if original['activity_id'] == guidance['activity_id']:
+                    driver = activity['drivers'][0]
+                    assessment = await self.db.framework_assessments.find_one({'client_id': cid,
+                        'framework_key': driver['framework_key'], 'definition_id': driver['framework_safeguards'][0]}, {'_id': 0})
+                    path = '/api/framework_assessments/' + assessment['framework_assessment_id']
+                    context = (await self.client.get(path + '/service-context')).json()
+                    self.assertIn(activity['activity_id'], [a['activity_id'] for a in context['candidates']])
+                    # The native assessment save owns coordination and tool adoption
+                    # atomically; merely reading its candidates creates no Review.
+                    before_count = await self.db.reviews.count_documents({'client_id': cid})
+                    body['tool_ids'] = ['ninjaone']
+                    intent = {'coordination': body,
+                        'expected_last_assessed': assessment.get('last_saved') or assessment.get('last_assessed')}
+                    saved = await self.client.patch(path, headers={'Idempotency-Key': 'setup-guided-adopt'}, json=intent)
+                    self.assertEqual(saved.status_code, 200, saved.text)
+                    self.assertEqual(saved.json()['status'], assessment['status'])
+                    self.assertEqual(await self.db.reviews.count_documents({'client_id': cid}), before_count + 1)
+                    replay = await self.client.patch(path, headers={'Idempotency-Key': 'setup-guided-adopt'}, json=intent)
+                    self.assertEqual(replay.status_code, 200, replay.text)
+                    self.assertEqual(replay.json(), saved.json())
+                    self.assertEqual(await self.db.reviews.count_documents({'client_id': cid}), before_count + 1)
+                    readback = (await self.client.get(path + '/service-context')).json()
+                    self.assertTrue(readback['selected_activity_id'].startswith('review:'))
+                else:
+                    body['responsibility'] = 'iv'
+                    request_key = 'setup-catalog-save-' + str(index)
+                    saved = await self.client.post(route, headers={'Idempotency-Key': request_key}, json=body)
+                    self.assertEqual(saved.status_code, 200, saved.text)
+                    before_replay = await self.db.reviews.count_documents({'client_id': cid})
+                    replay = await self.client.post(route, headers={'Idempotency-Key': request_key}, json=body)
+                    self.assertEqual(replay.status_code, 200, replay.text)
+                    self.assertEqual(replay.json(), saved.json())
+                    self.assertEqual(await self.db.reviews.count_documents({'client_id': cid}), before_replay)
+                    self.assertEqual((await self.client.post(route, headers={'Idempotency-Key': request_key + '-stale'}, json=body)).status_code, 409)
+                updated = (await self.client.get(route)).json()
+                matches = [a for a in updated['activities'] if drivers(a) == drivers(original)]
+                self.assertEqual(len(matches), 1)
+                actual = matches[0]
+                self.assertTrue(actual['review_id'])
+                self.assertNotIn(actual['review_id'], saved_ids)
+                saved_ids.add(actual['review_id'])
+                self.assertEqual(actual['setup']['recurring_ticket_number'], body['recurring_ticket_number'])
+                self.assertEqual((actual['cadence'], actual['custom_days'], actual['first_next_due']), ('custom', 45, '2026-12-01'))
+                if original['review_id']:
+                    self.assertEqual(actual['review_id'], original['review_id'])
+                self.assertEqual(len(updated['activities']), 38)
+        self.assertEqual(await self.db.reviews.count_documents({'client_id': cid}), 37)
+        final = (await self.client.get(route)).json()
+        self.assertEqual(len({a['activity_id'] for a in final['activities']}), 38)
+        self.assertTrue(all(a['state'] == 'done' for a in final['activities'] if a['provider_relevant'] and not a['internal']))
+        self.assertEqual(final['outstanding_count'], 0)
+        self.assertTrue(all(a['status'] == 'not_assessed' for a in await self.db.framework_assessments.find({'client_id': cid}, {'_id': 0}).to_list(None)))
+
+    async def test_new_multi_program_findings_keep_primary_actions_priorities_and_independent_validation(self):
+        created = await self.client.post('/api/clients', headers={'Idempotency-Key': 'finding-lifecycle-client'},
+                                         json={'name': 'SYNTHETIC Finding lifecycle QA', 'assigned_owner_id': 'owner'})
+        self.assertEqual(created.status_code, 200, created.text)
+        client_id = created.json()['client_id']
+        baseline = (await self.client.get('/api/onboarding/baseline', params={'client_id': client_id})).json()
+        enrollment = await self.client.post('/api/onboarding/baseline',
+            headers={'Idempotency-Key': 'finding-lifecycle-onboarding'},
+            json={'client_id': client_id, 'state': all_program_onboarding_state(), 'finalize': True,
+                  'expected_updated_at': baseline['state'].get('updated_at'),
+                  'expected_records': baseline['record_versions']})
+        self.assertEqual(enrollment.status_code, 200, enrollment.text)
+        await self.db.users.insert_one({'user_id': 'independent-validator', 'email': 'validator@example.test',
+            'name': 'Synthetic independent validator', 'role': 'platform_admin', 'status': 'active',
+            'client_ids': [client_id]})
+        cases = [('cis-ig1', 'high'), ('soc-2', 'low'), ('iso-27001', 'medium'),
+                 ('hipaa', 'critical'), ('nist-csf-2', 'high'), ('cmmc', 'high')]
+        identities = []
+        for framework, priority in cases:
+            with self.subTest(framework=framework, priority=priority):
+                assessment = await self.db.framework_assessments.find_one(
+                    {'client_id': client_id, 'framework_key': framework}, {'_id': 0})
+                aid = assessment['framework_assessment_id']
+                base = '/api/framework_assessments/' + aid
+                payload = {'title': 'SYNTHETIC QA ' + framework + ' gap',
+                    'description': 'Synthetic QA only. No customer deficiency asserted.',
+                    'remediation_title': 'SYNTHETIC QA corrective action ' + framework,
+                    'severity': priority, 'owner_id': 'owner', 'due_date': '2026-12-15',
+                    'request_id': 'finding-lifecycle-' + framework}
+                raised = await self.client.post(base + '/findings', json=payload)
+                self.assertEqual(raised.status_code, 200, raised.text)
+                finding = raised.json()
+                self.assertEqual(finding['framework_assessment_id'], aid)
+                self.assertEqual(finding['description'], payload['description'])
+                task_id = finding['primary_task_id']
+                identities.append((finding['finding_id'], task_id))
+                task = (await self.client.get('/api/tasks/' + task_id)).json()
+                self.assertEqual(task['finding_id'], finding['finding_id'])
+                self.assertEqual(task['priority'], priority)
+                self.assertEqual(task['title'], payload['remediation_title'])
+                self.assertEqual(task['assignee_id'], 'owner')
+                replay = await self.client.post(base + '/findings', json=payload)
+                self.assertEqual(replay.status_code, 200, replay.text)
+                self.assertEqual(replay.json()['finding_id'], finding['finding_id'])
+                self.assertEqual(replay.json()['primary_task_id'], task_id)
+                related = (await self.client.get(base + '/related')).json()
+                self.assertEqual([row['finding_id'] for row in related['findings']], [finding['finding_id']])
+                self.assertEqual([row['task_id'] for row in related['tasks']], [task_id])
+                denied = await self.client.patch('/api/tasks/' + task_id, headers=self.auth('reader'),
+                                                 json={'status': 'done', 'resolution': 'Forbidden attempt'})
+                self.assertEqual(denied.status_code, 403, denied.text)
+                submitted = await self.client.patch('/api/tasks/' + task_id,
+                    json={'status': 'done', 'resolution': 'Synthetic corrective work submitted',
+                          'expected_updated_at': task['updated_at']})
+                self.assertEqual(submitted.status_code, 200, submitted.text)
+                self.assertEqual(submitted.json()['completed_by'], 'owner')
+                pending = (await self.client.get('/api/findings/' + finding['finding_id'])).json()
+                self.assertEqual(pending['status'], 'remediated')
+                decision = {'rationale': 'Synthetic independent verification of corrective work',
+                            'expected_updated_at': pending['updated_at'],
+                            'request_id': 'finding-validation-' + framework}
+                self_decision = await self.client.post('/api/findings/' + finding['finding_id'] + '/validate', json=decision)
+                self.assertEqual(self_decision.status_code, 403, self_decision.text)
+                validated = await self.client.post('/api/findings/' + finding['finding_id'] + '/validate',
+                    headers=self.auth('independent-validator'), json=decision)
+                self.assertEqual(validated.status_code, 200, validated.text)
+                self.assertEqual(validated.json()['status'], 'closed')
+                self.assertEqual(validated.json()['validated_by'], 'independent-validator')
+                reloaded = (await self.client.get(base + '/related')).json()
+                self.assertEqual([row['task_id'] for row in reloaded['tasks']], [task_id])
+                self.assertEqual(reloaded['findings'][0]['status'], 'closed')
+                self.assertEqual(await self.db.tasks.count_documents({'finding_id': finding['finding_id']}), 1)
+                unchanged = await self.db.framework_assessments.find_one({'framework_assessment_id': aid}, {'_id': 0})
+                self.assertEqual(unchanged['status'], assessment['status'])
+                self.assertEqual(unchanged.get('assessment_history'), assessment.get('assessment_history'))
+        self.assertEqual(len({fid for fid, _ in identities}), 6)
+        self.assertEqual(len({tid for _, tid in identities}), 6)

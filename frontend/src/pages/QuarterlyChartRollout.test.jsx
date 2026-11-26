@@ -12,29 +12,36 @@ import {brawndoFullRecordEligible} from '@/lib/brawndoFullRecord';
 import {frameworkCatalog} from '@/lib/frameworks';
 import {rememberClient} from '@/lib/clientSelection';
 
-let mockAuth,mockOrg,mockRecords,mockReadError='',mockPendingRead=null;
+let mockAuth,mockOrg,mockRecords,mockReadError='',mockPendingRead=null,mockNativeDrawer=null;
 jest.mock('@/context/AuthContext',()=>({useAuth:()=>mockAuth}));
 jest.mock('@/context/OrgContext',()=>({useOrg:()=>mockOrg}));
 jest.mock('@/lib/api',()=>({__esModule:true,default:{get:jest.fn(),post:jest.fn(),patch:jest.fn(),put:jest.fn(),delete:jest.fn()},
   formatError:error=>error.message,API:'/api',PREVIEW_MODE:false}));
+// Exercise the native route/controller's typed record delivery without opening
+// an unrelated editor; editor persistence has its own native workflow suites.
+jest.mock('@/components/RecordDrawer',()=>({__esModule:true,default:props=>{
+  if(!props.open)return null;
+  mockNativeDrawer=props;
+  return <button type="button" data-testid="delivered-native-record" onClick={()=>props.onOpenChange(false)}>Close native record</button>;
+}}));
 
 const modules=[
   {name:'Reviews',path:'/reviews',collection:'reviews',element:<RecordListPage kind="reviews"/>,
-    chart:'.crr-root .crr-overview',period:'.quarter-controls strong',agenda:'.agenda-list .agenda-entry',markers:'.review-dot',
-    cards:'.crr-root [data-native-summary]',register:'.crr-root > section.register',savedMarker:'[data-date="2028-04-12"] .review-dot',
+    chart:'.crr-root .v3-quarter-ledger',period:'.v3-quarter-switch b',agenda:'.tl2-lists .tl-item',markers:'.ql-point',
+    cards:'.crr-root [data-native-summary]',register:'.crr-root > section.register',savedDay:12,savedLane:'annual',total:1,
     overdue:true,unavailable:'Review dates unavailable.',pending:'.bdr-empty[role="status"]',denied:'.bdr-empty[role="alert"]'},
   {name:'Actions',path:'/action-items',collection:'tasks',element:<ActionItems/>,
-    chart:'.cia-page .quarter-card',period:'.quarter-controls strong',agenda:'.cia-agenda-list .agenda-entry',markers:'.review-dot',
-    cards:'.cia-page [data-native-summary]',register:'.bda-table-scroll',savedMarker:'[data-date="2028-04-13"] [data-action-id="saved-action"]',
+    chart:'.cia-page .v3-quarter-ledger',period:'.v3-quarter-switch b',agenda:'.tl2-lists .tl-item',markers:'.ql-point',
+    cards:'.cia-page [data-native-summary]',register:'.bda-table-scroll',savedDay:13,savedLane:'medium',total:1,
     overdue:true,unavailable:'Action deadlines unavailable.',pending:'.bda-results [role="status"]',denied:'.bda-results [role="status"]'},
   {name:'Risks',path:'/risks',collection:'risks',element:<RiskRegister/>,
-    chart:'.cis-risks-concept .quarter-card',period:'.quarter-controls strong',agenda:'.agenda-list .agenda-entry',markers:'.review-dot',
+    chart:'.cis-risks-concept .v3-quarter-ledger',period:'.v3-quarter-switch b',agenda:'.tl2-lists .tl-item',markers:'.ql-point',
     cards:'.cis-risks-concept [data-native-summary]',register:'.cis-risks-concept > section.register',matrix:'.cis-risks-concept .matrix-panel',
-    savedMarker:'[data-date="2028-04-14"] .review-dot[data-event-id]',overdue:true,loadingFrame:'[data-testid="risks-navigation-loading"]'},
+    savedDay:14,savedLane:'review',total:1,overdue:true,loadingFrame:'[data-testid="risks-navigation-loading"]'},
   {name:'Vendors',path:'/vendors',collection:'vendors',element:<VendorRegister/>,
-    chart:'.cv-quarter',period:'.cv-quarter-controls strong',agenda:'.cv-agenda-entry',markers:'.cv-event-dot',
+    chart:'.cv-overview .v3-quarter-ledger',period:'.v3-quarter-switch b',agenda:'.tl2-lists .tl-item',markers:'.ql-point',
     cards:'[aria-label="Vendor summaries"]',register:'[aria-label="Vendor register"]',loadingFrame:'[data-testid="vendors-navigation-loading"]',
-    savedMarker:'[data-event-id$=":saved-vendor:review"]',overdue:true,overdueButtonText:'Overdue'},
+    savedDay:15,savedLane:'rev',total:2,overdue:true},
 ];
 let root,container,actorSequence=0;
 // Mocked hook values need a fresh element to rerender; keep the same mounted route/controller.
@@ -46,6 +53,44 @@ function requiredNode(parent,selector){
 }
 const requiredChart=module=>requiredNode(container,module.chart);
 const period=module=>requiredNode(requiredChart(module),module.period).textContent;
+const eventTitle=module=>'Retained native '+module.name.slice(0,-1);
+function expectSavedMarker(module){
+  const overview=requiredChart(module),stamp=new Date(2028,3,module.savedDay).getTime();
+  const marker=requiredNode(overview,`[data-k="${module.savedLane}|${stamp}"]`);
+  expect(marker.dataset.count).toBe('1');expect(marker.dataset.state).toBe('overdue');
+  expect(marker.getAttribute('aria-label')).toContain(`Apr ${module.savedDay}, 2028`);
+  expect(overview.querySelector('.vd tbody').textContent).toContain(eventTitle(module));
+  return marker;
+}
+async function expectNativeRecordOpens(module){
+  if(!['Actions','Vendors'].includes(module.name))return;
+  mockNativeDrawer=null;
+  const marker=expectSavedMarker(module);
+  await act(async()=>marker.dispatchEvent(new KeyboardEvent('keydown',{key:'Enter',bubbles:true})));
+  const choice=[...requiredChart(module).querySelectorAll('.v3-ledger-tip button')].find(node=>node.textContent.includes(eventTitle(module)));
+  expect(choice).toBeTruthy();
+  await act(async()=>jest.advanceTimersToNextTimer());expect(document.activeElement).toBe(choice);
+  await click(choice);
+  expect(mockNativeDrawer).not.toBeNull();
+  expect(mockNativeDrawer.kind).toBe(module.collection);
+  expect(mockNativeDrawer.clientId).toBe(mockOrg.currentClientId);
+  const id=module.name==='Actions'?'task_id':'vendor_id';
+  expect(mockNativeDrawer.record[id]).toBe(module.name==='Actions'?'saved-action':'saved-vendor');
+  expect(mockNativeDrawer.record.client_id).toBe(mockOrg.currentClientId);
+  // Vendor delivery includes native derived deadline signals; every saved field
+  // and the independent typed identity must still match the source record.
+  expect(mockNativeDrawer.record).toMatchObject(mockRecords[module.collection][0]);
+  await click(requiredNode(container,'[data-testid="delivered-native-record"]'));
+  expect(container.querySelector('[data-testid="delivered-native-record"]')).toBeNull();
+}
+function expectNoSelectedQuarterEvents(module){
+  const overview=requiredChart(module);
+  expect(overview.querySelector('.ql-totals').dataset.total).toBe('0');
+  expect(overview.querySelectorAll(module.markers)).toHaveLength(0);
+  // Behind schedule stays available across quarter navigation; it is saved work, not a forecast.
+  expect(overview.querySelector('.tl2-h[data-mode="overdue"]').textContent).toBe('Behind schedule · 1');
+  expect(overview.querySelector('.tl2-lists').textContent).toContain(eventTitle(module));
+}
 function expectEmptyEvents(module){
   const overview=requiredChart(module);
   expect(overview.querySelectorAll(module.agenda)).toHaveLength(0);
@@ -59,7 +104,8 @@ function expectUnavailable(module,error=''){
     expect(requiredNode(frame,error?'[role="alert"]':'[role="status"]').textContent).toContain(error||`Loading ${module.collection}…`);
   }else{
     expectEmptyEvents(module);
-    for(const selector of ['.agenda-empty','.chart-empty'])expect(requiredNode(requiredChart(module),selector).textContent).toContain(module.unavailable);
+    expect(requiredNode(requiredChart(module),'[role="status"]').textContent).toBe('Dates unavailable.');
+    expect(requiredChart(module).querySelector('.ql-chart')).toBeNull();
     expect(requiredNode(container,error?module.denied:module.pending).textContent).toContain(error?(module.name==='Reviews'?'Reviews unavailable':'Tickets unavailable'):(module.name==='Reviews'?'Loading reviews…':'Loading authorized tickets…'));
   }
 }
@@ -87,7 +133,7 @@ function protectedMarkup(module){
 beforeAll(()=>Object.defineProperty(globalThis,'crypto',{value:require('crypto').webcrypto,configurable:true}));
 beforeEach(()=>{
   global.IS_REACT_ACT_ENVIRONMENT=true;jest.useFakeTimers();jest.setSystemTime(new Date('2028-04-18T12:00:00'));
-  sessionStorage.clear();localStorage.clear();mockReadError='';mockPendingRead=null;configure('future-native-client');
+  sessionStorage.clear();localStorage.clear();mockReadError='';mockPendingRead=null;mockNativeDrawer=null;configure('future-native-client');
   api.get.mockImplementation(async path=>{
     const collection=path.slice(1);
     if(mockPendingRead&&Object.hasOwn(mockRecords,collection))return mockPendingRead;
@@ -102,7 +148,7 @@ beforeEach(()=>{
 afterEach(async()=>{await act(async()=>root.unmount());container.remove();jest.useRealTimers();jest.clearAllMocks();});
 
 test.each(modules.flatMap(module=>[1,2,3].flatMap(group=>['demo','standard'].map(mode=>[module.name,group,mode,module]))))(
-  '%s uses the quarterly chart for an arbitrary IG%i %s client without changing protected surfaces',async(name,group,mode,module)=>{
+  '%s uses the quarter ledger for an arbitrary IG%i %s client without changing protected surfaces',async(name,group,mode,module)=>{
     configure(`new-${module.collection}-${group}-${mode}`,group,mode);
     const before=JSON.stringify(mockRecords);await mount(module);
     expect(period(module)).toBe('Q2 2028');
@@ -110,21 +156,23 @@ test.each(modules.flatMap(module=>[1,2,3].flatMap(group=>['demo','standard'].map
     expect(api.get).toHaveBeenCalledWith('/'+module.collection,expect.objectContaining({params:expect.objectContaining({client_id:mockOrg.currentClientId})}));
     expect(mockOrg.clients).toHaveLength(1);expect(mockOrg.clients[0].client_id).not.toContain('brawndo');
     const protectedBefore=protectedMarkup(module);
+    expect(requiredChart(module).querySelector('.ql-totals').dataset.total).toBe(String(module.total));
+    expect(requiredChart(module).querySelector('.ql-totals').dataset.overdue).toBe('1');
     await click(requiredNode(requiredChart(module),'[aria-label="Previous quarter"]'));
-    expect(period(module)).toBe('Q1 2028');expectEmptyEvents(module);
+    expect(period(module)).toBe('Q1 2028');expectNoSelectedQuarterEvents(module);
     expect(protectedMarkup(module)).toEqual(protectedBefore);
     await click([...requiredChart(module).querySelectorAll('button')].find(button=>button.textContent==='This quarter'));
     expect(period(module)).toBe('Q2 2028');
-    // These native agendas separate the unchanged saved past dates from upcoming work.
-    if(module.overdue){
-      expect(requiredNode(requiredChart(module),module.savedMarker).getAttribute('aria-label')).toContain('Retained native '+name.slice(0,-1));
-      const overdueControl=module.overdueButtonText
-        ? [...requiredChart(module).querySelectorAll('button')].find(button=>button.textContent.startsWith(module.overdueButtonText))
-        : requiredNode(requiredChart(module),'[data-mode="overdue"]');
-      await click(overdueControl);
-    }
+    const marker=expectSavedMarker(module);
+    await act(async()=>marker.dispatchEvent(new KeyboardEvent('keydown',{key:'Enter',bubbles:true})));
+    const choice=[...requiredChart(module).querySelectorAll('.v3-ledger-tip button')].find(node=>node.textContent.includes(eventTitle(module)));
+    expect(choice).toBeTruthy();
+    await act(async()=>jest.advanceTimersToNextTimer());expect(document.activeElement).toBe(choice);
+    await act(async()=>choice.dispatchEvent(new KeyboardEvent('keydown',{key:'Escape',bubbles:true})));
+    expect(requiredChart(module).querySelector('.v3-ledger-tip')).toBeNull();expect(document.activeElement).toBe(marker);
     expect(requiredChart(module).querySelectorAll(module.agenda).length).toBeGreaterThan(0);
     expect(requiredChart(module).querySelector(module.agenda).textContent).toContain('Retained native '+name.slice(0,-1));
+    await expectNativeRecordOpens(module);
     expect(protectedMarkup(module)).toEqual(protectedBefore);expect(JSON.stringify(mockRecords)).toBe(before);noWrites();
   },
 );
@@ -189,12 +237,13 @@ test.each(modules.flatMap(module=>['hipaa','nist-csf-2'].flatMap(frameworkKey=>[
     const retained=JSON.stringify(mockRecords);
     await mount(module);requiredChart(module);
     expect(period(module)).toBe('Q2 2028');
-    expect(requiredNode(requiredChart(module),module.savedMarker).getAttribute('aria-label')).toContain('Retained native '+name.slice(0,-1));
+    expectSavedMarker(module);
     expect(cisClientProgram(mockOrg.currentClient)).toBeNull();
     const recordContext={...mockAuth,...mockOrg,pathname:module.path,selectedClientId:clientId,clientId,record:mockRecords[module.collection][0]};
     expect(brawndoFullRecordEligible(recordContext)).toBe(true);
     expect(brawndoFullRecordEligible({...recordContext,record:{...recordContext.record,client_id:'foreign-client'}})).toBe(false);
     expect(container.textContent).toContain('Retained native '+({reviews:'Review',tasks:'Action',risks:'Risk',vendors:'Vendor'}[module.collection]));
+    await expectNativeRecordOpens(module);
     expect(JSON.stringify(mockRecords)).toBe(retained);noWrites();
   },
 );
@@ -202,7 +251,7 @@ test.each(modules.flatMap(module=>['hipaa','nist-csf-2'].flatMap(frameworkKey=>[
 const sharedClients=[
   ['demo_dunder','Dunder Mifflin','iso-27001','demo'],
   ['demo_prestige','Prestige Worldwide','soc-2','demo'],
-  ...['iso-27001','soc-2'].flatMap(frameworkKey=>['demo','standard'].map(mode=>[
+  ...['iso-27001','soc-2','cmmc'].flatMap(frameworkKey=>['demo','standard'].map(mode=>[
     `future-${frameworkKey}-${mode}`,'Synthetic future customer',frameworkKey,mode,
   ])),
 ];
@@ -221,14 +270,15 @@ test.each(modules.flatMap(module=>sharedClients.map(([clientId,clientName,framew
     expect(period(module)).toBe('Q2 2028');
     expect(container.querySelector('.compact-program-timeline')).toBeNull();
     expect(api.get).toHaveBeenCalledWith('/'+module.collection,expect.objectContaining({params:expect.objectContaining({client_id:clientId})}));
-    expect(requiredNode(requiredChart(module),module.savedMarker).getAttribute('aria-label')).toContain('Retained native '+name.slice(0,-1));
+    expectSavedMarker(module);
+    await expectNativeRecordOpens(module);
     const protectedBefore=protectedMarkup(module);
     await click(requiredNode(requiredChart(module),'[aria-label="Previous quarter"]'));
-    expect(period(module)).toBe('Q1 2028');expectEmptyEvents(module);
+    expect(period(module)).toBe('Q1 2028');expectNoSelectedQuarterEvents(module);
     expect(protectedMarkup(module)).toEqual(protectedBefore);
     await click([...requiredChart(module).querySelectorAll('button')].find(button=>button.textContent==='This quarter'));
     expect(period(module)).toBe('Q2 2028');
-    expect(requiredNode(requiredChart(module),module.savedMarker).getAttribute('aria-label')).toContain('Retained native '+name.slice(0,-1));
+    expectSavedMarker(module);
     expect(protectedMarkup(module)).toEqual(protectedBefore);
     expect(JSON.stringify({client:mockOrg.currentClient,records:mockRecords})).toBe(retained);noWrites();
   },

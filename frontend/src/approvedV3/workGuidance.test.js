@@ -51,6 +51,13 @@ test('the approved drawer renders native steps, preserves empty answers, and att
     expect(window.document.getElementById('drawer').textContent).toContain('Confirm the latest sample');
     expect(view.data().steps.map(step=>step.result)).toEqual([null,'Exception']);
     expect(view.data().requiredSupport).toEqual(['Inventory file']);
+    window.GoverNaraNativePage.setReviewGuide('brawndo',view.id,sourceReviewGuide({...guide,
+      contract_token:'changed-contract',steps:[{step_id:'new-check',text:'Review the revised scope',who:'spm'}],results:[]},row));
+    view.open();
+    expect(view.data().steps.map(step=>step.result)).toEqual([null]);
+    expect(window.document.getElementById('drawer').textContent).toContain('Review the revised scope');
+    window.document.querySelector('#drawer [data-action="rev-complete-dlg"]').click();
+    expect(window.document.getElementById('dlg-scrim').hidden).toBe(true);
     view.evidence();
     const fileInput=window.document.getElementById('f-nativeEvidenceFile');
     expect(fileInput.type).toBe('file');

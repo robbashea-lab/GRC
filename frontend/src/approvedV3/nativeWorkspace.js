@@ -12,6 +12,7 @@ import {applyCmmcChanges, overlayCmmcWorkbook, downloadApprovedCmmc} from './cmm
 import {overlayNativeAudit} from './auditProjection';
 import {loadGlobalRecords,overlayGlobalRecords,applyGlobalChanges} from './adminCommands';
 import {createApprovedReportDownloader} from './reportDownloads';
+import {loadApprovedSetupCatalog,approvedSetupActivities} from './setupActivities';
 
 const endpoint = '/v3/approved-portfolio';
 const draftFields = ['itemHist','itemExtra','onboarding','activity'];
@@ -140,6 +141,9 @@ export function nativeTransport(base, pendingRequests) {
 
 export async function startNativeWorkspace(page, transport=api) {
   setWorkspaceMode('standard');
+  // Source routing toggles this prototype notice; signed-in records use native saves.
+  const prototypeNotice=document.getElementById('demo-strip');
+  if(prototypeNotice)prototypeNotice.style.display='none';
   let saving = false, ready = false, scheduled = null, pending = null, baseline = null;
   let packet, identityMaps, nativeRecords, actor, globals;
   const captured = [], files = new Map();
@@ -178,9 +182,28 @@ export async function startNativeWorkspace(page, transport=api) {
       }
       nativeRecords[cid] = data.records;
       await refreshCmmc(cid);
-      nativeRecords[cid].evidenceCatalog=await loadApprovedEvidenceCatalog({api:transport,clientId:cid});
+      await refreshCatalogs(cid);
     }
     identityMaps = approvedV3IdentityMaps(allRecords(nativeRecords));
+  }
+
+  async function refreshAudit(clientId,sourceId,actorId) {
+    const startingRecords=nativeRecords[clientId];
+    const {data}=await transport.get(endpoint+'/records',{params:{client_id:clientId}});
+    if(!ready||actor.user_id!==actorId||identityMaps.clientIds[sourceId]!==clientId||data.client_id!==clientId||
+        !data.records?.clients?.some(client=>client.client_id===clientId)||!Array.isArray(data.records.audit_logs)||
+        data.records.audit_logs.some(row=>row.client_id!==clientId))throw Error('The recent audit activity could not be verified.');
+    // A completed native refresh is newer than this export readback.
+    if(nativeRecords[clientId]!==startingRecords)return;
+    nativeRecords[clientId].audit_logs=data.records.audit_logs;
+    // A save already in flight will project this cache. Otherwise update only
+    // audit/activity; applying the business view would invalidate open forms.
+    if(saving||pending)return;
+    const state=page.snapshot(),names=new Map((data.records.users||[]).map(user=>[user.user_id,user.name]));
+    names.set(globals.account.user_id,globals.account.name);
+    overlayNativeAudit(state,data.records,{clientId,sourceId,userName:id=>names.get(id)||null});
+    baseline.audit=state.audit;baseline.activity=state.activity;
+    page.audit?.(dateEnvelope(state.audit),dateEnvelope(state.activity));
   }
 
   async function refreshCmmc(cid) {
@@ -194,6 +217,14 @@ export async function startNativeWorkspace(page, transport=api) {
       throw new Error('The CMMC workbook did not match the selected client.');
     }
     records.cmmcWorkbook = data;
+  }
+
+  async function refreshCatalogs(cid) {
+    const records=nativeRecords[cid];
+    [records.evidenceCatalog,records.setupCatalog]=await Promise.all([
+      loadApprovedEvidenceCatalog({api:transport,clientId:cid}),
+      loadApprovedSetupCatalog({api:transport,clientId:cid}),
+    ]);
   }
 
   async function saveDraft(view, before, sourceId, cid, requests) {
@@ -219,7 +250,7 @@ export async function startNativeWorkspace(page, transport=api) {
     identityMaps=approvedV3IdentityMaps(allRecords(nativeRecords));
     for(const cid of Object.keys(nativeRecords))await refreshCmmc(cid);
     await Promise.all(Object.entries(nativeRecords).map(async([cid,records])=>{
-      records.evidenceCatalog=await loadApprovedEvidenceCatalog({api:transport,clientId:cid});
+      await refreshCatalogs(cid);
     }));
     globals=await loadGlobalRecords(transport,packet.actor);
     actor=packet.actor;
@@ -319,6 +350,10 @@ export async function startNativeWorkspace(page, transport=api) {
 
   page.configure({
     hipaaSupplement:approvedHipaaSupplement,
+    setupActivities:sourceId=>{
+      const cid=identityMaps?.clientIds?.[sourceId],records=nativeRecords?.[cid];
+      return records?approvedSetupActivities(records.setupCatalog,records):null;
+    },
     onboardingPlan:(rows,draft)=>{
       try{return approvedOnboardingPlan(rows,draft,baseline?.onboarding?.[page.context().sourceId]);}
       catch(error){
@@ -392,10 +427,14 @@ export async function startNativeWorkspace(page, transport=api) {
     loadingAction=true;
     try {
       if (kind) {
+        const actorId=actor.user_id;
         const program=baseline.clients.find(client=>client.id===sourceId)?.progs?.find(program=>program.k==='cmmc'&&!program.retired);
         await downloadApprovedCmmc({clientId,level:program?.level,kind,api:transport,
           isCurrent:()=>page.context().sourceId===sourceId && ready && !saving && !pending});
-        status('Downloaded the current saved CMMC '+(kind==='ssp'?'SSP':kind==='poam'?'POA&M':'SPRS workbook')+'.');
+        const message='Downloaded the current saved CMMC '+(kind==='ssp'?'SSP':kind==='poam'?'POA&M':'SPRS workbook')+'.';
+        status(message);
+        try{await refreshAudit(clientId,sourceId,actorId);}
+        catch{status(message+' Recent audit activity could not be refreshed. Open Existing records → Audit Log to verify it.');}
       } else {
         await prepareReviewGuide({api:transport,page,records,clientId,sourceId,reviewId});
         if (!element.isConnected || window.location.hash!==hash || page.context().sourceId!==sourceId ||
@@ -436,7 +475,7 @@ export async function startNativeWorkspace(page, transport=api) {
     identityMaps = approvedV3IdentityMaps(allRecords(nativeRecords));
     for (const cid of Object.keys(nativeRecords)) await refreshCmmc(cid);
     await Promise.all(Object.entries(nativeRecords).map(async([cid,records])=>{
-      records.evidenceCatalog=await loadApprovedEvidenceCatalog({api:transport,clientId:cid});
+      await refreshCatalogs(cid);
     }));
     globals=await loadGlobalRecords(transport,actor);
     const view = project(packet.source_state);

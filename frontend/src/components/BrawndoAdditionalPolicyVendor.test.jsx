@@ -52,8 +52,10 @@ test('policy cards group saved states without reordering or changing native reco
     Object.freeze({ ...base, policy_id: 'unverified', status: 'approved' }),
   ]);
   await act(async () => root.render(<BrawndoAdditionalPolicies rows={rows} />));
-  expect([...container.querySelectorAll('.pc-status-card strong')].map(node => node.textContent)).toEqual(['1', '1', '1']);
-  expect(container.querySelector('.pc-approval-track').getAttribute('aria-label')).toBe('1 of 4 policies approved');
+  expect([...container.querySelectorAll('.npc-stat-count')].map(node => node.textContent)).toEqual(['1', '1', '1', '1']);
+  expect(container.querySelector('[data-testid="additional-policy-metric-approved"] .npc-stat-share').textContent).toBe('25%');
+  expect(container.querySelector('.npc-meta strong').textContent).toBe('4 policies');
+  expect(container.querySelector('[data-testid="additional-policy-metric-verify"] strong').textContent).toBe('1');
   expect([...container.querySelectorAll('.bap-row[data-testid]')].map(node => node.dataset.testid)).toEqual(['policies-row-0', 'policies-row-1', 'policies-row-2', 'policies-row-3']);
   expect([...container.querySelectorAll('.bap-row[data-testid] .bap-state-label')].map(node => node.textContent)).toEqual(['Needs Creation', 'Approved', 'Draft', 'Needs Confirmation']);
   expect(rows.map(row => row.policy_id)).toEqual(['missing', 'approved', 'awaiting', 'unverified']);
@@ -127,7 +129,8 @@ test.each([{ error: 'Refresh unavailable' }, { loading: true }])('vendor unavail
   await act(async () => root.render(<BrawndoAdditionalVendors rows={[]} onView={jest.fn()} {...state} />));
   expect([...container.querySelectorAll('.bapv-kcell strong')].map(node => node.textContent)).toEqual(['—', '—', '—', '—']);
   expect([...container.querySelectorAll('.bapv-segment button span')].every(node => node.textContent === '—')).toBe(true);
-  expect(container.querySelector('.bapv-page-head p').textContent).toBe('Third-party register');
+  expect(container.querySelector('.v3-workspace-head h1').textContent).toBe('Vendors');
+  expect(container.querySelector('.v3-workspace-head .page-sub').textContent).toBe('Third-party register');
   expect(container.querySelector('.bapv-summary').textContent).toBe(state.error ? 'Vendor counts unavailable.' : 'Loading vendors…');
 });
 
