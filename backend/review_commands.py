@@ -137,7 +137,7 @@ async def _ensure_action(s, finding, body, user, doc):
             # Validate raw values before fallback defaults can hide falsey wrong types.
             s._editable_patch('tasks', {'client_id': finding['client_id'], 'title': finding['title'], **body}, user=user)
             doc = {"task_id": tid, "title": body.get("title") or finding["title"], "title_generated": not bool(body.get("title")),
-                   "client_id": finding["client_id"], "status": "open", "priority": body.get("priority", finding.get("severity", "medium")),
+                   "client_id": finding["client_id"], "status": "open", "priority": body.get("priority", "medium"),
                    "assignee_id": body.get("assignee_id", finding.get("owner_id")), "due_date": body.get("due_date") or finding.get("due_date"),
                    "description": body.get("description") or finding.get("remediation_plan"), "finding_id": finding_id,
                    "review_id": finding.get("review_id"), "occurrence_id": finding.get("occurrence_id"),
