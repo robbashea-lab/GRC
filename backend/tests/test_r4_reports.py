@@ -392,6 +392,12 @@ class R4ReportRouteTests(unittest.IsolatedAsyncioTestCase):
              'occurrences': [{'completed_at': at}], 'completion_date': at[:10]},
             {'client_id': 'a', 'review_id': 'package-soc', 'title': 'Other program review',
              'framework_drivers': [{'framework_key': 'soc-2'}], 'completion_date': at}])
+        await server.db.findings.insert_one({
+            'client_id': 'a', 'finding_id': 'package-finding', 'review_id': 'package-cis',
+            'status': 'remediated', 'decision_history': [{
+                'action': 'rejected', 'at': at, 'note': 'Private rework rationale',
+            }],
+        })
         path = '/api/reports/materials'
         params = {'client_id': 'a', 'framework_key': 'cis-ig1'}
         response = await self.client.get(path, params=params)
@@ -403,6 +409,9 @@ class R4ReportRouteTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(bundle['registers']['clients'][0]['profile']['scope'],
                          {'statement':'Production boundary','systems':'Nominated billing platform'})
         self.assertEqual(bundle['registers']['clients'][0]['profile_scope_confirmation']['at'], at)
+        finding = next(row for row in bundle['registers']['findings'] if row['finding_id']=='package-finding')
+        self.assertEqual(finding['decision_history'], [{'action':'rejected','at':at}])
+        self.assertNotIn('Private rework rationale', response.text)
         self.assertEqual([row['event'] for row in bundle['register_history'] if row['record'] == 'Access policy'],
                          ['External approval recorded'])
         self.assertEqual([row['event'] for row in bundle['register_history'] if row['record'] == 'Selected review'],
