@@ -21,7 +21,7 @@ CATALOG = json.loads((Path(__file__).parents[1] / 'frontend/src/lib/aiGovernance
 AI_METADATA_DEFAULTS = {'environment':'','restrictions':'','data_settings':'','permitted_data_types':[]}
 AI_DECISIONS = {'approved','approved_with_conditions','not_approved'}
 AI_APPROVAL_FIELDS = (
-    'name','product_model','provider','vendor_id','description','purposes','data_types',
+    'name','product_model','provider','vendor_id','description','purposes','data_types','no_client_data',
     'access','screening','human_review_required','human_approval_required','oversight_notes',
     *AI_METADATA_DEFAULTS,
 )
@@ -40,6 +40,7 @@ class AIInput(BaseModel):
     status: Literal['draft','under_review','active','suspended','retired'] = 'draft'
     purposes: list[str] = Field(default_factory=list)
     data_types: list[str] = Field(default_factory=list)
+    no_client_data: StrictBool = False
     access: list[str] = Field(default_factory=list)
     roles: list[str] = Field(default_factory=list)
     risk_topics: list[str] = Field(default_factory=list)
@@ -237,6 +238,8 @@ def router_for(s):
         if data['status'] in ('active','suspended','retired') and (not old or old['status']!=data['status']): await client_scope(data['client_id'],user,True,True)
         for key in ('purposes','data_types','access','roles','risk_topics'):
             if set(data[key])-set(CATALOG[key]): raise HTTPException(422,'Invalid '+key)
+        if data.get('no_client_data') and data['data_types']:
+            raise HTTPException(422,'Select No client data by itself or identify the data the system handles')
         if set(data['screening'])-{q['key'] for q in CATALOG['questions']}: raise HTTPException(422,'Invalid screening question')
         await assignment_eligibility.validate(s.db, 'ai_systems', data, s._can_access_client, old)
         if data.get('vendor_id') and not await s.db.vendors.find_one({'vendor_id':data['vendor_id'],'client_id':data['client_id']}): raise HTTPException(422,'Vendor must belong to this client')
@@ -271,7 +274,8 @@ def router_for(s):
         async def execute(identity):
             await metadata_scope(body.client_id,body.model_fields_set)
             return await create_ai_record(body,user,identity)
-        payload=body.model_dump()
+        # Preserve the create fingerprint for requests saved before the explicit No client data field.
+        payload=body.model_dump(exclude=set() if body.no_client_data else {'no_client_data'})
         if idempotency_key is not None and all(payload[key]==default for key,default in AI_METADATA_DEFAULTS.items()):
             # Exact retained schemas only. Empty new metadata must not strand an
             # old create, but a real association or governance edit stays hashed.
@@ -291,7 +295,7 @@ def router_for(s):
         if existing:
             await s.audit(user,'AI use case created','ai_system',existing['ai_system_id'],existing['client_id'])
             return await view(existing)
-        data=body.model_dump(exclude=set(AI_METADATA_DEFAULTS)-body.model_fields_set)
+        data=body.model_dump(exclude=(set(AI_METADATA_DEFAULTS)|{'no_client_data'})-body.model_fields_set)
         await validate(data,user)
         counter_key='ai-display:'+data['client_id']
         try:
@@ -324,6 +328,8 @@ def router_for(s):
         # Empty form defaults do not backfill absent legacy boundaries.
         for key,default in AI_METADATA_DEFAULTS.items():
             if key not in old and data[key]==default: data.pop(key)
+        if 'no_client_data' not in old and not data['no_client_data']:
+            data.pop('no_client_data')
         await validate(data,user,old)
         if normalized_name(data['name'])!=normalized_name(old['name']):
             data['ai_name_key']=normalized_name(data['name'])

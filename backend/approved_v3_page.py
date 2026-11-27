@@ -715,7 +715,20 @@ window.GoverNaraNativePage=(function(){
     if(el.closest('#dlg')&&dialogWrites.includes(el.dataset.action)&&staleDialog()){
       event.preventDefault();event.stopImmediatePropagation();originalToast(staleFormMessage);return;
     }
-    var action=el.dataset.action,blocked={'ac-pwd':'Change the password in Existing records → My Account. This password form has not been submitted.',
+    var action=el.dataset.action;
+    if(action==='ai-assess'&&callbacks.openAiAssessment){
+      event.preventDefault();event.stopImmediatePropagation();
+      if(busy())return;
+      var row=CL[S.clientId]?.ai?.find(record=>record.name===el.dataset.id||record.wfId===el.dataset.id);
+      if(!row||row.st==='Retired'){originalToast(row?'This AI system is retained as retired history.':'Reopen this AI system before starting its assessment.');return;}
+      try{
+        var link=callbacks.openAiAssessment(S.clientId,row.wfId);
+        openDlg('Open saved AI assessment',row.name,'<p>Review the screening questions, saved use and approval conditions in the AI record.</p>',
+          '<button class="ghost" type="button" data-action="dlg-close">Close</button><a class="cta" href="'+esc(link)+'">Open AI assessment</a>');
+      }catch(error){originalToast(error.message);}
+      return;
+    }
+    var blocked={'ac-pwd':'Change the password in Existing records → My Account. This password form has not been submitted.',
       'u-pwd':'Open Existing records → Users & Access for authorized account recovery.',
       'demo-clear-ev':'Signed-in evidence is managed in the client Evidence Library.',
       'demo-storage':'Signed-in client records are saved to the platform.',

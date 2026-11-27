@@ -5,7 +5,7 @@ import {approvedV3IdentityMaps, overlayApprovedClientAssessments,approvedHipaaSu
 import {overlayApprovedV3Work} from '../preview/approvedV3Work';
 import {overlayApprovedV3Registers} from '../preview/approvedV3Registers';
 import {applyClientChanges,approvedOnboardingPlan} from './clientCommands';
-import {applyRegisterChanges} from './registerCommands';
+import {aiAssessmentDestination,applyRegisterChanges} from './registerCommands';
 import {applyWorkChanges} from './workCommands';
 import {prepareReviewGuide, downloadApprovedEvidence,loadApprovedEvidenceCatalog,downloadApprovedEvidenceArchive} from './workGuidance';
 import {applyCmmcChanges, overlayCmmcWorkbook, downloadApprovedCmmc} from './cmmcCommands';
@@ -398,6 +398,11 @@ export async function startNativeWorkspace(page, transport=api) {
     reportEvidence:(sourceId,program)=>{
       const clientId=identityMaps?.clientIds?.[sourceId];
       return approvedReportEvidence(nativeRecords?.[clientId],clientId,program);
+    },
+    openAiAssessment:(sourceId,sourceKey)=>{
+      const clientId=identityMaps?.clientIds?.[sourceId];
+      if(!ready||saving||pending||page.context().sourceId!==sourceId)throw Error('Reopen this AI system before starting its assessment.');
+      return aiAssessmentDestination({records:nativeRecords?.[clientId],clientId,sourceId},sourceKey);
     },
     downloadReport,
   });

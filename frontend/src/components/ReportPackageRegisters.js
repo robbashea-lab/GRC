@@ -126,7 +126,7 @@ export function registerWorkbooks(materials,config) {
     ...history('Vendor review history','Vendors')));
   const aiNames=new Map(r.ai_systems.map(s=>[s.ai_system_id,s.name]));
   files.push(workbook('06_AI-governance/AI-register.xlsx',sheet('AI systems',['AI system','Provider','Use case','Owner','Screening tier','Status','Approval','Data types','Restrictions','Linked risks'],
-    r.ai_systems.map(s=>[s.name,s.provider,list(s.purposes),person(s.owner_id),s.risk_tier,s.status,s.approval_status,list(s.data_types),s.restrictions,mappedIds(s)])),
+    r.ai_systems.map(s=>[s.name,s.provider,list(s.purposes),person(s.owner_id),s.risk_tier,s.status,s.approval_status,s.no_client_data===true?'No client data':list(s.data_types),s.restrictions,mappedIds(s)])),
     ...(config.history?[sheet('Review history',['Date','AI system','Review','Outcome'],reviews.filter(row=>aiNames.has(row.ai_system_id)).flatMap(row=>(row.occurrences||[])
       .filter(o=>within(o.completed_at||o.completion_date)).map(o=>[o.completed_at||o.completion_date,aiNames.get(row.ai_system_id),row.title,o.outcome])))]:[])));
   const ig=/IG[123]/i.exec(header.program.name)?.[0].toUpperCase();

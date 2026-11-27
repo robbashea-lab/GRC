@@ -77,7 +77,13 @@ export default function AIDrawer({open,onOpenChange,record,clientId,users=[],onS
   function blockUnconfirmedCreate(){if(!createRecord.unconfirmed())return false;setError('Create is unconfirmed. Retry its original request before closing.');return true;}
   function requestClose(value){if(value)return;if(busy||reference&&nested||blockUnconfirmedCreate())return;if(reference&&(dirty||relatedDraft)){setDiscard(true);return;}onOpenChange(false);}
   useEffect(()=>{if(!memoryCreateUnconfirmed&&(!reference||!(dirty||relatedDraft)))return;const warn=e=>{e.preventDefault();e.returnValue='';};window.addEventListener('beforeunload',warn);return()=>window.removeEventListener('beforeunload',warn);},[reference,dirty,relatedDraft,memoryCreateUnconfirmed]);
-  const put=(key,value)=>{const next={...form,[key]:value};if(screeningReviewSnapshot(next)!==screeningSnapshot)setScreeningConfirmation(null);setForm(next);};
+  const put=(key,value)=>{
+    const next={...form,[key]:value};
+    if(key==='data_types'&&value.length)next.no_client_data=false;
+    if(key==='no_client_data'&&value)next.data_types=[];
+    if(screeningReviewSnapshot(next)!==screeningSnapshot)setScreeningConfirmation(null);
+    setForm(next);
+  };
   const input=(key,label,multiline=false)=> <Field label={label}>{multiline?<Textarea value={form[key]||''} onChange={e=>put(key,e.target.value)}/>:<Input value={form[key]||''} onChange={e=>put(key,e.target.value)} required={key==='name'}/>}</Field>;
   const person=(key,label)=> <div><span className="text-sm">{label}</span><AssigneeSelect popoverClassName={concept ? "aic-owner-portal" : ""} clientId={clientId} label={label} showGuidance={!concept} value={form[key]} onChange={v=>put(key,v)} users={users}/></div>;
   const boolean=(label,value,onChange)=><Field label={label}><select className={SELECT} value={value===true?'yes':value===false?'no':''} onChange={e=>onChange(e.target.value===''?null:e.target.value==='yes')}><option value="">Not assessed</option><option value="yes">Yes</option><option value="no">No</option></select></Field>;

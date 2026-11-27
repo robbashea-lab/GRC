@@ -321,3 +321,24 @@ class AIGovernanceTests(ClientDashboardSourcesTests):
         self.assertEqual(current['related_links'],[valid])
         self.assertFalse(current['relationship_integrity_warning'])
         self.assertEqual(await server.db.ai_systems.find_one({'ai_system_id':aid}),before)
+
+    async def test_explicit_no_client_data_round_trips_and_does_not_reclassify_unanswered(self):
+        row = await self.create()
+        self.assertNotIn('no_client_data', row)
+        path = '/api/ai_systems/'+row['ai_system_id']
+        response = await self.client.patch(path, json={
+            'no_client_data': True, 'data_types': [], 'expected_updated_at': row['updated_at']})
+        self.assertEqual(response.status_code, 200, response.text)
+        saved = next(item for item in (await self.client.get('/api/ai_systems?client_id=a')).json()
+                     if item['ai_system_id'] == row['ai_system_id'])
+        self.assertIs(saved['no_client_data'], True)
+        self.assertEqual(saved['data_types'], [])
+        self.assertEqual(saved['screening'], row['screening'])
+        conflicting = await self.client.patch(path, json={
+            'no_client_data': True, 'data_types': ['Public'], 'expected_updated_at': saved['updated_at']})
+        self.assertEqual(conflicting.status_code, 422, conflicting.text)
+        updated = await self.client.patch(path, json={
+            'no_client_data': False, 'data_types': ['Public'], 'expected_updated_at': saved['updated_at']})
+        self.assertEqual(updated.status_code, 200, updated.text)
+        self.assertIs(updated.json()['no_client_data'], False)
+        self.assertEqual(updated.json()['data_types'], ['Public'])

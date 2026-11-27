@@ -1,4 +1,5 @@
 import {recordUuid} from '../lib/recordUuid';
+import {clientDestination} from '../lib/clientSelection';
 import {serviceFormFields} from '../preview/approvedV3Registers';
 import aiCatalog from '../lib/aiGovernanceCatalog.json';
 
@@ -83,10 +84,20 @@ function sourceFieldPatch(table,old,row,userIds,skipScores) {
         if(!canonical)throw Error('Choose a native AI data classification for “'+type+'” before saving.');
         return canonical;
       });
-      if(row.dataHandling.status==='none'&&types.length)throw Error('The AI data handling choices conflict.');
+      const none=row.dataHandling.status==='none';
+      if(none&&types.length)throw Error('The AI data handling choices conflict.');
+      if(none||old?.dataHandling?.status==='none')changes.no_client_data=none;
     }
   }
   return changes;
+}
+
+export function aiAssessmentDestination({records,clientId,sourceId},sourceKey) {
+  const client=records?.clients?.find(row=>row.client_id===clientId&&row.source_client_id===sourceId);
+  const matches=records?.ai_systems?.filter(row=>row.client_id===clientId&&
+    (row.source_record_id||row.ai_system_id)===sourceKey&&!row.archived&&!row.archived_at);
+  if(!client||matches?.length!==1||!matches[0].ai_system_id)scopeError();
+  return clientDestination(clientId,'/ai-governance?'+new URLSearchParams({ai_system_id:matches[0].ai_system_id}));
 }
 
 /** Persist the selected client's register edits using the native domain commands. */

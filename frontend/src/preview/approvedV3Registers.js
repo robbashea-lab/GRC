@@ -279,7 +279,9 @@ export function overlayApprovedV3Registers(state, nativeRecords, ctx) {
     const reviewId = workId(currentReview('ai_system_id',a.ai_system_id));
     const hasScreening = !!a.onboarding_screening || Object.values(a.screening || {}).some(value=>typeof value==='boolean');
     const tier = hasScreening ? label(a.risk_tier) : a.source_screening_tier || label(a.risk_tier);
-    return {name:a.name,prov:a.provider || '',purpose:a.description || '',tier:tier || 'Not assessed',
+    const types=Array.isArray(a.data_types)?a.data_types:[];
+    const dataHandling={status:types.length?'handled':a.no_client_data===true?'none':'unknown',types};
+    return {name:a.name,prov:a.provider || '',purpose:a.description || '',tier:tier || 'Not assessed',dataHandling,
       st:a.status==='retired'?'Retired':aiLabels[a.approval_status] || 'Approval not recorded',owner:displayOwner(a,a.owner_id,ctx),
       ...(a.approval_history?.length && {cond:a.approval_history.at(-1).note||''}),
       risk:risk?.display_id || null, rev:work.get(reviewId) || null};

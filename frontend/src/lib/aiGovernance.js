@@ -7,7 +7,7 @@ export function aiClientAvailable(client){
   return !!client?.client_id&&['active','onboarding'].includes(client.status)&&!client.archived&&!client.archived_at;
 }
 export const AI_RELATIONSHIP_NOTICE='Some stored AI relationships could not be read. Linked context may be incomplete. Existing data has been preserved; an authorized review is required.';
-export const AI_DEFAULTS={catalog_key:null,name:'',description:'',owner_id:null,technical_owner_id:null,provider:'',vendor_id:null,product_model:'',status:'draft',purposes:[],data_types:[],access:[],roles:[],risk_topics:[],screening:{},human_review_required:null,human_approval_required:null,oversight_owner_id:null,oversight_notes:'',governance_notes:''};
+export const AI_DEFAULTS={catalog_key:null,name:'',description:'',owner_id:null,technical_owner_id:null,provider:'',vendor_id:null,product_model:'',status:'draft',purposes:[],data_types:[],no_client_data:false,access:[],roles:[],risk_topics:[],screening:{},human_review_required:null,human_approval_required:null,oversight_owner_id:null,oversight_notes:'',governance_notes:''};
 export const AI_KEYS=Object.keys(AI_DEFAULTS);
 export function aiScreening(row){
   const onboarding=onboardingProjection(row);if(onboarding)return onboarding;
@@ -43,6 +43,8 @@ export function validateAI(db,row,existing){
   if(existing?.status==='retired')throw new Error('Retired AI records remain historical');
   if(!catalog.statuses.includes(row.status))throw new Error('Invalid status');
   for(const key of ['purposes','data_types','access','roles','risk_topics'])if(!Array.isArray(row[key])||row[key].some(v=>!catalog[key].includes(v)))throw new Error('Invalid '+key);
+  if(row.no_client_data!==undefined&&(typeof row.no_client_data!=='boolean'||row.no_client_data&&row.data_types.length))
+    throw new Error('Select No client data by itself or identify the data the system handles');
   for(const [key,value] of Object.entries(row.screening||{}))if(!catalog.questions.some(q=>q.key===key)||(value!==null&&typeof value!=='boolean'))throw new Error('Invalid screening answer');
   if(row.vendor_id&&!db.vendors.some(v=>v.vendor_id===row.vendor_id&&v.client_id===row.client_id))throw new Error('Vendor must belong to this client');
 }

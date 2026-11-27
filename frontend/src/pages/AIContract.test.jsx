@@ -188,3 +188,25 @@ test('a historical relationship integrity notice is visible in register and draw
  expect(drawer.textContent).toContain(AI_RELATIONSHIP_NOTICE);
  expect(post).not.toHaveBeenCalled();expect(patch).not.toHaveBeenCalled();
 });
+
+test('the scoped assessment link opens the exact native record and retains an authorized conditional decision on reopening',async()=>{
+ const row=(await api.post('/ai_systems',{client_id:mockClient,name:'Synthetic scoped AI assessment',description:'Public content drafting',
+   environment:'Managed test account',restrictions:'Human review before use',permitted_data_types:['Public']})).data;
+ const scoped='/ai-governance?'+new URLSearchParams({client_id:mockClient,ai_system_id:row.ai_system_id});
+ try{
+   window.history.replaceState(null,'',scoped);
+   await act(async()=>root.render(<AIGovernance/>));
+   expect(document.querySelector('[data-testid="ai-drawer"]').textContent).toContain(row.name);
+   await click(buttons('Oversight & Review')[0]);
+   await input('Decision','approved_with_conditions');
+   await input('Decision rationale','Synthetic human approval required.');
+   await click(buttons('Record Decision')[0]);
+   const saved=(await mine()).find(record=>record.ai_system_id===row.ai_system_id);
+   expect(saved.approval_status).toBe('approved_with_conditions');
+   expect(saved.approval_history).toEqual([expect.objectContaining({note:'Synthetic human approval required.',
+     scope:expect.objectContaining({environment:'Managed test account',restrictions:'Human review before use',permitted_data_types:['Public']})})]);
+   await act(async()=>root.render(null));
+   await act(async()=>root.render(<AIGovernance/>));
+   expect(document.querySelector('[data-testid="ai-drawer"]').textContent).toContain('Approved with Conditions');
+ }finally{window.history.replaceState(null,'','/');}
+});

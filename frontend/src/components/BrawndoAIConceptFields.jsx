@@ -33,6 +33,7 @@ export default function BrawndoAIConceptFields({form,put,current,id,template,scr
       </div>
       <Field label="Documented use"><textarea value={form.description||''} onChange={event=>put('description',event.target.value)}/></Field>
       <Chips label="Used for" values={catalog.purposes} selected={form.purposes} onChange={value=>put('purposes',value)}/>
+      <label><input type="checkbox" checked={!!form.no_client_data} onChange={event=>put('no_client_data',event.target.checked)}/>No client data</label>
       <Chips label="Data it can see" values={catalog.data_types} selected={form.data_types} onChange={value=>put('data_types',value)}/>
       <Chips label="Permitted data" values={catalog.data_types} selected={form.permitted_data_types} onChange={value=>put('permitted_data_types',value)}/>
       <Chips label="Access" values={catalog.access} selected={form.access} onChange={value=>put('access',value)}/>
