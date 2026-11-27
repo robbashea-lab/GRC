@@ -706,6 +706,7 @@ window.GoverNaraNativePage=(function(){
     },options);
   };
   function busy(){return editing||!!(callbacks&&callbacks.busy());}
+  var adminClicks=new WeakMap();
   document.addEventListener('click',function(event){
     var el=event.target.closest?.('[data-action]');if(!callbacks||!el)return;
     // Direct dialogs do not use formDlg (for example client access and setup).
@@ -740,17 +741,22 @@ window.GoverNaraNativePage=(function(){
     if(['save-account','save-role','save-access','u-enable','do-disable'].includes(action)&&!identity){
       event.preventDefault();event.stopImmediatePropagation();originalToast('This person is a reference record. Open a platform account in Users & Access.');return;
     }
-    var previous=JSON.stringify([ACCT,USERS]);editing=true;
-    // A trusted click can checkpoint microtasks between capture and the
-    // source's delegated handler. Wait until the complete click has run.
-    window.setTimeout(function(){
-      editing=false;
-      if(previous!==JSON.stringify([ACCT,USERS])){
-        callbacks.command('adminAction',[action,identity||'']);
-        callbacks.persist(connectedClone(connectedState()),null);
-      }else if(pendingMessage){originalToast(pendingMessage);pendingMessage='';}
-    },0);
+    adminClicks.set(event,{action:action,identity:identity||'',previous:JSON.stringify([ACCT,USERS])});
+    editing=true;
   },true);
+  // The reference page registers its delegated handlers first. Observe the
+  // same click after those handlers, including when the browser runs a
+  // microtask between listeners.
+  document.addEventListener('click',function(event){
+    var edit=adminClicks.get(event);
+    if(!edit)return;
+    adminClicks.delete(event);
+    editing=false;
+    if(edit.previous!==JSON.stringify([ACCT,USERS])){
+      callbacks.command('adminAction',[edit.action,edit.identity]);
+      callbacks.persist(connectedClone(connectedState()),null);
+    }else if(pendingMessage){originalToast(pendingMessage);pendingMessage='';}
+  });
   function bindCommands(){
     ["setReviewDescription","rescheduleReview","completeReview","saveRecordSchedule",
      "closeRisk","completeAction","validateFinding","savePolicyApproval","retireAI","offboardVendor"]

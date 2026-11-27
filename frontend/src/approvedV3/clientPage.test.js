@@ -50,7 +50,7 @@ test('a freshly loaded native client gets empty approved registers, exact select
   }finally{dom.window.close();}
 });
 
-test('the approved user dialog captures an explicit role change for the actual account and blocks reference-person edits',async()=>{
+test('the approved user dialog captures an explicit role change for the actual account and blocks reference-person edits',()=>{
   const dom=openApprovedPage();
   try{
     const {document,GoverNaraNativePage:page}=dom.window,state=page.snapshot();
@@ -67,17 +67,16 @@ test('the approved user dialog captures an explicit role change for the actual a
     const field=document.getElementById('ur-role');
     expect(field).toBeTruthy();field.value='cmgr';
     document.querySelector('[data-action="save-role"]').click();
-    await new Promise(resolve=>dom.window.setTimeout(resolve,0));
     expect(command).toHaveBeenCalledWith('adminAction',['save-role','actual-writer']);
     expect(persist.mock.calls.at(-1)[0].users.find(u=>u.nativeUserId==='actual-writer').role).toBe('cmgr');
     const calls=command.mock.calls.length;
-    click('save-role',0);await new Promise(resolve=>dom.window.setTimeout(resolve,0));
+    click('save-role',0);
     expect(command).toHaveBeenCalledTimes(calls);
     expect(page.snapshot().users[0].role).toBe('owner');
   }finally{dom.window.close();}
 });
 
-test('an invitation retains its explicit account action when a browser checks microtasks during dispatch',async()=>{
+test('an invitation retains its explicit account action when a browser checks microtasks during dispatch',()=>{
   const dom=openApprovedPage();
   try {
     const {document,GoverNaraNativePage:page}=dom.window;
@@ -91,7 +90,7 @@ test('an invitation retains its explicit account action when a browser checks mi
     document.getElementById('nu-name').value='Synthetic QA invite';
     document.getElementById('nu-email').value='synthetic-qa@example.test';
     document.querySelector('[data-action="save-user"]').click();
-    await new Promise(resolve=>dom.window.setTimeout(resolve,0));
+    expect(command).toHaveBeenCalledTimes(1);
     expect(command).toHaveBeenCalledWith('adminAction',['save-user','synthetic-qa@example.test']);
     expect(persist.mock.calls.at(-1)[0].users.find(user=>user.email==='synthetic-qa@example.test')).toMatchObject({
       status:'Invited',role:'cread',clients:[]
