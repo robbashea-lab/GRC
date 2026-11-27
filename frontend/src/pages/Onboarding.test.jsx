@@ -3,13 +3,14 @@ import {createRoot} from 'react-dom/client';
 import Onboarding from './Onboarding';
 import api from '@/lib/api';
 import catalog from '@catalogs/onboardingCatalog.json';
+import {sharedFrameworkPlans} from '@/lib/frameworks';
 let mockState,mockRole;
 jest.mock('@/context/OrgContext',()=>({useOrg:()=>({currentClientId:'a',currentClient:{name:'Northstar'}})}));
 jest.mock('@/context/AuthContext',()=>({useAuth:()=>({user:{user_id:'admin',role:mockRole}})}));
 jest.mock('@/context/ComplianceContext',()=>({useCompliance:()=>({refresh:jest.fn()})}));
 jest.mock('@/components/AIIntake',()=>()=>null);
 jest.mock('@/lib/api',()=>({__esModule:true,default:{get:jest.fn(),post:jest.fn()},formatError:e=>e.message}));
-jest.mock('react-router-dom',()=>({Link:({to,children,...props})=><a href={to} {...props}>{children}</a>}),{virtual:true});
+jest.mock('react-router-dom',()=>({useLocation:()=>({pathname:'/client-profile',search:''}),Link:({to,children,...props})=><a href={to} {...props}>{children}</a>}),{virtual:true});
 let root,container;
 const button=text=>Array.from(container.querySelectorAll('button')).find(b=>b.textContent===text);
 beforeEach(()=>{
@@ -70,7 +71,9 @@ test('successful completion becomes a read-only baseline and operational handoff
   expect(container.querySelector('[data-testid="onboarding-handoff"]')).toBeTruthy();
   expect(button('Complete onboarding')).toBeUndefined();
   expect(container.textContent).toContain('View onboarding baseline');
-  expect(container.querySelector('a[href="/dashboard"]')).toBeTruthy();
+  expect(container.querySelector('a[href="/dashboard?client_id=a"]')).toBeTruthy();
+  expect(container.querySelector('a[href="/client-profile?tab=services&client_id=a"]')?.textContent).toBe('Set up services & tools');
+  expect(container.querySelector('a[href="/iv-setup?client_id=a"]')?.textContent).toBe('Open iVenture Setup');
 });
 
 test('entered first due date remains visible and reaches draft and final submission',async()=>{
@@ -119,4 +122,22 @@ test('failed progress saves do not lock the form as an uncertain completion and 
   expect(api.post.mock.calls[3][1]).toMatchObject({finalize:true});
   expect(api.post.mock.calls[3][2].headers['Idempotency-Key']).toBeTruthy();
   expect(container.querySelector('[data-testid="onboarding-handoff"]')).toBeTruthy();
+});
+
+test('an existing native Review link keeps the current client and exact retained record without saving intake',async()=>{
+  mockState={...mockState,step:2,requirements:{'cis-ig1':'applies'},framework_settings:{'cis-ig1':{implementation_group:1}}};
+  const plan=sharedFrameworkPlans(mockState)[0];expect(plan).toBeDefined();
+  const review={client_id:'a',review_id:'synthetic-review:retained',title:plan.title,framework_plan_key:plan.key,
+    recurrence:'quarterly',due_date:'2099-01-01',status:'not_started'};
+  const before=JSON.stringify({state:mockState,review}),nativeRead=api.get.getMockImplementation();
+  api.get.mockImplementation(async(path,options)=>{
+    const response=await nativeRead(path,options);
+    return path==='/onboarding/handoff'?{data:{...response.data,records:{...response.data.records,reviews:[review]}}}:response;
+  });
+  await act(async()=>root.render(<Onboarding/>));
+  const link=[...container.querySelectorAll('a')].find(node=>node.textContent==='Manage in Reviews');
+  expect(link).toBeTruthy();const url=new URL(link.href);
+  expect(url.pathname).toBe('/reviews');expect(url.searchParams.get('client_id')).toBe('a');
+  expect(url.searchParams.get('open')).toBe(review.review_id);
+  expect(JSON.stringify({state:mockState,review})).toBe(before);expect(api.post).not.toHaveBeenCalled();
 });

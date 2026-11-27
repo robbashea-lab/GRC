@@ -6,9 +6,11 @@ from unittest.mock import patch
 
 from test_client_dashboard_sources import ClientDashboardSourcesTests as Harness, server
 from test_soc_framework import SocTests
+from r4_fixture_inputs import validate_with_independent_actor
 
 
 class OperatingModelTests(unittest.IsolatedAsyncioTestCase):
+    r4_valid_completion_fixture = True
     asyncSetUp = Harness.asyncSetUp
     sign_in = Harness.sign_in
 
@@ -79,7 +81,11 @@ class OperatingModelTests(unittest.IsolatedAsyncioTestCase):
                 self.assertEqual(len(related[kind]), 1)
         await self.ok('PATCH', '/tasks/' + action['task_id'], json={'status': 'done'})
         self.assertEqual((await self.ok('GET', '/findings/' + finding['finding_id']))['status'], 'remediated')
-        await self.ok('POST', '/findings/' + finding['finding_id'] + '/validate', json={'rationale': 'Validated fictional MFA coverage'})
+        ready = await server.db.findings.find_one({'finding_id': finding['finding_id']})
+        await validate_with_independent_actor(self, server, finding['finding_id'], {
+            'rationale': 'Validated fictional MFA coverage',
+            'request_id': 'operating-mfa-validation-' + finding['finding_id'],
+            'expected_updated_at': ready.get('updated_at')})
         for assessment in selected:
             saved = await self.ok('GET', '/framework_assessments/' + assessment['framework_assessment_id'])
             self.assertEqual(saved['status'], 'not_assessed')

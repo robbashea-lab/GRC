@@ -15,6 +15,7 @@ import json
 import os
 import random
 import unittest
+from r4_fixture_inputs import validate_with_independent_actor
 from datetime import date as REAL_DATE, datetime as REAL_DATETIME, time, timedelta, timezone
 from unittest.mock import patch
 
@@ -70,6 +71,8 @@ def add_days(value, n):
 
 
 class TenYearOperationTests(unittest.IsolatedAsyncioTestCase):
+    # Synthetic positive completions answer the actual current native Guide.
+    r4_valid_completion_fixture = True
     asyncSetUp_harness = Harness.asyncSetUp
 
     async def asyncSetUp(self):
@@ -319,7 +322,10 @@ class TenYearOperationTests(unittest.IsolatedAsyncioTestCase):
             self.validation_plans.setdefault(finding['finding_id'], add_days(self.today, 7 * self.rng.randint(1, 6)))
             if self.validation_plans[finding['finding_id']] > self.today:
                 continue
-            saved = await self.call('POST', f"/findings/{finding['finding_id']}/validate", json={'rationale': f'Validated {self.today}'}, label='validate')
+            response = await validate_with_independent_actor(self, server, finding['finding_id'], {
+                'rationale': f'Validated {self.today}', 'expected_updated_at': finding.get('updated_at'),
+                'request_id': 'synthetic-validate-' + finding['finding_id'] + '-' + self.today})
+            saved = response.json()
             if saved:
                 self.counts['validated'] += 1
                 self.ledger['decisions']['finding:' + finding['finding_id']] = list(saved.get('decision_history') or [])

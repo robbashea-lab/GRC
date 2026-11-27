@@ -6,8 +6,9 @@ import review_occurrences
 CLOSED = {'closed', 'retired'}
 CADENCES = {'none','monthly','quarterly','semiannual','annual','custom'}
 CLOSURE_REASONS = {'remediated','no_longer_applicable','system_process_retired','condition_removed','other'}
-ASSESSMENT_FIELDS = ('likelihood_score','impact_score','risk_score','risk_level','assessment_rationale',
-                     'likelihood_rationale','impact_rationale','treatment','notes','status',
+REVIEW_ASSESSMENT_FIELDS = ('likelihood_score','impact_score','risk_score','risk_level','assessment_rationale',
+                          'likelihood_rationale','impact_rationale','treatment','notes')
+ASSESSMENT_FIELDS = (*REVIEW_ASSESSMENT_FIELDS, 'status',
                      'acceptance_rationale','acceptance_expires_at','accepted_by','acceptance_date')
 
 
@@ -40,8 +41,8 @@ def validate_schedule(risk):
         raise HTTPException(422, 'Invalid Risk review cadence')
     if cadence == 'custom':
         days = risk.get('custom_recurrence_days')
-        if type(days) is not int or not 1 <= days <= 3650:
-            raise HTTPException(422, 'Custom cadence requires 1–3650 days')
+        if type(days) is not int or not 1 <= days <= 3660:
+            raise HTTPException(422, 'Custom cadence requires 1–3660 days')
     if risk.get('next_review') and not review_occurrences.scheduled_date(risk['next_review']):
         raise HTTPException(422, 'Invalid next review date')
 
@@ -99,8 +100,20 @@ Risk mutations reconcile this projection before editing, under the same lease.
     if not history:
         return
     latest = history[-1]
-    fields = {**latest['risk_after'], 'last_reviewed':latest['completed_at'],
+    # A Review records an assessment; it cannot restore a governance decision from history.
+    assessment = {key: value for key, value in latest['risk_after'].items() if key in REVIEW_ASSESSMENT_FIELDS}
+    fields = {**assessment, 'last_reviewed':latest['completed_at'],
               'next_review':review.get('due_date') if review.get('status') not in ('completed','cancelled') else None,
               'review_sync_occurrence_id':latest['occurrence_id'], 'updated_at':latest['completed_at']}
-    await db.risks.update_one({'risk_id':review['risk_id'],'client_id':review['client_id'],
-        'review_sync_occurrence_id':{'$ne':latest['occurrence_id']}}, {'$set':fields})
+    old = await db.risks.find_one({'risk_id': review['risk_id'], 'client_id': review['client_id']})
+    if not old or old.get('review_sync_occurrence_id') == latest['occurrence_id']:
+        return
+    from server import _portfolio_event_patch
+    actor = {'user_id': latest.get('completed_by'), 'name': latest.get('completed_by_name')}
+    capture, _event = _portfolio_event_patch('risks', review['risk_id'], review['client_id'], actor,
+        old, {**old, **fields}, latest['completed_at'])
+    fields.update(capture)
+    result = await db.risks.update_one({'risk_id':review['risk_id'],'client_id':review['client_id'],
+        'review_sync_occurrence_id':old.get('review_sync_occurrence_id'), 'updated_at':old.get('updated_at')}, {'$set':fields})
+    if not result.matched_count:
+        raise HTTPException(409, 'Risk changed during Review projection; retry to finish synchronization')

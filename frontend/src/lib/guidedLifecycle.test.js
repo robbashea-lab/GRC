@@ -1,7 +1,8 @@
 import {describeGuidedContext, prioritizeGuidedLifecycle, recordedDate} from './guidedLifecycle';
+import {rankProgramRows} from './programTriage';
 
 const work = extra => ({context_complete: true, finding_ids: [], review_ids: [], action_ids: [], open_findings: 0, open_actions: 0, overdue_reviews: 0, overdue_actions: 0, next_review_due: null, ...extra});
-const row = (id, extra = {}) => ({definition_id: id, client_id: 'client-a', framework_assessment_id: `assessment-${id}`, status: 'addressed', verification: 'verified', work: work(), ...extra});
+const row = (id, extra = {}) => ({definition_id: id, framework_key:'cis-ig1', client_id: 'client-a', framework_assessment_id: `assessment-${id}`, status: 'addressed', verification: 'verified', work: work(), ...extra});
 const fingerprint = 'a'.repeat(64);
 const draft = extra => ({client_id: 'client-a', assessment_id: 'assessment-1.1', user_id: 'actor-a', revision: 3, version: 'original-version', step: 2, completed: false, answers: {practice: 'Partially'}, base_assessment_token: '2026-09-01T12:00:00Z', base_scope_fingerprint: fingerprint, current_scope_fingerprint: fingerprint, lineage_known: true, lineage_stale: false, ...extra});
 const context = extra => ({record: row('1.1', {last_assessed: '2026-09-01T12:00:00Z', assessment_history: []}), draft: null, draftLoaded: true, workLoaded: true, historyComplete: true, supportedVersions: ['original-version'], expectedIdentity: {client_id: 'client-a', assessment_id: 'assessment-1.1', user_id: 'actor-a'}, ...extra});
@@ -24,10 +25,10 @@ test('routine native actions stay in the final work bucket even with Immediate p
   const result = prioritizeGuidedLifecycle([
     row('1.1', {work: work({open_actions: 1, task_ids: ['routine'], priority_records: [{kind: 'tasks', id: 'routine', open_gap: false, priority: 'immediate'}]})}),
     row('1.2', {status: 'not_assessed'}), row('1.3', {status: 'needs_attention'}), row('1.4', {status: 'in_progress'}),
-    row('1.5', {work: work({open_actions: 1, task_ids: ['gap-task'], priority_records: [{kind: 'tasks', id: 'gap-task', open_gap: true, priority: 'low'}]})}),
-    row('1.6', {work: work({next_review_due: '2026-10-08'})})
+    row('1.5', {items_to_address:[{item_id:'gap-item',kind:'gap',state:'open',question_id:'tool',source_version:'cis-v8.1-control1-5'}],work: work({open_actions: 1, task_ids: ['gap-task'], priority_records: [{kind: 'tasks', id: 'gap-task', open_gap: true, priority: 'low'}]})}),
+    row('2.1', {work: work({next_review_due: '2026-10-08'})})
   ], {contextComplete: true, limit: 10});
-  expect(result.recommendations.map(r => r.definition_id)).toEqual(['1.2', '1.3', '1.4', '1.5', '1.1', '1.6']);
+  expect(result.recommendations.map(r => r.definition_id)).toEqual(['1.2', '1.5', '1.3', '1.4', '2.1', '1.1']);
   const routine = result.recommendations.find(r => r.definition_id === '1.1');
   expect(routine).toMatchObject({rank: 3, reasonCode: 'verification_or_review', reason: 'Linked native Action Item remains open.', action: 'findings'});
   expect(routine.signals.hasOpenGapAction).toBe(false);
@@ -55,7 +56,7 @@ test('complete scope counts deduplicate safeguards and shared native work IDs', 
   const a = row('13.10', {status: 'not_assessed', work: work({finding_ids: ['f-a', 'f-a'], review_ids: ['r-a'], action_ids: ['t-a'], open_findings: 1, open_actions: 1})});
   const b = row('13.9', {status: 'not_assessed', work: work({finding_ids: ['f-a', 'f-b'], review_ids: ['r-a'], action_ids: ['t-a', 't-b'], open_findings: 2, open_actions: 2})});
   const result = prioritizeGuidedLifecycle([a, b, a, row('18.5', {in_active_scope: false})], {contextComplete: true});
-  expect(result.recommendations.map(r => r.definition_id)).toEqual(['13.9', '13.10']);
+  expect(result.recommendations.map(r => r.definition_id)).toEqual(['13.10', '13.9']);
   expect(result.counts).toMatchObject({safeguards: 2, notAssessed: 2, openFindings: 2, linkedReviews: 1, openActions: 2});
 });
 
@@ -87,19 +88,33 @@ test('verification and actual scheduled Reviews qualify; cadence and narrative d
     row('1.3', {cadence: 'annual', implementation: 'Annual review should be in December.'}),
     row('1.4')
   ], {contextComplete: true});
-  expect(result.recommendations.map(r => r.definition_id)).toEqual(['1.1', '1.2']);
-  expect(result.recommendations[1].signals.nextReview).toBe('2030-04-01');
+  expect(result.recommendations.map(r => r.definition_id)).toEqual(['1.2', '1.1']);
+  expect(result.recommendations[0].signals.nextReview).toBe('2030-04-01');
 });
 
 test('an unresolved Finding remains visible alongside a verified implementation position', () => {
   const record = row('1.1', {work: work({finding_ids: ['f-a'], open_findings: 1})});
   const priority = prioritizeGuidedLifecycle([record], {contextComplete: true});
-  expect(priority.recommendations[0]).toMatchObject({reasonCode: 'partial_or_unresolved', action: 'findings'});
+  expect(priority.recommendations[0]).toMatchObject({reasonCode: 'verification_or_review', action: 'findings'});
   const result = describeGuidedContext(context({record}));
   expect(result.saved.status).toBe('addressed');
   expect(result.saved.verification).toBe('verified');
   expect(result.actions).toContain('findings');
   expect(result.summary).toContain('1 open Finding remains');
+});
+
+test.each([['open','accepted'],['closed','assessed']])('the exact unresolved gap retains active Risk severity with Finding %s and Risk %s', (findingStatus,riskStatus) => {
+  const record=row('1.2',{status:'in_progress',items_to_address:[{item_id:'native-gap',finding_id:'gap-finding',question_id:'process',kind:'gap',state:'open',source_version:'cis-v8.1-control1-5'}],work:work({priority_records:[
+    {kind:'findings',id:'gap-finding',status:findingStatus,severity:'low',risk_id:'gap-risk',assessment_item_id:'native-gap',framework_assessment_id:'assessment-1.2',client_id:'client-a'},
+    {kind:'risks',id:'gap-risk',status:riskStatus,risk_level:'critical',client_id:'client-a'}]})});
+  expect(rankProgramRows([record])[0].triage).toMatchObject({priority:4,basis:'linked_native_severity'});
+  expect(prioritizeGuidedLifecycle([row('1.1',{status:'needs_attention'}),record],{contextComplete:true}).recommendations.map(r=>r.definition_id)).toEqual(['1.2','1.1']);
+  record.work.priority_records[0].status='open'; record.work.priority_records[1].status='closed';
+  expect(rankProgramRows([record])[0].triage.priority).toBe(1);
+  record.work.priority_records[1].status='assessed'; record.work.priority_records[1].client_id='foreign-client';
+  expect(rankProgramRows([record])[0].triage.priority).toBe(1);
+  record.work.priority_records[0].assessment_item_id='unrelated-gap';
+  expect(rankProgramRows([record])[0].triage.basis).toBe('reviewed_default');
 });
 
 test('tasks-only work remains visible and exposes native linked-record navigation', () => {

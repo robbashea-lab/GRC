@@ -1,10 +1,14 @@
 // DEMO — SYNTHETIC DATA. Program records are created through product APIs.
 import axios from 'axios';
 import {previewAdapter} from './commandTestAdapter';
-import {STORE_KEY} from './store';
+import {STORE_KEY,readStore,saveStore} from './store';
+import {readPortfolioStore} from './portfolioReporting';
 import baseline from '@catalogs/onboardingCatalog.json';
 import {CATALOGS,FRAMEWORKS,activeDefinitions} from '../lib/frameworks';
-import {reviewSchedule} from '../lib/reviewOccurrences';
+import {belongsToOccurrence,reviewSchedule} from '../lib/reviewOccurrences';
+import {assuranceStatus} from '../lib/vendorGovernance';
+import {currentReviewCompletion} from '../testUtils/r4ReviewFixture';
+import {recordUuid} from '../lib/recordUuid';
 
 const api=axios.create({adapter:previewAdapter});
 const {setImmediate:yieldLoop}=jest.requireActual('timers');
@@ -12,14 +16,79 @@ const get=async(path,cid,params={})=>(await api.get(path,{params:{client_id:cid,
 async function write(method,path,body){const r=await api[method](path,body);jest.runOnlyPendingTimers();await new Promise(resolve=>yieldLoop(resolve));return r.data;}
 const post=(p,b)=>write('post',p,b),patch=(p,b)=>write('patch',p,b);
 const clock=day=>jest.setSystemTime(new Date(day.slice(0,10)+'T14:00:00Z'));
-const db=()=>JSON.parse(sessionStorage.getItem(STORE_KEY));
+const db=()=>readPortfolioStore(sessionStorage.getItem(STORE_KEY));
 const copy=x=>JSON.parse(JSON.stringify(x));
 const count=(rows,key)=>rows.reduce((out,r)=>(out[r[key]||'not_recorded']=(out[r[key]||'not_recorded']||0)+1,out),{});
 const report={};
+async function completionFor(review,{completionNotes,evidenceId,gapOwnerId}={}){
+ const policy=review.policy_id?await get('/policies/'+review.policy_id):null;
+ const vendor=review.vendor_id?await get('/vendors/'+review.vendor_id):null;
+ const risk=review.risk_id?await get('/risks/'+review.risk_id):null;
+ const approvalGap=policy&&policy.status!=='approved';
+ const assuranceGaps=(vendor?.assurance_records||[]).filter(item=>['missing','expired'].includes(assuranceStatus(vendor,item)));
+ const findings=(await get('/findings',review.client_id)).filter(f=>f.client_id===review.client_id&&f.review_id===review.review_id&&belongsToOccurrence(f,review));
+ const gaps=[
+  approvalGap&&{key:'policy-approval',title:'Synthetic policy approval remains outstanding',
+   description:'The linked native Policy '+policy.policy_id+' remains '+policy.status+'; this recurrence walkthrough does not approve it.',remediation_title:'Obtain a separate Policy approval decision'},
+  assuranceGaps.length&&{key:'vendor-assurance',title:'Synthetic required supplier assurance remains outstanding',
+   description:'The linked native Vendor '+vendor.vendor_id+' has missing or expired required assurance: '+assuranceGaps.map(item=>item.type).join(', ')+'. Review sample files do not establish Vendor assurance.',remediation_title:'Obtain current required supplier assurance'}
+ ].filter(Boolean);
+ for(const gap of gaps){
+  if(findings.some(f=>f.title===gap.title))continue;
+  const {key,...fields}=gap;
+  const path='/reviews/'+review.review_id+'/create-finding';
+  const body={...fields,occurrence_id:review.current_occurrence_id,request_id:'greenfield-'+key+'-'+review.current_occurrence_id,severity:'medium'};
+  const candidates=await get('/clients/'+review.client_id+'/assignees',null,{limit:50});
+  expect(candidates.items.map(candidate=>candidate.user_id)).toContain(gapOwnerId);
+  const sourceOwner=readStore().users.find(user=>user.user_id===review.owner_id);
+  if(sourceOwner?.status==='disabled'){
+   for(const explicitOwner of [false,true]){
+    const invalid={...body,request_id:recordUuid(),...(explicitOwner?{owner_id:sourceOwner.user_id}:{})};
+    const before=sessionStorage.getItem(STORE_KEY);
+    await expect(post(path,invalid)).rejects.toThrow('Choose an active platform user with access to this client');
+    expect(sessionStorage.getItem(STORE_KEY)).toBe(before);
+    report.disabledSourceOwnerRejections++;
+   }
+  }
+  // These actual source gaps stay separate from the original corrective scenario slices.
+  const finding=await post(path,{...body,owner_id:gapOwnerId});
+  expect(finding).toMatchObject({client_id:review.client_id,review_id:review.review_id,occurrence_id:review.current_occurrence_id,title:gap.title,owner_id:gapOwnerId});
+  expect((await get('/reviews/'+review.review_id)).owner_id).toBe(review.owner_id);
+  findings.push(finding);
+ }
+ const gapReference=findings.map(f=>f.finding_id+': '+f.title).join('; ');
+ const command=await currentReviewCompletion(api,review.review_id,{
+  expectedOccurrenceId:review.current_occurrence_id,completionNotes,
+  supportingReference:'DEMO synthetic native record/recurrence walkthrough for Review '+review.review_id+' occurrence '+review.current_occurrence_id+'. '
+   +(evidenceId?'Current synthetic sample '+evidenceId+'. ':'')+(gapReference?'Native current-occurrence Findings: '+gapReference+'. ':'')
+   +'No external technical execution, interview, assurance report analysis or audit opinion is asserted.',
+  resultForStep:(step,{guide,review:current})=>{
+   const answer=(result,reason)=>({step_id:step.step_id,result,reason});
+   if(guide.template_id==='policy_rec'&&step.support==='Approved version'&&approvalGap)
+    return answer('Exception','The actual linked Policy '+policy.policy_id+' is '+policy.status+'; retain its current-occurrence approval Finding.');
+   if(['vendor_rec','assure_rec'].includes(guide.template_id)&&step.support==='Assurance document'&&assuranceGaps.length)
+    return answer('Exception','Required assurance for Vendor '+vendor.vendor_id+' is missing or expired; retain its current-occurrence assurance Finding.');
+   if(guide.template_id==='risk_rec'){
+    switch(step.support){
+     case 'Updated risk record':return answer('N/A','Native Risk '+risk.risk_id+' was read, but this synthetic recurrence case does not independently confirm real-world relevance or description accuracy.');
+     case 'Rating change':return answer('N/A','The saved native likelihood '+risk.likelihood_score+' and impact '+risk.impact_score+' are retained; no new risk assessment is performed here.');
+     case 'Action status':return answer('N/A','This case does not independently verify treatment effectiveness or complete corrective work through Review completion.');
+     case 'Approver and date':return answer('N/A','This occurrence makes no new acceptance or closure decision; the separate native Risk decisions remain authoritative.');
+     case 'Next review':return answer('Pass','The native scheduled successor '+current.next_review_date+' is inspected and the anchored date is asserted after completion.');
+     default:throw new Error('Unmodeled synthetic Risk checklist step: '+step.support);
+    }
+   }
+   return answer('N/A','This synthetic native lifecycle case does not perform the external operational check or business decision: '+step.text);
+  }
+ });
+ if(findings.length)command.outcome='Exceptions noted';
+ return command;
+}
 beforeEach(async()=>{jest.useFakeTimers({doNotFake:['performance','nextTick','queueMicrotask']});clock('2026-09-30');sessionStorage.clear();localStorage.clear();await post('/demo/enter');});
 afterEach(()=>jest.useRealTimers());
 
 test('greenfield CIS-only intake retains 24 months of authoritative operations',async()=>{
+ report.disabledSourceOwnerRejections=0;
  const catalog=CATALOGS['cis-ig1'];
  const before=db(),foreign=Object.fromEntries(['reviews','policies','findings','tasks','risks','vendors','framework_assessments'].map(k=>[k,copy(before[k])]));
  const client=await post('/clients',{name:'CIS Lifecycle QA — 24 Month Automation',industry:'Synthetic business services'}),cid=client.client_id;
@@ -47,6 +116,8 @@ test('greenfield CIS-only intake retains 24 months of authoritative operations',
  // Isolated account fixtures only: Demo cannot accept invitations. No program data inserted.
  const accountStore=db();
  accountStore.users.push(...['a','b'].map(s=>({user_id:'cis_qa_owner_'+s,name:'Synthetic Operator '+s,email:s+'@cis-qa.example.test',role:'client_contributor',status:'active',client_ids:[cid]})));
+  const validator={user_id:'cis_qa_independent_validator',name:'Synthetic independent validator',email:'validator@cis-qa.example.test',role:'platform_admin',status:'active',client_ids:[cid]};
+  accountStore.users.push(validator);
  sessionStorage.setItem(STORE_KEY,JSON.stringify(accountStore));
  const owner='cis_qa_owner_a',nextOwner='cis_qa_owner_b';
  for(const r of reviews)await patch('/reviews/'+r.review_id,{owner_id:owner,expected_occurrence_id:r.current_occurrence_id});
@@ -89,7 +160,21 @@ test('greenfield CIS-only intake retains 24 months of authoritative operations',
  const policy=policies.find(p=>p.baseline_key==='policy-information-security-policy');
  const policyReview=await post('/reviews',{client_id:cid,title:'Synthetic annual information-security policy review',review_type:'policy',policy_id:policy.policy_id,recurrence:'annual',due_date:'2026-12-31',owner_id:owner});
  const histories=new Map(),timeline=[];
- async function remediate(fid){const tasks=(await get('/tasks',cid)).filter(t=>t.finding_id===fid);for(const t of tasks)await patch('/tasks/'+t.task_id,{status:'done'});expect((await get('/findings/'+fid)).status).toBe('remediated');await post('/findings/'+fid+'/validate',{rationale:'SYNTHETIC: independent sampling confirmed corrective operation.'});}
+  async function remediate(fid){
+   const worker=readStore().user,tasks=(await get('/tasks',cid)).filter(t=>t.finding_id===fid);
+   for(const t of tasks){
+    expect(t.assignee_id).not.toBe(validator.user_id);
+    await patch('/tasks/'+t.task_id,{status:'done'});
+    expect((await get('/tasks/'+t.task_id)).completed_by).toBe(worker.user_id);
+   }
+   const ready=await get('/findings/'+fid);expect(ready.status).toBe('remediated');
+   const requestId=recordUuid();
+   const identities=readStore();identities.user=validator;saveStore(identities);
+   try{
+    await post('/findings/'+fid+'/validate',{request_id:requestId,expected_updated_at:ready.updated_at,rationale:'SYNTHETIC: independent sampling confirmed corrective operation.'});
+   }finally{const current=readStore();current.user=worker;saveStore(current);}
+   expect((await get('/findings/'+fid)).validated_by).toBe(validator.user_id);
+  }
  for(let month=1;month<=24;month++){
   const day=new Date(Date.UTC(2026,9+month,0)).toISOString().slice(0,10);clock(day);
   let executions=0;
@@ -100,7 +185,7 @@ test('greenfield CIS-only intake retains 24 months of authoritative operations',
    if(month===3&&[policyReview.review_id,...(await get('/reviews',cid)).filter(x=>x.vendor_id===vendor.vendor_id&&x.vendor_purpose==='vendor').map(x=>x.review_id)].includes(r.review_id)){
     const f=await post('/reviews/'+r.review_id+'/create-finding',{occurrence_id:r.current_occurrence_id,request_id:'cycle-gap-'+r.review_id,title:'Current documentation omits the changed support process',description:'SYNTHETIC: update the operating record and sample it independently.',remediation_title:'Update support-process documentation and verify it',severity:'medium',due_date:'2027-02-28'});findingIds.push(f.finding_id);
    }
-   const body={occurrence_id:r.current_occurrence_id,completion_notes:'DEMO — SYNTHETIC DATA. Reviewed current records and retained the sample.'};
+   const body=await completionFor(r,{evidenceId:ev.evidence_id,gapOwnerId:nextOwner,completionNotes:'DEMO — SYNTHETIC DATA. Reviewed current records and retained the sample.'});
    const done=await post('/reviews/'+r.review_id+'/complete',body);
    expect(done.occurrence.due_date).toBe(r.due_date);expect(done.occurrence.completed_at.slice(0,10)).toBe(day);
    expect(done.occurrence.evidence.map(e=>e.evidence_id)).toContain(ev.evidence_id);
@@ -148,6 +233,7 @@ test('greenfield CIS-only intake retains 24 months of authoritative operations',
   }
   timeline.push({month,day,executions,history:histories.size,calendar:entries.length,kpis:dash.kpis});
  }
+ expect(report.disabledSourceOwnerRejections).toBeGreaterThan(0);
  const library=await get('/evidence/catalog',cid),search=await get('/evidence/catalog',cid,{q:'DEMO-asset-register'});
  expect(search.total).toBe(1);expect(library.total).toBe((await get('/evidence',cid)).length);
  expect((await get('/evidence-library/items/'+evidence.evidence_id)).references.filter(r=>r.kind==='framework_assessments')).toHaveLength(2);
@@ -165,7 +251,7 @@ test.each([['monthly',null,'2027-01-31'],['quarterly',null,'2027-03-31'],['semia
  const cid=(await post('/clients',{name:'Disposable recurrence edge QA'})).client_id;
  for(const completion of ['2026-12-20','2026-12-31','2027-02-10']){
   const r=await post('/reviews',{client_id:cid,title:'Synthetic schedule edge '+completion,review_type:'access',recurrence,custom_recurrence_days:days,due_date:'2026-12-31'});clock(completion);
-  const done=await post('/reviews/'+r.review_id+'/complete',{occurrence_id:r.current_occurrence_id});
+  const done=await post('/reviews/'+r.review_id+'/complete',await completionFor(r));
   expect(done.review.due_date.slice(0,10)).toBe(expected);expect(done.occurrence.due_date).toBe('2026-12-31');
  }
 },30000);
@@ -173,6 +259,6 @@ test.each([['monthly',null,'2027-01-31'],['quarterly',null,'2027-03-31'],['semia
 test('missed monthly periods remain sequential backlog; none are silently skipped',async()=>{
  const cid=(await post('/clients',{name:'Disposable missed occurrence QA'})).client_id;
  let r=await post('/reviews',{client_id:cid,title:'Synthetic missed monthly obligation',review_type:'access',recurrence:'monthly',due_date:'2026-09-01'});clock('2026-11-10');
- for(const expected of ['2026-10-01','2026-11-01','2026-12-01']){r=(await post('/reviews/'+r.review_id+'/complete',{occurrence_id:r.current_occurrence_id})).review;expect(r.due_date.slice(0,10)).toBe(expected);}
+ for(const expected of ['2026-10-01','2026-11-01','2026-12-01']){r=(await post('/reviews/'+r.review_id+'/complete',await completionFor(r))).review;expect(r.due_date.slice(0,10)).toBe(expected);}
  expect(r.occurrences.map(o=>o.due_date.slice(0,10))).toEqual(['2026-09-01','2026-10-01','2026-11-01']);
 });

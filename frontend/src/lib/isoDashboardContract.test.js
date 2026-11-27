@@ -38,18 +38,22 @@ test.each(['existing-iso','new-multi-framework-client'])('ISO dashboard links pr
   const data={configured:true,selected:true,definitions,assessments:[...rows,{...rows[0],client_id:'foreign',framework_assessment_id:'foreign',status:'needs_attention'}],
     work:Object.fromEntries(rows.map(r=>[r.framework_assessment_id,r.work])),organizational_controls:[],configuration:{}};
   const before=JSON.stringify(data);
-  const cases=[['addressed',['4.1','A.5.1']],['in_progress',['4.2','A.5.5']],['needs_attention',['4.3','A.5.2']],
-    ['not_assessed',['4.4','A.5.4']],['not_applicable',['A.5.3']],['unremediated',['4.2','A.5.2','A.5.5']],['stale',['4.1','A.5.3']],['unevidenced',['4.1','A.5.3']]];
+  const cases=[['addressed',['4.1','A.5.1']],['in_progress',['4.2']],['needs_attention',['4.3','A.5.2']],
+    ['not_assessed',['4.4']],['not_applicable',['A.5.3']],['unremediated',['4.2','A.5.2','A.5.5']],['stale',['4.1','A.5.3']],['unevidenced',['4.1','A.5.3']]];
   for(const [view,ids] of cases){
     await act(async()=>root.render(<FrameworkProgramCard program={{key:'iso-27001',to:'/compliance/iso-27001'}} rows={rows}/>));
     const link=[...container.querySelectorAll('a')].find(a=>new URL(a.href).searchParams.get('view')===view);
-    expect(link).toBeDefined();expect(link.querySelector('strong').textContent).toBe(String(ids.length));
+    expect(link).toBeDefined();
+    if(view==='not_applicable')expect(link.textContent).toBe(`${ids.length} excluded / not applicable`);
+    else if(['addressed','in_progress','needs_attention','not_assessed'].includes(view))expect(link.querySelector('.bfb-count').textContent).toBe(String(ids.length));
+    else expect(link.querySelector('strong').textContent).toBe(String(ids.length));
     mockParams=new URL(link.href).searchParams;
     api.get.mockImplementation(async path=>({data:path==='/iso-audit'?{reviews:[]}:data}));
     await act(async()=>root.render(<FrameworkWorkspace frameworkKey="iso-27001" clientId={clientId}/>));
     expect([...container.querySelectorAll('[data-testid^="requirement-"]')].map(el=>el.dataset.testid.replace('requirement-',''))).toEqual(ids);
     if(view==='not_applicable'){
-      const search=container.querySelector('input[aria-label="Search requirements"]');
+      const search=container.querySelector('input[type="search"]');
+      expect(search.closest('label').textContent).toContain('Search requirements');
       const type=async value=>act(async()=>{Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,'value').set.call(search,value);search.dispatchEvent(new Event('input',{bubbles:true}));});
       await type('no-matching-control');
       expect(container.querySelectorAll('[data-testid^="requirement-"]')).toHaveLength(0);

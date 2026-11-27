@@ -1,5 +1,6 @@
 import {useEffect,useState} from 'react';
 import {Link} from 'react-router-dom';
+import {clientDestination} from '@/lib/clientSelection';
 import {ShieldCheck,ScrollText,FileWarning,Umbrella,Layers} from 'lucide-react';
 import api,{formatError} from '@/lib/api';
 import {toast} from 'sonner';
@@ -117,7 +118,7 @@ export default function ComplianceProfile({ clientId }) {
       ) : requirements.length === 0 ? (
         <div className="border border-dashed border-line rounded-md p-6 text-sm text-ink-secondary" data-testid="compliance-empty">
           No requirements captured yet.{" "}
-          <Link to="/onboarding" className="text-link underline">Complete Compliance & Requirements onboarding</Link>{" "}
+          <Link to={clientDestination(clientId,'/onboarding')} className="text-link underline">Complete Compliance & Requirements onboarding</Link>{" "}
           to populate this profile.
         </div>
       ) : (

@@ -1,0 +1,9 @@
+{
+  "checked_at": "2026-10-13T20:28:33.207Z",
+  "service": "srv-db1s0cugekts73f72reg",
+  "deployment": "dep-db780cij9qps73bcu1sg",
+  "status": "Live",
+  "source": "bf59aa8b7618c96d0abfa2a9fb1cd4243f1f5ce0",
+  "url": "https://omnisciente-staging.onrender.com",
+  "provenance": "Root supported normal provider UI; exact source link and Live; selected startup/health logs"
+}

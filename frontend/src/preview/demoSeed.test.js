@@ -1,5 +1,6 @@
 import {seedStore, ids, resetStore, readStore, saveStore} from './store';
 import {portfolio} from './summaries';
+import {latestPortfolioActivity} from '../lib/portfolioOverview';
 import {validateVendor} from './vendors';
 import {assuranceStatus} from '../lib/vendorGovernance';
 import {evidenceKind} from '../lib/evidenceReferences';
@@ -8,10 +9,10 @@ import {reviewSchedule} from '../lib/reviewOccurrences';
 beforeEach(()=>sessionStorage.clear());
 test('canonical clients reset independently of standard session material',()=>{
   const db=seedStore();
-  expect(db.clients.map(c=>c.name)).toEqual(['Brawndo','Dunder Mifflin','Prestige Worldwide','Initech']);
+  expect(db.clients.map(c=>c.name)).toEqual(['Brawndo','Dunder Mifflin','Prestige Worldwide','Initech','The Krusty Krab']);
   db.clients.push({client_id:'test-demo-only',name:'Session mutation'});saveStore(db);
   localStorage.setItem('grc_token','test-standard-token');resetStore();
-  expect(readStore().clients).toHaveLength(4);
+  expect(readStore().clients).toHaveLength(5);
   expect(localStorage.getItem('grc_token')).toBe('test-standard-token');localStorage.clear();
 });
 test('every relationship, owner and occurrence belongs to its client',()=>{
@@ -37,11 +38,18 @@ test('every relationship, owner and occurrence belongs to its client',()=>{
     expect(db[kind].some(r=>r[ids[kind]]===evidence.linked_id&&r.client_id===evidence.client_id)).toBe(true);
   }
 });
-test('Year-2 portfolios have limited derived work instead of abandoned programs',()=>{
+test('portfolios reconcile native work while unchanged Year-2 clients keep bounded queues',()=>{
   const db=seedStore(),result=portfolio(db,false);
   // Due-soon work is bounded but real: monthly Reviews, a departing employee's handover item and each
   // program's own remediation (Prestige: SOC exceptions inside the observation period) keep it at most 15.
-  for(const row of result.clients.filter(r=>r.client_id!=='demo_initech')){expect(row.past_due).toBeLessThanOrEqual(4);expect(row.due_30d).toBeLessThanOrEqual(15);expect(row.unassigned).toBeLessThanOrEqual(3);expect(row.last_activity).not.toBeNull();}
+  for(const row of result.clients.filter(row=>['demo_dunder','demo_prestige'].includes(row.client_id))){expect(row.past_due).toBeLessThanOrEqual(4);expect(row.due_30d).toBeLessThanOrEqual(15);expect(row.unassigned).toBeLessThanOrEqual(3);expect(row.last_activity).not.toBeNull();}
+  // The refreshed CIS fixtures deliberately demonstrate more operating states;
+  // the native selected populations, rather than an old sparse-seed cap, govern counts.
+  for(const row of result.clients)for(const key of ['past_due','due_30d','unassigned'])expect(row[key]).toBe(row.metric_items[key].length);
+  // Imported scenario chart dates are not native lifecycle activity. A new client may
+  // legitimately have no eligible activity; reconcile the actual logs instead of inventing it.
+  const actual=latestPortfolioActivity(db.logs,new Date(),db.portfolio_reporting?.activity_proofs);
+  expect(result.clients.find(row=>row.client_id==='demo_krusty_krab').last_activity).toEqual(actual.get('demo_krusty_krab')||null);
   for(const key of ['past_due','critical_high_open','unassigned'])expect(result.portfolio[key]).toBe(result.clients.reduce((sum,c)=>sum+c[key],0));
   const assurance=db.vendors.flatMap(v=>v.assurance_records.map(a=>assuranceStatus(v,a)));
   expect(assurance).toEqual(expect.arrayContaining(['current','due_soon']));
@@ -52,8 +60,9 @@ test('Year-2 portfolios have limited derived work instead of abandoned programs'
 test('seeded recurring Review history has no silently missing periods',()=>{
   const db=seedStore(new Date('2026-09-28T14:00:00Z'));
   const recurring=db.reviews.filter(r=>['monthly','quarterly','semiannual','annual'].includes(r.recurrence)&&!['completed','cancelled'].includes(r.status)&&r.occurrences?.length);
-  expect(db.reviews.filter(r=>r.client_id==='demo_initech').every(r=>!r.occurrences?.length&&!r.due_date)).toBe(true);
-  for(const client of db.clients.filter(c=>c.client_id!=='demo_initech'))expect(recurring.some(r=>r.client_id===client.client_id)).toBe(true);
+  // Initech and Krusty are populated CIS scenarios now; every canonical client
+  // must contribute native recurring history to the same cadence checks below.
+  for(const client of db.clients)expect(recurring.some(r=>r.client_id===client.client_id)).toBe(true);
   for(const r of recurring){
     const last=[...r.occurrences].sort((a,b)=>a.due_date.localeCompare(b.due_date)).at(-1);
     // The current occurrence is the period directly after the latest completed one.

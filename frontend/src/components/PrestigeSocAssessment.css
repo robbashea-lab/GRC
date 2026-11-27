@@ -1,5 +1,7 @@
 [data-testid="prestige-soc-assessment"] .brawndo-assessment-columns { grid-template-columns: minmax(0, 1fr); }
 [data-testid="prestige-soc-assessment"] .brawndo-assessment-details:empty { display: none; }
+/* The longer readiness label must not push the near-right tooltip beyond the program bar. */
+[data-testid="prestige-soc-workspace"] .bcis-bar > span:nth-last-child(2):not(:first-child) > .bcis-tip { left: auto; right: 0; transform: none; }
 [data-testid="prestige-soc-assessment"] .bcis-crumbs { margin-bottom: 6px; font-size: 12px; }
 [data-testid="prestige-soc-assessment"] .bcis-crumbs ol { display: flex; flex-wrap: wrap; gap: 4px; margin: 0; padding: 0; list-style: none; }
 [data-testid="prestige-soc-assessment"] .bcis-crumbs li + li::before { content: "›"; margin-right: 4px; color: var(--color-text-muted); }

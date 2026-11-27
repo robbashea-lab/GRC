@@ -1,0 +1,43 @@
+{
+  "reviewer": "/root/soc2_review",
+  "kind": "Independent non-author connected source review and automated component regression execution",
+  "sourceOwnerCommit": "0e5bc694fc269aa6978c45c7bc3ba7237a04df22",
+  "sourceOwnerParent": "59238111da234c7c94a36c347a58401f9bb16276",
+  "integratedRootCommit": "3f7e024525bf703c4ebde38ceeae13c0068e12c3",
+  "reviewedFiles": [
+    {"path": "frontend/src/components/RemediationTicketDrawer.jsx", "identicalRootAndOwnerGitBlob": "95ed17488762e60386199d2289be0cb67a0366cc"},
+    {"path": "frontend/src/components/RemediationSourceRefresh.test.jsx", "identicalRootAndOwnerGitBlob": "86fd30269a2251de6830d2661af26fca770e4c75"}
+  ],
+  "connectedReads": ["frontend/src/lib/createIntent.js", "frontend/src/lib/permissions.js", "frontend/src/lib/useActionRegisterData.js", "backend/server.py update_entity/_update_entity, including authorization, field allowlist, native snapshot check and conditional update"],
+  "findings": [],
+  "disposition": "No actionable defect found within the frozen Work state/acknowledgment delta; seven existing connected regression cases independently pass. Compiled browser reproduction/retest remains separately owned by root.",
+  "reviewedInvariants": [
+    {"invariant": "Draft identity", "evidence": "Work key includes actor, client and exact task, excluding update time; separate source views do not reuse another actor/client/task draft."},
+    {"invariant": "Authoritative native fields", "evidence": "Form is fresh native task overlaid only with explicit edited fields. PATCH includes only changed allowed fields. Untouched completion/resolution are never copied from stale form state."},
+    {"invariant": "Optimistic concurrency", "evidence": "Each edit retains its native before value. Noncolliding changes use the current native token; a changed edited field uses the original edit token and produces the existing conflict path with retained local text."},
+    {"invariant": "Native completed lifecycle", "evidence": "Fresh done status is displayed and disables status editing. Source-completed resolution is retained; saving unrelated planned text changes neither Finding validation nor assessment/Evidence state."},
+    {"invariant": "Acknowledgment provenance", "evidence": "A confirmed response rebases edits only when returned task_id and client_id match. Equal accepted values clear; newer local text remains with the accepted baseline and token."},
+    {"invariant": "Unconfirmed replay", "evidence": "Retry uses the original exact body and Idempotency-Key. Newer local text is retained through acknowledgment and then saved as a separate delta using the confirmed current token."},
+    {"invariant": "Permissions", "evidence": "Existing mayEdit/allowed-field checks remain in the UI; read-only fixture exposes disabled fields and no save/complete command. Server authorization and CAS are unchanged and remain authoritative."}
+  ],
+  "independentlyExecuted": {
+    "command": "CI=true node node_modules/@craco/craco/dist/bin/craco.js test --watchAll=false --runInBand --runTestsByPath src/components/RemediationSourceRefresh.test.jsx",
+    "cwd": "work/program-workflows/frontend",
+    "suitesPassed": 1,
+    "testsPassed": 7,
+    "testsFailed": 0,
+    "snapshots": 0,
+    "seconds": 37.824,
+    "log": "work-draft-refresh-independent.log",
+    "cases": ["clean source reopen refresh", "dirty source reopen retains parent text", "same-child completion pending validation preserves draft", "same-child validated completion preserves draft", "same-field remote planned-action conflict rejects overwrite and preserves draft", "lost-response exact replay preserves newer local text and confirms new save token", "read-only controls cannot write"]
+  },
+  "limits": [
+    "Real Demo transport and connected drawers are exercised, with lightweight Dialog/router/auth mocks; this is not compiled browser execution or real hosted authentication proof.",
+    "Read-only regression verifies presentation/command restrictions; the Demo transport actor is still the isolated Demo actor. No new claim of server task-role assurance is made.",
+    "Source-owner 27/27 result is separate author evidence and is not counted as this reviewer's execution.",
+    "Foreign task/client response acknowledgment guard and actor/client key were statically reviewed; those exact negative response/actor-swap cases were not separately executed.",
+    "Failed refresh/dependency timeout behavior is outside these seven successful-refresh/replay cases and is not represented as verified.",
+    "Initial repository-root CRACO invocation failed because config was absent in that working directory. No Jest tests ran; corrected frontend-directory invocation supplied the stated result.",
+    "No application source edited, no held sessions, hosted providers, accounts, grants or release operations touched by this reviewer."
+  ]
+}

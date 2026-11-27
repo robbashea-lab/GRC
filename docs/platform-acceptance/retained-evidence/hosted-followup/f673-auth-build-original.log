@@ -1,0 +1,29 @@
+(node:180) [DEP0176] DeprecationWarning: fs.F_OK is deprecated, use fs.constants.F_OK instead
+(Use `node --trace-deprecation ...` to show where the warning was created)
+Creating an optimized production build...
+Compiled successfully.
+
+File sizes after gzip:
+
+  1 MB (+222 B)  dist\static\js\main.13407597.js
+  104.52 kB      dist\static\js\246.7941513b.chunk.js
+  56.12 kB       dist\static\css\main.4c1f739f.css
+  462 B          dist\static\js\561.a9b7a9a4.chunk.js
+
+The bundle size is significantly larger than recommended.
+Consider reducing it with code splitting: https://goo.gl/9VhYWB
+You can also analyze the project dependencies: https://goo.gl/LeUzfb
+
+The project was built assuming it is hosted at /.
+You can control this with the homepage field in your package.json.
+
+The ..\deploy\cloudflare\dist folder is ready to be deployed.
+You may serve it with a static server:
+
+  yarn global add serve
+  serve -s ..\deploy\cloudflare\dist
+
+Find out more about deployment here:
+
+  https://cra.link/deployment
+

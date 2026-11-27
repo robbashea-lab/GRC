@@ -1,0 +1,53 @@
+PASS src/components/GuidedLifecycleNative.test.jsx
+PASS src/components/SocGuidedAssessor.test.jsx
+PASS src/components/IsoGuidedAssessor.test.jsx
+PASS src/components/PlatformCisNativeGuideRefresh.test.jsx
+PASS src/components/PlatformCisMinimizedNativeGuide.test.jsx
+PASS src/components/PrestigeSocAssessment.test.jsx
+  ● Console
+
+    console.error
+      Unknown event handler property `onEscapeKeyDown`. It will be ignored.
+
+      at validateProperty (../../../../2026-10-07/omnisciente-visual-consistency/work/GRC/frontend/node_modules/react-dom/cjs/react-dom-client.development.js:2810:21)
+      at warnUnknownProperties (../../../../2026-10-07/omnisciente-visual-consistency/work/GRC/frontend/node_modules/react-dom/cjs/react-dom-client.development.js:3021:9)
+      at validatePropertiesInDevelopment (../../../../2026-10-07/omnisciente-visual-consistency/work/GRC/frontend/node_modules/react-dom/cjs/react-dom-client.development.js:16825:9)
+      at setInitialProperties (../../../../2026-10-07/omnisciente-visual-consistency/work/GRC/frontend/node_modules/react-dom/cjs/react-dom-client.development.js:17449:7)
+      at completeWork (../../../../2026-10-07/omnisciente-visual-consistency/work/GRC/frontend/node_modules/react-dom/cjs/react-dom-client.development.js:13775:18)
+      at runWithFiberInDEV (../../../../2026-10-07/omnisciente-visual-consistency/work/GRC/frontend/node_modules/react-dom/cjs/react-dom-client.development.js:543:16)
+      at completeUnitOfWork (../../../../2026-10-07/omnisciente-visual-consistency/work/GRC/frontend/node_modules/react-dom/cjs/react-dom-client.development.js:15179:19)
+      at performUnitOfWork (../../../../2026-10-07/omnisciente-visual-consistency/work/GRC/frontend/node_modules/react-dom/cjs/react-dom-client.development.js:15061:11)
+      at workLoopSync (../../../../2026-10-07/omnisciente-visual-consistency/work/GRC/frontend/node_modules/react-dom/cjs/react-dom-client.development.js:14870:41)
+      at renderRootSync (../../../../2026-10-07/omnisciente-visual-consistency/work/GRC/frontend/node_modules/react-dom/cjs/react-dom-client.development.js:14850:11)
+      at performWorkOnRoot (../../../../2026-10-07/omnisciente-visual-consistency/work/GRC/frontend/node_modules/react-dom/cjs/react-dom-client.development.js:14334:13)
+      at performWorkOnRootViaSchedulerTask (../../../../2026-10-07/omnisciente-visual-consistency/work/GRC/frontend/node_modules/react-dom/cjs/react-dom-client.development.js:15931:7)
+      at flushActQueue (../../../../2026-10-07/omnisciente-visual-consistency/work/GRC/frontend/node_modules/react/cjs/react.development.js:862:34)
+      at ../../../../2026-10-07/omnisciente-visual-consistency/work/GRC/frontend/node_modules/react/cjs/react.development.js:1114:21
+
+PASS src/components/IsoAssessment.test.jsx
+  ● Console
+
+    console.error
+      Unknown event handler property `onEscapeKeyDown`. It will be ignored.
+
+      at validateProperty (../../../../2026-10-07/omnisciente-visual-consistency/work/GRC/frontend/node_modules/react-dom/cjs/react-dom-client.development.js:2810:21)
+      at warnUnknownProperties (../../../../2026-10-07/omnisciente-visual-consistency/work/GRC/frontend/node_modules/react-dom/cjs/react-dom-client.development.js:3021:9)
+      at validatePropertiesInDevelopment (../../../../2026-10-07/omnisciente-visual-consistency/work/GRC/frontend/node_modules/react-dom/cjs/react-dom-client.development.js:16825:9)
+      at setInitialProperties (../../../../2026-10-07/omnisciente-visual-consistency/work/GRC/frontend/node_modules/react-dom/cjs/react-dom-client.development.js:17449:7)
+      at completeWork (../../../../2026-10-07/omnisciente-visual-consistency/work/GRC/frontend/node_modules/react-dom/cjs/react-dom-client.development.js:13775:18)
+      at runWithFiberInDEV (../../../../2026-10-07/omnisciente-visual-consistency/work/GRC/frontend/node_modules/react-dom/cjs/react-dom-client.development.js:543:16)
+      at completeUnitOfWork (../../../../2026-10-07/omnisciente-visual-consistency/work/GRC/frontend/node_modules/react-dom/cjs/react-dom-client.development.js:15179:19)
+      at performUnitOfWork (../../../../2026-10-07/omnisciente-visual-consistency/work/GRC/frontend/node_modules/react-dom/cjs/react-dom-client.development.js:15061:11)
+      at workLoopSync (../../../../2026-10-07/omnisciente-visual-consistency/work/GRC/frontend/node_modules/react-dom/cjs/react-dom-client.development.js:14870:41)
+      at renderRootSync (../../../../2026-10-07/omnisciente-visual-consistency/work/GRC/frontend/node_modules/react-dom/cjs/react-dom-client.development.js:14850:11)
+      at performWorkOnRoot (../../../../2026-10-07/omnisciente-visual-consistency/work/GRC/frontend/node_modules/react-dom/cjs/react-dom-client.development.js:14334:13)
+      at performWorkOnRootViaSchedulerTask (../../../../2026-10-07/omnisciente-visual-consistency/work/GRC/frontend/node_modules/react-dom/cjs/react-dom-client.development.js:15931:7)
+      at flushActQueue (../../../../2026-10-07/omnisciente-visual-consistency/work/GRC/frontend/node_modules/react/cjs/react.development.js:862:34)
+      at ../../../../2026-10-07/omnisciente-visual-consistency/work/GRC/frontend/node_modules/react/cjs/react.development.js:1114:21
+
+
+Test Suites: 7 passed, 7 total
+Tests:       256 passed, 256 total
+Snapshots:   0 total
+Time:        18.217 s
+Ran all test suites within paths "src/components/PlatformCisMinimizedNativeGuide.test.jsx", "src/components/PlatformCisNativeGuideRefresh.test.jsx", "src/components/GuidedLifecycleNative.test.jsx", "src/components/SocGuidedAssessor.test.jsx", "src/components/IsoGuidedAssessor.test.jsx", "src/components/PrestigeSocAssessment.test.jsx", "src/components/IsoAssessment.test.jsx".

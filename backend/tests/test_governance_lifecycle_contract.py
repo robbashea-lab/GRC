@@ -12,6 +12,7 @@ CONTRACT = json.loads((Path(__file__).resolve().parents[2] / "shared/contracts/g
 
 
 class GovernanceLifecycleContractTests(unittest.IsolatedAsyncioTestCase):
+    r4_valid_completion_fixture = True
     asyncSetUp = harness.ClientDashboardSourcesTests.asyncSetUp
     sign_in = harness.ClientDashboardSourcesTests.sign_in
 

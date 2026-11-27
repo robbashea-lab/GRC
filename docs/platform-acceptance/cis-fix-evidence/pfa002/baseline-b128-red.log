@@ -1,0 +1,81 @@
+FAIL src/components/PlatformCisBreadcrumbContext.test.jsx (38.467 s)
+  × IG1 global Continue preserves the remembered background without a false safeguard ancestor (107 ms)
+  × IG2 global Continue preserves the remembered background without a false safeguard ancestor (163 ms)
+  × IG3 global Continue preserves the remembered background without a false safeguard ancestor (49 ms)
+  √ same-control selection and Next retain their complete breadcrumb and original table (58 ms)
+  √ a filtered result keeps its existing view breadcrumb and selected safeguard behavior (33 ms)
+
+  ● IG1 global Continue preserves the remembered background without a false safeguard ancestor
+
+    expect(received).toEqual(expected) // deep equality
+
+    - Expected  - 0
+    + Received  + 1
+
+      Array [
+        "CIS IG1",
+        "Control 3",
+    +   "Safeguard 1.1",
+      ]
+
+      53 |   await click(container.querySelector('[aria-label^="Continue assessment: 1.1 "]'));
+      54 |   expect(selected().dataset.criterion).toBe('1.1');expect(JSON.parse(selected().dataset.breadcrumb)).toEqual(['CIS IG'+group,'Control 1','Safeguard 1.1']);
+    > 55 |   expect(crumbs()).toEqual(['CIS IG'+group,'Control 3']);expect(tableIds()).toEqual(before);expect(JSON.parse(sessionStorage.getItem(preferenceKey))['category:all']).toEqual(['3']);
+         |                    ^
+      56 |   await click(selected().querySelectorAll('button')[1]);expect(selected()).toBeNull();expect(crumbs()).toEqual(['CIS IG'+group,'Control 3']);expect(tableIds()).toEqual(before);expect(mockNavigate).toHaveBeenCalledWith(-1);
+      57 | });
+      58 |
+
+      at src/components/PlatformCisBreadcrumbContext.test.jsx:55:20
+
+  ● IG2 global Continue preserves the remembered background without a false safeguard ancestor
+
+    expect(received).toEqual(expected) // deep equality
+
+    - Expected  - 0
+    + Received  + 1
+
+      Array [
+        "CIS IG2",
+        "Control 3",
+    +   "Safeguard 1.1",
+      ]
+
+      53 |   await click(container.querySelector('[aria-label^="Continue assessment: 1.1 "]'));
+      54 |   expect(selected().dataset.criterion).toBe('1.1');expect(JSON.parse(selected().dataset.breadcrumb)).toEqual(['CIS IG'+group,'Control 1','Safeguard 1.1']);
+    > 55 |   expect(crumbs()).toEqual(['CIS IG'+group,'Control 3']);expect(tableIds()).toEqual(before);expect(JSON.parse(sessionStorage.getItem(preferenceKey))['category:all']).toEqual(['3']);
+         |                    ^
+      56 |   await click(selected().querySelectorAll('button')[1]);expect(selected()).toBeNull();expect(crumbs()).toEqual(['CIS IG'+group,'Control 3']);expect(tableIds()).toEqual(before);expect(mockNavigate).toHaveBeenCalledWith(-1);
+      57 | });
+      58 |
+
+      at src/components/PlatformCisBreadcrumbContext.test.jsx:55:20
+
+  ● IG3 global Continue preserves the remembered background without a false safeguard ancestor
+
+    expect(received).toEqual(expected) // deep equality
+
+    - Expected  - 0
+    + Received  + 1
+
+      Array [
+        "CIS IG3",
+        "Control 3",
+    +   "Safeguard 1.1",
+      ]
+
+      53 |   await click(container.querySelector('[aria-label^="Continue assessment: 1.1 "]'));
+      54 |   expect(selected().dataset.criterion).toBe('1.1');expect(JSON.parse(selected().dataset.breadcrumb)).toEqual(['CIS IG'+group,'Control 1','Safeguard 1.1']);
+    > 55 |   expect(crumbs()).toEqual(['CIS IG'+group,'Control 3']);expect(tableIds()).toEqual(before);expect(JSON.parse(sessionStorage.getItem(preferenceKey))['category:all']).toEqual(['3']);
+         |                    ^
+      56 |   await click(selected().querySelectorAll('button')[1]);expect(selected()).toBeNull();expect(crumbs()).toEqual(['CIS IG'+group,'Control 3']);expect(tableIds()).toEqual(before);expect(mockNavigate).toHaveBeenCalledWith(-1);
+      57 | });
+      58 |
+
+      at src/components/PlatformCisBreadcrumbContext.test.jsx:55:20
+
+Test Suites: 1 failed, 1 total
+Tests:       3 failed, 2 passed, 5 total
+Snapshots:   0 total
+Time:        62.809 s
+Ran all test suites within paths "src/components/PlatformCisBreadcrumbContext.test.jsx".

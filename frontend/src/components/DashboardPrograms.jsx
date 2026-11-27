@@ -2,7 +2,7 @@ import {useEffect,useState} from 'react';
 import {Link} from 'react-router-dom';
 import api,{formatError} from '@/lib/api';
 import {operatorStatuses} from '@/lib/frameworkOperator';
-import {CisStatusBar,CIS_ORDER,CIS_TONE} from './CisStatus';
+import {CisStatusBar,CIS_ORDER,implementationTone} from './CisStatus';
 import './BrawndoCisWorkspace.css';
 import './AssessmentMetrics.css';
 import {Sheet,SheetContent,SheetHeader,SheetTitle,SheetDescription} from './ui/sheet';
@@ -46,8 +46,8 @@ export default function DashboardPrograms({programs,clientId,onOpen,reference=fa
       return <article key={p.key} data-testid={`program-${p.key}`} className="bg-surface-card border border-line rounded-lg p-4 space-y-3">
         <div className="flex justify-between items-baseline gap-2"><h2 id="programs-heading" className="font-heading font-semibold text-sm">{p.label} program</h2><Link to={p.to} className="text-xs text-link hover:underline">Open workspace</Link></div>
         <ProgramMetrics program={p}/>
-        <CisStatusBar counts={Object.fromEntries(CIS_ORDER.map(k=>[k,a.status_counts[k]||0]))} className="h-2"/>
-        <ul className="space-y-0.5">{CIS_ORDER.filter(k=>a.status_counts[k]).map(k=><li key={k}><Link to={href(p,k)} className={`${control} flex items-center gap-2 w-full px-1 py-1 text-xs`}><span className={`cis-dot cis-tone-${CIS_TONE[k]}`} aria-hidden="true"/><span className="flex-1 text-ink-secondary">{statuses[k]}</span><strong className="tabular-nums">{a.status_counts[k]}</strong></Link></li>)}</ul>
+        <CisStatusBar counts={Object.fromEntries(CIS_ORDER.map(k=>[k,a.status_counts[k]||0]))} className="h-2" framework={p.key}/>
+        <ul className="space-y-0.5">{CIS_ORDER.filter(k=>a.status_counts[k]).map(k=><li key={k}><Link to={href(p,k)} className={`${control} flex items-center gap-2 w-full px-1 py-1 text-xs`}><span className={`cis-dot cis-tone-${implementationTone(k,p.key)}`} aria-hidden="true"/><span className="flex-1 text-ink-secondary">{statuses[k]}</span><strong className="tabular-nums">{a.status_counts[k]}</strong></Link></li>)}</ul>
         {health&&<div className="border-t border-line pt-3 space-y-1"><h3 className="text-xs font-semibold">Recurring activities</h3>{health.total?<div className="flex flex-wrap gap-x-3 gap-y-1">{Object.entries(HEALTH).filter(([status])=>health.counts[status]||status==='past_due').map(([status,label])=><button key={status} onClick={()=>show(p,status)} className={`${control} text-xs py-0.5 ${status==='past_due'&&health.counts[status]?'text-semantic-critical font-medium':'text-ink-secondary'}`}>{health.counts[status]} {label}</button>)}</div>:<p className="text-xs text-ink-muted">No recurring obligations configured</p>}
           {health.next&&<button onClick={()=>openReview(health.next)} className={`${control} block text-xs text-link py-1 w-full`}>Next: {health.next.title} · {health.next.due_date?.slice(0,10)}</button>}</div>}
         <p className="text-xs text-ink-muted">{qualification(p.key)}</p>

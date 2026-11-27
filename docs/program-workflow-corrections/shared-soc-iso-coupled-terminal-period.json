@@ -1,0 +1,12 @@
+{
+  "commit": "d5bb9587743bb93610bcbb07a91a99bbf4093121",
+  "parent": "729598ce45bc758a78e16f88e6d791a7ee0b4a8b",
+  "source_scope": ["frontend/src/lib/isoGuidedAssessment.js", "backend/assessment_items.py"],
+  "test_scope": ["frontend/src/lib/inlineContextSentences.test.js", "backend/tests/test_assessment_unknowns.py", "backend/tests/test_assessment_items.py"],
+  "before": {"iso_writer":{"failed":1,"unselected":5,"seconds":1.61,"log":"work/program-shared-iso-period-before.log"},"native_labels":{"failed_subtests":24,"passed_tests":1,"passed_subtests":6,"seconds":0.86,"log":"work/program-shared-native-period-before.log"}},
+  "after": {"frontend":{"suites":4,"passed":33,"seconds":4.959,"log":"work/program-shared-coupled-period-final-fe.log"},"backend_serial":{"passed":28,"passed_subtests":9196,"seconds":5.21,"existing_fastapi_warnings":4,"log":"work/program-shared-coupled-period-final-python.log"}},
+  "behavior": ["Current ISO V2 fact/message construction preserves already supplied terminal punctuation using existing inlineSentence, matching current SOC behavior.","Canonical current SOC/ISO Item labels use one local shared fragment helper; legacy V1 retains original unconditional period behavior exactly.","Literal periods, exclamation/question marks and ellipsis remain supplied text; text lacking sentence punctuation gets one generated period.","Existing all-record JS/Python origin conformance now also compares actual current/legacy generated labels, including each applicable facet with terminal-detail vectors.","Native Item IDs/fingerprints are unchanged; resolved notes and prior history survive label reconciliation and an unchanged repeat remains a no-op.","No status, source/catalog, UI, manual/saved narrative, capture, schema or lifecycle changes. Python SOC/ISO evaluator modules have no separate narrative formatter; reviewed result DTO retention stays unchanged."],
+  "test_transport_correction": {"failed_run":"work/program-shared-coupled-period-encoding-failure.log","finding":"Exact-label comparison exposed implicit Windows cp1252 decoding of Node UTF8 JSON; a controlled literal runner returned U+00E2/U+20AC/U+201D instead of U+2014. The subprocess now explicitly uses UTF8 encoding; every exact text assertion remains."},
+  "diff_check": "passed",
+  "limits": "Focused author tests and source inspection only; root owns integrated combined suites and compiled refreshed-proposal/native-Item acceptance. No persistent Mongo, hosted/session, deployment, account or grant operations performed."
+}

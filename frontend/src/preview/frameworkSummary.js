@@ -1,4 +1,5 @@
 import {FRAMEWORKS, ASSESSMENT_STATUSES, activeDefinitions, frameworkDefinition} from '../lib/frameworks';
+import {activeReviewMappings} from '../lib/frameworkReviewLinks';
 import {reviewedProgress,ongoingProgram} from '../lib/programProgress';
 import {cisConfiguration,cisLabel} from '../lib/cisScope';
 import {socConfiguration} from '../lib/socReadiness';
@@ -20,7 +21,8 @@ export function frameworkSummary(db, cid, params={}) {
     const aids=new Set(rows.map(a=>a.framework_assessment_id)),definitions=new Set(rows.map(a=>a.definition_id));
     const direct=kind=>new Set(rows.flatMap(a=>(a.related_links||[]).filter(l=>l.kind===kind).map(l=>l.id)));
     const reviewLinks=direct('reviews'),findingLinks=direct('findings'),actionLinks=direct('tasks');
-    const rids=new Set(bounded(db.reviews.filter(r=>r.client_id===cid&&(reviewLinks.has(r.review_id)||aids.has(r.framework_assessment_id)||r.framework_key===f.key&&r.framework_safeguards?.some(id=>definitions.has(id))))).map(r=>r.review_id));
+    const rids=new Set(bounded(db.reviews.filter(r=>r.client_id===cid&&(reviewLinks.has(r.review_id)||aids.has(r.framework_assessment_id)
+      ||activeReviewMappings(r).some(driver=>driver.framework_key===f.key&&driver.framework_safeguards.some(id=>definitions.has(id)))))).map(r=>r.review_id));
     const health=ongoingProgram(db.reviews.filter(r=>r.client_id===cid&&rids.has(r.review_id)));
     if(params.program===f.key&&params.detail){
       if(params.detail==='all'||Object.hasOwn(ASSESSMENT_STATUSES,params.detail))detailRows=rows.filter(r=>params.detail==='all'||r.status===params.detail).sort((a,b)=>a.definition_id.localeCompare(b.definition_id)).map(r=>({id:r.framework_assessment_id,definition_id:r.definition_id,title:frameworkDefinition(f.key,r.definition_id)?.title||r.definition_id,status:r.status,kind:'framework_assessments'}));

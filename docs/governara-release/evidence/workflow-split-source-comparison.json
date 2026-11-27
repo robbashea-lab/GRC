@@ -1,0 +1,56 @@
+{
+  "sha256": "e0a5e4b7efe77576e95dcd8efe9e463faaa54e342fa19fd0cb2fba693a310966",
+  "parser_version": "1.10.3",
+  "parse_errors": [],
+  "workflow_name_preserved": true,
+  "triggers_preserved": true,
+  "permissions_preserved": true,
+  "frontend_exactly_preserved": true,
+  "offline_setup_and_command_exactly_preserved": true,
+  "mongo_setup_and_command_exactly_preserved": true,
+  "mongo_service_exactly_preserved": true,
+  "offline_has_no_mongo_service": true,
+  "job_timeouts": {
+    "frontend": 60,
+    "backend": 30,
+    "backend-mongo": 30,
+    "release-gate": 2
+  },
+  "runner_unchanged": true,
+  "gate_needs": [
+    "frontend",
+    "backend",
+    "backend-mongo"
+  ],
+  "gate_if": "${{ always() }}",
+  "gate_env": {
+    "FRONTEND_RESULT": "${{ needs.frontend.result }}",
+    "BACKEND_RESULT": "${{ needs.backend.result }}",
+    "MONGO_RESULT": "${{ needs.backend-mongo.result }}"
+  },
+  "gate_command": "test \"$FRONTEND_RESULT\" = success && test \"$BACKEND_RESULT\" = success && test \"$MONGO_RESULT\" = success",
+  "job_guards": {
+    "frontend": {
+      "if": null,
+      "continue_on_error": false,
+      "step_guards": []
+    },
+    "backend": {
+      "if": null,
+      "continue_on_error": false,
+      "step_guards": []
+    },
+    "backend-mongo": {
+      "if": null,
+      "continue_on_error": false,
+      "step_guards": []
+    },
+    "release-gate": {
+      "if": "${{ always() }}",
+      "continue_on_error": false,
+      "step_guards": []
+    }
+  },
+  "offline_command": "python backend/tests/run_isolated.py -vv -o faulthandler_timeout=60",
+  "mongo_command": "python backend/scripts/verify_mongo_recovery.py --mongo-url mongodb://127.0.0.1:27017 --include-program-lifecycle --include-cis-ig2 --include-remediation-tickets --include-cis-ig3-scope --include-cis-six-year --include-generic-saves --include-portfolio-reporting"
+}

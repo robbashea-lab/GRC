@@ -85,6 +85,20 @@ class GuidedTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(archived['version'],LEGACY['version'])
         self.assertEqual(started.json()['revision'],5)
 
+    async def test_original_question_only_catalog_retains_mixed_followup_as_confirmation(self):
+        import assessment_items
+        for definition, root in (('1.1','inventory'),('1.2','process')):
+            row={**self.row,'definition_id':definition,'framework_assessment_id':'historical-'+definition,'client_id':'demo_brawndo'}
+            answers={root:'Not sure','gaps':'May be missing or not yet confirmed'}
+            draft={'version':LEGACY['version'],'answers':answers,'generated_at':'2026-10-13T12:00:00+00:00'}
+            items=assessment_items.generated(row,draft)
+            followup=[item for item in items if item['question_id']=='gaps']
+            self.assertEqual(len(followup),1)
+            self.assertEqual(followup[0]['kind'],'verification')
+            self.assertIn(answers['gaps'],followup[0]['text'])
+            self.assertFalse(any(item['kind']=='gap' for item in items))
+            self.assertEqual(draft['answers'],answers)
+
     async def test_program_applicability_tracks_groups_without_copying_answers(self):
         for group in (1,2,3):
             allowed={id for id,d in CATALOG['definitions'].items() if group in d['groups']}
@@ -125,7 +139,7 @@ class GuidedTests(unittest.IsolatedAsyncioTestCase):
     async def test_all_expanded_question_sets_validate_only_their_own_bounded_answers(self):
         for definition in PROGRAM['definitions']:
             questions=CATALOG['safeguards'][definition]
-            answers={q['id']:{row:'Yes' for row in q['rows']} if q['type']=='matrix' else '' if q['type']=='text' else 'Yes' for q in questions}
+            answers={q['id']:'No' if q.get('optional') else {row:'Yes' for row in q['rows']} if q['type']=='matrix' else '' if q['type']=='text' else 'Yes' for q in questions}
             validate_answers(definition,answers,current_version(definition,upgraded=True))
             for choice in ('Partially','No','Not sure'):
                 validate_answers(definition,{**answers,'practice':choice},current_version(definition,upgraded=True))
@@ -142,20 +156,25 @@ class GuidedTests(unittest.IsolatedAsyncioTestCase):
                     with self.assertRaises(HTTPException):
                         validate_answers(definition,excluded,current_version(definition,upgraded=True))
 
-    async def test_175_source_condition_changes_only_its_current_schema(self):
-        self.assertEqual(current_version('17.5'), 'cis-v8.1-program-4')
+    async def test_175_historical_v4_condition_is_preserved_and_v5_uses_supplied_source(self):
+        self.assertEqual(current_version('17.5'), 'cis-v8.1-program-5')
         for definition in PROGRAM['definitions']:
-            if definition != '17.5':
-                self.assertEqual(current_version(definition), PROGRAM['version'])
+            self.assertEqual(current_version(definition), 'cis-v8.1-program-5')
+        historical_version = 'cis-v8.1-program-4'
         old = VERSIONS[PROGRAM['version']]['safeguards']['17.5']
-        corrected = VERSIONS[current_version('17.5')]['safeguards']['17.5']
+        corrected = VERSIONS[historical_version]['safeguards']['17.5']
         old_row = 'Incident-response responsibilities include relevant third parties.'
         new_row = 'Where relevant, third parties have assigned incident-response roles and responsibilities.'
         self.assertNotIn('Not applicable', next(q for q in old if old_row in q.get('rows', []))['choices'])
         matrix = next(q for q in corrected if new_row in q.get('rows', []))
-        validate_answers('17.5', {matrix['id']: {new_row: 'Not applicable'}, 'scope_reason': 'Synthetic internally assigned response'}, current_version('17.5'))
+        validate_answers('17.5', {matrix['id']: {new_row: 'Not applicable'}, 'scope_reason': 'Synthetic internally assigned response'}, historical_version)
         with self.assertRaises(HTTPException):
-            validate_answers('17.5', {matrix['id']: {old_row: 'Yes'}}, current_version('17.5'))
+            validate_answers('17.5', {matrix['id']: {old_row: 'Yes'}}, historical_version)
+        current = VERSIONS[current_version('17.5')]['safeguards']['17.5']
+        current_rows = [row for q in current for row in q.get('rows', [])]
+        self.assertNotIn(old_row, current_rows)
+        self.assertNotIn(new_row, current_rows)
+        self.assertEqual(len(current_rows), len([row for q in corrected for row in q.get('rows', [])]) - 1)
 
     async def test_175_explicit_upgrade_preserves_old_interview_and_native_record_until_apply(self):
         aid = 'synthetic-17.5'
@@ -266,6 +285,8 @@ class PilotHistoryTests(unittest.IsolatedAsyncioTestCase):
     async def test_shared_lineage_fixture_matches_current_backend_formula(self):
         contract=json.loads((Path(__file__).parent/'fixtures/guided-lineage-contract.json').read_text(encoding='utf-8'))
         self.assertEqual(guided_assessment.current_base(contract['row'],contract['client']),contract['base'])
+        with patch.object(guided_assessment, 'current_version', return_value=contract['previous_current_question_version']):
+            self.assertEqual(guided_assessment.current_base(contract['row'],contract['client']),contract['previous_current_base'])
 
     async def test_explicit_same_version_compare_preserves_answers_wording_history_and_rejects_forged_rebase(self):
         old={'version':LEGACY['version'],'answers':{'inventory':'No','gaps':'Historical unknown steps'},

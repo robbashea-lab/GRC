@@ -11,12 +11,35 @@ class FrameworkTests(unittest.IsolatedAsyncioTestCase):
     asyncSetUp = Harness.asyncSetUp
     sign_in = Harness.sign_in
 
+    async def test_linked_library_files_reach_the_scoped_assessment_context(self):
+        await self.configure(self.body(('iso-27001',)))
+        row = await server.db.framework_assessments.find_one({'client_id': 'a', 'framework_key': 'iso-27001'})
+        aid = row['framework_assessment_id']
+        await server.db.reviews.insert_one({'review_id': 'linked-review', 'client_id': 'a', 'framework_assessment_id': aid})
+        review_links = [{'kind': 'reviews', 'id': 'linked-review', 'occurrence_id': 'saved-occurrence'}]
+        scoped = {'client_id': 'a', 'relationships': review_links, 'filename': 'same.pdf'}
+        await server.db.evidence.insert_many([
+            {**scoped, 'evidence_id': 'review-file'}, {**scoped, 'evidence_id': 'assessment-file', 'relationships': [{'kind':'framework_assessments','id':aid}]},
+            {**scoped, 'evidence_id': 'foreign', 'client_id':'b'}, {**scoped, 'evidence_id': 'archived', 'archived_at':'2026-10-01'},
+            {**scoped, 'evidence_id': 'unlinked'}, {**scoped, 'evidence_id': 'unrelated', 'relationships':[{'kind':'vendors','id':'linked-review'}]},
+        ])
+        await server.db.framework_assessments.update_one({'client_id':'a','framework_assessment_id':aid},{'$set':{'unlinked_evidence_ids':['unlinked']}})
+        response = await self.client.get('/api/framework_assessments/' + aid + '/related')
+        self.assertEqual(response.status_code, 200, response.text)
+        self.assertEqual({file['evidence_id'] for file in response.json()['evidence']}, {'review-file','assessment-file'})
+
     async def test_workspace_review_setup_reuses_onboarding_and_preserves_schedule(self):
         workspace=await self.configure()
         plan=active_plans('cis-ig1')[0]
         row=next(a for a in workspace['assessments'] if a['definition_id'] in plan['safeguards'])
         old=await server.db.reviews.find_one({'client_id':'a','framework_plan_key':plan['key']})
         count=await server.db.reviews.count_documents({'client_id':'a'})
+        other=next(a for a in workspace['assessments'] if a['definition_id'] in plan['safeguards']
+                   and a['framework_assessment_id']!=row['framework_assessment_id'])
+        # Model an interrupted earlier multi-assessment linkage. The next normal
+        # setup call repairs another row while its audit keeps the origin row.
+        await server.db.framework_assessments.update_one({'client_id':'a','framework_assessment_id':other['framework_assessment_id']},
+            {'$pull':{'related_links':{'kind':'reviews','id':old['review_id']}}})
         path='/api/framework_assessments/'+row['framework_assessment_id']+'/reviews'
         for _ in range(2):
             response=await self.client.post(path,json={'plan_key':plan['key'],'title':'Do not overwrite','due_date':'2027-01-01'})
@@ -25,6 +48,15 @@ class FrameworkTests(unittest.IsolatedAsyncioTestCase):
             self.assertEqual(response.json()['due_date'],old['due_date'])
             self.assertEqual(response.json()['title'],old['title'])
         self.assertEqual(await server.db.reviews.count_documents({'client_id':'a'}),count)
+        linked_audit=await server.db.audit_logs.find_one({'entity_id':row['framework_assessment_id'],
+            'action':'Framework Review linked'},sort=[('at',-1)])
+        self.assertEqual(linked_audit['meta']['_portfolio_activity_source_type'],'framework_assessments')
+        self.assertEqual(linked_audit['meta']['_portfolio_activity_source_id'],other['framework_assessment_id'])
+        identity=linked_audit['meta']['_portfolio_activity_event_id']
+        captured=await server.db.portfolio_events.find_one({'event_id':identity})
+        self.assertEqual((captured['source_kind'],captured['source_id']),('framework_assessments',other['framework_assessment_id']))
+        source=await server.db.framework_assessments.find_one({'framework_assessment_id':other['framework_assessment_id']})
+        self.assertNotIn(identity,source.get('_portfolio_activity_pending',{}))
         for definition in plan['safeguards']:
             linked=await server.db.framework_assessments.find_one({'client_id':'a','framework_key':'cis-ig1','definition_id':definition})
             self.assertIn({'kind':'reviews','id':old['review_id']},linked['related_links'])
@@ -40,6 +72,18 @@ class FrameworkTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(first.status_code,200,first.text)
         second=await self.client.post(path,json=body)
         self.assertEqual(second.json()['review_id'],first.json()['review_id'])
+        stored_review=await server.db.reviews.find_one({'review_id':first.json()['review_id']})
+        capture=await server.db.portfolio_events.find({'source_kind':'reviews','source_id':stored_review['review_id']}).to_list(None)
+        self.assertEqual(len(capture),1);self.assertEqual(capture[0]['type'],'Assessments')
+        self.assertEqual(capture[0]['program_keys'],['cis-ig1'])
+        self.assertFalse(stored_review.get('_portfolio_activity_pending'))
+        self.assertNotIn('_portfolio_activity',str(first.json()))
+        stored_assessment=await server.db.framework_assessments.find_one({'framework_assessment_id':aid})
+        links=await server.db.portfolio_events.find({'source_kind':'framework_assessments','source_id':aid}).to_list(None)
+        self.assertEqual(len(links),1);self.assertIn('related_links',links[0]['changed_fields'])
+        self.assertFalse(stored_assessment.get('_portfolio_activity_pending'))
+        self.assertEqual(stored_assessment.get('assessment_history'),workspace['assessments'][0].get('assessment_history'))
+        self.assertEqual(stored_assessment.get('last_assessed'),workspace['assessments'][0].get('last_assessed'))
         self.assertEqual(first.json()['status'],'upcoming')
         self.assertTrue(first.json()['current_occurrence_id'])
         calendar=await self.client.get('/api/calendar',params={'client_id':'a','start':'2027-02-01','end':'2027-02-28','scope':'active'})
@@ -68,6 +112,15 @@ class FrameworkTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual((task['assignee_id'],task['due_date']),('member','2026-12-15'))
         again=await self.client.post(base+'/findings',json=payload)
         self.assertEqual(again.json()['finding_id'],finding['finding_id'])
+        stored=await server.db.findings.find_one({'finding_id':finding['finding_id']})
+        identity=stored['_portfolio_activity_creation_event_id']
+        captured=await server.db.portfolio_events.find_one({'event_id':identity})
+        self.assertEqual(captured['title'],'Finding created')
+        self.assertEqual(captured['program_keys'],['cis-ig1'])
+        self.assertFalse(stored.get('_portfolio_activity_pending'))
+        self.assertNotIn('_portfolio_activity',str(finding))
+        audit=await server.db.audit_logs.find_one({'entity_id':finding['finding_id'],'action':'create'})
+        self.assertEqual(audit['meta']['_portfolio_activity_event_id'],identity)
         self.assertEqual(await server.db.tasks.count_documents({'finding_id':finding['finding_id']}),1)
         for bad in ({'owner_id':'nobody'},{'due_date':'2026-02-30'}):
             response=await self.client.post(base+'/findings',json={**payload,'request_id':'bad-'+list(bad)[0],**bad})
@@ -133,7 +186,7 @@ class FrameworkTests(unittest.IsolatedAsyncioTestCase):
         expected = {f'{control}.{n}' for control, count in counts.items() for n in range(1, count+1)}
         self.assertEqual({d['id'] for d in active_definitions('cis-ig1')}, expected)
         self.assertEqual(len(active_definitions('cis-ig1')), 56)
-        self.assertEqual([f['key'] for f in FRAMEWORKS if f['implemented']], ['hipaa','cis-ig1','nist-csf-2','iso-27001','soc-2'])
+        self.assertEqual([f['key'] for f in FRAMEWORKS if f['implemented']], ['hipaa','cis-ig1','nist-csf-2','iso-27001','cmmc','soc-2'])
         for plan in active_plans('cis-ig1'):
             self.assertTrue(set(plan['safeguards']) <= expected)
             for field in ('basis','reason','source_cadence','default_cadence'): self.assertTrue(plan[field])
@@ -188,7 +241,7 @@ class FrameworkTests(unittest.IsolatedAsyncioTestCase):
             for key in ['hipaa','nist-csf-2','iso-27001','cmmc','soc-2']:
                 shell = (await self.client.get('/api/frameworks/'+key,params={'client_id':cid})).json()
                 self.assertEqual(shell['selected'],key in programs)
-                count={'hipaa':76,'iso-27001':123,'soc-2':33,'nist-csf-2':106}.get(key,0) if key in programs else 0
+                count={'hipaa':81,'iso-27001':123,'soc-2':33,'nist-csf-2':106}.get(key,0) if key in programs else 0
                 self.assertEqual(len(shell['definitions']),count); self.assertEqual(len(shell['assessments']),count)
 
     async def test_authoritative_workflow_and_reconfiguration_preserves_history(self):
@@ -210,8 +263,16 @@ class FrameworkTests(unittest.IsolatedAsyncioTestCase):
         related=(await self.client.get(base+'/related')).json()
         self.assertEqual(related['tasks'][0]['status'],'done');self.assertEqual(related['findings'][0]['status'],'remediated')
         self.assertEqual((await server.db.framework_assessments.find_one({'framework_assessment_id':aid}))['status'],'in_progress')
-        validated=await self.client.post('/api/findings/'+f.json()['finding_id']+'/validate',json={'rationale':'Remediation verified against inventory evidence'})
+        finding_path='/api/findings/'+f.json()['finding_id']+'/validate'
+        pending_finding=await server.db.findings.find_one({'finding_id':f.json()['finding_id']})
+        decision={'rationale':'Remediation verified against inventory evidence','expected_updated_at':pending_finding['updated_at'],'request_id':'independent-inventory-validation'}
+        self.assertEqual((await self.client.post(finding_path,json=decision)).status_code,403)
+        await server.db.users.insert_one({'user_id':'validator','email':'validator@example.test','role':'platform_admin','client_ids':['a'],'status':'active'})
+        self.sign_in('validator')
+        validated=await self.client.post(finding_path,json=decision)
         self.assertEqual(validated.status_code,200,validated.text)
+        self.assertEqual(validated.json()['validated_by'],'validator')
+        self.sign_in('admin')
         self.assertEqual((await self.client.patch(base,json={'status':'addressed'})).status_code,200)
         reviews=await server.db.reviews.find({'client_id':'a'},{'_id':0}).to_list(None)
         for r in reviews:
@@ -258,7 +319,18 @@ class FrameworkTests(unittest.IsolatedAsyncioTestCase):
         review=(await self.client.get('/api/reviews',params={'client_id':'a'})).json()
         current=next(r for r in review if r['review_id']=='existing')
         self.assertEqual(current['title'],'Client access review')
-        done=await self.client.post('/api/reviews/existing/complete',json={'occurrence_id':current['current_occurrence_id']})
+        guide_response=await self.client.get('/api/reviews/existing/completion-guide')
+        self.assertEqual(guide_response.status_code,200,guide_response.text)
+        guide=guide_response.json()
+        expected_steps=['access:operation:ticket','access:operation:due','access:operation:results',
+            'access:operation:exceptions','access:operation:next','access:client:1','access:client:2']
+        self.assertEqual([step['step_id'] for step in guide['steps']],expected_steps)
+        done=await self.client.post('/api/reviews/existing/complete',json={
+            'occurrence_id':current['current_occurrence_id'],'expected_updated_at':guide['expected_updated_at'],
+            'checklist':{'contract_token':guide['contract_token'],
+                'results':[{'step_id':step_id,'result':'Pass','reason':''} for step_id in expected_steps]},
+            'supporting_reference':'Synthetic completed account review result record ACCESS-CYCLE-001',
+            'outcome':'No exceptions noted'})
         self.assertEqual(done.status_code,200,done.text)
         self.assertEqual(done.json()['occurrence']['framework_key'],'cis-ig1')
         await self.configure()
@@ -298,4 +370,47 @@ class FrameworkTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(work['evidence_count'],1)
         related=(await self.client.get('/api/framework_assessments/'+aid+'/related')).json()
         self.assertEqual([e['evidence_id'] for e in related['evidence']],[kept])
+
+    async def test_record_links_capture_once_and_evidence_support_mirrors_do_not_duplicate_activity(self):
+        workspace=await self.configure();original=workspace['assessments'][0];aid=original['framework_assessment_id']
+        base='/api/framework_assessments/'+aid
+        await server.db.risks.insert_one({'risk_id':'portfolio-link-risk','client_id':'a','title':'Private linked Risk title','status':'open'})
+        body={'kind':'risks','id':'portfolio-link-risk'}
+        linked=await self.client.post(base+'/links',json=body);self.assertEqual(linked.status_code,200,linked.text)
+        row=await server.db.framework_assessments.find_one({'framework_assessment_id':aid})
+        captured=await server.db.portfolio_events.find({'source_kind':'framework_assessments','source_id':aid}).to_list(None)
+        self.assertEqual(len(captured),1);self.assertFalse(row.get('_portfolio_activity_pending'))
+        self.assertNotIn('Private linked Risk title',str(captured))
+        self.assertEqual((await self.client.post(base+'/links',json=body)).status_code,200)
+        self.assertEqual(await server.db.portfolio_events.find({'source_kind':'framework_assessments','source_id':aid}).to_list(None),captured)
+        self.assertFalse((await server.db.framework_assessments.find_one({'framework_assessment_id':aid})).get('_portfolio_activity_pending'))
+        uploaded=await self.client.post('/api/evidence',json={'client_id':'a','linked_type':'framework_assessment','linked_id':aid,'filename':'isolated.txt','content_base64':'eA=='})
+        self.assertEqual(uploaded.status_code,200,uploaded.text)
+        evidence={'kind':'evidence','id':uploaded.json()['evidence_id']}
+        self.assertEqual((await self.client.post(base+'/links',json=evidence)).status_code,200)
+        self.assertEqual((await self.client.request('DELETE',base+'/links',json=evidence)).status_code,200)
+        row=await server.db.framework_assessments.find_one({'framework_assessment_id':aid})
+        self.assertEqual(await server.db.portfolio_events.find({'source_kind':'framework_assessments','source_id':aid}).to_list(None),captured)
+        self.assertFalse(row.get('_portfolio_activity_pending'))
+        self.assertIn(evidence['id'],row['unlinked_evidence_ids'])
+        self.assertEqual(row.get('last_assessed'),original.get('last_assessed'))
+        self.assertEqual(row.get('assessment_history'),original.get('assessment_history'))
+
+    async def test_native_framework_responses_hide_capture_fields_without_mutating_sources(self):
+        workspace=await self.configure();aid=workspace['assessments'][0]['framework_assessment_id']
+        marker={'_portfolio_activity_pending':{'retained':{'private':'pending envelope'}},
+                '_portfolio_activity_last_event_id':'retained'}
+        await server.db.risks.insert_one({'risk_id':'private-marked-risk','client_id':'a','title':'Linked Risk','status':'open',**marker})
+        await server.db.framework_assessments.update_one({'framework_assessment_id':aid},{'$set':{
+            **marker,'related_links':[{'kind':'risks','id':'private-marked-risk'}]}})
+        before=await server.db.framework_assessments.find_one({'framework_assessment_id':aid})
+        risk=await server.db.risks.find_one({'risk_id':'private-marked-risk'})
+        for path,params in [('/api/framework_assessments/'+aid,None),
+                            ('/api/framework_assessments/'+aid+'/related',None),
+                            ('/api/frameworks/cis-ig1',{'client_id':'a'})]:
+            response=await self.client.get(path,params=params)
+            self.assertEqual(response.status_code,200,response.text)
+            self.assertNotIn('_portfolio_activity',str(response.json()))
+        self.assertEqual(await server.db.framework_assessments.find_one({'framework_assessment_id':aid}),before)
+        self.assertEqual(await server.db.risks.find_one({'risk_id':'private-marked-risk'}),risk)
 

@@ -53,7 +53,7 @@ test.each(ids)('%s consumed content handles roots, cadence, gaps and uncertainty
   const frequency = question(id, 'frequency');
   for (const value of frequency.choices) {
     const result = generateResult(id, {...complete, frequency: value});
-    expect(result.status).toBe(value === 'Not sure' || frequency.deficient_values.includes(value)
+    expect(result.status).toBe(value === 'Not sure' ? 'not_assessed' : frequency.deficient_values.includes(value)
       ? 'in_progress' : 'addressed');
     expect(result.signals.some(s => s.questionId === 'frequency' && s.kind === 'gap'))
       .toBe(frequency.deficient_values.includes(value));
@@ -61,21 +61,21 @@ test.each(ids)('%s consumed content handles roots, cadence, gaps and uncertainty
       .toBe(value === 'Not sure');
   }
   const {frequency: omitted, ...missingFrequency} = complete;
-  expect(generateResult(id, missingFrequency).status).toBe('in_progress');
+  expect(generateResult(id, missingFrequency).status).toBe('not_assessed');
 
   const gap = 'Confirmed: one connected segment is omitted.';
   const uncertainty = 'Unconfirmed: ask the provider whether that segment is covered.';
-  const gapResult = generateResult(id, {...complete, gaps: gap});
+  const gapResult = generateResult(id, {...complete, additional_gap:'Yes', gaps: gap});
   expect(gapResult.status).toBe('in_progress');
   expect(gapResult.gaps.join(' ')).toContain(gap);
   expect(gapResult.unknowns).toEqual([]);
-  const uncertainAnswers = validateAnswers(id, {...complete, unknowns: uncertainty});
+  const uncertainAnswers = validateAnswers(id, {...complete, additional_confirmation:'Yes', unknowns: uncertainty});
   const unknownResult = generateResult(id, uncertainAnswers);
-  expect(unknownResult.status).toBe('in_progress');
+  expect(unknownResult.status).toBe('not_assessed');
   expect(unknownResult.unknowns.join(' ')).toContain(uncertainty);
   expect(unknownResult.gaps).toEqual([]);
   expect(unknownResult.nextSteps.join(' ')).toContain(uncertainty);
-  const combined = generateResult(id, {...complete, gaps: gap, unknowns: uncertainty});
+  const combined = generateResult(id, {...complete, additional_gap:'Yes', additional_confirmation:'Yes', gaps: gap, unknowns: uncertainty});
   expect(combined.gaps.join(' ')).not.toContain(uncertainty);
   expect(combined.unknowns.join(' ')).not.toContain(gap);
   const narrative = generateResult(id, {...complete, system: 'Reported source', owner: 'Reported team'}).narrative;

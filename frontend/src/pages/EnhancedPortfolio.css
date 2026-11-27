@@ -1,0 +1,261 @@
+@font-face {
+  font-family: 'GoverNara Portfolio Inter';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 100 900;
+  src: url('../assets/fonts/inter-dashboard-latin.woff2') format('woff2');
+}
+/* Native data/history adapters for the supplied Portfolio presentation. */
+.portfolio-reference-overlay {background:rgba(3,8,18,.62);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px)}
+html[data-brawndo-portal=light] .portfolio-reference-overlay {background:rgba(15,23,42,.38)}
+html.portfolio-reference-root {color-scheme:dark}
+html.portfolio-reference-root[data-brawndo-portal=light] {color-scheme:light}
+html.portfolio-reference-root::-webkit-scrollbar,html.portfolio-reference-root body::-webkit-scrollbar,.portfolio-reference ::-webkit-scrollbar {all:revert;width:15px;height:15px}
+html.portfolio-reference-root::-webkit-scrollbar-track,html.portfolio-reference-root body::-webkit-scrollbar-track,.portfolio-reference ::-webkit-scrollbar-track {all:revert}
+html.portfolio-reference-root::-webkit-scrollbar-thumb,html.portfolio-reference-root body::-webkit-scrollbar-thumb,.portfolio-reference ::-webkit-scrollbar-thumb {all:revert}
+.portfolio-reference {
+  --font:'GoverNara Portfolio Inter',Inter,'Segoe UI',system-ui,sans-serif;
+  --page:var(--bg); --card:var(--surface-solid); --sunk:var(--surface-2);
+  --line:var(--divider); --line2:var(--input-bd); --ink:var(--text); --ink2:var(--muted);
+  --chart-implemented:var(--s1); --chart-partial:var(--s2); --chart-not:var(--s3);
+  --chart-unassessed:var(--s4); --chart-track:var(--track); --chart-grid:var(--divider);
+  --chart-area:var(--spark-fill);
+}
+.enhanced-portfolio:not(.portfolio-reference) {padding:24px}
+.portfolio-reference-chrome {min-height:100dvh}
+.portfolio-reference-chrome>.shell {min-height:calc(100dvh - 69px)}
+.portfolio-reference .portfolio-notifications>button {width:40px;height:40px;border-radius:12px;display:flex;align-items:center;justify-content:center;color:var(--muted);padding:0}
+.portfolio-reference .portfolio-notifications>button:hover {background:var(--hover);color:var(--text)}
+.portfolio-reference .portfolio-notifications>button>svg {width:18px;height:18px}
+.portfolio-reference.enhanced-portfolio:not(.ep-history) {background:transparent;min-height:0;height:auto;padding:0}
+.portfolio-reference.enhanced-portfolio {color:var(--text);font-family:var(--font);line-height:1.45}
+.portfolio-reference h1,.portfolio-reference h2,.portfolio-reference h3,.portfolio-reference .brand-name {font-family:var(--font)}
+.portfolio-reference .brand-name {color:var(--text)}
+.portfolio-reference .ep-heading {margin:0}
+.portfolio-reference .ep-heading p {margin-bottom:0}
+.portfolio-reference .seg button {display:inline-flex;align-items:center;justify-content:center;gap:6px}
+.portfolio-reference .seg button[aria-pressed=true] {background:var(--accent-strong);color:var(--text);font-weight:600;box-shadow:inset 0 0 0 1px var(--chip-bd)}
+.portfolio-reference[data-theme=light] .seg button[aria-pressed=true] {background:#fff;box-shadow:0 1px 2px rgba(16,24,40,.1)}
+.portfolio-reference .ep-kpi {text-align:left;min-width:0}
+.portfolio-reference .ep-kpi[aria-pressed=true] {background:var(--accent-soft);box-shadow:inset 0 -2px var(--accent)}
+.portfolio-reference .ep-kpi:hover:not(:disabled) {background:var(--hover)}
+.portfolio-reference .ep-kpi:disabled {opacity:1}
+.portfolio-reference .ep-kpi strong {font-weight:400}
+.portfolio-reference .ep-search {flex:1 1 200px;max-width:290px;margin:0}
+.portfolio-reference .ep-table {min-width:880px}
+.portfolio-reference .ep-columns {text-transform:uppercase}
+.portfolio-reference .ep-client {min-width:0}
+.portfolio-reference .ep-client-link {width:100%}
+.portfolio-reference .ep-client-copy {display:flex;flex-direction:column;min-width:0}
+.portfolio-reference .ep-avatar {width:42px;height:42px;flex:none;display:flex;align-items:center;justify-content:center;border-radius:12px;box-shadow:var(--tile-ring);background:var(--accent-soft);color:var(--text);font-size:16px;font-weight:600;overflow:hidden}
+.portfolio-reference .ep-programs {display:flex;flex-direction:column;gap:18px;min-width:0}
+.portfolio-reference .ep-program {width:calc(100% + 24px)}
+.portfolio-reference .ep-progress {display:inline-flex;align-items:baseline;gap:8px}
+.portfolio-reference .ep-program .gp-statusbar {display:flex;flex:none;gap:2px;height:6px;border-radius:3px;overflow:hidden;background:var(--track)}
+.portfolio-reference .ep-program .gp-statusbar>span {display:block;height:100%;border-radius:3px}
+.portfolio-reference .gp-statusbar .is-implemented {background:var(--s1)}
+.portfolio-reference .gp-statusbar .is-partial {background:var(--s2)}
+.portfolio-reference .gp-statusbar .is-not {background:var(--s3)}
+.portfolio-reference .gp-statusbar .is-unassessed {background:var(--s4)}
+.portfolio-reference .ep-group-heading {display:flex;align-items:center;gap:12px}
+.portfolio-reference .ep-group-heading .av {width:38px;height:38px;font-size:12px}
+.portfolio-reference .ep-group-heading small {display:block}
+.portfolio-reference .ep-tags {display:flex;flex-wrap:wrap;gap:6px}
+.portfolio-reference .pill-btn .ep-avatar {width:22px;height:22px;border-radius:6px;font-size:10px}
+.portfolio-reference .ep-empty {text-align:center;padding:32px 20px;color:var(--faint)}
+.portfolio-reference .ep-button {display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:32px;padding:0 12px;border-radius:9px;border:1px solid var(--input-bd);background:var(--input);font-size:12.5px}
+.portfolio-reference .ep-button.cta {min-height:40px;padding:0 16px;border:0;background:var(--cta);color:var(--cta-fg)}
+.portfolio-reference .ep-link {display:inline-flex;align-items:center;color:var(--accent);font-weight:500;min-height:32px;padding:0 6px;border-radius:8px;margin:12px 0 0 -6px}
+.portfolio-reference .ep-link:hover {text-decoration:underline}
+.portfolio-reference .ep-red {color:var(--alert)}
+.portfolio-reference .ep-amber {color:var(--warn)}
+.portfolio-reference .ep-green {color:var(--pos)}
+.portfolio-reference .ep-gray {color:var(--faint)}
+.portfolio-reference .ep-attention-chip.ep-red {color:var(--alert);background:var(--alert-bg);border-color:var(--alert-bd)}
+.portfolio-reference .ep-attention-chip.ep-amber {color:var(--warn);background:var(--warn-bg);border-color:var(--warn-bd)}
+.portfolio-reference .ep-attention-chip.ep-green {color:var(--ok);background:var(--ok-bg);border-color:var(--ok-bd)}
+.portfolio-reference .ep-attention-chip.ep-gray {color:var(--neu);background:var(--neu-bg);border-color:var(--neu-bd)}
+.portfolio-reference.portfolio-history-dialog.ep-history {
+  --color-bg-app:var(--surface-solid); --color-bg-subtle:var(--surface-2);
+  --color-text-primary:var(--text); --color-text-secondary:var(--muted); --color-text-muted:var(--faint);
+  --color-border:var(--border); --color-border-strong:var(--border-accent); --color-link:var(--accent);
+  --color-success:var(--s1); --font-body:var(--font);
+  position:fixed;inset:4dvh auto auto 50%;transform:translateX(-50%);
+  width:min(1080px,calc(100vw - 32px));max-width:calc(100vw - 32px);
+  height:auto;max-height:92dvh;padding:0;gap:0;
+  display:flex;flex-direction:column;border-radius:22px;
+  background:var(--surface-solid);background-image:var(--surface);
+  border:1px solid var(--border-accent);box-shadow:var(--shadow-pop);overflow:hidden;
+}
+.portfolio-reference.ep-history::before {content:"";position:absolute;left:0;right:0;top:0;height:1px;background:var(--hairline)}
+.portfolio-reference .ep-dialog-heading {flex:none}
+.portfolio-reference .ep-dialog-heading>.ep-avatar {width:52px;height:52px}
+.portfolio-reference .ep-dialog-heading>.ep-avatar+div {flex:1 1 260px;min-width:0}
+.portfolio-reference .ep-dialog-actions {display:flex;align-items:center;gap:10px}
+.portfolio-reference .ep-history-body {flex:1;overflow:auto;min-height:0}
+.portfolio-reference .ep-history-body p {margin:0}
+.portfolio-reference .ep-glance {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;align-items:start}
+.portfolio-reference .ep-work h3 {margin:0}
+.portfolio-reference .acc-title {margin-right:0;display:flex;align-items:center;gap:10px}
+.portfolio-reference .ep-work-disclosure>svg {margin-left:auto;transition:transform .2s}
+.portfolio-reference .ep-work-disclosure[aria-expanded=true]>svg {transform:rotate(180deg)}
+.portfolio-reference .ep-work-disclosure.ep-red .count {color:var(--alert);background:var(--alert-bg);border:1px solid var(--alert-bd)}
+.portfolio-reference .ep-work-disclosure.ep-amber .count {color:var(--warn);background:var(--warn-bg);border:1px solid var(--warn-bd)}
+.portfolio-reference .acc-item {width:100%;display:grid;grid-template-columns:minmax(0,1fr) auto 32px;gap:12px;align-items:center;text-align:left;padding:10px 12px 10px 16px}
+.portfolio-reference .acc-item+.acc-item {border-top:1px solid var(--divider)}
+.portfolio-reference .acc-item:hover:not(:disabled) {background:var(--hover)}
+.portfolio-reference .acc-item-main {display:flex;flex-direction:column;gap:3px;min-width:0}
+.portfolio-reference .acc-item-main>span {font-size:13.5px;line-height:1.35}
+.portfolio-reference .acc-item-main small {font-size:12px;color:var(--faint)}
+.portfolio-reference .acc-item-main .item-type {font-size:11px;font-weight:600;letter-spacing:.04em;color:var(--label);text-transform:uppercase}
+.portfolio-reference .acc-item-main .item-title {font-weight:400}
+.portfolio-reference .acc-item time {font-size:12.5px;font-weight:600;white-space:nowrap;text-align:right}
+.portfolio-reference .acc-list>p {padding:16px;color:var(--faint)}
+.portfolio-reference .ep-notice {border:1px solid var(--border);border-radius:12px;padding:14px 16px;color:var(--muted);background:var(--surface-2)}
+.portfolio-reference .ep-notice b {color:var(--text)}
+.portfolio-reference .ep-program-switch {display:flex;align-items:center;gap:10px;color:var(--faint);font-size:13px}
+.portfolio-reference .ep-program-switch .ep-segment {display:flex;flex-wrap:wrap;gap:8px}
+.portfolio-reference .ep-program-switch button {min-height:32px;padding:0 12px;border-radius:9px;font-weight:600;font-size:12.5px;border:1px solid var(--chip-bd);color:var(--chip-fg);background:var(--accent-soft)}
+.portfolio-reference .ep-program-switch button[aria-pressed=false] {background:transparent;color:var(--faint)}
+.portfolio-reference .ep-current>div:first-child>p:first-child {font-size:12px;color:var(--faint);margin-bottom:8px}
+.portfolio-reference .ep-current>div:first-child>strong {display:block}
+.portfolio-reference .ep-current>div:first-child>strong+p {font-size:12.5px;color:var(--muted);margin-top:10px}
+.portfolio-reference .ep-current>div:first-child>small {display:block;color:var(--faint);font-size:12px;margin-top:4px}
+.portfolio-reference .ep-breakdown-track>i {display:block;height:100%;border-radius:3px}
+.portfolio-reference .ep-status-0 {background:var(--s1)}
+.portfolio-reference .ep-status-1 {background:var(--s2)}
+.portfolio-reference .ep-status-2 {background:var(--s3)}
+.portfolio-reference .ep-status-3 {background:var(--s4)}
+.portfolio-reference .ep-periods .tile-val {display:block;font-weight:400}
+.portfolio-reference .ep-forecast>div:first-child>p:first-child {font-weight:600;font-size:14px;color:var(--muted)}
+.portfolio-reference .ep-forecast .est-big {display:block;font-weight:400}
+.portfolio-reference .ep-forecast-track {display:grid;grid-template-columns:1fr 1fr;gap:6px;color:var(--faint);font-size:12px}
+.portfolio-reference .ep-forecast-track>span:nth-child(even) {text-align:right}
+.portfolio-reference .ep-forecast-track>svg,.portfolio-reference .ep-forecast-track>div {grid-column:1/-1;width:100%}
+.portfolio-reference .ep-forecast-track>svg {max-height:84px}
+.portfolio-reference .ep-forecast-track>div {height:8px;border-radius:4px;overflow:hidden;background:var(--track)}
+.portfolio-reference .ep-forecast-track i {display:block;height:100%;background:var(--spark)}
+.portfolio-reference .ep-chart-heading {display:flex;align-items:center;flex-wrap:wrap;gap:12px;margin-bottom:16px}
+.portfolio-reference .ep-chart-heading .ep-segment {margin-left:auto;display:flex;gap:2px;padding:3px;border-radius:12px;background:var(--surface-2);border:1px solid var(--divider)}
+.portfolio-reference .ep-chart-heading .ep-segment button {min-height:30px;padding:0 11px;border-radius:9px;font-size:12.5px}
+.portfolio-reference .ep-history-card .ph-chart {width:100%;margin:0;background:transparent;border:0;padding:0}
+.portfolio-reference .ep-chart-legend {display:flex;gap:14px;flex-wrap:wrap;font-size:12px;color:var(--faint)}
+.portfolio-reference .ep-chart-legend>span {display:flex;align-items:center;gap:6px}
+.portfolio-reference .ep-chart-legend i {width:8px;height:8px;border-radius:50%}
+.portfolio-reference .ep-history-actions {display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
+.portfolio-reference .ep-history-caption {margin-top:10px!important;color:var(--faint);font-size:12px}
+.portfolio-reference .ep-history-data {margin-top:14px;max-height:340px;overflow:auto}
+.portfolio-reference .ep-history-data table {width:100%;border-collapse:collapse;text-align:left;font-size:12px}
+.portfolio-reference .ep-history-data td,.portfolio-reference .ep-history-data th {padding:9px 10px;border-bottom:1px solid var(--divider);white-space:nowrap}
+.portfolio-reference .ep-history-data td small {display:block;color:var(--faint)}
+.portfolio-reference .m-foot {flex:none}
+@media(max-width:1100px) {.portfolio-reference .ep-glance {grid-template-columns:1fr}}
+@media(max-width:560px) {.portfolio-reference .ep-dialog-actions {width:100%;justify-content:space-between}.portfolio-reference .acc-item {grid-template-columns:minmax(0,1fr) auto 24px;gap:8px}.portfolio-reference .acc-item time {white-space:normal}}
+
+/* Approved Nordic seven-column ledger; native record and history adapters remain unchanged. */
+.portfolio-reference .ep-register {
+  --ss-cols: minmax(250px,1.78fr) minmax(230px,1.55fr) repeat(3,minmax(145px,1fr)) minmax(150px,.96fr) 26px;
+  --ss-margin: 23px;
+  min-width: 0; width: 100%; color: var(--text); background: var(--surface-solid);
+}
+.portfolio-reference .ep-register[hidden] { display: none; }
+.portfolio-reference .ep-register .ss-intro { padding: 15px var(--ss-margin) 11px; }
+.portfolio-reference .ep-register .ss-intro h2 {
+  margin: 0; color: var(--text); font-size: 23px; line-height: 1.2;
+  font-weight: 650; letter-spacing: -.025em;
+}
+.portfolio-reference .ep-register .ss-intro p { margin: 4px 0 0; color: var(--muted); font-size: 14px; line-height: 1.4; }
+.portfolio-reference .ep-register .ss-table-wrap { overflow-x: auto; }
+.portfolio-reference .ep-register .ss-ledger { min-width: 1160px; }
+.portfolio-reference .ep-register :is(.ss-head,.ss-row) {
+  display: grid; grid-template-columns: var(--ss-cols); grid-template-areas: none;
+  gap: 0; align-items: center; padding: 0 var(--ss-margin);
+}
+.portfolio-reference .ep-register .ss-head {
+  min-height: 34px; color: var(--muted); background: color-mix(in srgb,var(--surface-2) 60%,var(--surface-solid));
+  border-block: 1px solid var(--divider); font-size: 13px; font-weight: 650; line-height: 1.25;
+}
+.portfolio-reference .ep-register .ss-head > span { min-width: 0; padding: 8px 12px 8px 0; }
+.portfolio-reference .ep-register .trow.ss-row {
+  min-height: 60px; padding-block: 6px; border: 0; cursor: pointer;
+  background: var(--surface-solid); position: relative;
+}
+.portfolio-reference .ep-register .ss-row::after {
+  content: ""; position: absolute; height: 1px; bottom: 0;
+  left: var(--ss-margin); right: var(--ss-margin); background: var(--divider);
+}
+.portfolio-reference .ep-register .ss-row:where(:hover,:focus-within) { background: var(--hover); }
+.portfolio-reference .ep-register .ss-ident {
+  display: flex; align-items: center; gap: 14px; min-width: 0; padding-right: 14px;
+}
+.portfolio-reference .ep-register .ss-ident > .tile { width: 33px !important; height: 33px !important; flex: 0 0 33px; border-radius: 7px !important; }
+.portfolio-reference .ep-register .ss-identity-text { min-width: 0; display: flex; flex-direction: column; align-items: flex-start; gap: 2px; }
+.portfolio-reference .ep-register .ss-client { padding: 0; min-width: 0; color: var(--text); text-align: start; cursor: pointer; }
+.portfolio-reference .ep-register .ss-client .client-name { font-size: 17px; font-weight: 650; line-height: 1.2; letter-spacing: -.015em; }
+.portfolio-reference .ep-register .ss-identity-text > small { color: var(--muted); font-size: 13px; line-height: 1.25; }
+.portfolio-reference .ep-register .ss-frameworks { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; }
+.portfolio-reference .ep-register .ss-framework-button {
+  min-height: 21px; padding: 2px 10px; border: 1px solid var(--border); border-radius: 4px;
+  color: var(--muted); background: var(--surface-solid); font: inherit; font-size: 11px; line-height: 1.25; cursor: pointer;
+}
+.portfolio-reference .ep-register .ss-framework-button:hover { background: var(--well,var(--surface-2)); color: var(--text); }
+.portfolio-reference .ep-register .ss-framework-button[aria-pressed="true"] { color: var(--chip-fg); background: var(--accent-soft); border-color: var(--chip-bd); font-weight: 650; }
+.portfolio-reference .ep-register :is(.ss-primary,.ss-assessed) { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; min-width: 0; padding-right: 16px; }
+.portfolio-reference .ep-register .ss-primary { text-align: start; cursor: pointer; }
+.portfolio-reference .ep-register .ss-primary > strong { font-size: 27px; font-weight: 650; line-height: 1.1; letter-spacing: -.035em; color: var(--accent); }
+.portfolio-reference .ep-register :is(.ss-primary,.ss-assessed) > small { font-size: 12px; line-height: 1.3; color: var(--muted); }
+.portfolio-reference .ep-register .ss-assessed > strong { font-size: 22px; font-weight: 650; line-height: 1.2; letter-spacing: -.025em; }
+.portfolio-reference .ep-register .ss-status { padding-right: 16px; min-width: 0; }
+.portfolio-reference .ep-register .ss-stat {
+  display: flex; align-items: center; justify-content: space-between; gap: 8px;
+  min-height: 38px; padding: 7px 12px; border-radius: 5px;
+  background: var(--well,var(--surface-2)); color: var(--muted); font-variant-numeric: tabular-nums;
+}
+.portfolio-reference .ep-register .ss-stat > strong { font-size: 21px; font-weight: 600; line-height: 1.1; }
+.portfolio-reference .ep-register .ss-stat > span { font-size: 12px; }
+.portfolio-reference .ep-register .ss-stat.ss-partial { color: var(--warn); background: var(--warn-bg); }
+.portfolio-reference .ep-register .ss-stat.ss-gap { color: var(--alert); background: var(--alert-bg); }
+.portfolio-reference .ep-register .ss-stat.ss-zero { background: color-mix(in srgb,var(--well,var(--surface-2)) 45%,var(--surface-solid)); color: var(--muted); }
+.portfolio-reference .ep-register .ss-stat.ss-zero > strong { font-weight: 400; }
+.portfolio-reference .ep-register .ss-open { padding: 5px 0; color: var(--faint); cursor: pointer; }
+.portfolio-reference .ep-register .ss-open svg { width: 15px; height: 15px; }
+.portfolio-reference .ep-register .ss-unavailable > strong { color: var(--faint); }
+.portfolio-reference .ep-register :is(.ss-client,.ss-primary,.ss-open,.ss-framework-button):focus-visible,
+.portfolio-reference .ep-register .ss-table-wrap:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 3px; }
+.portfolio-reference .ep-register > .gt-foot { border-top: 0; padding: 14px 23px 10px; font-size: 12px; }
+.portfolio-reference .portfolio-note { margin: -2px 0 0; color: var(--muted); font-size: 12px; line-height: 1.4; }
+@media (max-width: 1100px) {
+  .portfolio-reference .pf-kstrip .kchip { padding-inline: 14px; gap: 10px; }
+  .portfolio-reference .pf-kstrip .kchip .kl { font-size: 12px; }
+}
+@media (max-width: 650px) {
+  .portfolio-reference .pf-kstrip .kstrip { grid-template-columns: repeat(2,minmax(0,1fr)); padding: 0; }
+  .portfolio-reference .pf-kstrip .kchip { padding-block: 12px; }
+  .portfolio-reference .pf-kstrip .kchip:nth-child(3) { border-left: 0; }
+  .portfolio-reference .pf-kstrip .kchip:nth-child(n+3) { border-top: 1px solid var(--divider); }
+  .portfolio-reference .ep-register { --ss-margin: 15px; }
+  .portfolio-reference .ep-register .ss-intro h2 { font-size: 20px; }
+  .portfolio-reference .ep-register > .gt-foot { padding-inline: 15px; gap: 8px; }
+}
+@media (forced-colors: active) {
+  .portfolio-reference .ep-register .ss-stat { border: 1px solid CanvasText; }
+}
+
+
+.portfolio-reference .ep-box { background:transparent; border:0; box-shadow:none; overflow:visible; }
+.portfolio-reference .ep-toolbar { border:1px solid var(--border); border-radius:8px; padding:10px 12px; background:var(--surface-solid); margin:0 0 8px; }
+.portfolio-reference .pf-kstrip { padding:0; border:0; background:transparent; margin-bottom:12px; }
+.portfolio-reference .pf-kstrip .kstrip { grid-template-columns:repeat(4,minmax(0,1fr)); padding:10px 0; border-radius:8px; background:var(--surface-2); }
+.portfolio-reference .pf-kstrip .kchip { display:flex; align-items:center; gap:18px; padding:3px 20px; box-shadow:none; white-space:normal; }
+.portfolio-reference .pf-kstrip .kchip + .kchip { border-left:1px solid var(--divider); }
+.portfolio-reference .pf-kstrip .kchip b { font-size:23px; line-height:1.1; }
+.portfolio-reference .pf-kstrip .kchip .kl { font-size:14px; font-weight:400; }
+.portfolio-reference .pf-kstrip .kchip .kc { display:none; }
+.portfolio-reference .ep-register { overflow:hidden; border:1px solid var(--border); border-radius:8px 8px 0 0; }
+.portfolio-reference .ep-register .ss-head { text-transform:none; }
+.portfolio-reference .ep-register .ep-program { width:100%; }
+.portfolio-reference .ep-register .ss-ident > .ep-avatar { width:33px; height:33px; flex:0 0 33px; border-radius:7px; }
+.portfolio-reference .ep-register .ss-client { width:auto; }
+.portfolio-reference .ep-register .no-prog { width:auto; padding:0; color:var(--accent); font-size:12px; text-align:left; }
+.portfolio-reference .ep-box > .gt-foot { border:1px solid var(--border); border-top:0; border-radius:0 0 8px 8px; background:var(--surface-solid); padding:14px 23px 10px; }
+@media(max-width:650px) { .portfolio-reference .pf-kstrip .kstrip { grid-template-columns:repeat(2,minmax(0,1fr)); padding:0; } .portfolio-reference .pf-kstrip .kchip { padding-block:12px; } .portfolio-reference .pf-kstrip .kchip:nth-child(3) { border-left:0; } .portfolio-reference .pf-kstrip .kchip:nth-child(n+3) { border-top:1px solid var(--divider); } }

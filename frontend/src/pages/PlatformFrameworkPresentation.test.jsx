@@ -20,8 +20,10 @@ test('a newly onboarded authenticated client gets the shared CIS snapshot and na
   const root=createRoot(container);
   try{
     await act(async()=>root.render(<FrameworkWorkspace frameworkKey="cis-ig1" clientId={clientId}/>));
-    expect(container.querySelector('.bd-donut-value').textContent).toBe('57.1%');
-    expect(container.querySelector('.bwp-program-counts').textContent).toContain('Implemented32 of 56');
+    const implemented=container.querySelector('.gn-ring-card[data-status="I"]');
+    expect(implemented.querySelector('.gn-ring-value').textContent).toBe('57.1%');
+    expect(implemented.querySelector('.gn-ring-label').textContent).toBe('Implemented');
+    expect(implemented.querySelector('.gn-ring-copy strong').textContent).toBe('32 of 56');
     expect(container.querySelector('[aria-label="Control filters"]')).not.toBeNull();
     await act(async()=>container.querySelector('[data-testid="control-row-1"]').click());
     await act(async()=>container.querySelector('[data-testid="requirement-1.1"]').click());

@@ -1,50 +1,112 @@
 import {validateCsfProfile} from '../lib/csfProfile';
-import {pilotEnabled,versionForSafeguard,validateAnswers} from '../lib/guidedAssessment';
+import {pilotEnabled,versionForSafeguard,validateAnswers,validateGuidedCompletion,visibleQuestions} from '../lib/guidedAssessment';
 import {focusedOmniEnabled} from '../lib/focusedOmni';
 import {socGuidedEnabled,socGuidedCatalog,validateSocAnswers,validateSocCompletion,socGuidedResult} from '../lib/socGuidedAssessment';
 import {isoGuidedEnabled,isoGuidedCatalog,validateIsoAnswers,validateIsoCompletion,isoGuidedResult} from '../lib/isoGuidedAssessment';
+import {genericGuidedFramework,genericGuidedVersion,validateGenericAnswers,validateGenericCompletion,genericGuidedResult} from '../lib/genericGuidedAssessment';
+import {cmmcConfiguration,validateCmmcConfiguration} from '../lib/cmmcScope';
 import cisCriteria from '@catalogs/operatorGuidance/cisAssessmentCriteria.json';
 import socGuidance from '@catalogs/operatorGuidance/socAssessmentGuidance.json';
 import isoCriteria from '@catalogs/operatorGuidance/isoAssessmentCriteria.json';
 import {calendarDay} from '../lib/managementDates';
 import { validateAssignment, eligible, clientAccess } from './assignmentEligibility';
+import {policySupportsAssessment} from '../lib/frameworkPolicyLinks';
+import {reviewMapsTo} from '../lib/frameworkReviewLinks';
 import {CATALOGS,frameworkCatalog,frameworkDefinition,frameworkCapabilities,activeDefinitions,FRAMEWORKS,ASSESSMENT_STATUSES,CADENCES,reviewConfig} from '../lib/frameworks';
 import {cisConfiguration,validateCisSettings,validateCisConfiguration} from '../lib/cisScope';
 import {activePlans} from '../lib/frameworks';
 import {socConfiguration,validateSocConfiguration,validateManagementControls} from '../lib/socReadiness';
 import {record,write,audit,now,ids} from './store';
+import {stable as canonicalSnapshot} from './commandRequests';
 import {action} from './workflows';
+import {requireCreationAssignee} from './authorization';
+import {reconcileItems,currentItem,updateItem,linkItemFinding,reportedEvidence,changeManualItem,applyItemDraft,itemTaskEligible,withItemControls} from './assessmentItems';
+import {demoCurrentPositions} from './portfolioReporting';
 import {assessmentWork,findingApplies} from '../lib/frameworkWorkspace';
+import {assessedRisk,riskDue} from '../lib/grcWork';
 import {existingFrameworkReview,sharedFrameworkPlans,reviewDriver,reviewDrivers} from '../lib/frameworks';
+import {servicesOf,setupActivities} from './r4ServicesTools';
 const stable=(cid,kind,key,framework='cis-ig1')=>`fw_${cid}_${kind}_${framework==='cis-ig1'?'':framework+'_'}${key}`;
 const assessmentTitle=a=>`${frameworkCatalog(a.framework_key)?.label||(a.framework_key==='cis-ig1'?'CIS':a.framework_key.toUpperCase())} ${a.definition_id} · ${frameworkDefinition(a.framework_key,a.definition_id)?.title||a.definition_id}`;
 const VERIFICATION_FIELDS=['verification','verification_checklist'],VERIFICATION_STATES=['not_verified','needs_validation','gap_identified','verified'],VERIFICATION_TIERS={foundation:'f',operational:'o',mature:'m'};
 const fail=(message,status=422)=>{const error=new Error(message);error.status=status;throw error;};
 const copy=value=>JSON.parse(JSON.stringify(value));
+
+export function authorizeFrameworkReviewSetup(db,id,key){
+  const row=record(db,'framework_assessments',id);
+  frameworkScope(db,row.client_id);writable(db);
+  const client=record(db,'clients',row.client_id);
+  if(client._r4_context_pending||row._r4_context_pending)fail('An earlier Client or assessment save needs recovery',409);
+  if(!db.requirements.some(requirement=>requirement.client_id===row.client_id&&requirement.baseline_key===row.framework_key&&requirement.baseline_response==='applies'))fail('Activate the program before configuring Reviews',409);
+  if(!activeDefinitions(row.framework_key,clientConfiguration(row.framework_key,client)).some(definition=>definition.id===row.definition_id))fail('This assessment is retained outside the active program scope; existing work and history remain available',409);
+  if(typeof key!=='string'||!/^[A-Za-z0-9_-]{16,128}$/.test(key))fail('Invalid Idempotency-Key');
+  return row;
+}
+// Mirror native ReviewSetup only for keyed requests; fingerprint the raw body first.
+export function frameworkReviewSetupBody(body){
+  const defaults={plan_key:null,review_id:null,title:'',owner_id:null,recurrence:'quarterly',custom_recurrence_days:null,due_date:null};
+  if(!body||typeof body!=='object'||Array.isArray(body)||Object.keys(body).some(key=>!Object.hasOwn(defaults,key)))fail('Invalid Review setup fields');
+  const input={...defaults,...body};
+  for(const [key,max] of [['plan_key',160],['review_id',160],['owner_id',Infinity],['due_date',10]])
+    if(input[key]!==null&&(typeof input[key]!=='string'||input[key].length>max))fail('Invalid Review '+key);
+  if(typeof input.title!=='string'||input.title.length>500||!CADENCES.includes(input.recurrence))fail('Review title and valid cadence are required');
+  if(input.custom_recurrence_days!==null){
+    const value=input.custom_recurrence_days;
+    const days=typeof value==='number'||typeof value==='boolean'||typeof value==='string'&&/^\s*[+-]?\d+(?:\.0+)?\s*$/.test(value)?Number(value):NaN;
+    if(!Number.isInteger(days)||days<1||days>3660)fail('Custom cadence must be 1-3660 days');
+    input.custom_recurrence_days=days;
+  }
+  return input;
+}
+
+export function authorizeItemTask(db,path,body,key){
+  const parts=path.split('/'),row=record(db,'framework_assessments',parts[2]);
+  frameworkScope(db,row.client_id);writable(db);
+  if(typeof key!=='string'||!/^[A-Za-z0-9_-]{16,128}$/.test(key))fail('A valid Idempotency-Key is required');
+  if(!body||typeof body!=='object'||Array.isArray(body)||Object.keys(body).some(key=>!['expected_revision','title','description','priority','assignee_id','due_date'].includes(key))
+    ||!Number.isInteger(body.expected_revision)||body.expected_revision<0||typeof body.title!=='string'||!body.title.trim()||body.title.length>500
+    ||body.description!==undefined&&(typeof body.description!=='string'||body.description.length>20000)
+    ||body.priority!==undefined&&!['low','medium','high','critical'].includes(body.priority)
+    ||body.assignee_id!=null&&(typeof body.assignee_id!=='string'||body.assignee_id.length>200)
+    ||body.due_date!=null&&(typeof body.due_date!=='string'||calendarDay(body.due_date)===null))fail('Invalid assessment Item Action');
+  if(!db.requirements.some(requirement=>requirement.client_id===row.client_id&&requirement.baseline_key===row.framework_key&&requirement.baseline_response==='applies')
+    ||!activeDefinitions(row.framework_key,clientConfiguration(row.framework_key,record(db,'clients',row.client_id))).some(definition=>definition.id===row.definition_id))fail('Activate the current program scope before creating follow-up work',409);
+  requireCreationAssignee(db,row.client_id,body.assignee_id);
+  validateAssignment(db,'tasks',{client_id:row.client_id,assignee_id:body.assignee_id||null});
+}
+// Replay recognition and write pruning must agree about unset optional fields.
+const NATIVE_EMPTY_DEFAULTS={addressable_decision:'',addressable_rationale:'',iso_assessment_checks:[]};
+function sameNativeField(key,value,previous){
+  if(Object.hasOwn(NATIVE_EMPTY_DEFAULTS,key)){
+    value=value??NATIVE_EMPTY_DEFAULTS[key];previous=previous??NATIVE_EMPTY_DEFAULTS[key];
+  }
+  return canonicalSnapshot(value)===canonicalSnapshot(previous);
+}
 const BASE_FIELDS=['base_assessment_token','base_scope_fingerprint'];
-const guidedConfiguration=(db,row)=>row.framework_key==='iso-27001'?{__program_active:db.requirements.some(r=>r.client_id===row.client_id&&r.baseline_key==='iso-27001'&&r.baseline_response==='applies')}:row.framework_key==='soc-2'?socConfiguration(record(db,'clients',row.client_id)):cisConfiguration(record(db,'clients',row.client_id));
-const guidedEnabled=(db,row)=>row.framework_key==='iso-27001'?isoGuidedEnabled(row.client_id,db.user,row.framework_key,guidedConfiguration(db,row),row.definition_id):row.framework_key==='soc-2'?db.requirements.some(r=>r.client_id===row.client_id&&r.baseline_key==='soc-2'&&r.baseline_response==='applies')&&socGuidedEnabled(row.client_id,db.user,row.framework_key,guidedConfiguration(db,row),row.definition_id):pilotEnabled(row.client_id,row.framework_key,guidedConfiguration(db,row),row.definition_id);
-const guidedVersion=row=>row.framework_key==='iso-27001'?isoGuidedCatalog.version:row.framework_key==='soc-2'?socGuidedCatalog.version:versionForSafeguard(row.definition_id,true);
+const clientConfiguration=(key,client)=>key==='cis-ig1'?cisConfiguration(client):key==='soc-2'?socConfiguration(client):key==='cmmc'?cmmcConfiguration(client):{};
+const guidedConfiguration=(db,row)=>genericGuidedFramework(row.framework_key)?clientConfiguration(row.framework_key,record(db,'clients',row.client_id)):row.framework_key==='iso-27001'?{__program_active:db.requirements.some(r=>r.client_id===row.client_id&&r.baseline_key==='iso-27001'&&r.baseline_response==='applies')}:row.framework_key==='soc-2'?socConfiguration(record(db,'clients',row.client_id)):cisConfiguration(record(db,'clients',row.client_id));
+const guidedEnabled=(db,row)=>genericGuidedFramework(row.framework_key)?db.requirements.some(r=>r.client_id===row.client_id&&r.baseline_key===row.framework_key&&r.baseline_response==='applies')&&activeDefinitions(row.framework_key,guidedConfiguration(db,row)).some(d=>d.id===row.definition_id):row.framework_key==='iso-27001'?isoGuidedEnabled(row.client_id,db.user,row.framework_key,guidedConfiguration(db,row),row.definition_id):row.framework_key==='soc-2'?db.requirements.some(r=>r.client_id===row.client_id&&r.baseline_key==='soc-2'&&r.baseline_response==='applies')&&socGuidedEnabled(row.client_id,db.user,row.framework_key,guidedConfiguration(db,row),row.definition_id):pilotEnabled(row.client_id,row.framework_key,guidedConfiguration(db,row),row.definition_id);
+const guidedVersion=row=>genericGuidedFramework(row.framework_key)?genericGuidedVersion(row.framework_key):row.framework_key==='iso-27001'?isoGuidedCatalog.version:row.framework_key==='soc-2'?socGuidedCatalog.version:versionForSafeguard(row.definition_id,true);
 function guidedScope(db,row){
   const configuration=guidedConfiguration(db,row);
-  const scope=row.framework_key==='iso-27001'?{client_id:row.client_id,assessment_id:row.framework_assessment_id,framework_key:row.framework_key,framework_version:row.framework_version??null,definition_id:row.definition_id,question_version:guidedVersion(row),owner_id:row.owner_id??null,process_owner_id:row.process_owner_id??null,configuration:{},soa_applicability:row.soa_applicability||'',soa_justification:row.soa_justification||''}:row.framework_key==='soc-2'?{client_id:row.client_id,assessment_id:row.framework_assessment_id,framework_key:row.framework_key,framework_version:row.framework_version??null,definition_id:row.definition_id,question_version:guidedVersion(row),categories:[...configuration.categories].sort(),system_description:configuration.system_description||'',period_start:configuration.period_start||'',period_end:configuration.period_end||'',configuration_token:configuration.expected_updated_at??null,owner_id:row.owner_id??null,process_owner_id:row.process_owner_id??null}:{client_id:row.client_id,assessment_id:row.framework_assessment_id,
+  const scope=genericGuidedFramework(row.framework_key)?{client_id:row.client_id,assessment_id:row.framework_assessment_id,framework_key:row.framework_key,framework_version:row.framework_version??null,definition_id:row.definition_id,question_version:guidedVersion(row),configuration,owner_id:row.owner_id??null,process_owner_id:row.process_owner_id??null}:row.framework_key==='iso-27001'?{client_id:row.client_id,assessment_id:row.framework_assessment_id,framework_key:row.framework_key,framework_version:row.framework_version??null,definition_id:row.definition_id,question_version:guidedVersion(row),owner_id:row.owner_id??null,process_owner_id:row.process_owner_id??null,configuration:{},soa_applicability:row.soa_applicability||'',soa_justification:row.soa_justification||''}:row.framework_key==='soc-2'?{client_id:row.client_id,assessment_id:row.framework_assessment_id,framework_key:row.framework_key,framework_version:row.framework_version??null,definition_id:row.definition_id,question_version:guidedVersion(row),categories:[...configuration.categories].sort(),system_description:configuration.system_description||'',period_start:configuration.period_start||'',period_end:configuration.period_end||'',configuration_token:configuration.expected_updated_at??null,owner_id:row.owner_id??null,process_owner_id:row.process_owner_id??null}:{client_id:row.client_id,assessment_id:row.framework_assessment_id,
     framework_key:row.framework_key,framework_version:row.framework_version??null,
     definition_id:row.definition_id,question_version:versionForSafeguard(row.definition_id,true),
     implementation_group:configuration.implementation_group,configuration_token:configuration.expected_updated_at??null,
     owner_id:row.owner_id??null,process_owner_id:row.process_owner_id??null,provider:row.cis_operation?.provider??null};
   // Match Python's sorted compact JSON with ensure_ascii=True, including surrogate pairs.
-  const serialized=JSON.stringify(Object.fromEntries(Object.keys(scope).sort().map(key=>[key,scope[key]])))
+  const serialized=canonicalSnapshot(scope)
     .replace(/[\u007f-\uffff]/g,char=>'\\u'+char.charCodeAt(0).toString(16).padStart(4,'0'));
   return {serialized,base_assessment_token:row.last_saved||row.last_assessed||null};
 }
-// Hash before dispatch. The adapter reloads storage after this await, then the
-// synchronous handler compares trusted inputs and applies its revision check.
+// Hash before dispatch. The adapter revalidates storage and file-cache freshness
+// after this await; the synchronous handler still checks trusted inputs and revision.
 export function prepareGuidedContext(db,path,method,body){
   const [,kind,id,operation,detail]=path.split('/');
   if(kind!=='framework_assessments'||!(operation==='guided-assessment'&&!detail||method==='patch'&&!operation&&body.guided_assessment_source))return null;
   const row=record(db,'framework_assessments',id);
   frameworkScope(db,row.client_id);
-  if(!['soc-2','iso-27001'].includes(row.framework_key)&&!focusedOmniEnabled(row.client_id,db.user,row.framework_key,cisConfiguration(record(db,'clients',row.client_id)),row.definition_id))return null;
+  if(!genericGuidedFramework(row.framework_key)&&!['soc-2','iso-27001'].includes(row.framework_key)&&!focusedOmniEnabled(row.client_id,db.user,row.framework_key,cisConfiguration(record(db,'clients',row.client_id)),row.definition_id))return null;
   if(!guidedEnabled(db,row))fail('Guided pilot is not enabled for this assessment',404);
   if(!globalThis.crypto?.subtle)fail('The recorded context could not be read; reopen this review to retry',503);
   const scope=guidedScope(db,row),userId=db.user.user_id,bytes=Uint8Array.from(scope.serialized,char=>char.charCodeAt(0));
@@ -68,16 +130,17 @@ function validateReportedResult(result,version){
   const object=value=>!!value&&typeof value==='object'&&!Array.isArray(value);
   const text=(value,max)=>typeof value==='string'&&value.length<=max;
   const list=(value,max,valid)=>Array.isArray(value)&&value.length<=max&&value.every(valid);
-  const keys=['version','status','narrative','basis','gaps','unknowns','nextSteps','evidence','answers','signals'];
+  const keys=['version','status','narrative','basis','gaps','unknowns','nextSteps','evidence','answers','signals','evaluation_date'];
   if(!object(result)||Object.keys(result).some(key=>!keys.includes(key))||
     !['not_assessed','needs_attention','in_progress','addressed'].includes(result.status)||!text(result.narrative,20000)||
     result.version!=null&&(!text(result.version,100)||result.version!==version)||
+    result.evaluation_date!=null&&(typeof result.evaluation_date!=='string'||!/^\d{4}-\d{2}-\d{2}$/.test(result.evaluation_date)||calendarDay(result.evaluation_date)===null)||
     ['basis','gaps','unknowns','nextSteps','evidence'].some(key=>!list(result[key],153,value=>text(value,4000)))||
     !list(result.answers,300,value=>object(value)&&Object.keys(value).every(key=>['prompt','answer'].includes(key))&&text(value.prompt,4000)&&text(value.answer,12000))||
     result.signals!=null&&!list(result.signals,300,value=>object(value)&&Object.keys(value).every(key=>['kind','questionId','text'].includes(key))&&['gap','verification'].includes(value.kind)&&text(value.questionId,100)&&(value.text==null||text(value.text,4000))))
     fail('Invalid recorded interview result');
   const recorded=copy(result);
-  for(const key of ['version','signals'])if(recorded[key]===null)delete recorded[key];
+  for(const key of ['version','signals','evaluation_date'])if(recorded[key]===null)delete recorded[key];
   for(const signal of recorded.signals||[])if(signal.text===null)delete signal.text;
   return recorded;
 }
@@ -88,12 +151,18 @@ function pilotWork(db,row){
   const reviews=related.reviews.filter(r=>rids.has(r.review_id)&&!['completed','cancelled'].includes(r.status));
   const findings=related.findings.filter(f=>work.finding_ids.includes(f.finding_id));
   const tasks=related.tasks.filter(t=>!['done','cancelled'].includes(t.status)&&(linkedTask(t.task_id)||t.framework_assessment_id===row.framework_assessment_id||(t.finding_id?relevant.has(t.finding_id):!t.framework_assessment_id&&rids.has(t.review_id))));
-  const scalar=(kind,item,id)=>Object.fromEntries(Object.entries({kind,id,[kind==='reviews'?'review_id':kind==='findings'?'finding_id':'task_id']:id,
-    title:item.title??null,status:item.status??null,due_date:item.due_date??null,severity:item.severity,priority:item.priority,
+  const scalar=(kind,item,id)=>Object.fromEntries(Object.entries({kind,id,[kind==='reviews'?'review_id':kind==='findings'?'finding_id':kind==='risks'?'risk_id':'task_id']:id,
+    client_id:row.client_id,framework_assessment_id:item.framework_assessment_id,assessment_item_id:item.assessment_item_id,finding_id:item.finding_id,risk_id:item.risk_id,risk_level:kind==='risks'?assessedRisk(item).risk_level:undefined,
+    title:item.title??null,status:item.status??null,due_date:kind==='risks'?riskDue(item):item.due_date??null,severity:item.severity,priority:item.priority,
     owner_id:item.owner_id,assignee_id:item.assignee_id,reviewer_id:item.reviewer_id,
-    open_gap:kind==='findings'||kind==='tasks'&&work.finding_ids.includes(item.finding_id)}).filter(([,value])=>value!==undefined));
+    open_gap:kind==='findings'?work.finding_ids.includes(item.finding_id)&&gapFids.has(item.finding_id):kind==='tasks'&&gapFids.has(item.finding_id)}).filter(([,value])=>value!==undefined));
+  const gapFinding=finding=>finding.framework_assessment_id===row.framework_assessment_id&&row.items_to_address?.some(item=>item.item_id===finding.assessment_item_id&&item.finding_id===finding.finding_id&&item.kind==='gap'&&item.state==='open');
+  const gapFids=new Set(related.findings.filter(gapFinding).map(f=>f.finding_id));
+  const connectors=related.findings.filter(f=>gapFids.has(f.finding_id)&&!work.finding_ids.includes(f.finding_id)&&f.risk_id);
+  const riskIds=new Set([...findings,...connectors].map(f=>f.risk_id));
+  const risks=(db.risks||[]).filter(risk=>risk.client_id===row.client_id&&riskIds.has(risk.risk_id));
   return {...work,task_ids:[...new Set(tasks.map(t=>t.task_id))].sort(),context_complete:true,
-    priority_records:[...reviews.map(r=>scalar('reviews',r,r.review_id)),...findings.map(f=>scalar('findings',f,f.finding_id)),...tasks.map(t=>scalar('tasks',t,t.task_id))]};
+    priority_records:[...reviews.map(r=>scalar('reviews',r,r.review_id)),...[...findings,...connectors].map(f=>scalar('findings',f,f.finding_id)),...risks.map(r=>scalar('risks',r,r.risk_id)),...tasks.map(t=>scalar('tasks',t,t.task_id))]};
 }
 // Shape and safeguard prefix only; the UI checks ids against operator guidance.
 const validateVerificationChecklist=(value,definitionId)=>{
@@ -118,7 +187,7 @@ export function validateFrameworkConfig(state){
   for(const c of Object.values(configs)){
     if(!c||Object.keys(c).some(k=>!['enabled','recurrence','custom_recurrence_days','due_date'].includes(k)))throw new Error('Invalid framework Review fields');
     if((c.enabled!=null&&typeof c.enabled!=='boolean')||(c.recurrence&&!CADENCES.includes(c.recurrence)))throw new Error('Invalid client cadence');
-    if(c.recurrence==='custom'&&(!Number.isInteger(c.custom_recurrence_days)||c.custom_recurrence_days<1||c.custom_recurrence_days>3650))throw new Error('Custom cadence must be 1–3650 days');
+    if(c.recurrence==='custom'&&(!Number.isInteger(c.custom_recurrence_days)||c.custom_recurrence_days<1||c.custom_recurrence_days>3660))throw new Error('Custom cadence must be 1–3660 days');
     if(c.due_date&&(!/^\d{4}-\d{2}-\d{2}$/.test(c.due_date)||calendarDay(c.due_date)===null))throw new Error('Invalid Review date');
   }
 }
@@ -138,10 +207,10 @@ export function reconcileFramework(db,cid,state){
   }
 }
 function reconcileCatalog(db,cid,state,key,catalog){
-  const client=db.clients.find(c=>c.client_id===cid),configuration=key==='cis-ig1'?{...cisConfiguration(client),...state.framework_settings?.['cis-ig1']}:socConfiguration(client);
+  const client=db.clients.find(c=>c.client_id===cid),configuration={...clientConfiguration(key,client),...state.framework_settings?.[key]};
   state={...state,framework_settings:{...client.framework_settings,...state.framework_settings}};
   const plans=activePlans(key,configuration),planKeys=new Set(plans.map(p=>p.key));
-  if(key==='cis-ig1')for(const row of db.reviews.filter(r=>r.client_id===cid))for(const driver of reviewDrivers(row).filter(d=>d.framework_key===key&&!planKeys.has(d.framework_plan_key)))addReviewDriver(row,key,{...catalog.review_plans.find(p=>p.key===driver.framework_plan_key),safeguards:driver.framework_safeguards},false);
+  if(['cis-ig1','cmmc'].includes(key))for(const row of db.reviews.filter(r=>r.client_id===cid))for(const driver of reviewDrivers(row).filter(d=>d.framework_key===key&&!planKeys.has(d.framework_plan_key)))addReviewDriver(row,key,{...catalog.review_plans.find(p=>p.key===driver.framework_plan_key),safeguards:driver.framework_safeguards},false);
   for(const d of activeDefinitions(key,configuration)){
     const aid=stable(cid,'assessment',d.id,key);
     if(!db.framework_assessments.some(a=>a.framework_assessment_id===aid))db.framework_assessments.push({framework_assessment_id:aid,client_id:cid,framework_key:key,framework_version:catalog.version,definition_id:d.id,status:'not_assessed',implementation:'',technology:'',notes:'',na_rationale:'',owner_id:null,process_owner_id:null,created_at:now(),related_links:[],assessment_history:[]});
@@ -171,24 +240,32 @@ export function frameworkRelated(db,row){
   const cid=row.client_id,aid=row.framework_assessment_id,did=row.definition_id,result={};
   for(const kind of ['reviews','findings','tasks','risks','policies','requirements','evidence','vendors']){
     const direct=(row.related_links||[]).filter(l=>l.kind===kind).map(l=>l.id);
-    result[kind]=(db[kind]||[]).filter(r=>r.client_id===cid&&(direct.includes(r[ids[kind]])||r.framework_assessment_id===aid||
-      (kind==='reviews'&&r.framework_key===row.framework_key&&r.framework_safeguards?.includes(did))||
+    result[kind]=(db[kind]||[]).filter(r=>r.client_id===cid&&(kind==='policies'?policySupportsAssessment(row,r):(direct.includes(r[ids[kind]])||r.framework_assessment_id===aid||
+      (kind==='reviews'&&reviewMapsTo(r,row.framework_key,did))||
       (kind==='policies'&&frameworkCatalog(row.framework_key)?.policy_mappings.some(p=>p.policy_key===r.baseline_key&&p.safeguards.includes(did)))||
-      (kind==='evidence'&&['framework_assessment','framework_assessments'].includes(r.linked_type)&&r.linked_id===aid)));
+      (kind==='evidence'&&['framework_assessment','framework_assessments'].includes(r.linked_type)&&r.linked_id===aid))));
+  }
+  for(const [kind,field] of [['risks','risk_id'],['vendors','vendor_id'],['ai_systems','ai_system_id']]){
+    const subjectIds=new Set(result.reviews.map(review=>review[field]).filter(Boolean));
+    const subjects=(db[kind]||[]).filter(subject=>subject.client_id===cid&&subjectIds.has(subject[field]));
+    result[kind]=[...new Map([...(result[kind]||[]),...subjects].map(subject=>[subject[field],subject])).values()];
   }
   const rids=result.reviews.map(r=>r.review_id);
   result.findings=[...new Map([...result.findings,...db.findings.filter(f=>f.client_id===cid&&findingApplies(row,f,new Set(rids),db.framework_assessments))].map(r=>[r.finding_id,r])).values()];
   const fids=result.findings.map(f=>f.finding_id);
   result.tasks=[...new Map([...result.tasks,...db.tasks.filter(t=>t.client_id===cid&&(t.finding_id?fids.includes(t.finding_id):!t.framework_assessment_id&&rids.includes(t.review_id)))].map(r=>[r.task_id,r])).values()];
-  result.evidence=[...new Map([...result.evidence,...db.evidence.filter(e=>e.client_id===cid&&['review','reviews'].includes(e.linked_type)&&rids.includes(e.linked_id))].map(r=>[r.evidence_id,r])).values()];
-  if(row.framework_key==='cis-ig1')result.evidence=[...new Map([...result.evidence,...db.evidence.filter(e=>e.client_id===cid&&e.relationships?.some(l=>l.kind==='reviews'&&rids.includes(l.id)))].map(e=>[e.evidence_id,e])).values()];
+  const mappedFiles=db.evidence.filter(file=>file.client_id===cid && (
+    ['review','reviews'].includes(file.linked_type) && rids.includes(file.linked_id) ||
+    file.relationships?.some(link=>link.kind==='reviews' && rids.includes(link.id) ||
+      link.kind==='framework_assessments' && link.id===aid)));
+  result.evidence=[...new Map([...result.evidence,...mappedFiles].map(file=>[file.evidence_id,file])).values()];
   result.evidence=result.evidence.filter(e=>!e.archived_at&&!row.unlinked_evidence_ids?.includes(e.evidence_id));
   return result;
 }
 export function frameworkReverse(db,kind,source,result){
   if(kind==='framework_assessments')return frameworkRelated(db,source);
   const fid=source.finding_id,aid=source.framework_assessment_id||(kind==='evidence'&&['framework_assessment','framework_assessments'].includes(source.linked_type)?source.linked_id:null)||db.findings.find(f=>f.client_id===source.client_id&&f.finding_id===fid)?.framework_assessment_id;
-  result.framework_assessments=(db.framework_assessments||[]).filter(a=>a.client_id===source.client_id&&(a.framework_assessment_id===aid||a.related_links?.some(l=>l.kind===kind&&l.id===source[ids[kind]])||(kind==='reviews'&&a.framework_key===source.framework_key&&source.framework_safeguards?.includes(a.definition_id))||(kind==='policies'&&frameworkCatalog(a.framework_key)?.policy_mappings.some(m=>m.policy_key===source.baseline_key&&m.safeguards.includes(a.definition_id)))))
+  result.framework_assessments=(db.framework_assessments||[]).filter(a=>a.client_id===source.client_id&&(kind==='policies'?policySupportsAssessment(a,source):(a.framework_assessment_id===aid||a.related_links?.some(l=>l.kind===kind&&l.id===source[ids[kind]])||(kind==='reviews'&&reviewMapsTo(source,a.framework_key,a.definition_id))||(kind==='policies'&&frameworkCatalog(a.framework_key)?.policy_mappings.some(m=>m.policy_key===source.baseline_key&&m.safeguards.includes(a.definition_id))))))
     .filter(a=>kind!=='evidence'||!a.unlinked_evidence_ids?.includes(source.evidence_id)).map(a=>({...a,title:assessmentTitle(a)}));
   const finding=kind==='tasks'?db.findings.find(f=>f.client_id===source.client_id&&f.finding_id===source.finding_id):source;
   const explicitFinding=(db.framework_assessments||[]).filter(a=>a.client_id===source.client_id&&(a.framework_assessment_id===finding?.framework_assessment_id||a.related_links?.some(l=>l.kind==='findings'&&l.id===finding?.finding_id)));
@@ -201,7 +278,48 @@ export function frameworkReverse(db,kind,source,result){
 }
 export function frameworkRequest(db,path,method,params,body,context=null){
   db.framework_assessments||=[];
-  const [,kind,id,operation,detail]=path.split('/');
+  const [,kind,id,operation,detail,itemAction]=path.split('/');
+  if(kind==='frameworks'&&method==='get'&&operation==='client-questions'&&!detail){
+    frameworkScope(db,params.client_id);
+    const client=record(db,'clients',params.client_id);
+    if(!CATALOGS[id]||!db.requirements.some(row=>row.client_id===client.client_id&&row.baseline_key===id&&row.baseline_response==='applies'))fail('This program is not active for the client',404);
+    if(client._r4_context_pending)fail('The current Client responsibility save needs recovery',409);
+    const eligible=new Set(activeDefinitions(id,clientConfiguration(id,client)).map(definition=>definition.id));
+    const rows=db.framework_assessments.filter(row=>row.client_id===client.client_id&&row.framework_key===id&&eligible.has(row.definition_id));
+    if(rows.length>10000)fail('The complete program Item population exceeds the supported limit',413);
+    if(rows.length!==eligible.size||new Set(rows.map(row=>row.definition_id)).size!==eligible.size)fail('The complete current program assessment population could not be verified',409);
+    const activities=setupActivities(db,client),bindings=servicesOf(client).assessment_activities||{},questions=[];
+    let unconfirmed_count=0;
+    for(const row of rows){
+      if(row._r4_context_pending)fail('An earlier assessment save needs recovery',409);
+      const binding=bindings[row.framework_assessment_id];
+      const selected=binding?activities.find(activity=>activity.activity_id===binding&&activity.drivers.some(driver=>driver.framework_key===id&&driver.framework_safeguards.includes(row.definition_id))):null;
+      for(const item of row.items_to_address||[]){
+        if(item.state!=='open')continue;
+        if(selected?.responsibility!=='cl'){if(selected?.responsibility!=='iv')unconfirmed_count++;continue;}
+        if(typeof item.text!=='string'||!item.text.trim()||!item.item_id)fail('A saved Client Item could not be verified',409);
+        questions.push({item_id:item.item_id,assessment_id:row.framework_assessment_id,definition_id:row.definition_id,text:item.text,
+          basis:{activity_id:selected.activity_id,area_id:selected.area_id,responsibility:'cl'}});
+      }
+    }
+    return {client_id:client.client_id,framework_key:id,questions,unconfirmed_count};
+  }
+  if(kind==='frameworks'&&id==='cmmc'&&operation==='configuration'&&method==='patch'){
+    frameworkScope(db,body.client_id);
+    if(!['super_admin','platform_admin'].includes(db.user.role))fail('Program configuration requires a service-provider administrator',403);
+    if(!db.baselines?.[body.client_id]?.completed)fail('Complete onboarding before adjusting program configuration',409);
+    if(!db.requirements.some(row=>row.client_id===body.client_id&&row.baseline_key==='cmmc'&&row.baseline_response==='applies'))fail('Select CMMC Applies before configuring its scope',409);
+    const config=validateCmmcConfiguration(body),client=record(db,'clients',body.client_id),before=cmmcConfiguration(client);
+    if(!Object.hasOwn(body,'expected_updated_at'))fail('Reload the record before saving; an edit version is required',428);
+    if(body.expected_updated_at!==before.expected_updated_at)fail('Record changed since it was opened; reload before saving',409);
+    if(config.level<before.level&&(!body.confirm_reduction||!body.reason?.trim()||!body.effective_date))fail('Scope reduction requires impact confirmation, reason and effective date; answers, evidence and history are retained');
+    reconcileFramework(db,body.client_id,{...db.baselines[body.client_id],requirements:{cmmc:'applies'},framework_settings:{cmmc:config}});
+    client.framework_settings={...client.framework_settings,cmmc:config};
+    client.cmmc_configuration_updated_at=new Date(Math.max(Date.now(),(Date.parse(before.expected_updated_at)||0)+1)).toISOString();
+    client.cmmc_scope_change={before:before.level,after:config.level,reason:body.reason||'',effective_date:body.effective_date||new Date().toISOString().slice(0,10),changed_by:db.user.user_id,updated_at:client.cmmc_configuration_updated_at};
+    audit(db,'CMMC scope updated','clients',client,client.cmmc_scope_change);
+    return {...config,expected_updated_at:client.cmmc_configuration_updated_at};
+  }
   if(kind==='frameworks'&&id==='cis-ig1'&&operation==='configuration'&&method==='patch'){
     frameworkScope(db,body.client_id);
     if(!['super_admin','platform_admin'].includes(db.user.role))fail('Program configuration requires a service-provider administrator',403);
@@ -233,11 +351,11 @@ export function frameworkRequest(db,path,method,params,body,context=null){
   if(kind==='frameworks'&&method==='get'){
     frameworkScope(db,params.client_id);const framework=FRAMEWORKS.find(f=>f.key===id);if(!framework)throw new Error('Framework not found');
     const assessments=framework.implemented?db.framework_assessments.filter(a=>a.client_id===params.client_id&&a.framework_key===id):[];
-    const configuration=id==='cis-ig1'?cisConfiguration(record(db,'clients',params.client_id)):id==='soc-2'?socConfiguration(record(db,'clients',params.client_id)):{};
-    const upgraded=['soc-2','iso-27001'].includes(id)||focusedOmniEnabled(params.client_id,db.user,id,configuration);
+    const configuration=clientConfiguration(id,record(db,'clients',params.client_id));
+    const upgraded=genericGuidedFramework(id)||['soc-2','iso-27001'].includes(id)||focusedOmniEnabled(params.client_id,db.user,id,configuration);
     if(upgraded&&['reviews','findings','tasks','evidence'].some(kind=>(db[kind]||[]).filter(item=>item.client_id===params.client_id).length>10000))fail('Authorized workspace context exceeds the supported limit',413);
     if(id==='cis-ig1'&&operation==='export'){
-      const active=new Set(activeDefinitions(id,configuration).map(d=>d.id)),fields=['framework_assessment_id','definition_id','title','scope_group','in_active_scope','client_implementation_group','status','verification','implementation','owner_id','process_owner_id','last_assessed','notes','related_links'];
+      const active=new Set(activeDefinitions(id,configuration).map(d=>d.id)),fields=['framework_assessment_id','definition_id','title','scope_group','in_active_scope','client_implementation_group','status','verification','implementation','owner_id','process_owner_id','last_assessed','notes','related_links','policy_link_ids'];
       const cell=value=>{let text=String(value??'');if(/^[\s]*[=+\-@]/.test(text)||/^[\t\r\n]/.test(text))text="'"+text;return '"'+text.replace(/"/g,'""')+'"';};
       const includeRetained=params.include_retained===true||params.include_retained==='true';
       const selected=assessments.filter(r=>includeRetained||active.has(r.definition_id)).sort((a,b)=>a.definition_id.localeCompare(b.definition_id,undefined,{numeric:true}));
@@ -246,6 +364,7 @@ export function frameworkRequest(db,path,method,params,body,context=null){
       return new Blob([[fields.join(','),...lines].join('\r\n')],{type:'text/csv;charset=utf-8'});
     }
     return {framework,selected:db.requirements.some(r=>r.client_id===params.client_id&&r.baseline_key===id&&r.baseline_response==='applies'),configured:!!assessments.length,
+      implementation_position:demoCurrentPositions(db,[record(db,'clients',params.client_id)]).find(position=>position.framework_key===id)?.current||null,
       definitions:(frameworkCatalog(id)?.requirements||[]).filter(d=>assessments.some(a=>a.definition_id===d.id)),assessments,configuration,
       guided_assessment_drafts:Object.fromEntries(assessments.filter(a=>guidedEnabled(db,a)).flatMap(a=>{const draft=db.guided_assessment_pilot?.[a.framework_assessment_id+':'+db.user.user_id];return draft?[[a.definition_id,{revision:draft.revision,completed:draft.completed,...(upgraded?{version:draft.version??null,generated_at:draft.generated_at??null,user_id:draft.user_id??null}:{})}]]:[];})),
       organizational_controls:id==='soc-2'?(db.organizational_controls||[]).filter(c=>c.client_id===params.client_id).map(c=>({control_id:c.control_id,legacy_id:c.legacy_id,assessment_ids:c.assessment_ids,design:c.design,conflicts:c.conflicts,observations:c.observations.map(o=>({operating:o.operating,expected_instances:o.expected_instances,collected_instances:o.collected_instances}))})):[],
@@ -253,7 +372,7 @@ export function frameworkRequest(db,path,method,params,body,context=null){
   }
   const row=record(db,'framework_assessments',id);frameworkScope(db,row.client_id);if(method!=='get')writable(db);
   const pilot=()=>{if(!guidedEnabled(db,row))fail('Guided pilot is not enabled for this assessment',404);};
-  const upgraded=['soc-2','iso-27001'].includes(row.framework_key)||focusedOmniEnabled(row.client_id,db.user,row.framework_key,cisConfiguration(record(db,'clients',row.client_id)),row.definition_id);
+  const upgraded=genericGuidedFramework(row.framework_key)||['soc-2','iso-27001'].includes(row.framework_key)||focusedOmniEnabled(row.client_id,db.user,row.framework_key,cisConfiguration(record(db,'clients',row.client_id)),row.definition_id);
   const draftKey=id+':'+db.user.user_id;
   const storedDraft=()=>{const draft=db.guided_assessment_pilot?.[draftKey];return draft&&(!draft.client_id||draft.client_id===row.client_id)?draft:null;};
   const readDraft=()=>{
@@ -313,32 +432,59 @@ export function frameworkRequest(db,path,method,params,body,context=null){
         validateIsoAnswers(row.definition_id,review.answers,review.version);
       }
       if(body.completed){validateIsoCompletion(row.definition_id,body.answers,body.version);if(!result||result.status!==isoGuidedResult(row.definition_id,body.answers,body.version).status||result.narrative!==body.narrative)fail('ISO summary status and reviewed text must match this completed interview');}
-    }else validateAnswers(row.definition_id,body.answers,body.version);
+    }else if(genericGuidedFramework(row.framework_key)){
+      validateGenericAnswers(row.definition_id,body.answers,body.version);
+      if(body.completed){validateGenericCompletion(row.definition_id,body.answers,body.version);if(!result||result.status!==genericGuidedResult(row.definition_id,body.answers,body.version).status||result.narrative!==body.narrative)fail('Reviewed status and text must match this completed interview');}
+    }else{validateAnswers(row.definition_id,body.answers,body.version);if(body.completed)validateGuidedCompletion(row.definition_id,body.answers,body.version);}
+    const at=now();let generatedAt=body.completed?at:null;
+    const dateAssessment=row.framework_key==='cis-ig1'&&visibleQuestions(row.definition_id,body.answers,body.version).some(question=>question.type==='date');
+    if(result?.evaluation_date&&!dateAssessment)fail('Evaluation date belongs only to a CIS date-question result');
+    if(dateAssessment&&body.completed&&result){
+      const sameBasis=snapshot=>snapshot?.version===body.version&&canonicalSnapshot(snapshot.answers)===canonicalSnapshot(body.answers);
+      let prior=old.completed&&sameBasis(old)?old:null;
+      if(!prior&&sameBasis(old)&&old.completed===false&&!old.result&&old.revision>1){
+        const archived=db.guided_assessment_history?.[draftKey+':'+(old.revision-1)],source=row.guided_assessment_source;
+        if(archived?.completed&&sameBasis(archived)&&archived.client_id===row.client_id&&archived.assessment_id===id&&archived.user_id===db.user.user_id&&
+          source?.by===db.user.user_id&&source.version===archived.version&&source.revision===archived.revision&&source.generated_at===archived.generated_at&&canonicalSnapshot(source.answers)===canonicalSnapshot(archived.answers))prior=archived;
+      }
+      const knownDate=prior?.result?.evaluation_date;
+      if(!result.evaluation_date&&knownDate)result.evaluation_date=knownDate;
+      if(result.evaluation_date&&result.evaluation_date!==knownDate&&Math.abs(calendarDay(result.evaluation_date)-calendarDay(at))>1)fail('Evaluation date must be within one day of completion');
+      const evaluatorFields=snapshot=>Object.fromEntries(Object.entries(snapshot||{}).filter(([key])=>key!=='narrative'));
+      if(prior&&canonicalSnapshot(evaluatorFields(result))===canonicalSnapshot(evaluatorFields(prior.result)))generatedAt=prior.generated_at||at;
+    }
+    const data={version:body.version,answers:copy(body.answers),narrative:body.narrative||'',step:body.step,completed:body.completed,revision:old.revision+1,updated_at:at,generated_at:generatedAt,
+      ...(upgraded?{...base,client_id:row.client_id,assessment_id:id,user_id:db.user.user_id,result}:{})};
+    if(['soc-2','iso-27001'].includes(row.framework_key))data.summary_review=Object.hasOwn(body,'summary_review')?copy(body.summary_review??null):body.restart?null:copy(old.summary_review??null);
+    const semantic=['version','answers','step','completed','narrative','result','summary_review','base_assessment_token','base_scope_fingerprint'];
+    if(old.revision&&!body.restart&&semantic.every(key=>canonicalSnapshot(old[key]??null)===canonicalSnapshot(data[key]??null)))return upgraded?contextualDraft(old,trustedBase(db,row,context)):old;
     if(old.revision&&(upgraded?(old.completed||body.restart||body.rebase):(old.version!==body.version||old.completed&&!body.completed&&!Object.keys(body.answers).length))){
       const key=draftKey+':'+old.revision;
       if(!Object.hasOwn(db.guided_assessment_history||{},key))(db.guided_assessment_history||={})[key]={...copy(old),...(upgraded?{client_id:row.client_id,assessment_id:id,user_id:db.user.user_id}:{})};
     }
-    const at=now(),data={version:body.version,answers:copy(body.answers),narrative:body.narrative||'',step:body.step,completed:body.completed,revision:old.revision+1,updated_at:at,generated_at:body.completed?at:null,
-      ...(upgraded?{...base,client_id:row.client_id,assessment_id:id,user_id:db.user.user_id,result}:{})};
-    if(['soc-2','iso-27001'].includes(row.framework_key))data.summary_review=Object.hasOwn(body,'summary_review')?copy(body.summary_review??null):body.restart?null:copy(old.summary_review??null);
     (db.guided_assessment_pilot||={})[draftKey]=data;return upgraded?contextualDraft(data,trustedBase(db,row,context)):data;
   }
   if(method==='post'&&operation==='reviews'){
-    if(Object.keys(body).some(k=>!['plan_key','review_id','title','owner_id','recurrence','custom_recurrence_days','due_date'].includes(k)))throw new Error('Invalid Review setup fields');
+    const invalid=message=>{if(context?.reviewSetup)fail(message);throw new Error(message);};
+    if(Object.keys(body).some(k=>!['plan_key','review_id','title','owner_id','recurrence','custom_recurrence_days','due_date'].includes(k)))invalid('Invalid Review setup fields');
     if(!db.requirements.some(r=>r.client_id===row.client_id&&r.baseline_key===row.framework_key&&r.baseline_response==='applies'))throw new Error('Activate the program before configuring Reviews');
-    const catalog=frameworkCatalog(row.framework_key),client=record(db,'clients',row.client_id),configuration=row.framework_key==='cis-ig1'?cisConfiguration(client):socConfiguration(client);
+    const catalog=frameworkCatalog(row.framework_key),client=record(db,'clients',row.client_id),configuration=clientConfiguration(row.framework_key,client);
     if(!activeDefinitions(row.framework_key,configuration).some(d=>d.id===row.definition_id))fail('This assessment is retained outside the active program scope; existing work and history remain available',409);
     const plan=activePlans(row.framework_key,configuration).find(p=>p.key===body.plan_key&&p.safeguards.includes(row.definition_id));
-    if(body.plan_key&&!plan)throw new Error('Review plan does not map to this requirement');
+    if(body.plan_key&&!plan)invalid('Review plan does not map to this requirement');
     let review=body.review_id?record(db,'reviews',body.review_id):plan?existingFrameworkReview(db.reviews.filter(r=>r.client_id===row.client_id),plan):null;
-    if(review&&review.client_id!==row.client_id)throw new Error('Relationship must belong to this client');
+    if(review&&review.client_id!==row.client_id)invalid('Relationship must belong to this client');
     const canonical=Object.entries(CATALOGS).flatMap(([key,c])=>c.review_plans.map(p=>({key,plan:p}))).find(p=>plan?.baseline_key&&p.plan.baseline_key===plan.baseline_key);
     const rid=stable(row.client_id,'review',plan?(canonical?.plan.key||plan.key):'requirement:'+row.definition_id,canonical?.key||row.framework_key);
     review||=db.reviews.find(r=>(r.review_id===rid||r.framework_setup_key===rid)&&r.client_id===row.client_id);
     if(!review){
-      if(typeof body.title!=='string'||!body.title.trim()||body.title.length>500||!CADENCES.includes(body.recurrence))throw new Error('Review title and valid cadence are required');
-      if(body.due_date&&(!/^\d{4}-\d{2}-\d{2}$/.test(body.due_date)||calendarDay(body.due_date)===null))throw new Error('Invalid Review date');
-      if(body.recurrence==='custom'&&(!Number.isInteger(body.custom_recurrence_days)||body.custom_recurrence_days<1||body.custom_recurrence_days>3650))throw new Error('Custom cadence must be 1–3650 days');
+      if(typeof body.title!=='string'||!body.title.trim()||body.title.length>500||!CADENCES.includes(body.recurrence))invalid('Review title and valid cadence are required');
+      if(body.due_date&&(!/^\d{4}-\d{2}-\d{2}$/.test(body.due_date)||calendarDay(body.due_date)===null))invalid('Invalid Review date');
+      if(body.recurrence==='custom'&&(!Number.isInteger(body.custom_recurrence_days)||body.custom_recurrence_days<1||body.custom_recurrence_days>3660))invalid('Custom cadence must be 1-3660 days');
+      if(context?.reviewSetup){
+        try{validateAssignment(db,'reviews',{client_id:row.client_id,owner_id:body.owner_id});}
+        catch(error){if(error.message==='Choose an active platform user with access to this client')fail(error.message);throw error;}
+      }
       review=write(db,'reviews',{client_id:row.client_id,title:body.title.trim(),review_type:plan?.review_type||'requirements',owner_id:body.owner_id||null,recurrence:body.recurrence,custom_recurrence_days:body.custom_recurrence_days,due_date:body.due_date||null,status:body.due_date?'upcoming':'needs_scheduling',framework_key:row.framework_key,framework_plan_key:plan?.key,baseline_key:plan?.baseline_key,framework_safeguards:plan?.safeguards||[row.definition_id],framework_basis:plan?.basis,framework_source_cadence:plan?.source_cadence,framework_setup_key:rid});
     }
     if(plan)addReviewDriver(review,row.framework_key,plan);
@@ -349,20 +495,65 @@ export function frameworkRequest(db,path,method,params,body,context=null){
   if(method==='get'&&!operation)return row;
   if(method==='get'&&operation==='related')return frameworkRelated(db,row);
   if(method==='get'&&operation==='activity')return db.logs.filter(l=>l.client_id===row.client_id&&l.entity_id===id);
+  if(method==='post'&&operation==='items'&&detail&&itemAction==='task'&&path.split('/').length===6){
+    if(body.expected_revision!==(row.items_revision||0))fail('Items changed in another window; refresh before creating work',409);
+    const item=currentItem(row,decodeURIComponent(detail));
+    if(!itemTaskEligible(row,item))fail('Only an unlinked open confirmation or Evidence Item can create an Action',409);
+    const task=write(db,'tasks',{client_id:row.client_id,title:body.title.trim(),description:body.description||'',
+      priority:body.priority||'medium',assignee_id:body.assignee_id||null,due_date:body.due_date||null,status:'open',
+      source_type:'other',source_id:null,source:assessmentTitle(row)+' assessment Item',framework_assessment_id:id,
+      framework_key:row.framework_key,assessment_item_id:item.item_id});
+    const at=now();Object.assign(item,{task_id:task.task_id,updated_at:at});
+    (item.history||=[]).push({at,by:db.user.user_id,event:'task_linked',state:item.state,resolution:item.resolution||'',task_id:task.task_id});
+    row.items_revision=(row.items_revision||0)+1;
+    audit(db,'Assessment item updated','framework_assessments',row,{item_id:item.item_id,task_id:task.task_id});return task;
+  }
+  if(method==='post'&&operation==='items'&&(!detail||itemAction==='remove'&&path.split('/').length===6)){
+    pilot();
+    if(changeManualItem(row,body,db.user.user_id,now(),detail?decodeURIComponent(detail):null))audit(db,'Assessment item updated','framework_assessments',row,{event:detail?'removed':'added'});
+    return row;
+  }
+  if(method==='patch'&&operation==='items'&&detail&&!itemAction){
+    if(!CATALOGS[row.framework_key])fail('Assessment items are not available for this framework',404);
+    if(updateItem(row,decodeURIComponent(detail),body,db.user.user_id,now()))audit(db,'Assessment item updated','framework_assessments',row,{item_id:decodeURIComponent(detail),state:body.state});
+    return row;
+  }
   if(method==='patch'&&!operation){
+    if(body.guided_assessment_source&&!Object.hasOwn(body,'status')&&!Object.hasOwn(body,'expected_last_assessed'))fail('Reload the record before saving; an edit version is required',428);
     if(Object.prototype.hasOwnProperty.call(body,'expected_last_assessed')&&body.expected_last_assessed!==(row.last_saved??row.last_assessed??null))fail('Assessment changed since it was opened; reload before saving',409);
+    if(Object.hasOwn(body,'policy_link_ids')){
+      if(!Object.hasOwn(body,'expected_last_assessed'))fail('Reload the record before saving; an edit version is required',428);
+      if(!['super_admin','platform_admin'].includes(db.user.role))fail('Program configuration requires a service-provider administrator',403);
+      if(!Array.isArray(body.policy_link_ids)||body.policy_link_ids.length>500||body.policy_link_ids.some(id=>typeof id!=='string'||!/^[A-Za-z0-9_-]{1,160}$/.test(id)))fail('Choose current Policy record identities');
+      if(body.policy_link_ids.some(id=>!db.policies.some(policy=>policy.client_id===row.client_id&&policy.policy_id===id)))fail('Every Policy relationship must belong to this client');
+      const client=record(db,'clients',row.client_id);
+      if(!db.requirements.some(item=>item.client_id===row.client_id&&item.baseline_key===row.framework_key&&item.baseline_response==='applies')||!activeDefinitions(row.framework_key,clientConfiguration(row.framework_key,client)).some(definition=>definition.id===row.definition_id))fail('This assessment is retained outside the active program scope',409);
+      body={...body,policy_link_ids:[...new Set(body.policy_link_ids)]};
+    }
     body={...body};delete body.expected_last_assessed;
+    const itemDraft=body.item_draft;
+    if(Object.hasOwn(body,'item_draft')&&(!itemDraft||!body.guided_assessment_source||Object.hasOwn(body,'status')))fail('Pending Item edits require the reviewed implementation-only Save');
+    delete body.item_draft;
+    let sameApplication=false;
     if('guided_assessment_source' in body){
       pilot();
       if(body.guided_assessment_source){
         const draft=readDraft(),source=body.guided_assessment_source;
+        const savedSource=row.guided_assessment_source;
+        sameApplication=savedSource?.by===db.user.user_id&&['version','revision','generated_at'].every(key=>source[key]===savedSource[key])&&Object.entries(body).every(([key,value])=>['guided_assessment_source','record_assessment'].includes(key)||sameNativeField(key,value,row[key]));
         if(!draft.completed||Object.keys(source).length!==3||['version','revision','generated_at'].some(k=>source[k]!==draft[k]))fail('Guided result changed; regenerate before applying',409);
-        if(upgraded&&draft.version!==guidedVersion(row))fail('Current-source interview review is required before saving a new assessment',409);
-        if(upgraded&&(!draft.lineage_known||draft.lineage_stale))fail('Assessment or scope changed after this review began; begin a new review before applying',409);
+        if(upgraded&&!sameApplication&&draft.version!==guidedVersion(row))fail('Current-source interview review is required before saving a new assessment',409);
+        if(upgraded&&!sameApplication&&(!draft.lineage_known||draft.lineage_stale))fail('Assessment or scope changed after this review began; begin a new review before applying',409);
+        const narrativeOnly=!Object.hasOwn(body,'status');
+        if(Object.hasOwn(body,'status')&&body.status===null)fail('An explicit implementation status cannot be null');
+        if(narrativeOnly){
+          if(Object.keys(body).some(key=>!['implementation','guided_assessment_source'].includes(key)))fail('Save other assessment edits separately from the reviewed implementation and follow-up items');
+          if(typeof body.implementation!=='string'||body.implementation!==draft.narrative)fail('Save the exact reviewed implementation before adopting follow-up items');
+        }
         if(row.framework_key==='soc-2'){
           if(!draft.summary_review||draft.summary_review.version!==draft.version||JSON.stringify(Object.entries(draft.summary_review.answers).sort())!==JSON.stringify(Object.entries(draft.answers).sort()))fail('Review SOC wording against the current answers before saving',409);
           validateSocCompletion(row.definition_id,draft.answers,draft.version);
-          if(body.implementation!==draft.narrative||body.status!==socGuidedResult(row.definition_id,draft.answers,draft.version).status)fail('Save the exact reviewed SOC 2 text and proposed readiness status');
+          if(body.implementation!==draft.narrative||(!narrativeOnly&&body.status!==socGuidedResult(row.definition_id,draft.answers,draft.version).status))fail('Save the exact reviewed SOC 2 text and proposed readiness status');
           const allowed=['implementation','status','guided_assessment_source','record_assessment'];
           if(Object.entries(body).some(([key,value])=>!allowed.includes(key)&&JSON.stringify(value)!==JSON.stringify(row[key])))fail('A SOC 2 guided save cannot change other native fields');
         }
@@ -370,19 +561,24 @@ export function frameworkRequest(db,path,method,params,body,context=null){
           if(!draft.summary_review||draft.summary_review.version!==draft.version||JSON.stringify(Object.entries(draft.summary_review.answers).sort())!==JSON.stringify(Object.entries(draft.answers).sort()))fail('Review ISO wording against the current answers before saving',409);
           validateIsoCompletion(row.definition_id,draft.answers,draft.version);
           if(frameworkDefinition(row.framework_key,row.definition_id)?.specification==='annex_control'&&(row.soa_applicability!=='included'||!row.soa_justification?.trim()))fail('Record an included SoA decision and justification before saving implementation');
-          if(body.implementation!==draft.narrative||body.status!==isoGuidedResult(row.definition_id,draft.answers,draft.version).status)fail('Save the exact reviewed ISO text and proposed implementation status');
+          if(body.implementation!==draft.narrative||(!narrativeOnly&&body.status!==isoGuidedResult(row.definition_id,draft.answers,draft.version).status))fail('Save the exact reviewed ISO text and proposed implementation status');
           const allowed=['implementation','status','guided_assessment_source'];
           if(Object.entries(body).some(([key,value])=>!allowed.includes(key)&&JSON.stringify(value)!==JSON.stringify(row[key])))fail('An ISO guided save cannot change other native fields');
+        }
+        if(genericGuidedFramework(row.framework_key)){
+          const result=genericGuidedResult(row.definition_id,draft.answers,draft.version);
+          if(body.implementation!==draft.narrative||(!narrativeOnly&&body.status!==result.status))fail('Save the exact reviewed text and proposed implementation status');
         }
         body.guided_assessment_source={...source,origin:'guided-assessment-pilot',answers:JSON.parse(JSON.stringify(draft.answers)),by:db.user.user_id,...(upgraded?Object.fromEntries(BASE_FIELDS.map(key=>[key,draft[key]])): {})};
       }
     }else if(row.guided_assessment_source&&['implementation','status'].some(k=>k in body&&body[k]!==row[k]))body.guided_assessment_source=null;
-    const recordAssessment=body.record_assessment===true;
+    const recordAssessment=body.record_assessment===true&&!sameApplication;
     if('record_assessment' in body&&(row.framework_key!=='soc-2'||typeof body.record_assessment!=='boolean'))fail('Explicit assessment recording applies only to SOC 2');
     delete body.record_assessment;
-    const ownershipOnly=Object.keys(body).length>0&&Object.keys(body).every(k=>['owner_id','process_owner_id'].includes(k))&&!recordAssessment;
+    const actualChanges=Object.keys(body).filter(key=>canonicalSnapshot(body[key])!==canonicalSnapshot(row[key]??null));
+    const ownershipOnly=actualChanges.length>0&&actualChanges.every(k=>['owner_id','process_owner_id','policy_link_ids'].includes(k))&&!recordAssessment;
     const supported=frameworkCapabilities(row.framework_key);
-    const fields=['status','implementation','technology','notes','na_rationale','owner_id','process_owner_id','addressable_decision','addressable_rationale','soa_applicability','soa_justification','management_controls','csf_profile',...['cis_assessment_criteria','soc_assessment_checks','cis_operation'].filter(k=>supported.includes(k)),...(row.framework_key==='iso-27001'?['iso_assessment_checks']:[]),...('guided_assessment_source' in body||'guided_assessment_source' in row?['guided_assessment_source']:[])];
+    const fields=['status','implementation','technology','notes','na_rationale','owner_id','process_owner_id','policy_link_ids','addressable_decision','addressable_rationale','soa_applicability','soa_justification','management_controls','csf_profile',...['cis_assessment_criteria','soc_assessment_checks','cis_operation'].filter(k=>supported.includes(k)),...(row.framework_key==='iso-27001'?['iso_assessment_checks']:[]),...('guided_assessment_source' in body||'guided_assessment_source' in row?['guided_assessment_source']:[])];
     if('cis_operation' in body){
       if(!supported.includes('cis_operation'))fail('Operating arrangements apply only to CIS IG1');
       const op=body.cis_operation;
@@ -414,7 +610,7 @@ export function frameworkRequest(db,path,method,params,body,context=null){
     }
     if(Object.keys(body).some(k=>!fields.includes(k)&&!VERIFICATION_FIELDS.includes(k)))fail('Unknown or immutable assessment fields');
     const verificationAllowed=supported.includes('verification');
-    if('verification' in body&&!verificationAllowed)fail('Verification is available only for CIS Controls IG1 and SOC 2');
+    if('verification' in body&&!verificationAllowed)fail('Verification is unavailable for this framework');
     if('verification_checklist' in body){
       if(!supported.includes('verification_checklist'))fail('Verification checklists apply only to CIS Controls IG1');
       body={...body};
@@ -431,7 +627,7 @@ export function frameworkRequest(db,path,method,params,body,context=null){
       if(JSON.stringify(body.management_controls)!==JSON.stringify(row.management_controls||[])&&(row.controls_migrated||db.organizational_controls?.some(c=>c.client_id===row.client_id&&(c.assessment_ids.includes(id)||c.legacy_sources.some(s=>s.assessment_id===id)))))throw new Error('Legacy descriptions are preserved. Edit the shared organizational Control instead');
       body={...body,management_controls:validateManagementControls(body.management_controls)};
     }
-    const data={...row,...body};if(!ASSESSMENT_STATUSES[data.status]||['implementation','technology','notes','na_rationale'].some(k=>typeof data[k]!=='string'))throw new Error('Invalid assessment');
+    let data={...row,...body};if(!ASSESSMENT_STATUSES[data.status]||['implementation','technology','notes','na_rationale'].some(k=>typeof data[k]!=='string'))throw new Error('Invalid assessment');
     if(recordAssessment&&data.status==='not_assessed')fail('Choose an assessment status before recording an assessment');
     const definition=frameworkDefinition(row.framework_key,row.definition_id);
     if(data.status==='not_applicable'&&definition?.specification!=='annex_control'&&!data.na_rationale.trim())throw new Error('N/A rationale is required');
@@ -452,7 +648,18 @@ export function frameworkRequest(db,path,method,params,body,context=null){
     }else if(body.addressable_decision||body.addressable_rationale)throw new Error('Addressability fields apply only to addressable specifications');
     validateAssignment(db, 'framework_assessments', data, row);
     if(data.process_owner_id&&!db.contacts.some(c=>c.client_id===row.client_id&&c.contact_id===data.process_owner_id))throw new Error('Process owner must be a client Contact');
-    const changed=Object.keys(body).filter(k=>['verification_checklist','cis_assessment_criteria','soc_assessment_checks','iso_assessment_checks','cis_operation'].includes(k)?JSON.stringify(body[k])!==JSON.stringify(row[k]??null):body[k]!==row[k]);
+    if(body.guided_assessment_source){
+      const draft=readDraft(),evidenceLinked=reportedEvidence(row,draft)?frameworkRelated(db,row).evidence.length>0:null;
+      let items=reconcileItems(row,draft,db.user.user_id,now(),{evidenceLinked});
+      if(itemDraft)items=applyItemDraft(row,items,itemDraft,db.user.user_id,now(),{allowReplay:sameApplication});
+      if(JSON.stringify(items)!==JSON.stringify(row.items_to_address||[]))Object.assign(body,{items_to_address:items,items_revision:(row.items_revision||0)+1});
+      historyFields.push('items_to_address','items_revision');
+    }
+    // Match native no-op semantics for optional empty footer fields.
+    body={...body};
+    for(const key of Object.keys(NATIVE_EMPTY_DEFAULTS))if(Object.hasOwn(body,key)&&sameNativeField(key,body[key],row[key]))delete body[key];
+    data={...row,...body};
+    const changed=Object.keys(body).filter(k=>['guided_assessment_source','verification_checklist','cis_assessment_criteria','soc_assessment_checks','iso_assessment_checks','cis_operation','policy_link_ids'].includes(k)?canonicalSnapshot(body[k])!==canonicalSnapshot(row[k]??null):body[k]!==row[k]);
     if(changed.length||recordAssessment){
       const at=new Date(Math.max(Date.now(),(Date.parse(row.last_saved??row.last_assessed)||0)+1)).toISOString();
       if(row.framework_key==='soc-2'&&!ownershipOnly){
@@ -465,13 +672,14 @@ export function frameworkRequest(db,path,method,params,body,context=null){
         Object.assign(row,{last_assessed:at,assessed_by:db.user.user_id});
         (row.assessment_history||=[]).push({...Object.fromEntries(historyFields.map(k=>[k,row[k]])),at,by:row.assessed_by});
       }
-      audit(db,'Framework assessment updated','framework_assessments',row,{changed_fields:changed,status:row.status});
+      audit(db,'Framework assessment updated','framework_assessments',row,{changed_fields:changed,status:row.status,record_assessment:recordAssessment});
     }
     return row;
   }
   if(method==='post'&&operation==='links'){
     if(!['reviews','findings','tasks','risks','policies','evidence','requirements','vendors'].includes(body.kind))throw new Error('Unsupported relationship');
     const target=record(db,body.kind,body.id);if(target.client_id!==row.client_id)throw new Error('Relationship must belong to this client');
+    if(body.kind==='policies'&&Object.hasOwn(row,'policy_link_ids')&&!row.policy_link_ids.includes(body.id)){row.policy_link_ids=[...row.policy_link_ids,body.id];row.last_saved=new Date(Math.max(Date.now(),(Date.parse(row.last_saved??row.last_assessed)||0)+1)).toISOString();}
     if(body.kind==='evidence')row.unlinked_evidence_ids=(row.unlinked_evidence_ids||[]).filter(id=>id!==body.id);
     if(!row.related_links.some(l=>l.kind===body.kind&&l.id===body.id))row.related_links.push({kind:body.kind,id:body.id});audit(db,'Framework record linked','framework_assessments',row,body);return {ok:true};
   }
@@ -484,15 +692,29 @@ export function frameworkRequest(db,path,method,params,body,context=null){
   }
   if(method==='post'&&operation==='findings'){
     if(!body.title?.trim()||!body.remediation_title?.trim()||!body.request_id||!['low','medium','high','critical'].includes(body.severity||'medium'))throw new Error('Finding and Action titles, valid severity and request ID are required');
-    const fid=stable(row.client_id,'finding',id+':'+body.request_id);let f=db.findings.find(f=>f.finding_id===fid);
+    const item=body.item_id?currentItem(row,body.item_id):null;
+    const fid=stable(row.client_id,'finding',id+':'+(item?'item:'+body.item_id:body.request_id));let f=db.findings.find(f=>f.finding_id===fid);
+    if (body.cmmc_gap_version!=null) {
+      const client=record(db,'clients',row.client_id);
+      if (row.framework_key!=='cmmc' || cmmcConfiguration(client).level!==2 || !db.requirements.some(r=>r.client_id===row.client_id && r.baseline_key==='cmmc' && r.baseline_response==='applies')) fail('Open the current CMMC Level 2 workbook before creating remediation',409);
+      if (!f && ((row.last_saved || row.last_assessed || row.updated_at || '')!==body.cmmc_gap_version || !['needs_attention','in_progress'].includes(row.status))) fail('The saved gap changed; reopen the workbook',409);
+    }
     // A departed or out-of-scope safeguard owner is never copied onto new work; the Finding starts unassigned.
     let owner=row.owner_id&&eligible(db.users.find(u=>u.user_id===row.owner_id),row.client_id)?row.owner_id:null;
     // Optional at creation, as in the backend: an explicit owner must be eligible; a target date must be valid.
     if(Object.prototype.hasOwnProperty.call(body,'owner_id')){owner=body.owner_id||null;if(owner&&!eligible(db.users.find(u=>u.user_id===owner),row.client_id))throw new Error('Finding owner must be an active user with access to this client');}
     const due=body.due_date?calendarDay(body.due_date):null;
     if(body.due_date&&due===null)throw new Error('Enter a valid target date');
+    if(!f&&item&&!withItemControls(row).item_controls[item.item_id].can_create_finding)fail('Only an unlinked open Gap Item can create a Finding',409);
     if(!f){f={finding_id:fid,client_id:row.client_id,title:body.title.trim(),description:body.description||'',severity:body.severity||'medium',status:'open',framework_assessment_id:id,source:assessmentTitle(row),owner_id:owner,due_date:due===null?null:new Date(due*86400000).toISOString().slice(0,10),remediation_title:body.remediation_title.trim(),created_at:now(),updated_at:now()};validateAssignment(db, 'findings', f);db.findings.push(f);audit(db,'Finding raised','framework_assessments',row,{finding_id:fid});audit(db,'create','findings',f);}
-    action(db,'findings',fid,'create-task',{title:f.remediation_title});return f;
+    action(db,'findings',fid,'create-task',{title:f.remediation_title});
+    if(item){
+      if(!f.assessment_item_id)Object.assign(f,{assessment_item_id:body.item_id,assessment_item_text:item.text,framework_key:row.framework_key});
+      const previouslyLinked=item.finding_id;
+      linkItemFinding(row,body.item_id,fid,db.user.user_id,now());
+      if(previouslyLinked!==fid)audit(db,'Assessment item updated','framework_assessments',row,{item_id:body.item_id,state:item.state,finding_id:fid});
+    }
+    return f;
   }
   throw new Error('Unsupported framework operation; assessment history is retained');
 }

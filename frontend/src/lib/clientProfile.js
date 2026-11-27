@@ -1,4 +1,5 @@
 import catalog from './clientProfileFields.json';
+import {scheduledDate} from './reviewOccurrences';
 export {catalog};
 export const optionsFor = field => typeof field.options === 'string' ? catalog.options[field.options] : field.options || [];
 export function recordedBaseline(client,saved,events=[]) {
@@ -6,6 +7,15 @@ export function recordedBaseline(client,saved,events=[]) {
   if(saved?.completed)return {state:saved,legacy:true,completed_at:null};
   const event=events.filter(e=>e.client_id===client.client_id&&e.action==='onboarding-complete').sort((a,b)=>String(a.at).localeCompare(String(b.at)))[0];
   return event?{state:{},legacy:true,completed_at:event.at,completed_by:event.user_id}:null;
+}
+export function recordedOnboardingState(client,saved=client?.onboarding_baseline,events=[]) {
+  if(typeof client?.client_id!=='string'||!client.client_id.trim())return 'unknown';
+  const object=value=>!!value&&typeof value==='object'&&!Array.isArray(value);
+  if(object(client?.initial_program_baseline)&&Object.keys(client.initial_program_baseline).length
+    ||object(saved)&&saved.completed===true
+    ||Array.isArray(events)&&events.some(event=>event?.client_id===client.client_id&&event?.action==='onboarding-complete'))return 'complete';
+  if(object(saved)&&saved.completed===false&&scheduledDate(saved.updated_at))return 'in_progress';
+  return 'unknown';
 }
 export function validateProfile(section, values) {
   const fields=catalog.sections[section];

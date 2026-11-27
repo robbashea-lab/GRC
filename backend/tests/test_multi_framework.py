@@ -8,6 +8,7 @@ server=framework_tests.server
 
 
 class MultiFrameworkTests(unittest.IsolatedAsyncioTestCase):
+    r4_valid_completion_fixture = True
     asyncSetUp = framework_tests.FrameworkTests.asyncSetUp
     sign_in = framework_tests.FrameworkTests.sign_in
     body = framework_tests.FrameworkTests.body

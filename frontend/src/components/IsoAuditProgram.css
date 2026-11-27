@@ -1,0 +1,17 @@
+.iso-audit-program { display:grid; gap:20px; min-width:0; }
+.iso-cis-program-visual .iso-audit-quarter { padding:18px 24px; }
+.iso-cis-program-visual .iso-audit-quarter h3, .iso-cis-program-visual .iso-audit-program > header h3 { color:var(--fg); font:600 15px/1.35 var(--font); }
+.iso-cis-program-visual .iso-audit-quarter p { margin-top:4px; color:var(--muted); font-size:12.5px; }
+.iso-cis-program-visual .iso-audit-progress-bar { background:var(--c-track); }
+.iso-cis-program-visual .iso-audit-quarter .iso-audit-progress-bar { margin:12px 0; }
+.iso-cis-program-visual .iso-audit-packages .card-head { padding-bottom:18px; }
+.iso-cis-program-visual .iso-audit-year { justify-self:start; }
+.iso-cis-program-visual .iso-audit-occurrence { font-size:12.5px; color:var(--muted); }
+.iso-cis-program-visual .iso-audit-areas .grow:disabled { cursor:default; }
+.iso-cis-program-visual .iso-audit-areas .grow:disabled:hover, .iso-cis-program-visual .iso-audit-status-legend .lg-cell:hover { background:transparent; }
+.iso-cis-program-visual .iso-audit-program :is(button,input,select,summary):focus-visible { outline:2px solid var(--focus); outline-offset:-3px; }
+[data-testid="iso-audit-workpaper"] .iso-audit-source { margin: 14px 0; padding: 14px 16px; border: 1px solid var(--color-border); border-radius: 8px; }
+[data-testid="iso-audit-workpaper"] .iso-audit-source > summary { cursor: pointer; font-size: 13px; font-weight: 600; }
+[data-testid="iso-audit-workpaper"] .iso-audit-source .assessment-requirement { margin-top: 12px; }
+
+@media(max-width:860px) { .iso-cis-program-visual .iso-audit-quarter { padding:16px; } }

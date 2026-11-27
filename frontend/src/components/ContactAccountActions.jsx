@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
-import api, { formatError } from '@/lib/api';
+import { formatError } from '@/lib/api';
+import {useAssessmentApi} from '@/lib/assessmentCommandScope';
 import { invitationFeedback } from '@/lib/invitationFeedback';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
@@ -9,6 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { toast } from 'sonner';
 
 export default function ContactAccountActions({ contact, onChanged }) {
+  const api=useAssessmentApi();
   const [mode, setMode] = useState(null), [search, setSearch] = useState('');
   const [candidates, setCandidates] = useState([]), [candidate, setCandidate] = useState('');
   const [role, setRole] = useState('client_readonly'), [loading, setLoading] = useState(false);
@@ -22,7 +24,7 @@ export default function ContactAccountActions({ contact, onChanged }) {
       .catch(e => { if (!abort.signal.aborted) setError(formatError(e)); })
       .finally(() => { if (!abort.signal.aborted) setLoading(false); });
     return () => abort.abort();
-  }, [mode, search, contact.contact_id]);
+  }, [api,mode, search, contact.contact_id]);
   async function submit() {
     setSaving(true); setError('');
     try {

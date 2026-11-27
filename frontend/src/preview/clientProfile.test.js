@@ -64,3 +64,18 @@ test('original audit-only completion is recognized without inventing intake',asy
   await api.patch('/onboarding/programs/cmmc',{client_id:cid,applicability:'applies'});
   expect((await profile()).baseline).toEqual(p.baseline);
 });
+
+test('scope stays client-specific, validates fields and keeps its last confirmation through unrelated profile edits',async()=>{
+  expect((await profile()).scope_confirmation).toBeNull();
+  await save('scope',{statement:'Accounts payable',systems:'Billing system'});
+  const first=await profile();
+  expect(first.profile.scope).toEqual({statement:'Accounts payable',systems:'Billing system'});
+  expect(first.scope_confirmation).toMatchObject({at:first.updated_at,by:expect.any(String)});
+  await save('organization',{employees:50});
+  expect((await profile()).scope_confirmation).toEqual(first.scope_confirmation);
+  const other=readStore().clients.find(client=>client.client_id!==cid);
+  expect((await api.get('/clients/'+other.client_id+'/profile')).data.scope_confirmation).toBeNull();
+  await expect(save('scope',{confirmed_by:'outside actor'})).rejects.toBeTruthy();
+  await save('scope',{statement:null,systems:null});
+  expect((await profile()).scope_confirmation).toBeNull();
+});

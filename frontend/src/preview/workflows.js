@@ -1,3 +1,4 @@
+import {isCisClient} from './cisCapability';
 import {ensurePolicyReview,syncPolicyReview} from './policyReviews';
 import {ensureVendorReviews} from './vendors';
 import {approvalSnapshot} from './policyProvenance';
@@ -11,14 +12,15 @@ import {requireCreationAssignee} from './authorization';
 import {guardEdit} from './decisions';
 import {auditPackage,blankAuditItem} from '../lib/isoAudit';
 import {eligible} from './assignmentEligibility';
+import {independentValidationIssue} from '../lib/r4Remediation';
 
 function commandFields(body, allowed) {
   if(Object.entries(body).some(([key,value])=>!allowed.includes(key)||(value!=null&&typeof value!=='string')))
     throw Object.assign(new Error('Unsupported command field or invalid text value'),{status:422});
 }
 
-function commandEdit(kind, body, user) {
-  try{guardEdit(kind,body,{},user);}
+function commandEdit(kind, body, user, db) {
+  try{guardEdit(kind,body,{},user,db);}
   catch(error){error.status=422;throw error;}
 }
 export function nextDue(base, recurrence, custom) {
@@ -148,8 +150,14 @@ export function onboard(db, body) {
 export function action(db, kind, id, name, body) {
   const r = record(db, kind, id),
     cid = r.client_id;
+  // An accepted Review occurrence replays before current-cycle CAS; new completions validate their Guide below.
+  if(kind==='reviews'&&name==='complete'){
+    if(db.user.status&&db.user.status!=='active')throw Object.assign(new Error('This retained Review is read-only'),{status:403});
+    return reviewAction(db,id,name,body);
+  }
   if(Object.prototype.hasOwnProperty.call(body,'expected_updated_at')&&body.expected_updated_at!==(r.updated_at??null))throw new Error('Record changed since it was opened; reload before saving');
-  body={...body};delete body.expected_updated_at;
+  body={...body};
+  delete body.expected_updated_at;
   const patch = b => write(db, kind, b, id);
   if(kind==='findings'&&name==='reopen'){
     if(!['super_admin','platform_admin'].includes(db.user.role))throw new Error('Only platform-level roles can reopen remediation');
@@ -175,10 +183,26 @@ export function action(db, kind, id, name, body) {
     if (kind === 'exceptions' && (!r.expires_at || r.expires_at.slice(0,10) <= now().slice(0,10))) throw new Error('A future exception expiry is required.');
     return patch({status:kind === 'exceptions' ? 'approved' : 'accepted', ...(kind === 'exceptions' ? {approver_id:db.user.user_id,approved_at:now()} : {}), decision_history:[...(r.decision_history || []), {action:name,by:db.user.user_id,at:now(),rationale:body.rationale}]});
   }
-  if ((kind === 'risks' && name === 'accept' || kind === 'findings' && name === 'validate' || kind === 'policies' && ['approve','reject','verify'].includes(name)) && !['super_admin','platform_admin'].includes(db.user.role)) throw new Error('Only platform-level roles can record this decision.');
-  if (kind === 'findings' && name === 'validate') {
-    if (r.status !== 'remediated' || list(db, 'tasks', cid).some(t => t.finding_id === id && !['done','cancelled'].includes(t.status))) throw new Error('Complete remediation before validation.');
+  if ((kind === 'risks' && name === 'accept' || kind === 'findings' && ['validate','reject'].includes(name) || kind === 'policies' && ['approve','reject','verify'].includes(name)) && !['super_admin','platform_admin'].includes(db.user.role)) throw new Error('Only platform-level roles can record this decision.');
+  if (kind === 'findings' && ['validate','reject'].includes(name)) {
+    if(r.status!=='remediated')throw new Error('Finding must be pending validation.');
+    const actions=list(db,'tasks',cid).filter(task=>task.finding_id===id),issue=independentValidationIssue(actions,db.user.user_id);
+    if(issue)throw new Error(issue);
     if (!body.rationale?.trim()) throw new Error('Validation rationale is required.');
+    if(name==='reject') {
+      commandFields(body,['request_id','rationale']);
+      if(!body.request_id)throw new Error('A retained rework request identity is required.');
+      const source=actions.find(task=>task.task_id===r.primary_task_id)||actions[0],owner=source.assignee_id||source.owner_id;
+      const task=write(db,'tasks',{client_id:cid,finding_id:id,source_type:'finding',source_id:id,
+        title:source.title||r.remediation_title||r.title,description:source.description,
+        assignee_id:owner&&eligible(db.users.find(user=>user.user_id===owner),cid)?owner:null,
+        due_date:source.due_date,priority:source.priority||r.severity||'medium',status:'open'});
+      const result=patch({status:'in_remediation',primary_task_id:task.task_id,decision_history:[...(r.decision_history||[]),
+        {action:'rejected',by:db.user.user_id,at:now(),rationale:body.rationale,request_id:body.request_id,
+          previous_primary_task_id:r.primary_task_id,rework_task_id:task.task_id}]});
+      audit(db,'Work returned for rework','findings',result,{task_id:task.task_id});
+      return result;
+    }
     const result = patch({status:'closed', validated_by:db.user.user_id, validated_at:now(), closed_by:db.user.user_id,closed_at:now(),decision_history:[...(r.decision_history || []), {action:'validated',by:db.user.user_id,at:now(),rationale:body.rationale}]});
     for (const task of list(db,'tasks',cid).filter(t=>t.finding_id===id)) audit(db,'Related Finding validated and closed','tasks',task,{finding_id:id});
     if (r.review_id) reviewEvent(db,record(db,'reviews',r.review_id),'Finding validated and closed',r.occurrence_id || 'occ_' + r.review_id,{finding_id:id,title:r.title});
@@ -188,7 +212,7 @@ export function action(db, kind, id, name, body) {
     if (r.status !== 'completed' || !body.rationale?.trim()) throw new Error('A completed review and amendment explanation are required.');
     return patch({amendments:[...(r.amendments || []), {by:db.user.user_id,at:now(),rationale:body.rationale}]});
   }
-  if (kind === 'reviews' && ['start','complete'].includes(name)) return reviewAction(db, id, name, body);
+  if (kind === 'reviews' && name==='start') return reviewAction(db, id, name, body);
   if (kind === 'reviews' && name === 'create-finding') {
     const prior = body.request_id && list(db,'findings',cid).find(f => f.created_by === db.user.user_id && f.review_id === id && f.occurrence_id === body.occurrence_id && f.request_id === body.request_id);
     if (prior) return prior;
@@ -201,7 +225,7 @@ export function action(db, kind, id, name, body) {
     if (!['low', 'medium', 'high', 'critical'].includes(body.severity || 'medium')) throw Object.assign(new Error('Invalid severity.'),{status:422});
     const owner=Object.prototype.hasOwnProperty.call(body,'owner_id')?body.owner_id:r.owner_id;
     requireCreationAssignee(db,cid,owner);
-    commandEdit('findings',{due_date:body.due_date},db.user);
+    commandEdit('findings',{due_date:body.due_date},db.user,db);
     const finding = write(db, 'findings', {
       title: body.title.trim(), description: body.description || '', severity: body.severity || 'medium',
       remediation_plan: body.remediation_plan || '', remediation_title:body.remediation_title.trim(), audit_item_key:body.audit_item_key, due_date: body.due_date || null,
@@ -224,7 +248,7 @@ export function action(db, kind, id, name, body) {
     commandFields(body,['title','priority','assignee_id','due_date','description']);
     const assignee=Object.prototype.hasOwnProperty.call(body,'assignee_id')?body.assignee_id:r.owner_id;
     requireCreationAssignee(db,cid,assignee);
-    commandEdit('tasks',{title:body.title||r.title,due_date:body.due_date||r.due_date},db.user);
+    commandEdit('tasks',{title:body.title||r.title,due_date:body.due_date||r.due_date},db.user,db);
     const task = write(db, 'tasks', {
       ...body,
       title: body.title || r.title,
@@ -297,7 +321,6 @@ export function action(db, kind, id, name, body) {
       acceptance_date: now(),
       acceptance_rationale: body.rationale,
       acceptance_expires_at: body.expiry_date,
-      next_review: [r.next_review,body.expiry_date].filter(Boolean).sort()[0],
       decision_history: [...(r.decision_history || []), {action:'accepted', by:db.user.user_id,at:now(),rationale:body.rationale,expires_at:body.expiry_date}],
       compensating_controls: body.compensating_controls
     });
@@ -310,7 +333,7 @@ export function action(db, kind, id, name, body) {
   if (kind === 'policies' && name === 'verify' && r.status==='in_review') throw new Error('Return the pending submission to Draft before verifying metadata');
   if (kind === 'policies' && name === 'verify' && Object.keys(body).some(k=>!['version','owner_id','approver_id','approved_at','last_reviewed_at','next_review_date','summary','status'].includes(k))) throw new Error('Unknown verification field');
   if(kind==='policies'&&name==='verify') {
-    if(r.client_id==='demo_brawndo'&&(r.schedule_from_reviews||db.reviews.some(v=>v.policy_id===id&&v.client_id===r.client_id))) {
+    if(isCisClient(db,r.client_id)&&(r.schedule_from_reviews||db.reviews.some(v=>v.policy_id===id&&v.client_id===r.client_id))) {
       for(const key of ['last_reviewed_at','next_review_date'])if(body[key]&&String(body[key]).slice(0,10)!==String(r[key]||'').slice(0,10))throw new Error('Policy Review dates are controlled by linked Reviews.');
       body={...body};delete body.last_reviewed_at;delete body.next_review_date;
     }
@@ -324,9 +347,9 @@ export function action(db, kind, id, name, body) {
         provenance:'Verified metadata; not an in-app approval',subject}];
     } else fields=invalidatePolicyApproval(fields,r);
     const updated=patch(fields);
-    // Brawndo: approval establishes the Policy's recurring Review (annual from the last review, or today)
+    // A configured CIS approval establishes the Policy's recurring Review (annual from the last review, or today)
     // instead of storing a free-standing next-review date on the Policy.
-    if(r.client_id==='demo_brawndo'&&body.status==='approved'){
+    if(isCisClient(db,r.client_id)&&body.status==='approved'){
       const had=db.reviews.some(v=>v.policy_id===id&&v.client_id===r.client_id&&!['completed','cancelled'].includes(v.status));
       const review=ensurePolicyReview(db,updated,updated.next_review_date||nextPolicyReview(String(updated.last_reviewed_at||now()).slice(0,10)));
       if(review){syncPolicyReview(db,review);if(!had)audit(db,'Policy Review scheduled','policies',updated,{review_id:review.review_id,due_date:review.due_date});}

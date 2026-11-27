@@ -1,28 +1,40 @@
+jest.mock('@/lib/brawndoAdditionalScope',()=>({useAdditionalSectionsSurface:(_surface,loadedClientId)=>mockAdditional&&!!loadedClientId,useAdditionalSectionsPresentation:()=>mockAdditional}));
 import React,{act} from 'react';
 import {createRoot} from 'react-dom/client';
 import AIGovernance from './AIGovernance';
 import AIDrawer from '@/components/AIDrawer';
 import api from '@/lib/api';
-let mockClient='demo_brawndo';
+import {cisClient as mockCisClient} from '@/testUtils/cisExperience';
+let mockClient='demo_brawndo',mockAdditional=false;
 const mockUser={user_id:'admin',role:'super_admin',workspace_mode:'demo'};
-jest.mock('@/context/AuthContext',()=>({useAuth:()=>({user:mockUser})}));
-jest.mock('@/context/OrgContext',()=>({useOrg:()=>({currentClientId:mockClient})}));
+jest.mock('@/context/AuthContext',()=>({useAuth:()=>({user:mockUser,workspaceMode:'demo',loading:false})}));
+jest.mock('@/context/OrgContext',()=>({useOrg:()=>{const client=mockClient==='demo_brawndo'?mockCisClient(mockClient):{client_id:mockClient,name:'Non-CIS client',status:'active'};return {currentClientId:mockClient,currentClient:client,clients:[client],loading:false};}}));
 jest.mock('@/lib/api',()=>({__esModule:true,default:{get:jest.fn(),post:jest.fn(),patch:jest.fn()},formatError:e=>e.message,API:'/api',PREVIEW_MODE:true}));
 jest.mock('react-router-dom',()=>({Link:({children})=><span>{children}</span>,useLocation:()=>({pathname:'/ai-governance',search:''}),useNavigate:()=>jest.fn(),useSearchParams:()=>require('react').useState(new URLSearchParams())}),{virtual:true});
 jest.mock('@/lib/recordUuid',()=>({recordUuid:()=> 'test-request-identity'}));
 let root,container;
 const click=node=>act(async()=>node.click());
 const input=(node,value)=>act(async()=>{Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,'value').set.call(node,value);node.dispatchEvent(new Event('input',{bubbles:true}));});
-beforeEach(()=>{global.IS_REACT_ACT_ENVIRONMENT=true;mockClient='demo_brawndo';localStorage.clear();container=document.createElement('div');document.body.appendChild(container);root=createRoot(container);api.get.mockImplementation(async path=>({data:path==='/related'?{}:path==='/ai-intake'?{usage:'unsure'}:path==='/ai_systems'?[{ai_system_id:'a',client_id:mockClient,name:'AI QA',status:'active',provider:'Test',data_types:['Public']}]:[]}));});
+beforeEach(()=>{global.IS_REACT_ACT_ENVIRONMENT=true;mockClient='demo_brawndo';mockAdditional=false;localStorage.clear();container=document.createElement('div');document.body.appendChild(container);root=createRoot(container);api.get.mockImplementation(async path=>({data:path==='/related'?{}:path==='/ai-intake'?{client_id:mockClient,usage:'unsure'}:path==='/ai_systems'?[{ai_system_id:'a',client_id:mockClient,name:'AI QA',status:'active',provider:'Test',data_types:['Public']}]:[]}));});
 afterEach(async()=>{await act(async()=>root.unmount());container.remove();jest.clearAllMocks();});
-test('shared AI cards do not expand approval or data permission and other clients retain intake notice',async()=>{
+test('shared AI cards preserve unconfirmed approval and data permission while the approved register retains native filters and intake uncertainty',async()=>{
   await act(async()=>root.render(<AIGovernance/>));expect(container.querySelector('.brawndo-ai-grid')).not.toBeNull();expect(container.textContent).toContain('Approval not recorded');expect(container.textContent).toContain('Data permissions not established');expect(container.textContent).not.toContain('AI applicability is not yet confirmed');
   await click(container.querySelector('[data-testid="new-ai-system"]'));expect(document.querySelector('[data-testid="ai-drawer"]').className).toContain('brawndo-cis-assessment');expect(document.body.textContent).toContain('Pending Assessment');
   await click([...document.querySelectorAll('button')].find(b=>b.textContent==='Cancel'));
-  mockClient='demo_dunder';await act(async()=>root.render(<AIGovernance/>));expect(container.querySelector('table')).toBeTruthy();expect(container.querySelector('button[aria-label="Provider: sort and filter"]')).toBeTruthy();expect(container.querySelector('[data-testid="ai-system-view-pending"]')).toBeNull();expect(container.textContent).not.toMatch(/Approval not recorded|Data permissions not established/);expect(container.textContent).toContain('AI applicability is not yet confirmed');
+  mockClient='demo_dunder';await act(async()=>root.render(<AIGovernance/>));
+  expect(container.querySelector('.brawndo-ai-grid')).toBeTruthy();expect(container.textContent).toContain('Approval not recorded');expect(container.textContent).toContain('Data permissions not established');
+  // Publish the accurate loaded presentation receipt for this same saved client;
+  // the native controller still validates its own records and intake before it renders.
+  mockAdditional=true;await act(async()=>root.render(<AIGovernance/>));
+  expect(container.querySelector('[data-testid="ai-register-first"] table')).toBeTruthy();
+  expect(container.querySelector('button[aria-label="Provider: sort and filter"]')).toBeTruthy();
+  expect(container.querySelector('[data-testid="ai-system-view-pending"]')).toBeTruthy();
+  expect(container.textContent).toContain('AI profile needs confirmation');
+  expect(api.get).toHaveBeenCalledWith('/ai-intake',expect.objectContaining({params:{client_id:'demo_dunder'}}));
+  expect(api.post).not.toHaveBeenCalled();expect(api.patch).not.toHaveBeenCalled();
 });
 test('draft remains across tabs, failed save and cancel; approval decision unavailable before creation',async()=>{
-  const close=jest.fn();api.post.mockRejectedValue(new Error('Save unavailable'));
+  const close=jest.fn();api.post.mockRejectedValue(Object.assign(new Error('Save unavailable'),{response:{headers:{'x-create-rejected':'true'}}}));
   await act(async()=>root.render(<AIDrawer open onOpenChange={close} clientId={mockClient}/>));
   await input(document.querySelector('[aria-label="Product / System Name"]'),'Draft AI');
   await click([...document.querySelectorAll('[role="tab"]')].find(b=>b.textContent==='Data & Access'));
@@ -41,4 +53,39 @@ test('AI Governance uses the shared page header, subtitle and view chips across 
   expect(container.querySelector('[data-testid="ai-system-view-high"]').getAttribute('aria-pressed')).toBe('true');
   mockClient='demo_dunder';await act(async()=>root.render(<AIGovernance/>));
   expect(container.querySelector('.bpage[data-theme] h1').textContent).toBe('AI Governance');expect(container.querySelector('.bpage-subtitle').textContent).toContain('Not a legal classification');
+});
+
+test('an uncertain AI create blocks discard and explicitly retries its original values and identity',async()=>{
+  const close=jest.fn(),onSaved=jest.fn();api.post.mockReset();
+  api.post.mockRejectedValueOnce(Object.assign(new Error('Response lost'),{response:{status:503,headers:{}}}))
+    .mockResolvedValueOnce({data:{ai_system_id:'synthetic-created-ai',client_id:mockClient}});
+  await act(async()=>root.render(<AIDrawer open onOpenChange={close} onSaved={onSaved} clientId={mockClient}/>));
+  await input(document.querySelector('[aria-label="Product / System Name"]'),'Original AI proposal');
+  await input(document.querySelector('[aria-label="Provider"]'),'Original AI provider');
+  await click([...document.querySelectorAll('button')].find(button=>button.textContent==='Create AI System'));
+  expect(api.post).toHaveBeenCalledTimes(1);
+  const original=api.post.mock.calls[0];
+  expect(original[0]).toBe('/ai_systems');
+  expect(original[1]).toMatchObject({client_id:mockClient,name:'Original AI proposal',provider:'Original AI provider'});
+  expect(original[2]).toMatchObject({headers:{'Idempotency-Key':'test-request-identity'}});
+  await click([...document.querySelectorAll('button')].find(button=>button.textContent==='Cancel'));
+  expect(close).not.toHaveBeenCalled();expect(onSaved).not.toHaveBeenCalled();
+  expect(document.querySelector('[role="alertdialog"]')).toBeNull();
+  expect(document.querySelector('[aria-label="Product / System Name"]').value).toBe('Original AI proposal');
+  expect(document.body.textContent).toContain('Create is unconfirmed. Retry its original request before closing.');
+  expect(api.post).toHaveBeenCalledTimes(1);expect(api.patch).not.toHaveBeenCalled();
+  await input(document.querySelector('[aria-label="Product / System Name"]'),'Newer unsaved AI wording');
+  await click([...document.querySelectorAll('button')].find(button=>button.textContent==='Create AI System'));
+  expect(api.post).toHaveBeenCalledTimes(1);expect(api.patch).not.toHaveBeenCalled();
+  expect(close).not.toHaveBeenCalled();expect(onSaved).not.toHaveBeenCalled();
+  expect(document.querySelector('[aria-label="Product / System Name"]').value).toBe('Newer unsaved AI wording');
+  expect(document.querySelector('[aria-label="Provider"]').value).toBe('Original AI provider');
+  await click([...document.querySelectorAll('button')].find(button=>button.textContent==='Retry unconfirmed create'));
+  expect(api.post).toHaveBeenCalledTimes(2);
+  const retried=api.post.mock.calls[1];
+  expect(retried[0]).toBe(original[0]);expect(JSON.stringify(retried[1])).toBe(JSON.stringify(original[1]));
+  expect(retried[2].headers).toEqual(original[2].headers);
+  expect(retried[2].pendingCommandGeneration).toBe(original[2].pendingCommandGeneration);
+  expect(api.patch).not.toHaveBeenCalled();expect(onSaved).toHaveBeenCalledTimes(1);
+  expect(close).toHaveBeenCalledTimes(1);expect(close).toHaveBeenCalledWith(false);
 });

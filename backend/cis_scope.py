@@ -16,13 +16,29 @@ def configuration(client):
             'expected_updated_at': (client or {}).get('cis_configuration_updated_at')}
 
 
+def experience_program(client, selected):
+    """Read projection of committed enrollment, independent of an editable setup draft."""
+    settings = client.get('framework_settings', {})
+    group = None
+    if isinstance(settings, dict) and isinstance(settings.get('cis-ig1', {}), dict):
+        candidate = configuration(client)['implementation_group']
+        if type(candidate) is int and candidate in available_groups():
+            group = candidate
+    cid = client['client_id']
+    return {'client_id': cid, 'program_id': cid + ':cis-ig1', 'framework_key': 'cis-ig1',
+            'version': CIS['version'], 'selected': bool(selected), 'implementation_group': group}
+
+
 def validate_settings(settings):
-    if not isinstance(settings, dict) or set(settings) - {'cis-ig1'}:
+    if not isinstance(settings, dict) or set(settings) - {'cis-ig1', 'cmmc'}:
         raise ValueError('Invalid onboarding framework settings')
     cis = settings.get('cis-ig1', {})
     if not isinstance(cis, dict) or set(cis) - {'implementation_group'} or (
             'implementation_group' in cis and (type(cis['implementation_group']) is not int or cis['implementation_group'] not in available_groups())):
         raise ValueError('CIS implementation group is not available')
+    if 'cmmc' in settings:
+        from cmmc_scope import validate_settings as validate_cmmc_settings
+        validate_cmmc_settings(settings['cmmc'])
 
 
 class CisConfiguration(BaseModel):

@@ -1,0 +1,39 @@
+{
+  "runtime_revision": "87d37b67fde542710c337c238a5bc9833d1aeaa6",
+  "build_kind": "compiled Demo",
+  "manifest": {
+    "files": {
+      "main.css": "/static/css/main.7e6897c1.css",
+      "main.js": "/static/js/main.296e55c7.js",
+      "static/js/472.80e43652.chunk.js": "/static/js/472.80e43652.chunk.js",
+      "static/js/617.6f8d8744.chunk.js": "/static/js/617.6f8d8744.chunk.js",
+      "static/media/governara-scene.webp": "/static/media/governara-scene.41f90fa5b6e74e22d94b.webp",
+      "static/media/nara-owl.webp": "/static/media/nara-owl.87326e07f90e4acacc48.webp",
+      "static/media/nara-avatar.webp": "/static/media/nara-avatar.0b98c8010cfef77d6d15.webp",
+      "index.html": "/index.html",
+      "static/media/governara-feather.svg": "/static/media/governara-feather.0a4f7eb57b2953455d5b787040f51902.svg",
+      "main.7e6897c1.css.map": "/static/css/main.7e6897c1.css.map",
+      "main.296e55c7.js.map": "/static/js/main.296e55c7.js.map",
+      "472.80e43652.chunk.js.map": "/static/js/472.80e43652.chunk.js.map",
+      "617.6f8d8744.chunk.js.map": "/static/js/617.6f8d8744.chunk.js.map"
+    },
+    "entrypoints": [
+      "static/css/main.7e6897c1.css",
+      "static/js/main.296e55c7.js"
+    ]
+  },
+  "assets": [
+    {
+      "Path": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-13\\agent-1-implement-the-approved-internal\\work\\program-workflows\\build\\static\\js\\main.296e55c7.js",
+      "Hash": "8C75975A3C8DEDAA4415123226CE280E5A7A8AC5376D9C63BE0E15AA24F1D76D"
+    },
+    {
+      "Path": "C:\\Users\\RobbA\\Documents\\Codex\\2026-10-13\\agent-1-implement-the-approved-internal\\work\\program-workflows\\build\\static\\css\\main.7e6897c1.css",
+      "Hash": "52BD9F1111DAAEF1147922737EDE6EC8C06114EA63DB5A464C07793DBBD6C29D"
+    }
+  ],
+  "runtime_diff_since_freeze": null,
+  "build_exit_code": 0,
+  "observed_dom_receipt": "../program-review/browser/final-loaded-bundle-87d37b6.json",
+  "limits": "Compiled loopback Demo; not authenticated hosted proof."
+}

@@ -51,13 +51,26 @@ class CisIG2Tests(unittest.IsolatedAsyncioTestCase):
         saved={'title':'Custom review','description':'Client procedure','recurrence':'custom','custom_recurrence_days':42,'due_date':'2027-01-01','schedule_anchor':'2026-01-01',
                'occurrences':[{'occurrence_id':'historical','framework_safeguards':['1.1','1.2'],'conclusion':'Original assessment'}]}
         await s.db.reviews.update_one({'review_id':review['review_id']},{'$set':saved})
-        before={a['definition_id']:a for a in await s.db.framework_assessments.find({'client_id':'a'}).to_list(None)}
+        before={a['definition_id']:copy.deepcopy(a) for a in await s.db.framework_assessments.find({'client_id':'a'}).to_list(None)}
+        for original_row in before.values():
+            self.assertFalse(original_row.get('items_to_address'))
+            self.assertNotIn('item_controls',original_row)
         upgraded=await self.scope(2)
         self.assertEqual(upgraded.status_code,200,upgraded.text)
+        for original_row in before.values():
+            stored=await s.db.framework_assessments.find_one({'client_id':'a',
+                'framework_assessment_id':original_row['framework_assessment_id']})
+            self.assertEqual(stored,original_row)
         workspace=await self.workspace();self.assertEqual(len(workspace['assessments']),130)
         for row in workspace['assessments']:
             if row['definition_id'] in before:
-                expected={k:v for k,v in before[row['definition_id']].items() if k!='_id'}
+                original_row=before[row['definition_id']]
+                stored=await s.db.framework_assessments.find_one({'client_id':'a',
+                    'framework_assessment_id':original_row['framework_assessment_id']})
+                self.assertEqual(stored,original_row)
+                self.assertNotIn('item_controls',stored)
+                expected={k:v for k,v in original_row.items() if k!='_id'}
+                expected['item_controls']={}
                 self.assertEqual(row,expected)
             else:self.assertEqual((row['status'],row['implementation'],row['assessment_history']),('not_assessed','',[]))
         after=await s.db.reviews.find_one({'review_id':review['review_id']})

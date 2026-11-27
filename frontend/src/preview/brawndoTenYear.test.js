@@ -15,13 +15,15 @@
 import axios from 'axios';
 import {performance} from 'perf_hooks';
 import {previewAdapter} from './commandTestAdapter';
-import {STORE_KEY,ids as ID_FIELDS} from './store';
+import {STORE_KEY,ids as ID_FIELDS,buildLegacyDemoStore,readStore,saveStore} from './store';
 import {restoreFiles} from './evidenceStorage';
 import {registerSignals} from '../lib/registerSignals';
 import {riskMatchesView} from '../lib/riskRegister';
 import {vendorSignals} from '../lib/vendorGovernance';
 import {matchesAssessment} from '../lib/frameworkWorkspace';
 import {cisSummary} from '../lib/cisVerification';
+import {currentReviewCompletion} from '../testUtils/r4ReviewFixture';
+import {belongsToOccurrence} from '../lib/reviewOccurrences';
 
 class MemoryStorage {
   constructor() { this.map = new Map(); }
@@ -41,6 +43,7 @@ const BROWSER_QUOTA_CHARS = 5242880;
 const START = '2026-09-28', END = process.env.SIM_END || '2036-09-29';
 const CID = 'demo_brawndo', JOE = 'demo_brawndo_user_0', CAMACHO = 'demo_brawndo_user_1', FRITO = 'demo_brawndo_user_2', ADMIN = 'demo_admin';
 const OTHER_CLIENT = 'demo_prestige';
+const VALIDATOR = 'qa_brawndo_ten_year_validator';
 const DAY = 86400000;
 const addDays = (d, n) => new Date(Date.parse(d + 'T00:00:00Z') + n * DAY).toISOString().slice(0, 10);
 const day = v => (v ? String(v).slice(0, 10) : null);
@@ -153,13 +156,70 @@ async function raiseReviewFinding(r, scripted) {
   return f;
 }
 
-function riskReviewBody(r) {
+function riskReviewBody(r, via = 'Risk Review completion') {
   const plans = riskPlan.get(r.risk_id) || [];
   const next = plans.find(p => !p.used && p.after <= today);
   if (!next) return {risk_assessment: {}, risk_outcome: 'Reviewed — No Change'};
   next.used = true;
-  report.risks.events.push({today, risk: r.risk_id, change: next.change, via: 'Risk Review completion'});
+  report.risks.events.push({today, risk: r.risk_id, change: next.change, via});
   return {risk_assessment: next.change, risk_outcome: next.outcome || 'Additional Action Required'};
+}
+
+async function currentCompletionBody(r, evidence) {
+  const sourcePolicy = r.policy_id ? await get(`/policies/${r.policy_id}`) : null;
+  const sourceVendor = r.vendor_id ? await get(`/vendors/${r.vendor_id}`) : null;
+  const aiRows = r.ai_system_id ? await get('/ai_systems', {client_id: CID}) : [];
+  if (!Array.isArray(aiRows)) throw new Error('The scoped native AI list could not be read');
+  const sourceAI = r.ai_system_id ? aiRows.find(item => item.client_id === CID && item.ai_system_id === r.ai_system_id) : null;
+  if (r.ai_system_id && !sourceAI) throw new Error('The Review-linked AI system is absent from this client');
+  let sourceRisk = r.risk_id ? await get(`/risks/${r.risk_id}`) : null;
+  const approvalGap = sourcePolicy && sourcePolicy.status !== 'approved';
+  const aiApprovalGap = sourceAI && !['approved', 'approved_with_conditions'].includes(sourceAI.approval_status);
+  const assuranceGap = sourceVendor?.assurance_required && (sourceVendor.assurance_records || []).some(item => item.required !== false
+    && (!item.evidence_ids?.length || !item.received_at || !item.refresh_due || day(item.refresh_due) < today));
+  const currentFindings = ((await get('/findings', {client_id: CID})) || []).filter(f => f.review_id === r.review_id && belongsToOccurrence(f, r));
+  if ((approvalGap || aiApprovalGap || assuranceGap) && !currentFindings.length) {
+    const finding = await raiseReviewFinding(r, {severity: 'medium',
+      title: approvalGap ? 'Synthetic policy approval remains outstanding' : aiApprovalGap ? 'Synthetic AI authorization remains outstanding' : 'Synthetic supplier assurance remains outstanding',
+      remediation: approvalGap ? 'Obtain a separate policy approval decision' : aiApprovalGap ? 'Obtain a separate AI authorization decision' : 'Obtain current required supplier assurance'});
+    if (!finding) return null;
+    currentFindings.push(finding);
+  }
+  let riskBody = r.risk_id ? riskReviewBody(r, currentFindings.length ? 'Separate native Risk assessment after Review exception' : 'Risk Review completion') : {};
+  if (r.risk_id && currentFindings.length) {
+    // The planned same-day assessment is a separate native decision when the
+    // Review records an exception. Never bypass the exception-form restriction.
+    if (Object.keys(riskBody.risk_assessment).length) {
+      sourceRisk = await call('patch', `/risks/${r.risk_id}`, {...riskBody.risk_assessment, expected_updated_at: sourceRisk.updated_at}, null,
+        {label: 'planned Risk assessment after Review exception'});
+      if (!sourceRisk) return null;
+    }
+    riskBody = {};
+  }
+  const command = await currentReviewCompletion(api, r.review_id, {
+    expectedOccurrenceId: r.current_occurrence_id,
+    supportingReference: `DEMO synthetic native lifecycle walkthrough ${today}; Review ${r.review_id}, occurrence ${r.current_occurrence_id}. ${evidence ? 'Current file ' + evidence.evidence_id + '. ' : ''}No external ticket execution, technical test or attestation is asserted.`,
+    resultForStep: (step, {guide, review}) => {
+      const answer = (result, reason) => ({step_id: step.step_id, result, reason});
+      const gaps = currentFindings.map(f => f.finding_id + ': ' + f.title).join('; ');
+      if (guide.template_id === 'risk_rec') {
+        switch (step.support) {
+          case 'Updated risk record': return answer('Pass', 'Synthetic walkthrough inspected the native risk ' + sourceRisk.risk_id + ': ' + sourceRisk.title);
+          case 'Rating change': return answer('Pass', 'Inspected saved likelihood ' + sourceRisk.likelihood_score + ' and impact ' + sourceRisk.impact_score + '; any explicit planned change uses the native Risk assessment.');
+          case 'Action status': return answer('N/A', 'This record-lifecycle walkthrough does not independently verify treatment effectiveness or complete the linked corrective work.');
+          case 'Approver and date': return answer('N/A', 'This occurrence does not make an acceptance or closure decision; the separate scripted native decisions remain authoritative.');
+          case 'Next review': return answer('Pass', 'Inspected native scheduled successor ' + review.next_review_date + '; the original boundary and immutable-history assertions remain unchanged.');
+          default: throw new Error('Unmodeled synthetic Risk check: ' + step.support);
+        }
+      }
+      if (guide.template_id === 'policy_rec' && step.support === 'Approved version') return answer(approvalGap ? 'Exception' : 'Pass', approvalGap ? 'The linked native Policy remains unapproved; retain ' + gaps : 'The separately approved native Policy version ' + sourcePolicy.version + ' remains approved.');
+      if (guide.template_id === 'ai_rec' && step.support === 'Decision' && aiApprovalGap) return answer('Exception', 'No AI authorization is inferred from Review completion; retain ' + gaps);
+      if (['vendor_rec', 'assure_rec'].includes(guide.template_id) && assuranceGap && ['Assurance document', 'Period dates', 'Review notes', 'Follow-up date'].includes(step.support)) return answer('Exception', 'Required supplier assurance remains unresolved: ' + gaps);
+      return answer('N/A', 'This synthetic native record-lifecycle scenario does not perform the external control, communication or business decision in this question: ' + step.text);
+    }
+  });
+  if (currentFindings.length) command.outcome = 'Exceptions noted';
+  return {...command, ...riskBody};
 }
 
 async function executeReview(r) {
@@ -168,11 +228,12 @@ async function executeReview(r) {
     const started = await call('post', `/reviews/${id}/start`, {occurrence_id: oid}, null, {label: 'start review ' + r.title});
     if (!started) return null;
   }
-  if (rnd() < EVIDENCE_RATE[yearIndex(today)]) await upload('review', id, `${r.title} - ${r.period}`, {occurrence_id: oid});
+  const evidence = rnd() < EVIDENCE_RATE[yearIndex(today)] ? await upload('review', id, `${r.title} - ${r.period}`, {occurrence_id: oid}) : null;
   const scripted = reviewFindingScripts.find(s => !s.used && s.review(r) && s.after <= today);
   if (scripted) scripted.used = true;
   if (scripted || rnd() < findingRate(r)) await raiseReviewFinding(r, scripted);
-  const body = {occurrence_id: oid, ...(r.risk_id ? riskReviewBody(r) : {})};
+  const body = await currentCompletionBody(r, evidence);
+  if (!body) return null;
   const result = await call('post', `/reviews/${id}/complete`, body, null, {label: 'complete review ' + r.title});
   if (!result) return null;
   const o = result.occurrence, y = yearIndex(today);
@@ -264,8 +325,25 @@ async function validateFindings() {
   for (const f of (findings || []).filter(f => f.status === 'remediated')) {
     if (!validationPlans.has(f.finding_id)) validationPlans.set(f.finding_id, addDays(today, 7 * between(...LAG[yearIndex(today)])));
     if (validationPlans.get(f.finding_id) > today) continue;
-    const r = await call('post', `/findings/${f.finding_id}/validate`, {rationale: `Validated ${today}: corrective evidence inspected.`, spawn_next: true, expected_updated_at: f.updated_at}, null, {label: 'validate finding'});
-    if (r) { report.findings.validated++; ledger.findingDecisions.set(f.finding_id, clone(r.decision_history)); validationPlans.delete(f.finding_id); }
+    const db = readStore(), actor = clone(db.user);
+    // Only the current account changes: retained work submitters, current owners
+    // and all prior decisions remain real inputs to the native independence gate.
+    db.user = clone(db.users.find(user => user.user_id === VALIDATOR));saveStore(db);
+    try {
+      const r = await call('post', `/findings/${f.finding_id}/validate`, {rationale: `Validated ${today}: corrective evidence inspected.`, spawn_next: true, expected_updated_at: f.updated_at}, null, {label: 'validate finding'});
+      if (r) {
+        expect(r.validated_by).toBe(VALIDATOR);
+        const actions = readStore().tasks.filter(task => task.finding_id === f.finding_id);
+        for (const action of actions) {
+          expect(action.assignee_id || action.owner_id).not.toBe(VALIDATOR);
+          expect(action.completed_by).not.toBe(VALIDATOR);
+          expect((action.submission_history || []).map(submission => submission.by)).not.toContain(VALIDATOR);
+        }
+        report.findings.validated++; ledger.findingDecisions.set(f.finding_id, clone(r.decision_history)); validationPlans.delete(f.finding_id);
+      }
+    } finally {
+      const restored = readStore();restored.user = actor;saveStore(restored);
+    }
   }
 }
 
@@ -380,7 +458,7 @@ const EVENTS = [
   {on: START, name: 'boundary reviews', run: createBoundaryReviews},
   // Year 0: stabilizing. CIS gaps without Findings are tracked; Risk acceptance lapses briefly.
   {on: '2026-10-05', name: 'CIS 3.5 assessed partial, no Finding yet', run: () => assess('3.5', {status: 'in_progress', technology: 'Disposal vendor (no certificates)', implementation: narrative('3.5', 'Retired laptops collected by a recycling vendor. No certificates of destruction retained.')})},
-  {on: '2027-01-04', name: 'Acceptable Use Policy revised and approved', run: () => revisePolicy('demo_brawndo_policy-acceptable-use-policy', '2.1')},
+  {on: '2027-01-04', name: 'Acceptable Use Policy revised and approved', run: async () => revisePolicy((await policyForBaseline('acceptable-use-policy')).policy_id, '2.1')},
   {on: '2027-01-11', name: 'linked annual Policy Reviews established', run: establishPolicyReviews},
   {on: '2027-02-01', name: 'CIS 17.2 Finding raised', run: () => cisFinding('17.2', {title: 'Incident contact list names former insurer and MSP numbers', severity: 'medium', remediation: 'Update incident contact list and publish', due: '2027-03-01', syncFindingDue: true})},
   {on: '2027-02-22', name: 'RISK-003 acceptance lapsed checkpoint', run: () => checkpoint('acceptance lapsed')},
@@ -477,6 +555,13 @@ async function snapshotYearOne() {
     fritoCompleted: mine('reviews').flatMap(r => (r.occurrences || []).filter(o => o.completed_by === FRITO).map(o => o.occurrence_id)),
   };
 }
+async function policyForBaseline(key) {
+  const policies = await get('/policies', {client_id: CID});
+  const matches = policies.filter(policy => policy.baseline_key === `policy-${key}`);
+  expect(matches).toHaveLength(1);
+  expect(matches[0].client_id).toBe(CID);
+  return matches[0];
+}
 async function revisePolicy(id, version) {
   const p = await get(`/policies/${id}`);
   const subject = await call('post', `/policies/${id}/approval-subject`, {version, external_reference: `Brawndo controlled policy register / ${p.title}`, external_version: `Revision ${version}`, expected_updated_at: p.updated_at}, null, {label: 'policy approval basis'});
@@ -489,7 +574,7 @@ async function revisePolicy(id, version) {
 const KEY_POLICIES = ['information-security-policy', 'access-control-identity-management-policy', 'incident-response-policy', 'backup-restoration-policy', 'vendor-third-party-risk-management-policy', 'acceptable-use-policy'];
 async function establishPolicyReviews() {
   for (const key of KEY_POLICIES) {
-    const p = await get(`/policies/demo_brawndo_policy-${key}`);
+    const p = await policyForBaseline(key);
     // Brawndo Policies already schedule through one linked recurring Review; reuse it instead of adding another.
     const existing = raw().reviews.find(r => r.client_id === CID && r.policy_id === p.policy_id && !['completed', 'cancelled'].includes(r.status));
     if (existing) {report.policies.events.push({today, policy: p.title, event: 'linked annual Review already established', review_id: existing.review_id});continue;}
@@ -930,7 +1015,27 @@ async function runSimulation() {
   jest.useFakeTimers('modern');
   setClock(START);
   storage.clear(); localStorage.clear();
+  // This fixed ten-year event ledger targets retained v1 Risk/Vendor identities.
+  // Install that explicit input; all subsequent operations still use native APIs.
+  // Fresh showcase lifecycle coverage remains in cisDemoRefresh/cisDemoOperations.
+  const initial = buildLegacyDemoStore();
+  // Demo has no real invitation flow. Add only this owned identity; no client,
+  // business state, historical submission or decision is invented or reset.
+  initial.users.push({user_id: VALIDATOR, name: 'Synthetic independent lifecycle validator', email: 'brawndo-ten-year-validator@example.test',
+    role: 'platform_admin', status: 'active', client_ids: [CID], all_clients: false});
+  saveStore(initial, {resetFiles: true});
   await api.post('/demo/enter');
+  // This operating campaign explicitly exercises an optional Acceptable Use
+  // Policy. Strict CIS Demo onboarding excludes it until an organization opts in.
+  const baseline = (await api.get('/onboarding/baseline', {params: {client_id: CID}})).data.state;
+  const optionalPolicy = 'policy-acceptable-use-policy';
+  await api.post('/onboarding/baseline', {client_id: CID, finalize: true, state: {
+    ...baseline,
+    selected_policy_keys: [...new Set([...baseline.selected_policy_keys, optionalPolicy])],
+    policies: {...baseline.policies, [optionalPolicy]: 'yes'},
+  }});
+  const optedIn = await policyForBaseline('acceptable-use-policy');
+  expect(optedIn).toMatchObject({client_id: CID, baseline_key: optionalPolicy});
   const others = raw().clients.map(c => c.client_id).filter(c => c !== CID);
   const before = Object.fromEntries(others.map(c => [c, clientFingerprint(c)]));
   volumeSample('seed');

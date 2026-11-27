@@ -5,7 +5,7 @@ import {useActionRegisterData} from './useActionRegisterData';
 
 jest.mock('./api',()=>({__esModule:true,default:{get:jest.fn()},formatError:error=>error.message}));
 let root,container,current;
-function Probe({clientId}){current=useActionRegisterData(clientId);return <pre>{JSON.stringify(current)}</pre>;}
+function Probe({clientId,retainOnRefreshError=false}){current=useActionRegisterData(clientId,{retainOnRefreshError});return <pre>{JSON.stringify(current)}</pre>;}
 function response(path,options){
   const clientId=options?.params?.client_id||path.split('/')[2];
   return {data:path==='/onboarding/state'?{assessments:[{client_id:clientId,assessment_id:'assessment'}, {client_id:'foreign',assessment_id:'foreign'}]}:
@@ -39,6 +39,29 @@ test('dependency failure clears stale results and the same controller can retry'
   await act(async()=>current.load());
   expect(current.data.tasks).toEqual([{client_id:'client',title:'client'}]);
   expect(current.error).toBe('');
+});
+
+test('opted-in refresh recovery retains the current client records and people with an explicit failure result',async()=>{
+  await act(async()=>root.render(<Probe clientId="client" retainOnRefreshError/>));
+  const retainedData=current.data,retainedUsers=current.users;
+  api.get.mockRejectedValueOnce(new Error('Refresh interrupted'));
+  let result;
+  await act(async()=>{result=await current.load();});
+  expect(result).toEqual({ok:false,error:'Refresh interrupted'});
+  expect(current.data).toBe(retainedData);expect(current.users).toBe(retainedUsers);expect(current).toMatchObject({error:'Refresh interrupted',loading:false});
+  await act(async()=>{result=await current.load();});expect(result).toEqual({ok:true});expect(current.error).toBe('');
+});
+
+test('opted-in retained data never crosses a client switch, even when its new request fails',async()=>{
+  await act(async()=>root.render(<Probe clientId="old" retainOnRefreshError/>));
+  expect(current.data.tasks).toEqual([{client_id:'old',title:'old'}]);
+  let rejectNew;
+  api.get.mockImplementation((path,options)=>path==='/tasks'&&options.params.client_id==='new'?
+    new Promise((resolve,reject)=>{rejectNew=reject;}):Promise.resolve(response(path,options)));
+  await act(async()=>root.render(<Probe clientId="new" retainOnRefreshError/>));
+  expect(current).toMatchObject({data:{},users:[],loading:true});expect(container.textContent).not.toContain('old');
+  await act(async()=>rejectNew(new Error('New client unavailable')));
+  expect(current).toMatchObject({data:{},users:[],loading:false,error:'New client unavailable'});expect(container.textContent).not.toContain('old');
 });
 
 test.each([403,404,503])('historical source error %s is unavailable only for denied or missing records',async status=>{

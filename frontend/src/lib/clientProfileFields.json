@@ -4,6 +4,13 @@
     "capability": ["Implemented", "Partial", "Not Implemented", "Unknown", "Not Applicable"]
   },
   "sections": {
+    "scope": [
+      {"id":"statement","label":"Scope statement","type":"textarea"},
+      {"id":"systems","label":"In-scope systems and services","type":"textarea"},
+      {"id":"locations","label":"In-scope locations","type":"text"},
+      {"id":"data","label":"Data in scope","type":"text"},
+      {"id":"exclusions","label":"Exclusions and rationale","type":"textarea"}
+    ],
     "organization": [
       {"id":"legal_name","label":"Legal organization name","type":"text"},
       {"id":"domain","label":"Primary domain","type":"text"},

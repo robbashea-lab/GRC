@@ -1,0 +1,103 @@
+{
+  "test": "test_ordinary_record_parallel_stale_and_post_write_audit_failure_retry",
+  "status": "passed",
+  "interval": [
+    "2027-01-01",
+    "2037-01-01"
+  ],
+  "as_of": "2037-01-15T12:00:00Z",
+  "clock_boundary": "Only server _now patched; no OS/shared clock change",
+  "persistence": "real_loopback_motor_mongo",
+  "identity": "isolated modeled signed actor; no live hosted role proof",
+  "measurements": [
+    {
+      "method": "PATCH",
+      "path": "/api/assets/scale-retry",
+      "status": 503,
+      "elapsed_ms": 42.347,
+      "response_bytes": 113
+    },
+    {
+      "method": "GET",
+      "path": "/api/assets/scale-retry",
+      "status": 200,
+      "elapsed_ms": 7.207,
+      "response_bytes": 148
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/assets/scale-retry",
+      "status": 200,
+      "elapsed_ms": 57.922,
+      "response_bytes": 148
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/assets/scale-retry",
+      "status": 200,
+      "elapsed_ms": 16.378,
+      "response_bytes": 148
+    },
+    {
+      "method": "GET",
+      "path": "/api/assets/scale-retry",
+      "status": 200,
+      "elapsed_ms": 8.742,
+      "response_bytes": 161
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/assets/scale-retry",
+      "status": 409,
+      "elapsed_ms": 38.286,
+      "response_bytes": 69
+    },
+    {
+      "method": "GET",
+      "path": "/api/assets/scale-retry",
+      "status": 200,
+      "elapsed_ms": 7.167,
+      "response_bytes": 161
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/assets/scale-retry",
+      "status": 200,
+      "elapsed_ms": 15.638,
+      "response_bytes": 148
+    },
+    {
+      "method": "GET",
+      "path": "/api/assets/scale-retry",
+      "status": 200,
+      "elapsed_ms": 5.333,
+      "response_bytes": 161
+    }
+  ],
+  "volume": {},
+  "owned_database": {
+    "origin": "mongodb://127.0.0.1:58749",
+    "database_name": "platform_acceptance_20261011_scale_a80015ef8f93487d",
+    "fresh_collection_readback": [],
+    "cleanup": "drop_acknowledged_by_driver"
+  },
+  "limitations": [
+    "Historical saves/approval/closure are seeded load volume, not executed lifecycle proof.",
+    "No hosted backend/browser, real restricted identity or production capacity claim.",
+    "Latency observations have no invented pass threshold; adopted payload/cap budgets are separately asserted.",
+    "Mongo mock does not prove durability, index/query-plan or multiworker contention.",
+    "Board PDF date/generated labels and recent-policy 90-day cutoff use actual server.datetime; no recent-policy fixture or full-clock claim.",
+    "Cleanup receipt is author-harness evidence; coordinator independently checks the exact recorded database afterward."
+  ],
+  "concurrent_results": [
+    200,
+    409,
+    409,
+    409,
+    409,
+    409,
+    409,
+    409
+  ],
+  "reliability_boundary": "Injected exception after ordinary Asset primary CAS but before audit call writes; not lost driver/audit-write acknowledgement. No server/process kill, driver cancellation, auth endpoint or hosted fault injection"
+}

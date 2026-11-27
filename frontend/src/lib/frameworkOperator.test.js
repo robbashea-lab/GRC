@@ -35,9 +35,20 @@ test('NIST source qualifications survive concise operator explanations',()=>{
   }
 });
 test('HIPAA explanatory text never substitutes for stored regulatory wording',()=>{
-  for(const d of CATALOGS.hipaa.requirements){const g=operatorGuidance('hipaa',d);expect(g.meaning.length).toBeGreaterThan(50);expect(g.meaning).not.toBe(d.guidance);expect(g.implementation).toBeTruthy();expect(g.evidence).toBeTruthy();}
-  expect(operatorGuidance('hipaa',CATALOGS.hipaa.requirements.find(d=>d.id==='164.306(d)')).meaning).toContain('does not mean optional');
-  expect(new Set(CATALOGS.hipaa.requirements.map(d=>operatorGuidance('hipaa',d).evidence)).size).toBe(76);
+  const catalog=CATALOGS.hipaa,before=JSON.stringify(catalog);
+  for(const d of catalog.requirements){const g=operatorGuidance('hipaa',d);expect(g.meaning.length).toBeGreaterThan(50);expect(g.meaning).not.toBe(d.guidance);expect(g.implementation).toBeTruthy();expect(g.evidence).toBeTruthy();}
+  expect(operatorGuidance('hipaa',catalog.requirements.find(d=>d.id==='164.306(d)')).meaning).toContain('does not mean optional');
+  // Preserve the 76 native assessment units and five finer R4 units; this is not a client applicability denominator.
+  expect(catalog.requirements).toHaveLength(81);
+  expect(new Set(catalog.requirements.map(d=>d.id)).size).toBe(81);
+  expect(new Set(catalog.requirements.map(d=>operatorGuidance('hipaa',d).evidence)).size).toBe(81);
+  expect(catalog.requirements.filter(d=>d.parent_assessment_id).map(d=>[d.id,d.parent_assessment_id])).toEqual([
+    ['164.308(b)(2)','164.308(b)(1)'],
+    ['164.314(a)(2)(i)','164.314(a)(1)'],['164.314(a)(2)(ii)','164.314(a)(1)'],
+    ['164.314(a)(2)(iii)','164.314(a)(1)'],['164.314(b)(2)','164.314(b)(1)'],
+  ]);
+  for(const id of ['164.302','164.105','164.530'])expect(catalog.requirements.some(d=>d.id===id)).toBe(true);
+  expect(JSON.stringify(catalog)).toBe(before);
 });
 
 test('HIPAA summaries retain periodic review and the pre-movement backup safeguard',()=>{

@@ -9,7 +9,8 @@ HIPAA = json.loads((ROOT / 'hipaaSecurityRule.json').read_text(encoding='utf-8')
 ISO = json.loads((ROOT / 'iso27001.json').read_text(encoding='utf-8'))
 SOC = json.loads((ROOT / 'soc2.json').read_text(encoding='utf-8'))
 NIST = json.loads((ROOT / 'nistCSF2.json').read_text(encoding='utf-8'))
-CATALOGS = {'cis-ig1': CIS, 'hipaa': HIPAA, 'iso-27001': ISO, 'soc-2': SOC, 'nist-csf-2': NIST}
+CMMC = json.loads((ROOT / 'cmmc.json').read_text(encoding='utf-8'))
+CATALOGS = {'cis-ig1': CIS, 'hipaa': HIPAA, 'iso-27001': ISO, 'soc-2': SOC, 'nist-csf-2': NIST, 'cmmc': CMMC}
 
 
 def capabilities(framework_key):
@@ -24,10 +25,15 @@ def active_definitions(key, configuration=None):
         return [d for d in definitions if d['category'] in categories]
     if key == 'cis-ig1':
         return [d for d in definitions if d.get('implementation_group', 1) <= (configuration or {}).get('implementation_group', 1)]
+    if key == 'cmmc':
+        return [d for d in definitions if (configuration or {}).get('level', 2) == 2 or d.get('level_one_parent')]
     return definitions
 
 
 def client_configuration(key, client, state=None):
+    if key == 'cmmc':
+        from cmmc_scope import configuration
+        return {**configuration(client), **(state or {}).get('framework_settings', {}).get(key, {})}
     if key == 'soc-2':
         from soc_readiness import configuration
         return configuration(client or {})
@@ -39,7 +45,7 @@ def client_configuration(key, client, state=None):
 
 def active_plans(key, configuration=None):
     allowed = {d['id'] for d in active_definitions(key, configuration)}
-    return [{**p, 'title': p.get('ig3_title', p['title']) if key == 'cis-ig1' and (configuration or {}).get('implementation_group') == 3 else p['title'], 'safeguards': [ident for ident in p['safeguards'] if ident in allowed],
+    return [{**p, 'title': p.get('level_one_title', p['title']) if key == 'cmmc' and (configuration or {}).get('level', 2) == 1 else p.get('ig3_title', p['title']) if key == 'cis-ig1' and (configuration or {}).get('implementation_group') == 3 else p['title'], 'safeguards': [ident for ident in p['safeguards'] if ident in allowed],
              'cadence_references': [ref for ref in p.get('cadence_references', []) if ref['definition_id'] in allowed and ref['definition_id'] in p['safeguards']]}
             for p in CATALOGS[key]['review_plans'] if any(ident in allowed for ident in p['safeguards'])]
 

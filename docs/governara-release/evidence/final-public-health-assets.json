@@ -1,0 +1,10 @@
+{
+  "checked_at": "2026-10-13T20:25:06.932Z",
+  "health": 200,
+  "health_body": "{\"service\":\"grc-platform\",\"status\":\"ok\"}",
+  "login": 200,
+  "assets": [
+    "/static/js/main.d171f8c7.js",
+    "/static/css/main.e82e5c68.css"
+  ]
+}

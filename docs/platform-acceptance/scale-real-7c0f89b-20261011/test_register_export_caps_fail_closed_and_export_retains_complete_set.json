@@ -1,0 +1,62 @@
+{
+  "test": "test_register_export_caps_fail_closed_and_export_retains_complete_set",
+  "status": "passed",
+  "interval": [
+    "2027-01-01",
+    "2037-01-01"
+  ],
+  "as_of": "2037-01-15T12:00:00Z",
+  "clock_boundary": "Only server _now patched; no OS/shared clock change",
+  "persistence": "real_loopback_motor_mongo",
+  "identity": "isolated modeled signed actor; no live hosted role proof",
+  "measurements": [
+    {
+      "method": "GET",
+      "path": "/api/assets",
+      "status": 200,
+      "elapsed_ms": 22.312,
+      "response_bytes": 128891
+    },
+    {
+      "method": "GET",
+      "path": "/api/assets",
+      "status": 413,
+      "elapsed_ms": 11.721,
+      "response_bytes": 137
+    },
+    {
+      "method": "GET",
+      "path": "/api/export/assets",
+      "status": 200,
+      "elapsed_ms": 21.487,
+      "response_bytes": 65990
+    },
+    {
+      "method": "GET",
+      "path": "/api/export/assets",
+      "status": 413,
+      "elapsed_ms": 32.318,
+      "response_bytes": 123
+    }
+  ],
+  "volume": {
+    "cap_only_assets": 10001,
+    "register_limit": 1000,
+    "export_limit": 10000,
+    "not_plausible_lifecycle_seed": "Exact declared capacity boundary fixture only"
+  },
+  "owned_database": {
+    "origin": "mongodb://127.0.0.1:58749",
+    "database_name": "platform_acceptance_20261011_scale_bed62b781aaf46fd",
+    "fresh_collection_readback": [],
+    "cleanup": "drop_acknowledged_by_driver"
+  },
+  "limitations": [
+    "Historical saves/approval/closure are seeded load volume, not executed lifecycle proof.",
+    "No hosted backend/browser, real restricted identity or production capacity claim.",
+    "Latency observations have no invented pass threshold; adopted payload/cap budgets are separately asserted.",
+    "Mongo mock does not prove durability, index/query-plan or multiworker contention.",
+    "Board PDF date/generated labels and recent-policy 90-day cutoff use actual server.datetime; no recent-policy fixture or full-clock claim.",
+    "Cleanup receipt is author-harness evidence; coordinator independently checks the exact recorded database afterward."
+  ]
+}

@@ -1,309 +1,39 @@
-import { ComplianceProvider, useCompliance } from "@/context/ComplianceContext";
-import DemoNotice from "@/preview/DemoNotice";
-import {PREVIEW_MODE} from '@/lib/api';
-import {dashboardPilot} from '@/lib/dashboardWorkQueue';
-import {isReferenceRegister,isBrawndoReference,isReferencePortfolio} from '@/lib/reference';
-import ClientSurface from './ClientSurface';
-import BrawndoWorkspace from './BrawndoWorkspace';
+import {Outlet, useLocation} from 'react-router-dom';
+import {ComplianceProvider} from '@/context/ComplianceContext';
+import {AdditionalSectionsProvider} from '@/lib/brawndoAdditionalScope';
+import NativeStandardShell from './NativeStandardShell';
 import AdminSurface from './AdminSurface';
-import Brand from "@/components/Brand";
+import ClientSurface from './ClientSurface';
+import {useAuth} from '@/context/AuthContext';
+import {useOrg} from '@/context/OrgContext';
+import {ClientWorkspaceAvailability} from '@/lib/useSurfaceRef';
 import './BrawndoPortalTheme.css';
-import BrawndoSidebar,{BrawndoPlatformSidebar} from "@/components/BrawndoSidebar";
-import { useEffect, useMemo, useState } from "react";
-import { NavLink, Outlet, useNavigate, useLocation } from "react-router-dom";
-import { useOrg } from "@/context/OrgContext";
-import { useAuth } from "@/context/AuthContext";
-import { Input } from "@/components/ui/input";
-import {
-  LayoutDashboard, ClipboardCheck, AlertOctagon, ShieldAlert, FileText,
-  Building2, ListChecks, FolderArchive, ScrollText, ChevronsUpDown,
-  LogOut, Sparkles, FileWarning, Server, CalendarDays, Users, ArrowLeft, Settings2, UserCog, UserCircle2,
-  ClipboardList, ShieldCheck, Lock, Search,
-} from "lucide-react";
-import NotificationBell from "@/components/NotificationBell";
-import {
-  DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem,
-  DropdownMenuSeparator,
-} from "@/components/ui/dropdown-menu";
+import './BrawndoWorkspace.css';
+import './SixSurfaceAppearance.css';
+import './AdditionalSectionsAppearance.css';
+import './CisWorkspaceSizing.css';
+import './CisRegisterSizing.css';
+import './NativeStandard.css';
 
-// Client-scoped modules (visible only inside a tenant workspace).
-const CLIENT_NAV = [
-  { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard, testid: "nav-dashboard" },
-  { to: "/calendar", label: "Calendar", icon: CalendarDays, testid: "nav-calendar" },
-  { to: "/reviews", label: "Reviews", icon: ClipboardCheck, testid: "nav-reviews" },
-  { to: "/findings", label: "Findings", icon: FileWarning, testid: "nav-findings" },
-  { to: "/action-items", label: "Action Items", icon: ListChecks, testid: "nav-action-items" },
-  { to: "/risks", label: "Risks", icon: ShieldAlert, testid: "nav-risks" },
-  { to: "/policies", label: "Policies", icon: FileText, testid: "nav-policies" },
-  { to: "/vendors", label: "Vendors", icon: Building2, testid: "nav-vendors" },
-  { to: '/ai-governance', label: 'AI Governance', icon: Sparkles, testid: 'nav-ai-governance' },
-  { to: "/contacts", label: "Contacts", icon: Users, testid: "nav-contacts" },
-  { to: "/systems", label: "Systems & Scope", icon: Server, testid: "nav-systems" },
-  { to: "/evidence", label: "Evidence Library", icon: FolderArchive, testid: "nav-evidence" },
-  { to: "/client-profile", label: "Client Profile", icon: Settings2, testid: "nav-client-profile" },
-];
-
-// Platform-level modules (visible to internal admins in the platform context).
-// Anything mounted below /clients, /admin, or /platform is considered "platform" scope.
-// Note: `/clients` (the Portfolio Overview) is rendered by PlatformClientsSection
-// below, not as a flat nav link — it's the heading of the client navigator.
-const PLATFORM_NAV = [
-  { section: "Administration" },
-  { to: "/admin/clients", label: "Client Management", icon: Building2, testid: "nav-admin-clients" },
-  { to: "/admin/users", label: "Users & Access", icon: UserCog, testid: "nav-admin-users" },
-  { to: "/admin/roles", label: "Roles & Permissions", icon: ShieldCheck, testid: "nav-admin-roles" },
-  { to: "/admin/security", label: "Security & Auth", icon: Lock, testid: "nav-admin-security" },
-  { to: "/admin/audit", label: "Audit Log", icon: ScrollText, testid: "nav-admin-audit" },
-];
-
-function ContextHeader({ isInternal, atPlatform }) {
-  // Client Workspace context ONLY — the Platform mode no longer renders a
-  // large "All Clients" chip (that job now belongs to the Clients section in
-  // PlatformClientsSection). In Client mode we still show the tenant chip
-  // + a "← All Clients" return button for internal users.
-  const { currentClient } = useOrg();
-  const navigate = useNavigate();
-  if (atPlatform) return null;
-
-  const initial = currentClient?.name?.[0] || "•";
-  return (
-    <div className="space-y-2">
-      {isInternal && (
-        <button
-          type="button"
-          onClick={() => navigate("/clients")}
-          data-testid="return-to-portfolio"
-          className="w-full flex items-center gap-1.5 px-2 py-1.5 rounded-md border border-brand-metallic-3 bg-brand-charcoal hover:bg-brand-metallic-2 text-xs font-mono uppercase tracking-widest text-ink-onDarkMuted hover:text-ink-onDark transition-colors"
-        >
-          <ArrowLeft className="h-3 w-3" /> Portfolio
-        </button>
-      )}
-      <div
-        data-testid="context-header-client"
-        className="w-full flex items-center gap-2 rounded-md border border-brand-metallic-3 bg-brand-metallic-2 px-3 py-2.5"
-      >
-        <div className="h-7 w-7 rounded-md bg-brand-metallic text-ink-onDark flex items-center justify-center text-xs font-bold border border-brand-metallic-3">
-          {initial}
-        </div>
-        <div className="min-w-0">
-          <div className="text-xs uppercase tracking-wider text-ink-onDark2 font-mono">Client{currentClient?.status === "archived" && <span className="ml-1.5 normal-case tracking-normal font-sans text-semantic-duesoon-bg" data-testid="context-client-archived">· Archived</span>}</div>
-          <div className="text-sm text-ink-onDark font-medium truncate">
-            {currentClient?.name || "Select a client…"}
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-const CLIENT_FILTERS = [
-  { id: "all", label: "All Clients" },
-  { id: "assigned", label: "Assigned to Me" },
-];
-
-function PlatformClientsSection() {
-  // The permanent Clients navigator in the Platform sidebar. Header links to
-  // /clients (GRC Portfolio Overview); ALL/MINE tabs and compact search.
-  const { clients, switchClient, loading, error, refresh } = useOrg();
-  const { user } = useAuth();
-  const navigate = useNavigate();
-  const location = useLocation();
-  const [filter, setFilter] = useState("all");
-  const [q, setQ] = useState("");
-
-  const active = useMemo(
-    () => (clients || []).filter((c) => (c.status || "active") !== "archived"),
-    [clients]
-  );
-
-  const scoped = useMemo(() => {
-    let list = active;
-    // Same definition as the Portfolio's Assigned to Me: the client's GRC lead.
-    if (filter === "assigned") list = list.filter((c) => (c.grc_lead_id || c.assigned_owner_id) === user?.user_id);
-    const s = q.trim().toLowerCase();
-    if (s) list = list.filter((c) => (c.name || "").toLowerCase().includes(s));
-    return [...list].sort((a, b) => (a.name || "").trim().localeCompare((b.name || "").trim()));
-  }, [active, filter, user?.user_id, q]);
-
-  const onClientsPage = location.pathname === "/clients";
-
-  // Search earns its space only once the list is long enough to scan.
-  const searchable = active.length > 8;
-  const emptyLabel = loading ? "Loading clients…" : filter === "assigned"
-      ? "None assigned to you."
-      : q ? "No matches." : "No clients available.";
-
-  return (
-    <div className="space-y-1" data-testid="sidebar-clients-section">
-      <button
-        type="button"
-        onClick={() => navigate("/clients")}
-        data-testid="nav-clients"
-        className={`w-full side-link ${onClientsPage ? "active" : ""}`}
-      >
-        <Users className="h-4 w-4 shrink-0" style={{ color: "inherit" }} />
-        <span>Portfolio</span>
-      </button>
-
-      <div className="pl-2 pr-1 py-1.5 space-y-1.5">
-        <div className="inline-flex items-center rounded-md border border-brand-metallic-3 bg-brand-charcoal/40 p-0.5 gap-0.5 w-full">
-          {CLIENT_FILTERS.map((t) => {
-            const isActive = filter === t.id;
-            return (
-              <button
-                key={t.id}
-                onClick={() => setFilter(t.id)}
-                data-testid={`sidebar-filter-${t.id}`}
-                className={`flex-1 px-1.5 h-6 text-xs font-mono uppercase tracking-wider rounded-[5px] transition ${isActive ? "bg-brand-metallic text-ink-onDark" : "text-ink-onDarkMuted hover:text-ink-onDark"}`}
-              >
-                {t.id === "all" ? "ALL" : "MINE"}
-              </button>
-            );
-          })}
-        </div>
-        {searchable && <div className="relative">
-          <Search className="h-3 w-3 absolute left-2 top-1/2 -translate-y-1/2 text-ink-onDarkMuted" />
-          <Input
-            value={q}
-            onChange={(e) => setQ(e.target.value)}
-            placeholder="Search clients…"
-            className="pl-6 h-7 text-xs bg-brand-charcoal/40 border-brand-metallic-3 text-ink-onDark placeholder:text-ink-onDarkMuted focus-visible:ring-brand-metallic"
-            data-testid="sidebar-client-search"
-          />
-        </div>}
-
-        <div className="max-h-64 overflow-y-auto -mx-1 px-1" data-testid="sidebar-client-list">
-          {error ? (
-            <div className="text-xs text-ink-onDarkMuted py-2 px-1" role="alert" data-testid="sidebar-client-error">
-              Clients could not be loaded. <button type="button" className="underline text-ink-onDark" onClick={refresh}>Retry</button>
-            </div>
-          ) : scoped.length === 0 ? (
-            <div className="text-xs text-ink-onDarkMuted text-center py-2" data-testid="sidebar-client-empty">
-              {emptyLabel}
-            </div>
-          ) : (
-            scoped.map((c) => {
-              return (
-                <div
-                  key={c.client_id}
-                  className="group flex items-center gap-1.5 px-1.5 py-1 rounded-md hover:bg-brand-metallic-2 transition cursor-pointer min-w-0"
-                  data-testid={`sidebar-client-${c.client_id}`}
-                >
-                  <button
-                    type="button"
-                    onClick={() => { switchClient(c.client_id); navigate("/dashboard"); }}
-                    className="flex-1 min-w-0 text-left"
-                    data-testid={`sidebar-open-${c.client_id}`}
-                  >
-                    <div className="text-xs text-ink-onDark truncate group-hover:text-white">{c.name}</div>
-                  </button>
-                </div>
-              );
-            })
-          )}
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function Sidebar() {
-  const { user, logout } = useAuth();
-  const {currentClientId}=useOrg();
-  const nav = useNavigate();
-  const location = useLocation();
-  const isInternal = ["super_admin", "platform_admin"].includes(user?.role);
-  // Platform context covers portfolio, administration, and any future /platform/* routes.
-  // Client Workspace context covers everything else (dashboard, calendar, reviews, etc.).
-  const atPlatform = ["/clients", "/admin", "/platform"].some((p) => location.pathname.startsWith(p));
-  const { items: complianceItems } = useCompliance();
-  const items = atPlatform && isInternal ? PLATFORM_NAV : [...CLIENT_NAV.filter(item=>item.to!=='/findings'||!isReferenceRegister(currentClientId,user)), ...complianceItems.map(item => ({
-    ...item, icon: ShieldCheck, testid: `nav-compliance-${item.key}`,
-  }))];
-
-  // Default client navigation uses the reference presentation; route permissions stay unchanged.
-  if(!atPlatform&&currentClientId)return <BrawndoSidebar complianceItems={complianceItems} isInternal={isInternal} showFindings={false}/>;
-  if(atPlatform&&isInternal&&isReferencePortfolio(user))return <BrawndoPlatformSidebar adminItems={PLATFORM_NAV.filter(n=>!n.section)}/>;
-  return (
-    <aside className="app-sidebar w-64 shrink-0 hidden lg:flex flex-col bg-brand-charcoal border-r border-brand-metallic-3 h-screen sticky top-0">
-      <div className={`px-4 py-4 ${atPlatform && isInternal ? "" : "border-b border-brand-metallic-3"}`}>
-        <Brand />
-        {(!atPlatform || !isInternal) && (
-          <div className="mt-3">
-            <ContextHeader isInternal={isInternal} atPlatform={atPlatform} />
-          </div>
-        )}
-      </div>
-      <nav className="flex-1 px-3 py-3 space-y-0.5 overflow-y-auto" data-testid={atPlatform ? "sidebar-platform" : "sidebar-client"}>
-        {atPlatform && isInternal && <PlatformClientsSection />}
-        {items.filter((n) => !n.adminOnly || isInternal).map((n, i) => (
-          n.section ? (
-            <div key={`sec-${i}`} className="pt-3 pb-1 px-2 text-xs uppercase tracking-widest font-mono text-ink-onDarkMuted">
-              {n.section}
-            </div>
-          ) : (
-            <NavLink
-              key={n.id || n.to}
-              to={n.to}
-              end={n.end}
-              data-testid={n.testid}
-              className={({ isActive }) => `side-link ${isActive ? "active" : ""}`}
-            >
-              <n.icon className="h-4 w-4 shrink-0" style={{ color: "inherit" }} />
-              <span>{n.label}</span>
-            </NavLink>
-          )
-        ))}
-      </nav>
-      <div className="px-3 py-3 border-t border-brand-metallic-3">
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <button
-              data-testid="profile-menu-trigger"
-              className="w-full flex items-center gap-2 px-2 py-2 rounded-md hover:bg-brand-metallic-2 transition-colors text-left"
-            >
-              <div className="h-8 w-8 rounded-full bg-brand-metallic text-ink-onDark flex items-center justify-center text-xs font-medium">
-                {user?.name?.[0] || user?.email?.[0]?.toUpperCase()}
-              </div>
-              <div className="min-w-0 flex-1">
-                <div className="text-xs text-ink-onDark truncate">{user?.name || user?.email}</div>
-                <div className="text-xs text-ink-onDarkMuted font-mono uppercase tracking-wider">{(user?.role || "").replace("_", " ")}</div>
-              </div>
-              <ChevronsUpDown className="h-3.5 w-3.5 text-ink-onDarkMuted" />
-            </button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="start" side="top" className="w-56">
-            <DropdownMenuItem onClick={() => nav("/account")} data-testid="profile-menu-account" className="text-sm">
-              <UserCircle2 className="h-3.5 w-3.5 mr-2" /> My Account
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <div className="px-2 py-1"><NotificationBell /></div>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem
-              data-testid="logout-button"
-              onClick={async () => { if (await logout()) nav("/login"); }}
-              className="text-sm text-semantic-critical focus:text-semantic-critical"
-            >
-              <LogOut className="h-3.5 w-3.5 mr-2" /> Sign out
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      </div>
-    </aside>
-  );
-}
-
+// The protected shell changes presentation; native contexts and commands retain
+// enrollment, record identity, authorization and save behavior.
 export default function Layout() {
-  const {currentClientId}=useOrg();
-  const {user}=useAuth();
-  const {pathname}=useLocation();
-  const pilot=!!user;
-  const content=<div className="app-shell min-h-screen flex bg-surface-app">
-      <Sidebar />
-      <main className="app-workspace flex-1 min-w-0">
-        {!(pathname==='/dashboard'&&dashboardPilot(PREVIEW_MODE,currentClientId))&&<DemoNotice />}
-        {pathname.startsWith('/admin/') ? <AdminSurface><Outlet /></AdminSurface> : currentClientId&&(pathname==='/reviews'||pilot&&pathname==='/systems'||!isBrawndoReference(currentClientId,user))&&!['/clients','/admin','/platform'].some(path=>pathname.startsWith(path))?<ClientSurface key={pathname}><Outlet /></ClientSurface>:<Outlet />}
-      </main>
-    </div>;
-  return <ComplianceProvider>{pilot?<BrawndoWorkspace>{content}</BrawndoWorkspace>:content}</ComplianceProvider>;
+  const {pathname} = useLocation();
+  const org=useOrg(),auth=useAuth();
+  const clientRoute=pathname!=='/clients'&&!pathname.startsWith('/clients/')&&pathname!=='/account'
+    &&pathname!=='/admin'&&!pathname.startsWith('/admin/')&&!pathname.startsWith('/platform');
+  const unavailable=clientRoute&&!!(org.loading||org.error||auth.loading||auth.error
+    ||org.currentClientId&&org.currentClient?.client_id!==org.currentClientId);
+  const refreshing=unavailable&&org.loading&&!org.error&&!auth.error;
+  const block=unavailable?event=>{event.preventDefault();event.stopPropagation();}:undefined;
+  const content = pathname.startsWith('/admin/') ? <AdminSurface><Outlet/></AdminSurface>
+    : pathname === '/clients' ? <Outlet/> : <ClientSurface><Outlet/></ClientSurface>;
+  return <AdditionalSectionsProvider><ComplianceProvider><NativeStandardShell>
+    {unavailable&&<p className="section-body" role={refreshing?'status':'alert'}>{refreshing?'Refreshing client workspace…':'The client workspace is unavailable. Resolve the current client read before editing.'}</p>}
+    <ClientWorkspaceAvailability.Provider value={!unavailable}>
+      <div data-client-workspace-body hidden={unavailable} inert={unavailable}
+        onClickCapture={block} onSubmitCapture={block} onKeyDownCapture={block} onPointerDownCapture={block}
+        onInputCapture={block} onChangeCapture={block}>{content}</div>
+    </ClientWorkspaceAvailability.Provider>
+  </NativeStandardShell></ComplianceProvider></AdditionalSectionsProvider>;
 }

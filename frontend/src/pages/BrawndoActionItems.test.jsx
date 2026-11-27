@@ -71,6 +71,16 @@ test('row separates action, full stored Finding and originating record without i
   expect(document.querySelector('[data-testid="remediation-ticket-drawer"]').textContent).toContain(issue);
   expect(findings[0].description).toBe(issue);
 });
+test('typed POA&M Action links open the intended native task when a finding shares its ID',async()=>{
+  mockQuery='?task_id=b';
+  findings.push({client_id:mockClient,finding_id:'b',title:'Unrelated finding with same ID',status:'open'});
+  await act(async()=>root.render(<ActionItems/>));
+  const drawer=document.querySelector('[data-testid="remediation-ticket-drawer"]');
+  expect(drawer).toBeTruthy();
+  expect(drawer.textContent).toContain('Ordinary task');
+  expect(drawer.textContent).not.toContain('Unrelated finding with same ID');
+});
+
 test.each(['dependency failure','missing finding'])('Finding deep link recovers after %s and retry',async failure=>{
   mockQuery='?finding_id=f';
   const get=api.get.getMockImplementation();let recovered=false;

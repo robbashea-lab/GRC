@@ -13,6 +13,10 @@ async def ensure_indexes(db):
     await db.password_resets.create_index("token_hash", unique=True)
     await db.sessions.create_index("session_token", unique=True)
     await db.ai_systems.create_index('ai_system_id', unique=True)
+    # Additive race protection for explicitly named new/renamed AI systems.
+    # Legacy rows are not backfilled or renamed by startup.
+    await db.ai_systems.create_index([('client_id',1),('ai_name_key',1)], unique=True,
+        partialFilterExpression={'ai_name_key':{'$type':'string'}}, name='ai_client_name_key_unique')
     await db.ai_systems.create_index([('client_id',1),('display_id',1)], unique=True)
     await db.ai_intake.create_index('client_id', unique=True)
     await db.framework_assessments.create_index('framework_assessment_id', unique=True)

@@ -174,19 +174,40 @@ class BulkOutcomeTests(unittest.IsolatedAsyncioTestCase):
         await server.db.users.insert_one({'user_id': 'synthetic-recipient', 'role': 'platform_admin',
             'client_ids': ['a', 'b'], 'status': 'active'})
         self.body['payload'] = {'owner_id': 'synthetic-recipient'}
+        unstarted = await server.db.findings.find_one({'finding_id': 'two'})
         with patch.object(server, 'audit', AsyncMock(side_effect=RuntimeError('Synthetic audit outage'))):
             uncertain = await self.submit()
         self.assertEqual(uncertain.status_code, 503, uncertain.text)
         first = await server.db.findings.find_one({'finding_id': 'one'})
+        pending = first['_portfolio_activity_pending']
+        self.assertEqual(len(pending), 1)
+        event_id, event = next(iter(pending.items()))
+        self.assertEqual(first['_portfolio_activity_last_event_id'], event_id)
+        self.assertEqual(await server.db.portfolio_events.count_documents({}), 0)
         await server.db.users.update_one({'user_id': 'synthetic-recipient'}, {'$set': {'status': 'disabled'}})
         recovered = await self.submit()
         self.assertEqual(recovered.status_code, 200, recovered.text)
         self.assertEqual([row['outcome'] for row in recovered.json()['results']], ['applied', 'rejected'])
         self.assertEqual(recovered.json()['results'][1]['status'], 422)
-        self.assertEqual(await server.db.findings.find_one({'finding_id': 'one'}), first)
+        saved = await server.db.findings.find_one({'finding_id': 'one'})
+        # Successful recovery acknowledges only the already committed envelope;
+        # all business fields, source identity, timestamps and history stay exact.
+        self.assertEqual(saved, {key: value for key, value in first.items() if key != '_portfolio_activity_pending'})
+        events = await server.db.portfolio_events.find({}).to_list(None)
+        self.assertEqual(events, [{'_id': event_id, **event}])
+        self.assertEqual(await server.db.findings.find_one({'finding_id': 'two'}), unstarted)
         self.assertIsNone((await server.db.findings.find_one({'finding_id': 'two'})).get('owner_id'))
         receipt = await server.db.create_requests.find_one({'_id': first['_save_command']})
         self.assertEqual(receipt['state'], 'complete')
+        audits = await server.db.audit_logs.find({}).to_list(None)
+        self.assertEqual(await server.db.audit_logs.count_documents({'entity_id': 'one', 'action': 'update'}), 1)
+        replay = await self.submit()
+        self.assertEqual(replay.status_code, 200, replay.text)
+        self.assertEqual(replay.json(), recovered.json())
+        self.assertEqual(await server.db.findings.find_one({'finding_id': 'one'}), saved)
+        self.assertEqual(await server.db.findings.find_one({'finding_id': 'two'}), unstarted)
+        self.assertEqual(await server.db.portfolio_events.find({}).to_list(None), events)
+        self.assertEqual(await server.db.audit_logs.find({}).to_list(None), audits)
 
     async def test_parent_deadline_retains_known_child_outcomes(self):
         self.body['payload'] = {'remediation_plan': 'Synthetic controlled parent deadline'}

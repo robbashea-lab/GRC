@@ -86,8 +86,9 @@ export function recordedOmniReasons(row,complete){
           reasons.push((names[q.id]||q.prompt)+(signal.kind==='verification'?' needs confirmation.':' has a recorded deficiency.'));
         }
       }
-      if(source.answers.gaps?.trim())reasons.push('Reported deficiency: '+source.answers.gaps.trim());
-      if(source.answers.unknowns?.trim())reasons.push('Needs confirmation: '+source.answers.unknowns.trim());
+      const active=new Set(visibleQuestions(row.definition_id,source.answers,source.version).map(q=>q.id));
+      if(active.has('gaps')&&source.answers.gaps?.trim())reasons.push('Reported deficiency: '+source.answers.gaps.trim());
+      if(active.has('unknowns')&&source.answers.unknowns?.trim())reasons.push('Needs confirmation: '+source.answers.unknowns.trim());
     }catch{reasons.push('Saved interview details are unavailable or incompatible. Review the native assessment.');}
   }
   for(const item of row.work?.priority_records||[])if(item.open_gap===true&&item.title)reasons.push('Open linked work: '+item.title);

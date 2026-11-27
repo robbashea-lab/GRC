@@ -3,6 +3,7 @@ import {previewAdapter} from './commandTestAdapter';
 import {readStore,STORE_KEY} from './store';
 import {reviewSchedule} from '../lib/reviewOccurrences';
 import contract from '@contracts/governance-lifecycle.json';
+import {currentReviewCompletion} from '../testUtils/r4ReviewFixture';
 
 const api=axios.create({adapter:previewAdapter});
 let clientId;
@@ -26,8 +27,13 @@ test('shared recurrence boundaries retain their original anchors',()=>{
 test('late completion and definition edits preserve the original history',async()=>{
   const scenario=contract.review_history,owner=readStore().user.user_id;
   const review=(await api.post('/reviews',{client_id:clientId,owner_id:owner,...scenario.initial})).data;
-  const path='/reviews/'+review.review_id,selected={occurrence_id:review.current_occurrence_id};
+  const path='/reviews/'+review.review_id;
   jest.useFakeTimers('modern');jest.setSystemTime(new Date(scenario.completed_at));
+  const selected=await currentReviewCompletion(api,review.review_id,{
+    expectedOccurrenceId:review.current_occurrence_id,
+    resultForStep:step=>({step_id:step.step_id,result:'N/A',reason:'SYNTHETIC recurrence/history contract case; no external control or business decision is performed: '+step.text}),
+    supportingReference:'SYNTHETIC QA recurrence/history result for '+review.review_id+' occurrence '+review.current_occurrence_id+'.'
+  });
   const done=(await api.post(path+'/complete',selected)).data;
   expect(done.review.due_date.slice(0,10)).toBe(scenario.next_due);
   const history=done.occurrence;
@@ -46,13 +52,36 @@ test('shared Policy Risk and Vendor schedule projections follow completed Review
       (await api.post('/reviews',{client_id:clientId,title:'Projection review',review_type:'policy',policy_id:row.policy_id,due_date:scenario.due_date,recurrence:scenario.recurrence})).data:
       (await api.get('/reviews',{params:{client_id:clientId}})).data.find(r=>r[scenario.key]===row[scenario.key]&&(r.vendor_purpose||'vendor')==='vendor');
     jest.useFakeTimers('modern');jest.setSystemTime(new Date(contract.projection_completed_at));
-    const done=(await api.post('/reviews/'+review.review_id+'/complete',{occurrence_id:review.current_occurrence_id})).data;
+    const missingApprovedPolicy=scenario.kind==='policies'&&row.status==='draft';
+    const finding=missingApprovedPolicy?(await api.post('/reviews/'+review.review_id+'/create-finding',{
+      occurrence_id:review.current_occurrence_id,request_id:'projection-policy-approval-'+row.policy_id,
+      title:'SYNTHETIC projection Policy has no approved version',severity:'medium',
+      description:'The synthetic Policy '+row.policy_id+' remains '+row.status+' / '+row.presence+'; no approved version was supplied.',
+      remediation_title:'Obtain an approved version for the synthetic projection Policy'
+    })).data:null;
+    if(finding)expect(finding).toMatchObject({client_id:clientId,review_id:review.review_id,occurrence_id:review.current_occurrence_id});
+    const completion=await currentReviewCompletion(api,review.review_id,{
+      expectedOccurrenceId:review.current_occurrence_id,
+      resultForStep:step=>finding&&step.step_id==='policy_rec:record:2'
+        ?{step_id:step.step_id,result:'Exception',reason:'The saved synthetic Policy is draft with no approved version; native Finding '+finding.finding_id+' retains the gap.'}
+        :{step_id:step.step_id,result:'N/A',reason:'SYNTHETIC '+scenario.kind+' schedule-projection case; no external control or business decision is performed: '+step.text},
+      supportingReference:'SYNTHETIC QA native schedule projection for '+scenario.kind+' '+row[scenario.key]+' through Review '+review.review_id+'.'+(finding?' Missing approved version recorded in native Finding '+finding.finding_id+'.':'')
+    });
+    if(finding)completion.outcome='Exceptions noted';
+    const done=(await api.post('/reviews/'+review.review_id+'/complete',completion)).data;
     const saved=(await api.get('/'+scenario.kind+'/'+row[scenario.key])).data;
     expect({kind:scenario.kind,next:saved[scenario.next_field].slice(0,10)}).toEqual({kind:scenario.kind,next:scenario.next_due});
     expect(saved[scenario.last_field]).toBe(done.occurrence.completed_at);
     expect(done.occurrence.due_date.slice(0,10)).toBe(scenario.due_date);
     expect(done.review.due_date.slice(0,10)).toBe(scenario.next_due);
     for(const field of ['status','risk_score'])if(field in scenario)expect(saved[field]).toBe(scenario[field]);
+    if(finding){
+      expect(done.occurrence).toMatchObject({outcome:'findings_raised',finding_count:1,checklist_outcome:'Exceptions noted'});
+      expect(done.occurrence.checklist_results.filter(result=>result.result==='Exception')).toEqual([expect.objectContaining({step_id:'policy_rec:record:2',result:'Exception'})]);
+      expect((await api.get('/findings/'+finding.finding_id)).data).toMatchObject({review_id:review.review_id,occurrence_id:review.current_occurrence_id,status:'in_remediation'});
+      expect(saved.presence).toBe(row.presence);
+      for(const field of ['approved_at','approval_history','decision_history'])expect(saved[field]).toEqual(row[field]);
+    }
   }
 });
 

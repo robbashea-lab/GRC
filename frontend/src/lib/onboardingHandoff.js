@@ -1,6 +1,7 @@
 import {FRAMEWORKS, CATALOGS, activeDefinitions, sharedFrameworkPlans, reviewConfig, genericReviews,existingFrameworkReview} from './frameworks';
 import {cisProgramName,cisLabel} from './cisScope';
 import {reviewView} from './reviewOccurrences';
+import {selectedPolicies} from './policySelection';
 
 export const APPLICABILITY = [['applies','Applies'],['does_not_apply','Does Not Apply'],['unsure','Unsure']];
 export const SETUP_FILTERS = {
@@ -13,18 +14,18 @@ export const SETUP_FILTERS = {
     verification: {label:'Policies need verification', matches:r => r.status !== 'retired' && ['reported_existing','needs_confirmation'].includes(r.presence)},
   },
 };
-export const unansweredPolicies = (catalog, state) => catalog.policies.filter(p => !['yes','no','unsure'].includes(state.policies[p.key]));
+export const unansweredPolicies = (catalog, state) => selectedPolicies(catalog,state).filter(p => !['yes','no','unsure'].includes(state.policies[p.key]));
 export function reviewConfigurationIssues(state) {
   return sharedFrameworkPlans(state).filter(p => {
     const config=reviewConfig(state,p);
-    return config.conflict || config.recurrence==='custom' && (!Number.isInteger(config.custom_recurrence_days) || config.custom_recurrence_days<1 || config.custom_recurrence_days>3650);
+    return config.conflict || config.recurrence==='custom' && (!Number.isInteger(config.custom_recurrence_days) || config.custom_recurrence_days<1 || config.custom_recurrence_days>3660);
   });
 }
 export function existingBaseline(rows, item) {
   return rows.find(r => r.baseline_key === item.key) || rows.find(r => !r.baseline_key && [item.name,...(item.aliases || [])].some(n => n.toLowerCase() === (r.title || '').trim().toLowerCase()));
 }
 export function onboardingPreview(catalog, state, records) {
-  const policies = catalog.policies.map(p => ({existing:!!existingBaseline(records.policies,p), response:state.policies[p.key]}));
+  const policies = selectedPolicies(catalog,state).map(p => ({existing:!!existingBaseline(records.policies,p), response:state.policies[p.key]}));
   const uniquePlans=sharedFrameworkPlans(state).filter(p=>reviewConfig(state,p).enabled);
   const reviews = uniquePlans.map(p => {
     const old = existingFrameworkReview(records.reviews,p);

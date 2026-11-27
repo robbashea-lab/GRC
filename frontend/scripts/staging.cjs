@@ -19,4 +19,6 @@ const result = spawnSync(process.execPath,
   [require.resolve('@craco/craco/dist/bin/craco.js'), 'build'],
   { cwd: frontend, env, stdio: 'inherit' });
 if (result.error) throw result.error;
-process.exit(result.status ?? 1);
+if (result.status !== 0) process.exit(result.status ?? 1);
+require('./approved-v3-native.cjs').buildApprovedV3(env.BUILD_PATH)
+  .catch(error => {process.stderr.write(error.message+'\n');process.exitCode=1;});

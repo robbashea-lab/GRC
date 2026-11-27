@@ -6,12 +6,14 @@ import rules from '../lib/managementRules.json';
 import {managementDay} from '../lib/managementDates';
 import {representedFinding} from '../lib/grcWork';
 import {clientProjection} from './clientRelationships';
+import {recordedOnboardingState} from '../lib/clientProfile';
 import {portfolioPopulations,portfolioFrameworks,portfolioOrder,latestPortfolioActivity} from '../lib/portfolioOverview';
 import {evidenceAccess} from './evidence';
 import {dashboardPosture} from '../lib/dashboardPosture';
 import {COMPLIANCE_SECTIONS} from '../lib/complianceNavigation';
 import {dashboardWorkQueue,filterDashboardQueue} from '../lib/dashboardWorkQueue';
 import {eligible} from './assignmentEligibility';
+import {portfolioMonitoring} from './portfolioMonitoring';
 
 const sources=(db,cid)=>Object.fromEntries(DASHBOARD_KINDS.map(k=>[k,list(db,k,cid)]));
 const model=(db,cid,today,scope={kind:'org'})=>{
@@ -23,7 +25,7 @@ const emptyMetrics=()=>Object.fromEntries(rules.metrics.map(k=>[k,[]]));
 export function portfolio(db,includeArchived,today=new Date()) {
   if(!['super_admin','platform_admin'].includes(db.user.role))throw new Error('Client directory is restricted to internal admins');
   const day=managementDay(today), allMetrics=emptyMetrics(), attention=[];
-  const latest=latestPortfolioActivity(db.logs,today);
+  const latest=latestPortfolioActivity(db.logs,today,db.portfolio_reporting?.activity_proofs);
   const rows=db.clients.filter(c=>evidenceAccess(db.user,c.client_id)&&(includeArchived||c.status!=='archived')).map(c=>{
     const m=model(db,c.client_id,today), active=!['archived','inactive'].includes(c.status);
     const metric_items=Object.fromEntries(rules.metrics.map(k=>[k,m.metrics[k].map(r=>portfolioItem(r,c,today))]));
@@ -36,13 +38,13 @@ export function portfolio(db,includeArchived,today=new Date()) {
       attention.push(...new Map(current.map(r=>[r.kind+':'+r.id,portfolioItem(r,c,today)])).values());
     }
     const major=m.work.filter(r=>r.kind==='reviews'&&r.day>=day&&['risk','risk_assessment','vendor','policy','access','penetration_test','bcp_dr','incident_response','awareness'].includes(r.record.review_type)).sort((a,b)=>a.day-b.day)[0];
-    return {...clientProjection(db,c),client_status:c.status,program_status:managementProgramStatus(c,m),...m.counts,metric_items,
+    return {...clientProjection(db,c),onboarding_state:recordedOnboardingState(c,db.baselines?.[c.client_id]||c.onboarding_baseline,db.logs||[]),client_status:c.status,program_status:managementProgramStatus(c,m),...m.counts,metric_items,
       critical_high_issues:extra.critical_high_issues.length,frameworks:portfolioFrameworks(c.client_id,{...db.baselines?.[c.client_id],framework_settings:c.framework_settings},list(db,'requirements',c.client_id)),
       next_major_item:major?{...portfolioItem(major,c,today),review_id:major.id,review_type:major.record.review_type}:null,
       open_actions:m.counts.past_due+m.counts.due_30d,open_findings:m.activeRecords.findings.length,
       significant_risks:m.significantRisks.length,critical_high_findings:m.materialFindings.length,
       overdue_reviews:m.metrics.past_due.filter(r=>r.kind==='reviews').length,upcoming_reviews:m.metrics.due_30d.filter(r=>r.kind==='reviews').length,
-      last_activity:latest.get(c.client_id)||null};
+      last_activity:latest.get(c.client_id)||null, monitoring:portfolioMonitoring(db,c,today)};
   });
   const active=rows.filter(c=>!['archived','inactive'].includes(c.client_status));
   const action_required=active.filter(c=>c.program_status==='action_required').length, needs_attention=active.filter(c=>c.program_status==='needs_attention').length;
@@ -62,8 +64,8 @@ export function dashboard(db,params) {
   // Opt-in read-only queue contract; ordinary dashboards keep their current view.
   if(params.work_queue) {
     const base=dashboardWorkQueue(m,new Set(db.users.filter(u=>eligible(u,params.client_id)).map(u=>u.user_id)),records);
-    const groups=filterDashboardQueue(base,records,(db.framework_assessments||[]).filter(r=>r.client_id===params.client_id),(db.organizational_controls||[]).filter(r=>r.client_id===params.client_id),params.framework||'',params.search||'');
-    const brief=row=>({...Object.fromEntries(['key','id','kind','type','due_date','owner_id','unassigned','status','severity'].map(key=>[key,row[key]])),
+    const groups=filterDashboardQueue(base,records,(db.framework_assessments||[]).filter(r=>r.client_id===params.client_id),(db.organizational_controls||[]).filter(r=>r.client_id===params.client_id),params.framework||'',params.search||'',!!params.work_metadata);
+    const brief=row=>({...Object.fromEntries(['key','id','kind','type','due_date','owner_id','unassigned','status','severity','framework_keys','safeguard_ids','safeguard_labels','framework_membership_known'].map(key=>[key,row[key]])),
       title:String(row.title||'').slice(0,240),owner:String(row.owner||'Unassigned').slice(0,200),source_label:String(row.source_label||'').slice(0,240)});
     if(params.detail) {
       const rows=groups[params.detail],offset=Number(params.offset||0),limit=Number(params.limit||25);

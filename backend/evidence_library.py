@@ -60,13 +60,20 @@ def router_for(s):
 
     @router.get('/sources')
     async def sources(client_id:str,kind:str,q:str=Query('',max_length=250),page:int=Query(1,ge=1),user=Depends(s.get_current_user)):
+        from r4_services import require_settled_population
+
         s._scope_filter(user,client_id)
         if kind not in ctx.SOURCES: raise HTTPException(422,'Unsupported source')
+        await require_settled_population(s.db, {'client_id': client_id})
         query={'client_id':client_id}
         if q: query['$or']=[{field:{'$regex':re.escape(q),'$options':'i'}} for field in ('title','name','display_id','definition_id','framework_key')]
+        if kind in ('reviews', 'vendors', 'framework_assessments'):
+            await require_settled_population(s.db, query, collections=(kind,))
         key=ctx.SOURCES[kind]['key']
         docs=await s.db[kind].find(query,{'_id':0}).sort([(key,1)]).skip((page-1)*25).limit(25).to_list(25)
-        return {'items':[ctx.reference(kind,row,occurrence=review_occurrences.occurrence_id(row) if kind=='reviews' else None) for row in docs], 'total':await s.db[kind].count_documents(query),'page':page,'page_size':25}
+        total = await s.db[kind].count_documents(query)
+        await require_settled_population(s.db, {'client_id': client_id}, docs)
+        return {'items':[ctx.reference(kind,row,occurrence=review_occurrences.occurrence_id(row) if kind=='reviews' else None) for row in docs], 'total':total,'page':page,'page_size':25}
 
     @router.get('/reviews/{review_id}/sets')
     async def sets(review_id:str,page:int=Query(1,ge=1),year:str=Query('',max_length=4),user=Depends(s.get_current_user)):
@@ -112,9 +119,10 @@ def router_for(s):
         s._require_snapshot(body.model_dump(exclude_unset=True),doc)
         patch=body.model_dump(mode='json',exclude={'expected_updated_at'},exclude_unset=True)
         patch['updated_at']=s._next_write_time(doc.get('updated_at'))
-        result=await s.db.evidence.update_one({'evidence_id':eid,'archived_at':None,'updated_at':doc.get('updated_at')},{'$set':patch})
+        portfolio_patch, portfolio_event = s._portfolio_event_patch('evidence', eid, doc['client_id'], user, doc, {**doc, **patch}, patch['updated_at'])
+        result=await s.db.evidence.update_one({'evidence_id':eid,'archived_at':None,'updated_at':doc.get('updated_at')},{'$set':{**patch, **portfolio_patch}})
         if not result.matched_count: raise HTTPException(409,'Evidence changed; reload before saving')
-        await s.audit(user,'Evidence metadata changed','evidence',eid,doc['client_id'],meta={'fields':sorted(set(patch)-{'updated_at'})})
+        await s.audit(user,'Evidence metadata changed','evidence',eid,doc['client_id'],meta={'fields':sorted(set(patch)-{'updated_at'}),'_portfolio_activity_event_id':portfolio_event['event_id'] if portfolio_event else None,'_portfolio_activity_noop':portfolio_event is None})
         return await detail(eid,user)
 
     @router.post('/items/{eid}/relationships')
@@ -148,10 +156,13 @@ def router_for(s):
         if body.remove and link not in links or not body.remove and link in links: return await detail(eid,user)
         if not body.remove and len(links)>=100: raise HTTPException(422,'Evidence supports at most 100 additional relationships')
         op='$pull' if body.remove else '$addToSet'
+        at = s._next_write_time(doc.get('updated_at'))
+        after_links = [r for r in links if r != link] if body.remove else [*links, link]
+        portfolio_patch, portfolio_event = s._portfolio_event_patch('evidence', eid, doc['client_id'], user, doc, {**doc, 'relationships': after_links}, at)
         result=await s.db.evidence.update_one({'evidence_id':eid,'archived_at':None,'updated_at':doc.get('updated_at')},
-            {op:{'relationships':link},'$set':{'updated_at':s._next_write_time(doc.get('updated_at'))}})
+            {op:{'relationships':link},'$set':{'updated_at':at, **portfolio_patch}})
         if not result.matched_count: raise HTTPException(409,'Evidence changed; reload before saving')
-        await s.audit(user,'Evidence relationship removed' if body.remove else 'Evidence relationship added','evidence',eid,doc['client_id'],meta=link)
+        await s.audit(user,'Evidence relationship removed' if body.remove else 'Evidence relationship added','evidence',eid,doc['client_id'],meta={**link,'_portfolio_activity_event_id':portfolio_event['event_id'] if portfolio_event else None})
         return await detail(eid,user)
 
     return router

@@ -1,0 +1,151 @@
+{
+  "run_id": 38446917191,
+  "url": "https://github.com/robbashea-lab/GRC/actions/runs/38446917191",
+  "revision": "bf59aa8b7618c96d0abfa2a9fb1cd4243f1f5ce0",
+  "branch": "codex/governara-release-20261013",
+  "pull_request": 78,
+  "source_proof": "Exact SHA independently read in frontend and offline backend checkout logs.",
+  "observed_terminal_at_utc": "2026-10-13 19:02:04 UTC",
+  "conclusion": "success",
+  "all_four_jobs_terminal_success": true,
+  "jobs": {
+    "frontend": {
+      "id": 115467603886,
+      "conclusion": "success",
+      "suites": {
+        "passed": 302,
+        "failed": 0,
+        "total": 302
+      },
+      "tests": {
+        "passed": 9111,
+        "failed": 0,
+        "total": 9111
+      },
+      "snapshots": {
+        "passed": 1,
+        "failed": 0,
+        "total": 1
+      },
+      "seconds": 1813.966,
+      "authenticated_build": {
+        "command": "node scripts/staging.cjs",
+        "conclusion": "success",
+        "javascript": "main.d171f8c7.js",
+        "css": "main.e82e5c68.css"
+      },
+      "demo_build": {
+        "command": "yarn build:preview",
+        "conclusion": "success",
+        "javascript": "main.af09bb52.js",
+        "css": "main.7e6897c1.css"
+      }
+    },
+    "backend": {
+      "id": 115467603824,
+      "conclusion": "success",
+      "offline": "success",
+      "tests": {
+        "passed": 971,
+        "skipped": 3
+      },
+      "subtests": {
+        "passed": 12404
+      },
+      "warnings": 8,
+      "seconds": 1647.72,
+      "count_provenance": "Completed offline job log retrieved by GitHub connector.",
+      "skipped_cases": [
+        "backend/tests/test_framework_reports.py::FrameworkReportMongoSnapshotTests::test_real_snapshot_has_no_source_writes",
+        "backend/tests/test_framework_reports.py::FrameworkReportMongoSnapshotTests::test_real_snapshot_rechecks_role_membership_enabled_program_and_session_fences",
+        "backend/tests/test_framework_reports.py::FrameworkReportMongoSnapshotTests::test_real_transaction_concurrent_assessment_and_evidence_edits_use_one_snapshot"
+      ]
+    },
+    "backend_mongo": {
+      "id": 115467604147,
+      "conclusion": "success",
+      "campaign": "success",
+      "count_provenance": "Coordinator directly observed terminal GitHub provider UI and reported artifacts; not this watcher's failed connector log fetch.",
+      "coordinator_ui_reported": {
+        "tests": 166,
+        "seconds": 241.741,
+        "result": "OK",
+        "job_duration": "4m56s",
+        "artifacts": [
+          "ci165-mongo-terminal-ui.txt",
+          "ci165-mongo-terminal-ui.png"
+        ]
+      },
+      "connector_log_error": "tool call failed for codex_apps/github.fetch_workflow_job_logs: Transport closed"
+    },
+    "release_gate": {
+      "id": 115482567682,
+      "conclusion": "success",
+      "frontend_result": "success",
+      "backend_result": "success",
+      "mongo_result": "success",
+      "condition": "test \"$FRONTEND_RESULT\" = success && test \"$BACKEND_RESULT\" = success && test \"$MONGO_RESULT\" = success"
+    }
+  },
+  "relevant_frontend_log_lines": [
+    "2026-10-13T18:27:44.9604974Z [command]/usr/bin/git -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules --depth=1 origin +bf59aa8b7618c96d0abfa2a9fb1cd4243f1f5ce0:refs/remotes/origin/codex/governara-release-20261013",
+    "2026-10-13T18:27:47.1953615Z  * [new ref]         bf59aa8b7618c96d0abfa2a9fb1cd4243f1f5ce0 -> origin/codex/governara-release-20261013",
+    "2026-10-13T18:27:47.4472260Z [command]/usr/bin/git log -1 --format=%H",
+    "2026-10-13T18:27:47.4501870Z bf59aa8b7618c96d0abfa2a9fb1cd4243f1f5ce0",
+    "2026-10-13T18:58:43.3516822Z Test Suites: 302 passed, 302 total",
+    "2026-10-13T18:58:43.3517395Z Tests:       9111 passed, 9111 total",
+    "2026-10-13T18:58:43.3517856Z Snapshots:   1 passed, 1 total",
+    "2026-10-13T18:58:43.3518158Z Time:        1813.966 s",
+    "2026-10-13T18:58:43.6297337Z ##[group]Run node scripts/staging.cjs",
+    "2026-10-13T18:59:18.7674215Z Compiled successfully.",
+    "2026-10-13T18:59:18.9210206Z   1.01 MB    dist/static/js/main.d171f8c7.js",
+    "2026-10-13T18:59:18.9211513Z   52.84 kB   dist/static/css/main.e82e5c68.css",
+    "2026-10-13T18:59:19.0736488Z ##[group]Run yarn build:preview",
+    "2026-10-13T18:59:50.9734302Z Compiled successfully.",
+    "2026-10-13T18:59:51.1076771Z   1.01 MB    build/static/js/main.af09bb52.js",
+    "2026-10-13T18:59:51.1078348Z   52.89 kB   build/static/css/main.7e6897c1.css"
+  ],
+  "relevant_backend_log_lines": [
+    "2026-10-13T18:27:45.1197045Z [command]/usr/bin/git -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules --depth=1 origin +bf59aa8b7618c96d0abfa2a9fb1cd4243f1f5ce0:refs/remotes/origin/codex/governara-release-20261013",
+    "2026-10-13T18:27:46.9648407Z  * [new ref]         bf59aa8b7618c96d0abfa2a9fb1cd4243f1f5ce0 -> origin/codex/governara-release-20261013",
+    "2026-10-13T18:27:47.2242566Z bf59aa8b7618c96d0abfa2a9fb1cd4243f1f5ce0",
+    "2026-10-13T18:29:34.7614183Z [gw1] [ 88%] SKIPPED backend/tests/test_framework_reports.py::FrameworkReportMongoSnapshotTests::test_real_snapshot_has_no_source_writes ",
+    "2026-10-13T18:29:34.7628435Z [gw1] [ 88%] SKIPPED backend/tests/test_framework_reports.py::FrameworkReportMongoSnapshotTests::test_real_snapshot_rechecks_role_membership_enabled_program_and_session_fences ",
+    "2026-10-13T18:29:34.7644454Z [gw1] [ 88%] SKIPPED backend/tests/test_framework_reports.py::FrameworkReportMongoSnapshotTests::test_real_transaction_concurrent_assessment_and_evidence_edits_use_one_snapshot ",
+    "2026-10-13T18:55:27.0174275Z = 971 passed, 3 skipped, 8 warnings, 12404 subtests passed in 1647.72s (0:27:27) ="
+  ],
+  "release_gate_log_lines": [
+    "2026-10-13T18:59:57.4015239Z ##[group]Run test \"$FRONTEND_RESULT\" = success && test \"$BACKEND_RESULT\" = success && test \"$MONGO_RESULT\" = success",
+    "2026-10-13T18:59:57.4016914Z \u001b[36;1mtest \"$FRONTEND_RESULT\" = success && test \"$BACKEND_RESULT\" = success && test \"$MONGO_RESULT\" = success\u001b[0m",
+    "2026-10-13T18:59:57.5164571Z   FRONTEND_RESULT: success",
+    "2026-10-13T18:59:57.5165235Z   BACKEND_RESULT: success",
+    "2026-10-13T18:59:57.5165947Z   MONGO_RESULT: success"
+  ],
+  "frontend_warnings": [
+    "(node:2319) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.",
+    "Unknown event handler property `onOpenAutoFocus`. It will be ignored.",
+    "Unknown event handler property `onCloseAutoFocus`. It will be ignored.",
+    "Unknown event handler property `onPointerDownOutside`. It will be ignored.",
+    "(node:2885) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.",
+    "##[warning]Node.js 20 is deprecated. The following actions target Node.js 20 but are being forced to run on Node.js 24: actions/checkout@11d5960a326750d5838078e36cf38b85af677262, actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/"
+  ],
+  "offline_warning_note": "Eight observed warnings include FastAPI on_event deprecation; no source change made.",
+  "skipped_case_boundary": {
+    "ci_execution": "The three optional snapshot cases were skipped by offline CI; the 166-test Mongo campaign is not claimed to execute them.",
+    "coordinator_reported_separate_local_evidence": "Coordinator reports 3 passed in 1.418 seconds against owned real MongoDB 8.0.28 replica at application14fc, receipt real-mongo-verification.json; application/runtime/test paths verified byte-identical to bf59 by coordinator.",
+    "evidence_kind": "Separate local real persistence under synthetic ASGI identity, not CI execution or authenticated hosted proof.",
+    "hosted_report_generation": "Still a distinct required check after controlled gate/deployment."
+  },
+  "prior_ci164": {
+    "preserved": true,
+    "gate": "failure",
+    "frontend": "success",
+    "backend": "cancelled",
+    "offline": "success",
+    "mongo": "cancelled",
+    "coordinator_provider_ui_cause": "Backend exceeded maximum 30m0s; offline completed26m15s, Mongo cancelled3m24s. No assertion failure established.",
+    "original_buffered_faulthandler": "Historical configured 60-second diagnostic; not an application hang or the cancellation cause."
+  },
+  "evidence_kind": "GitHub CI logs and job/step metadata. Not staging hosted QA or final acceptance.",
+  "mutations": "Only this external sanitized receipt. No source, browser, provider, Git, dispatch, retry, cancel or deployment action."
+}

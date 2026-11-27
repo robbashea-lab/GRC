@@ -1,6 +1,7 @@
+import {isCisClient} from './cisCapability';
 import rules from '../lib/grcRules.json';
 import { scheduledDate } from '../lib/reviewOccurrences';
-export function guardEdit(kind, body, existing = {}, user) {
+export function guardEdit(kind, body, existing = {}, user, db) {
   body = {...body};
   delete body.expected_updated_at; // Concurrency precondition, not a business-field edit.
   if('calendar_move' in body) {
@@ -19,6 +20,9 @@ export function guardEdit(kind, body, existing = {}, user) {
   if (kind === 'contacts' && 'linked_user_id' in changes) throw new Error('Use the explicit account-link action to change a Contact identity association');
   if (kind === 'policies' && existing.schedule_from_reviews && ['last_reviewed_at','next_review_date'].some(k => k in changes)) throw new Error('Policy Review dates are controlled by linked Reviews.');
   if(kind==='vendors') {
+    if('confirm_criticality' in body&&(body.confirm_criticality!==true||!existing.criticality_provisional||!('criticality' in body)))throw new Error('Confirm the actual criticality of an existing provisional Vendor');
+    if(body.confirm_criticality&& !['super_admin','platform_admin'].includes(user?.role))throw new Error('Only platform administrators can confirm Vendor criticality');
+    for(const field of ['source_services','criticality_provisional','criticality_confirmed_at','criticality_confirmed_by'])if(field in changes)throw new Error('Vendor provenance is system-controlled');
     if(['last_review','assurance_status'].some(k=>k in changes)) throw new Error('Review dates and assurance status are derived.');
     if(existing.status==='inactive'&&Object.keys(changes).length) throw new Error('Inactive Vendors remain historical records.');
     if(existing.vendor_id&&['next_review','review_frequency','custom_recurrence_days','separate_assurance_review','assurance_review_date','assurance_cadence','contract_review_enabled','contract_lead_days','offboarding_review_date'].some(k=>k in changes)&&user&&!['super_admin','platform_admin'].includes(user.role)) throw new Error('Only platform administrators can change Review configuration.');
@@ -41,10 +45,10 @@ export function guardEdit(kind, body, existing = {}, user) {
     if(!existing.risk_id&&changes.status&&!['open','identified','assessed'].includes(changes.status)) throw new Error('New Risks start as Identified or Assessed.');
   }
   const protectedFields = ['created_at','created_by','updated_at','completion_date','parent_review_id','completion_snapshot','next_occurrence_id','rating_history','approval_history','decision_history','validated_by','validated_at','verified_at','verified_by','approved_at','accepted','accepted_by','acceptance_date','acceptance_rationale','acceptance_expires_at'];
-  protectedFields.push('current_occurrence_id','occurrence_id','occurrences','schedule_anchor','recurrence_due_date','started_at','started_by','completed_at','completed_by','closed_at','closed_by','title_generated');
+  protectedFields.push('current_occurrence_id','occurrence_id','occurrences','schedule_anchor','recurrence_due_date','started_at','started_by','completed_at','completed_by','submission_history','closed_at','closed_by','title_generated');
   if (protectedFields.some(k => k in changes)) throw new Error('Decision and history fields cannot be edited directly.');
   const targets = {policies:['approved'], risks:['accepted','closed','retired'], findings:['closed','accepted','remediated'], reviews:['completed'], exceptions:['approved']};
-  const riskPilot=kind==='risks'&&(existing.client_id||body.client_id)==='demo_brawndo';
+  const riskPilot=kind==='risks'&&isCisClient(db||{},existing.client_id||body.client_id);
   if ('status' in changes && rules.statuses[kind] && !rules.statuses[kind].includes(changes.status) && !(riskPilot&&changes.status==='monitoring')) throw new Error('Invalid status.');
   if (targets[kind]?.includes(changes.status) || kind === 'policies' && changes.presence === 'verified_existing' || kind === 'risks' && changes.treatment === 'accept'&&!riskPilot) throw new Error('Use the dedicated decision action.');
   if(riskPilot&&existing.status==='accepted'&&'treatment' in changes&&changes.treatment!=='accept'&&!('status' in changes))throw new Error('Change the lifecycle status when replacing an accepted treatment. The previous decision remains in history.');

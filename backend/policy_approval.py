@@ -4,6 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, Field, ConfigDict
 from copy import deepcopy
 import policy_provenance
+import portfolio_activity
 
 INTERNAL = {"super_admin", "platform_admin"}
 PROTECTED = {"approval_account_id", "approver_contact_id", "approval_request_id"} | policy_provenance.PROTECTED
@@ -100,13 +101,13 @@ def router_for(s):
         patch = {"approval_source": body.model_dump(exclude={'expected_updated_at'}), "version": body.version}
         await policy_provenance.snapshot(s, {**p, **patch})
         if patch["approval_source"] == p.get("approval_source") and patch["version"] == p.get("version"):
-            return p
+            return portfolio_activity.public_source(p)
         entry = {"at": s._now(), "action": "approval_basis_updated", "by": user["user_id"],
                  "by_name": user.get("name"), "by_email": user.get("email")}
         patch.update({"status": "draft", "approved_at": None, "approval_subject": None, "updated_at": entry["at"]})
-        result = await change(p, patch, entry)
-        await s.audit(user, "policy-basis", "policy", policy_id, p["client_id"])
-        return result
+        result, portfolio_event = await change(p, patch, entry)
+        await s.audit(user, "policy-basis", "policy", policy_id, p["client_id"], meta={"_portfolio_activity_event_id": (portfolio_event or {}).get("event_id"), "_portfolio_activity_noop": portfolio_event is None})
+        return portfolio_activity.public_source(result)
 
     @router.post("/policies/{policy_id}/approval-authority")
     async def authority(policy_id: str, body: AuthorityIn, user=Depends(s.get_current_user)):
@@ -124,19 +125,21 @@ def router_for(s):
                 raise HTTPException(422, "Choose an active account with access to this client")
         entry = {"at": s._now(), "action": "authority_updated", "by": user["user_id"],
                  "by_name": user.get("name"), "by_email": user.get("email"), **body.model_dump(exclude={'expected_updated_at'})}
-        await change(p, {**body.model_dump(exclude={'expected_updated_at'}), "updated_at": entry["at"]}, entry)
-        await s.audit(user, "policy-authority", "policy", policy_id, p["client_id"], meta=body.model_dump(exclude={'expected_updated_at'}))
+        result, portfolio_event = await change(p, {**body.model_dump(exclude={'expected_updated_at'}), "updated_at": entry["at"]}, entry)
+        await s.audit(user, "policy-authority", "policy", policy_id, p["client_id"], meta={**body.model_dump(exclude={'expected_updated_at'}), "_portfolio_activity_event_id": (portfolio_event or {}).get("event_id"), "_portfolio_activity_noop": portfolio_event is None})
         return await context(policy_id, user)
 
     async def change(p, patch, entry):
         patch['updated_at']=s._next_write_time(p.get('updated_at'))
+        actor = {'user_id': entry['by'], 'name': entry.get('by_name')}
+        portfolio_patch, portfolio_event = s._portfolio_event_patch('policy', p['policy_id'], p['client_id'], actor, p, {**p, **patch}, patch['updated_at'])
         query = {"policy_id": p["policy_id"], "client_id": p["client_id"],
                  "status": p.get("status"), "updated_at": p.get("updated_at"),
                  "approval_request_id": p.get("approval_request_id")}
-        result = await s.db.policies.update_one(query, {"$set": patch, "$push": {"approval_history": entry}})
+        result = await s.db.policies.update_one(query, {"$set": {**patch, **portfolio_patch}, "$push": {"approval_history": entry}})
         if not result.matched_count:
             raise HTTPException(409, "Policy changed; reload before making this decision")
-        return await s.db.policies.find_one({"policy_id": p["policy_id"]}, {"_id": 0})
+        return await s.db.policies.find_one({"policy_id": p["policy_id"]}, {"_id": 0}), portfolio_event
 
     @router.post("/policies/{policy_id}/submit-review")
     async def submit(policy_id: str, body: SubmissionIn, user=Depends(s.get_current_user)):
@@ -149,12 +152,12 @@ def router_for(s):
         at = s._now()
         entry = {"at": at, "action": "submitted", "by": user["user_id"], "by_name": user.get("name"),
                  "by_email": user.get("email"), "approval_request_id": request_id, "subject": subject}
-        result = await change(p, {"status": "in_review", "approval_request_id": request_id, "approval_subject": subject, "updated_at": at}, entry)
-        await s.audit(user, "submit-review", "policy", policy_id, p["client_id"], meta={"approval_request_id": request_id})
+        result, portfolio_event = await change(p, {"status": "in_review", "approval_request_id": request_id, "approval_subject": subject, "updated_at": at}, entry)
+        await s.audit(user, "submit-review", "policy", policy_id, p["client_id"], meta={"approval_request_id": request_id, "_portfolio_activity_event_id": (portfolio_event or {}).get("event_id"), "_portfolio_activity_noop": portfolio_event is None})
         if p.get("approval_account_id"):
             await s.create_notification(user_id=p["approval_account_id"], title=f"Policy submitted for your approval: {p['title']}",
                                         kind="policy_review", entity_type="policies", entity_id=policy_id, client_id=p["client_id"])
-        return result
+        return portfolio_activity.public_source(result)
 
     @router.post("/policies/{policy_id}/approve")
     async def approve(policy_id: str, body: DecisionIn, user=Depends(s.get_current_user)):
@@ -173,9 +176,9 @@ def router_for(s):
             raise HTTPException(409, "This submission is no longer pending")
         entry = {"at": s._now(), "action": "submission_withdrawn", "by": user["user_id"],
                  "by_name": user.get("name"), "by_email": user.get("email"), "subject": p.get("approval_subject")}
-        result = await change(p, {"status": "draft", "updated_at": entry["at"]}, entry)
-        await s.audit(user, "withdraw-submission", "policy", policy_id, p["client_id"])
-        return result
+        result, portfolio_event = await change(p, {"status": "draft", "updated_at": entry["at"]}, entry)
+        await s.audit(user, "withdraw-submission", "policy", policy_id, p["client_id"], meta={"_portfolio_activity_event_id": (portfolio_event or {}).get("event_id"), "_portfolio_activity_noop": portfolio_event is None})
+        return portfolio_activity.public_source(result)
 
     async def decide(policy_id, body, user, decision):
         p = await s._authorized_parent("policies", policy_id, user)
@@ -193,11 +196,11 @@ def router_for(s):
         patch = {"status": "approved" if decision == "approved" else "draft", "updated_at": at}
         if decision == "approved":
             patch["approved_at"] = at
-        result = await change(p, patch, entry)
-        await s.audit(user, decision, "policy", policy_id, p["client_id"], meta=entry)
+        result, portfolio_event = await change(p, patch, entry)
+        await s.audit(user, decision, "policy", policy_id, p["client_id"], meta={**entry, "_portfolio_activity_event_id": (portfolio_event or {}).get("event_id"), "_portfolio_activity_noop": portfolio_event is None})
         if p.get("owner_id"):
             await s.create_notification(user_id=p["owner_id"], title=f"Policy {decision}: {p['title']}",
                                         kind="policy_decision", entity_type="policies", entity_id=policy_id, client_id=p["client_id"])
-        return result
+        return portfolio_activity.public_source(result)
 
     return router

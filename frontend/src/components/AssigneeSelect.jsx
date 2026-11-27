@@ -1,7 +1,7 @@
 import { useEffect, useId, useState } from 'react';
 import { Check, ChevronDown } from 'lucide-react';
 import api, { formatError, PREVIEW_MODE } from '@/lib/api';
-import {selectedClient} from '@/lib/clientSelection';
+import {clientDestination,selectedClient} from '@/lib/clientSelection';
 import { useAuth } from '@/context/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -9,13 +9,15 @@ import { Input } from '@/components/ui/input';
 
 // History is supplied for the selected label only, never used as candidate data.
 export default function AssigneeSelect({ clientId, value, onChange, label = 'Owner', disabled = false,
-  users = [], testId, required = false, emptyLabel = 'Unassigned', showGuidance = true, showManagePeople = true }) {
+  users = [], testId, required = false, emptyLabel = 'Unassigned', showGuidance = true, showManagePeople = true, popoverClassName = '',
+  guidanceText = 'Only active platform users with access to this client can be assigned. Contacts alone are not eligible.' }) {
   const { user } = useAuth();
   const helpId = useId();
   const [open, setOpen] = useState(false), [search, setSearch] = useState('');
   const [offset, setOffset] = useState(0), [retry, setRetry] = useState(0);
   const [result, setResult] = useState(null), [selected, setSelected] = useState(null);
   const [peopleError, setPeopleError] = useState('');
+  const peopleDestination = clientId ? clientDestination(clientId, '/contacts') : undefined;
   const mode = PREVIEW_MODE;
   useEffect(() => { setOpen(false); setSearch(''); setOffset(0); setSelected(null); }, [clientId, user, mode]);
   useEffect(() => {
@@ -38,14 +40,16 @@ export default function AssigneeSelect({ clientId, value, onChange, label = 'Own
     event.preventDefault();
     // A same-origin blank tab inherits the isolated Demo session. Remove its
     // opener before navigation; preserve this form and never change assignment.
-    if (selectedClient() !== clientId) {
+    // A pinned URL owns this tab; unpinned forms retain the existing preference guard.
+    const requestedClientId = new URLSearchParams(window.location.search).get('client_id');
+    if (!clientId || (requestedClientId ? requestedClientId !== clientId : selectedClient() !== clientId)) {
       setPeopleError('Open Contacts from this client after saving your changes.');
       return;
     }
     const tab = window.open('about:blank', '_blank');
     if (!tab) { setPeopleError('Allow this tab to open Contacts. Your form is unchanged.'); return; }
     tab.opener = null;
-    tab.location.replace(new URL('/contacts', window.location.origin).href);
+    tab.location.replace(new URL(peopleDestination, window.location.origin).href);
     setPeopleError('');
   }
   return <div className="space-y-1.5">
@@ -53,7 +57,7 @@ export default function AssigneeSelect({ clientId, value, onChange, label = 'Own
       <PopoverTrigger asChild><Button type="button" variant="outline" aria-haspopup="dialog" aria-label={label} aria-expanded={open} aria-describedby={showGuidance?helpId:undefined} disabled={disabled || !clientId} data-testid={testId} className="w-full justify-between font-normal text-sm">
         <span className="truncate">{name}</span><ChevronDown className="h-4 w-4 shrink-0" />
       </Button></PopoverTrigger>
-      <PopoverContent align="start" aria-label={`${label} selection`} className="w-[var(--radix-popover-trigger-width)] min-w-64 p-2">
+      <PopoverContent align="start" aria-label={`${label} selection`} className={`w-[var(--radix-popover-trigger-width)] min-w-64 p-2 ${popoverClassName}`}>
           <Input aria-label={`Search ${label.toLowerCase()} candidates`} placeholder="Search eligible users…" value={search} onChange={e => { setSearch(e.target.value); setOffset(0); }} maxLength={100} />
           <div className="max-h-64 overflow-y-auto mt-2" aria-label={`${label} candidates`}>
             {!required && <Button type="button" variant="ghost" className="w-full justify-start font-normal" aria-pressed={!value} onClick={() => choose(null)}>{emptyLabel}{!value && <Check className="ml-auto h-4 w-4" />}</Button>}
@@ -68,9 +72,9 @@ export default function AssigneeSelect({ clientId, value, onChange, label = 'Own
           {(offset > 0 || data?.has_more) && <div className="flex justify-between border-t border-line p-2"><Button type="button" size="sm" variant="ghost" disabled={!offset} onClick={() => setOffset(n => Math.max(0, n - 50))}>Previous</Button><Button type="button" size="sm" variant="ghost" disabled={!data?.has_more} onClick={() => setOffset(n => n + 50)}>Next</Button></div>}
       </PopoverContent>
     </Popover>
-    {showGuidance&&<p id={helpId} className="text-xs leading-relaxed text-ink-secondary">Only active platform users with access to this client can be assigned. Contacts alone are not eligible.</p>}
-    {value && current?.status && current.status !== 'active' && <p className="text-xs text-ink-secondary">The recorded account is not active. Its assignment is retained until you choose a replacement.</p>}
-    {showGuidance&&showManagePeople&&<a href="/contacts" onClick={managePeople} className="inline-block text-xs text-link underline" aria-label="Manage people in a new tab">Manage people →</a>}
+    {showGuidance&&<p id={helpId} className="text-xs leading-relaxed text-ink-secondary">{guidanceText}</p>}
+    {value && current?.status && current.status !== 'active' && <p data-assignee-inactive className="text-xs text-ink-secondary">The recorded account is not active. Its assignment is retained until you choose a replacement.</p>}
+    {showGuidance&&showManagePeople&&<a href={peopleDestination} onClick={managePeople} className="inline-block text-xs text-link underline" aria-label="Manage people in a new tab">Manage people →</a>}
     {peopleError && <p role="status" className="text-xs text-ink-secondary">{peopleError}</p>}
   </div>;
 }

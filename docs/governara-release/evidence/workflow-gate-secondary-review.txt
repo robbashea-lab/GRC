@@ -1,0 +1,20 @@
+Release workflow gate: bounded independent source receipt
+
+Reviewed only the explicitly frozen .github/workflows/release-verification.yml against immutable baseline 14fc37114bef6891fde31eb0d5897c3ce01c80c5.
+Raw SHA256 before/after reading and after comparison matched:
+e0a5e4b7efe77576e95dcd8efe9e463faaa54e342fa19fd0cb2fba693a310966
+
+Verdict: no material source issue found in the assigned dependency/status/flag-preservation scope.
+
+The release gate (lines80-92) retains always(), directly needs frontend, backend and backend-mongo, and maps each dependency result into a quoted shell comparison. All three must equal literal success. failure, cancelled, skipped, and an absent/empty result cannot satisfy that conjunction; a cancelled gate itself is not a successful check. There is no continue-on-error, conditional Mongo skip or success fallback.
+
+needs.backend-mongo.result is valid property dereference: GitHub permits hyphens in property names beginning with a letter. Its needs context documents success/failure/cancelled/skipped results. always() overrides the default success-only job condition; it is appropriate here for the short local gate, which does not fetch sources.
+Official references consulted:
+https://docs.github.com/en/actions/reference/workflows-and-actions/contexts#available-contexts
+https://docs.github.com/en/actions/reference/workflows-and-actions/contexts#needs-context
+https://docs.github.com/en/actions/reference/workflows-and-actions/expressions#always
+
+The offline command (line52) is unchanged: python backend/tests/run_isolated.py -vv -o faulthandler_timeout=60. No worker override was introduced; the baseline runner reads backend/pytest.ini with fixed -n 2 --dist loadscope.
+The complete Mongo command (lines74-78) retains its local URL and all seven include flags: program-lifecycle, cis-ig2, remediation-tickets, cis-ig3-scope, cis-six-year, generic-saves, portfolio-reporting. It now runs in its own required backend-mongo job. Both backend jobs retain 30-minute limits. The frozen diff preserves the existing Mongo service, install/action pins and command flags; root owns the separate setup-wide comparison.
+
+Evidence is source reading and official documentation only. No YAML/gate execution, tests, builds, browser, provider mutation, CI dispatch or application edits. No successful CI or branch-protection configuration is certified by this receipt.

@@ -5,13 +5,16 @@ import program from '@catalogs/guidedCisProgram.json';
 import programV1 from '@catalogs/guidedCisProgramV1.json';
 import programV2 from '@catalogs/guidedCisProgramV2.json';
 import programV4 from '@catalogs/guidedCisProgramV4.json';
+import programV5 from '@catalogs/guidedCisProgramV5.json';
 import control1V3 from '@catalogs/guidedControl1V3.json';
 import control1V4 from '@catalogs/guidedControl1V4.json';
+import control1V5 from '@catalogs/guidedControl1V5.json';
+import {rankProgramRows} from './programTriage';
 const contextOnly=new Set(['system','owner','sources','reconciled','inventory_dependency','disposition','confirmation','exceptions']);
 const inherited=Object.fromEntries(Object.entries(legacy.safeguards).map(([id,questions])=>[id,[...questions.map(q=>({...q,critical:q.critical&&!contextOnly.has(q.id),question_set_version:pack.version,...(q.id==='gaps'?{prompt:'Describe any confirmed missing or incomplete requirement elements.',help:'Record known deficiencies here. Put uncertainty in Items requiring verification.'}:{}),unknown_template:`Confirm: ${q.prompt}`,next_step_template:q.help})),{id:'unknowns',prompt:'Which requirement elements still need confirmation, and who can verify them?',help:'Uncertainty is not a confirmed gap.',type:'text',choices:[],critical:false,element:'unknowns',status_impact:'Reported uncertainty prevents an unqualified recommendation',safeguard_id:id,question_set_version:pack.version,question_id:id+':unknowns',narrative_template:'',gap_template:'',unknown_template:'Reviewer-reported uncertainty',next_step_template:'Confirm the reported uncertainty with the responsible team',evidence_guidance:'Use relevant records and responsible-owner confirmation.'}]]));
 export const control1Catalog={...pack,safeguards:{...inherited,...additions.safeguards}};
 function programQuestions(id,definition,version){
-  const current=[program.version,programV4.version].includes(version);
+  const current=[program.version,programV4.version,programV5.version].includes(version);
   const evidence=definition.evidence.join(' '),when={practice:['Yes','Partially']};
   const question=(key,prompt,type,critical,extra={})=>({id:key,prompt,type,critical,choices:type==='text'?[]:['Yes','Partially','No','Not sure'],help:definition.guidance,element:key,safeguard_id:id,question_id:id+':'+key,question_set_version:version,status_impact:critical?'Reported implementation only; unresolved gaps or unknowns prevent an unqualified recommendation':'Context only; not a mandatory artifact',evidence_guidance:evidence,...extra});
   const questions=[question('practice',`Is the practice “${definition.title}” in place and operating?`,'select',true),question('existing','What relevant practice or information exists, and who can confirm it?','text',false,{when:{practice:['No','Not sure']}})];
@@ -24,6 +27,12 @@ function programQuestions(id,definition,version){
     }
   }
   questions.push(question('scope_reason','Explain any source-conditioned exclusions.','text',false,{...(!current?{when}:{}),condition:'not_applicable'}),question('system','Which systems or processes support this practice?','text',false,{when,help:'Optional context; name actual systems or processes, not proposed products.'}),question('owner','Who operates this practice?','text',false,{when,help:'Optional context; record the responsible business, IT, security or provider team.'}),question('operation','How is this safeguard implemented in day-to-day work?','text',false,{when,help:'Record the actual process and relevant timing. This is optional narrative context, not verification.'}),question('evidence','What records could substantiate the reported implementation?','text',false,{help:evidence}),question('gaps','Describe confirmed missing or incomplete requirement elements.','text',false,{help:'Confirmed gaps only. Record uncertainty separately.'}),question('unknowns',current?'Which substantive safeguard requirements still need confirmation, and who can verify them?':'What still needs confirmation, and who can verify it?','text',false,current?{help:'Record uncertainty about the required safeguard practices, not a confirmed deficiency. Optional tool, owner or record details belong in the context fields and do not qualify the proposed status.',status_impact:'Unresolved substantive requirements qualify the proposed status; optional context does not.'}:{help:'Unknowns are not confirmed gaps.'}));
+  if(version===programV5.version){
+    const parents=[question('additional_gap','Is there an additional confirmed gap relevant to this requirement?','select',false,{choices:['Yes','No','Not sure'],optional:true}),question('additional_confirmation','Is there additional requirement information that needs confirmation?','select',false,{choices:['Yes','No','Not sure'],optional:true})];
+    for(const [index,key,parent] of [[0,'gaps','additional_gap'],[1,'unknowns','additional_confirmation']]){
+      const offset=questions.findIndex(q=>q.id===key);questions[offset]={...questions[offset],when:{[parent]:['Yes']}};questions.splice(offset,0,parents[index]);
+    }
+  }
   return questions;
 }
 function programCatalog(source){
@@ -35,16 +44,37 @@ const program2Catalog={...program2Base,definitions:{...program2Base.definitions,
 const currentProgram=programCatalog(program);
 const program3Catalog={...currentProgram,definitions:{...currentProgram.definitions,...Object.fromEntries(Object.entries(control1V3.definitions).map(([id,d])=>[id,{...d,question_set_version:control1V3.version}])),...Object.fromEntries(Object.entries(control1V4.definitions).map(([id,d])=>[id,{...d,question_set_version:control1V4.version}]))},safeguards:{...currentProgram.safeguards,...control1V3.safeguards,...control1V4.safeguards}};
 const program4Catalog=programCatalog(programV4);
+const program5Catalog=programCatalog(programV5);
 // Only corrected safeguards change versions; program3 interviews remain readable.
-export const guidedCatalog={...program3Catalog,definitions:{...program3Catalog.definitions,...Object.fromEntries(Object.keys(programV4.definitions).map(id=>[id,program4Catalog.definitions[id]]))},safeguards:{...program3Catalog.safeguards,...Object.fromEntries(Object.keys(programV4.definitions).map(id=>[id,program4Catalog.safeguards[id]]))}};
+export const guidedCatalog={...program3Catalog,definitions:{...program3Catalog.definitions,...Object.fromEntries(Object.keys(programV4.definitions).map(id=>[id,program4Catalog.definitions[id]])),...Object.fromEntries(Object.keys(programV5.definitions).map(id=>[id,program5Catalog.definitions[id]])),...Object.fromEntries(Object.entries(control1V5.definitions).map(([id,d])=>[id,{...d,question_set_version:control1V5.version}]))},safeguards:{...program3Catalog.safeguards,...Object.fromEntries(Object.keys(programV4.definitions).map(id=>[id,program4Catalog.safeguards[id]])),...Object.fromEntries(Object.keys(programV5.definitions).map(id=>[id,program5Catalog.safeguards[id]])),...control1V5.safeguards}};
 export const catalogForPilot=(upgraded=true)=>upgraded?guidedCatalog:program1Catalog;
 export const legacyVersionForSafeguard=id=>program1Catalog.definitions[id]?.question_set_version;
 export const versionForSafeguard=(id,upgraded=true)=>catalogForPilot(upgraded).definitions[id]?.question_set_version;
-export const catalogForVersion=version=>version===legacy.version?legacy:version===pack.version?control1Catalog:version===programV1.version?program1Catalog:version===programV2.version?program2Catalog:version===control1V3.version?control1V3:version===control1V4.version?control1V4:version===program.version?program3Catalog:version===programV4.version?program4Catalog:null;
+export const catalogForVersion=version=>version===legacy.version?legacy:version===pack.version?control1Catalog:version===programV1.version?program1Catalog:version===programV2.version?program2Catalog:version===control1V3.version?control1V3:version===control1V4.version?control1V4:version===control1V5.version?control1V5:version===program.version?program3Catalog:version===programV4.version?program4Catalog:version===programV5.version?program5Catalog:null;
 export const pilotEnabled=(client,framework,configuration,id)=>!!client&&framework===pack.framework_id&&[1,2,3].includes(configuration?.implementation_group??1)&&configuration?.guided_assessment_enabled!==false&&(!id||!!guidedCatalog.definitions[id]?.groups.includes(configuration?.implementation_group??1));
 export function visibleQuestions(id,answers,version=versionForSafeguard(id)){
-  return (catalogForVersion(version)?.safeguards[id]||[]).filter(q=>!q.when||Object.entries(q.when).every(([key,values])=>values.includes(answers[key]))).filter(q=>q.condition!=='not_applicable'||(catalogForVersion(version)?.safeguards[id]||[]).some(matrix=>matrix.type==='matrix'&&Object.values(answers[matrix.id]||{}).includes('Not applicable')));
+  const active=(catalogForVersion(version)?.safeguards[id]||[]).filter(q=>!q.when||Object.entries(q.when).every(([key,values])=>values.includes(answers[key])));
+  const matrices=version===control1V5.version?active:(catalogForVersion(version)?.safeguards[id]||[]);
+  return active.filter(q=>q.condition!=='not_applicable'||matrices.some(matrix=>matrix.type==='matrix'&&matrix.choices.includes('Not applicable')&&matrix.rows.some(row=>answers[matrix.id]?.[row]==='Not applicable')));
 }
+// UI edits only: saved/submitted answers still pass through strict validation unchanged.
+export function updateGuidedMultiAnswer(values,option,checked,version){
+  if(!checked)return values.filter(value=>value!==option);
+  const exclusive=[control1V4.version,control1V5.version].includes(version),sentinels=['None','Not sure'];
+  if(exclusive&&sentinels.includes(option))return [option];
+  const retained=values.filter(value=>!exclusive||!sentinels.includes(value));
+  return retained.includes(option)?retained:[...retained,option];
+}
+
+export function updateGuidedAnswer(answers,question,value){
+  const next={...answers};
+  if(question.type==='select'&&value==='')delete next[question.id];
+  else next[question.id]=question.type==='matrix'&&value&&typeof value==='object'&&!Array.isArray(value)
+    ?Object.fromEntries(Object.entries(value).filter(([,answer])=>answer!==''))
+    :value;
+  return next;
+}
+
 export function validateAnswers(id,answers,version=versionForSafeguard(id)){
   if(!answers||typeof answers!=='object'||Array.isArray(answers))throw new Error('Invalid interview answers');
   const questions=catalogForVersion(version)?.safeguards[id];
@@ -54,16 +84,21 @@ export function validateAnswers(id,answers,version=versionForSafeguard(id)){
     if(!q)throw new Error('Unknown question');
     if(detail||['text','date'].includes(q.type)){if(typeof value!=='string'||value.length>2000)throw new Error('Invalid answer text');}
     else if(q.type==='matrix'){if(!value||typeof value!=='object'||Array.isArray(value)||Object.entries(value).some(([k,v])=>!q.rows.includes(k)||!(q.row_choices?.[k]||q.choices).includes(v)))throw new Error('Invalid matrix answer');}
-    else if(q.type==='multi'){if(!Array.isArray(value)||value.length>q.choices.length||new Set(value).size!==value.length||value.some(v=>!q.choices.includes(v))||(version===control1V4.version&&value.length>1&&value.some(v=>['None','Not sure'].includes(v))))throw new Error('Invalid answer selection');}
+    else if(q.type==='multi'){if(!Array.isArray(value)||value.length>q.choices.length||new Set(value).size!==value.length||value.some(v=>!q.choices.includes(v))||([control1V4.version,control1V5.version].includes(version)&&value.length>1&&value.some(v=>['None','Not sure'].includes(v))))throw new Error('Invalid answer selection');}
     else if(!q.choices.includes(value))throw new Error('Invalid answer selection');
   }
   return answers;
 }
 
+export function validateGuidedCompletion(id,answers,version=versionForSafeguard(id)){
+  validateAnswers(id,answers,version);
+  if([programV5.version,control1V5.version].includes(version))for(const [parent,detail] of [['additional_gap','gaps'],['additional_confirmation','unknowns']])if(answers[parent]==='Yes'&&!answers[detail]?.trim())throw new Error('Describe the additional reported work before reviewing the summary.');
+}
+
 export function compatibleInterviewAnswers(id,answers,fromVersion,toVersion){
   const oldQuestions=visibleQuestions(id,answers,fromVersion),newQuestions=catalogForVersion(toVersion)?.safeguards[id]||[],mapped={};
   const stable12=new Set(['process','existing','inventory_dependency','detection','system','owner','frequency','actions','disposition','confirmation','exceptions','reconciled','unresolved','evidence',...(fromVersion==='cis-v8.1-control1-2'?['gaps','unknowns']:[])]);
-  const programVersions=new Set([programV1.version,programV2.version,program.version,programV4.version]);
+  const programVersions=new Set([programV1.version,programV2.version,program.version,programV4.version,programV5.version]);
   const uncertaintyPrompts=new Set(['What still needs confirmation, and who can verify it?','Which substantive safeguard requirements still need confirmation, and who can verify them?']);
   for(const next of newQuestions){
     const old=oldQuestions.find(q=>q.id===next.id&&q.type===next.type);
@@ -79,12 +114,14 @@ export function compatibleInterviewAnswers(id,answers,fromVersion,toVersion){
         if(value&&(next.row_choices?.[text]||next.choices).includes(value))rows[text]=value;
       });
       if(Object.keys(rows).length)mapped[next.id]=rows;
-    }else if(old&&(fromVersion===toVersion||stableProgramUncertainty||id==='1.2'&&toVersion===control1V4.version&&stable12.has(next.id)||old.prompt===next.prompt&&(old.critical===next.critical||contextOnly.has(next.id)&&next.critical===false))&&answers[old.id]!==undefined){
+    }else if(old&&(fromVersion===toVersion||stableProgramUncertainty||[programV5.version,control1V5.version].includes(toVersion)&&['gaps','unknowns'].includes(next.id)||id==='1.2'&&[control1V4.version,control1V5.version].includes(toVersion)&&stable12.has(next.id)||old.prompt===next.prompt&&(old.critical===next.critical||contextOnly.has(next.id)&&next.critical===false))&&answers[old.id]!==undefined){
       const value=answers[old.id];
-      if(['text','date'].includes(next.type)||next.type==='multi'&&value.every(item=>next.choices.includes(item))&&!(toVersion===control1V4.version&&value.length>1&&value.some(item=>['None','Not sure'].includes(item)))||next.choices.includes(value))mapped[next.id]=value;
+      if(['text','date'].includes(next.type)||next.type==='multi'&&value.every(item=>next.choices.includes(item))&&!([control1V4.version,control1V5.version].includes(toVersion)&&value.length>1&&value.some(item=>['None','Not sure'].includes(item)))||next.choices.includes(value))mapped[next.id]=value;
       if(mapped[next.id]!==undefined&&answers[old.id+'_detail']!==undefined)mapped[next.id+'_detail']=answers[old.id+'_detail'];
     }
   }
+  // Retained prose is prefill; only a valid existing affirmative intent is reusable.
+  if([programV5.version,control1V5.version].includes(toVersion))for(const [parent,detail] of [['additional_gap','gaps'],['additional_confirmation','unknowns']])if(mapped[parent]==='Yes'&&!mapped[detail]?.trim())delete mapped[parent];
   validateAnswers(id,mapped,toVersion);
   return mapped;
 }
@@ -119,7 +156,8 @@ function generateLegacyResult(id,answers,today=new Date(),version=guidedCatalog.
     if(q.id==='evidence')evidence.push(value||q.help);
   }
   if(answers.gaps?.trim())gaps.push(`Reviewer-reported follow-up: ${answers.gaps.trim()}`);
-  const status=answers[root]==='No'?'needs_attention':!answers[root]||answers[root]==='Not sure'?'not_assessed':gaps.length||unknowns.length?'in_progress':'addressed';
+  const substantiveGaps=signals.some(signal=>signal.questionId!==root&&signal.kind==='gap');
+  const status=answers[root]==='No'?'needs_attention':!answers[root]||answers[root]==='Not sure'||version===control1V5.version&&answers[root]!=='Partially'&&unknowns.length&&!substantiveGaps?'not_assessed':gaps.length||unknowns.length?'in_progress':'addressed';
   const intro=id==='1.1'?`Brawndo reports ${answers.inventory==='No'?'no enterprise asset inventory':answers.inventory==='Yes'?'an enterprise asset inventory':answers.inventory==='Partially'?'a partial enterprise asset inventory':'that enterprise asset inventory existence is not confirmed'}.`:`Brawndo reports ${answers.process==='No'?'no process for addressing unauthorized assets':answers.process==='Yes'?'a process for addressing unauthorized assets':answers.process==='Partially'?'a partial process for addressing unauthorized assets':'that the unauthorized-asset process is not confirmed'}.`;
   const matrixNarrative=(key,subject)=>{
     const rows=answers[key];if(!rows)return '';
@@ -135,7 +173,7 @@ function generateLegacyResult(id,answers,today=new Date(),version=guidedCatalog.
 
 // One canonical requirement definition is inherited by applicable implementation groups.
 export function generateResult(id,answers,today=new Date(),version=versionForSafeguard(id)){
-  if([program.version,programV4.version,control1V4.version].includes(version))return generateCurrentCisResult(id,answers,version);
+  if([program.version,programV4.version,programV5.version,control1V4.version].includes(version)||version===control1V5.version&&!['1.1','1.2'].includes(id))return generateCurrentCisResult(id,answers,version);
   if(version===legacy.version)return generateLegacyResult(id,answers,today,version);
   validateAnswers(id,answers,version);
   const definition=catalogForVersion(version)?.definitions[id],questions=visibleQuestions(id,answers,version);
@@ -169,7 +207,7 @@ export function generateResult(id,answers,today=new Date(),version=versionForSaf
     output.unknowns.push('Applicability requires native assessment decision; excluded scope is not proof of implementation.');
     output.signals.push({questionId:'scope_reason',kind:'verification'});
   }
-  if(output.status==='addressed'&&(output.gaps.length||output.unknowns.length))output.status='in_progress';
+  if(output.status==='addressed'&&(output.gaps.length||output.unknowns.length))output.status=version===control1V5.version&&!output.gaps.length?'not_assessed':'in_progress';
   output.nextSteps=[...new Set([...(['1.1','1.2'].includes(id)?[]:output.nextSteps),...output.gaps.map(v=>`Address and reassess: ${v}`),...output.unknowns.map(v=>`Confirm with the responsible team: ${v}`)])];
   const root=answers[definition.root];
   const facts=[excludedScope?`The organization reports exclusion of all source-conditioned requirements for “${definition.title}”; applicability requires a native assessment decision.`:root==='Yes'?(definition.root==='practice'?`The organization reports implementation of “${definition.title}”.`:`The organization reports ${id==='1.1'?'an enterprise asset inventory':id==='1.2'?'a process for addressing unauthorized assets':id==='1.4'?'DHCP logging or IP address management used for inventory updates':id==='1.3'?'an active asset discovery tool':'a passive asset discovery tool'}.`):root==='No'?`The organization reports that ${definition.title.toLowerCase()} is not currently in place.`:root==='Partially'?`The organization reports partial implementation of ${definition.title.toLowerCase()}.`:'Implementation has not yet been confirmed.'];
@@ -197,7 +235,7 @@ function generateCurrentCisResult(id,answers,version){
   const definition=catalogForVersion(version).definitions[id],questions=visibleQuestions(id,answers,version);
   const active=Object.fromEntries(Object.entries(answers).filter(([key])=>questions.some(q=>key===q.id||key===q.id+'_detail')));
   const root=active[definition.root],gaps=[],unknowns=[],basis=[],signals=[],requirements=[];
-  const criteria=questions.filter(q=>q.critical&&(definition.root!=='practice'||q.id!==definition.root));
+  const criteria=questions.filter(q=>q.critical&&(![programV5.version,control1V5.version].includes(version)?definition.root!=='practice'||q.id!==definition.root:q.id!==definition.root));
   for(const q of criteria){
     const rows=q.type==='matrix'?q.rows.map(row=>({name:row,value:active[q.id]?.[row]})):[{name:q.summary_topic||q.narrative_template?.split(':')[0]||q.element||q.id,value:active[q.id]}];
     for(const row of rows){
@@ -216,21 +254,32 @@ function generateCurrentCisResult(id,answers,version){
   const applicable=requirements.filter(row=>row.state!=='excluded'),meaningful=applicable.filter(row=>row.state!=='unknown');
   const allExcluded=!!requirements.length&&!applicable.length;
   const supported=meaningful.some(row=>['met','partial'].includes(row.state));
-  let status=root==='No'&&!supported?'needs_attention':!supported?meaningful.length===applicable.length&&!!meaningful.length?'needs_attention':'not_assessed':applicable.every(row=>row.state==='met')?'addressed':'in_progress';
+  const confirmedGap=meaningful.some(row=>['absent','partial'].includes(row.state));
+  const corrected=[programV5.version,control1V5.version].includes(version);
+  let status=corrected?(root==='No'&&!supported?'needs_attention':!supported?confirmedGap?'needs_attention':'not_assessed':applicable.every(row=>row.state==='met')?'addressed':confirmedGap?'in_progress':'not_assessed'):(root==='No'&&!supported?'needs_attention':!supported?meaningful.length===applicable.length&&!!meaningful.length?'needs_attention':'not_assessed':applicable.every(row=>row.state==='met')?'addressed':'in_progress');
+  if(version===control1V5.version&&(!root||root==='Not sure')){
+    const question=questions.find(q=>q.id===definition.root),detail=active[definition.root+'_detail']?.trim();
+    unknowns.push((question.unknown_template||`Confirm: ${question.prompt}`)+(detail?' — '+detail:''));
+    signals.push({questionId:definition.root,kind:'verification'});
+  }
+  if(corrected&&root==='No'&&!gaps.length){gaps.push('The requirement practice is reported not in place.');signals.push({questionId:definition.root,kind:'gap'});}
   if(root==='No'&&meaningful.some(row=>['met','partial'].includes(row.state))||root==='Partially'&&status==='addressed'){
     status='in_progress';unknowns.push('The overall practice answer conflicts with the reported requirement details; confirm the actual implementation.');signals.push({questionId:definition.root,kind:'verification'});
   }
   if(['Yes','Partially'].includes(root)&&status==='needs_attention')unknowns.push('The overall practice answer conflicts with the reported absence of every substantive requirement; confirm the overall answer.');
+  if(version===control1V5.version&&root==='Partially'&&!allExcluded){
+    if(status==='not_assessed')status='in_progress';
+    if(!gaps.length){gaps.push('The requirement practice is reported partly in place.');signals.push({questionId:definition.root,kind:'gap'});}
+  }
   if(active.gaps?.trim())gaps.push(`Reviewer-reported gap: ${active.gaps.trim()}`);
   if(active.unknowns?.trim())unknowns.push(`Reviewer-reported uncertainty: ${active.unknowns.trim()}`);
   if(allExcluded){status='not_assessed';basis.length=0;unknowns.push('Applicability requires native assessment decision; excluded scope is not proof of implementation.');signals.push({questionId:'scope_reason',kind:'verification'});}
-  else if(status==='addressed'&&(gaps.length||unknowns.length))status='in_progress';
+  else if(status==='addressed'&&(gaps.length||unknowns.length))status=corrected&&!gaps.length?'not_assessed':'in_progress';
   const unique=values=>[...new Set(values)];
-  const narrative=(allExcluded?`The organization reports exclusion of all source-conditioned requirements for “${definition.title}”; applicability requires a native assessment decision.${active.scope_reason?' Reported applicability rationale: '+active.scope_reason:''}`:`The organization reports ${status==='addressed'?'implementation':status==='needs_attention'?'absence':status==='in_progress'?'partial or unresolved implementation':'an unconfirmed implementation position'} of “${definition.title}”.`)+[active.system&&`Maintained using: ${active.system}.`,active.owner&&`Responsible team: ${active.owner}.`,active.operation&&`Reported operation: ${active.operation}.`].filter(Boolean).map(value=>' '+value).join('');
+  const narrative=(allExcluded?`The organization reports exclusion of all source-conditioned requirements for “${definition.title}”; applicability requires a native assessment decision.${active.scope_reason?' Reported applicability rationale: '+active.scope_reason:''}`:`The organization reports ${status==='addressed'?'implementation':status==='needs_attention'?corrected&&root!=='No'?'confirmed missing components':'absence':status==='in_progress'?'partial or unresolved implementation':'an unconfirmed implementation position'} of “${definition.title}”.`)+[active.system&&`Maintained using: ${active.system}.`,active.owner&&`Responsible team: ${active.owner}.`,active.operation&&`Reported operation: ${active.operation}.`].filter(Boolean).map(value=>' '+value).join('');
   return {status,narrative,basis:unique(basis),gaps:unique(gaps),unknowns:unique(unknowns),nextSteps:unique([...gaps.map(value=>'Address and reassess: '+value),...unknowns.map(value=>'Confirm with the responsible team: '+value)]),evidence:questions.filter(q=>q.id==='evidence').map(q=>active[q.id]||q.evidence_guidance||q.help),answers:questions.map(q=>({prompt:q.prompt,answer:label(active[q.id])})),version,signals:signals.filter((signal,index)=>signals.findIndex(other=>other.questionId===signal.questionId&&other.kind===signal.kind)===index)};
 }
 
 export function prioritizeGuidedRows(rows,drafts={}){
-  const rank=r=>drafts[r.definition_id]?.revision&&!drafts[r.definition_id]?.completed?0:r.work?.overdue_reviews?1:r.status==='not_assessed'?2:r.status==='needs_attention'&&r.work?.open_actions?3:r.status==='in_progress'?4:r.status==='addressed'&&r.verification!=='verified'?5:r.work?.next_review_due?6:7;
-  return rows.filter(r=>guidedCatalog.definitions[r.definition_id]).slice().sort((a,b)=>rank(a)-rank(b)||(rank(a)===6?(a.work.next_review_due.localeCompare(b.work.next_review_due)):0)||Number(a.definition_id.split('.')[0])-Number(b.definition_id.split('.')[0])||Number(a.definition_id.split('.')[1])-Number(b.definition_id.split('.')[1])).slice(0,3);
+  return rankProgramRows(rows.filter(r=>guidedCatalog.definitions[r.definition_id]));
 }

@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { Toaster } from "sonner";
 import { AuthProvider, useAuth } from "@/context/AuthContext";
@@ -10,6 +11,7 @@ import ResetPassword from "@/pages/ResetPassword";
 import Dashboard from "@/pages/Dashboard";
 import RecordListPage from "@/pages/RecordListPage";
 import Evidence from "@/pages/Evidence";
+import Reports from "@/pages/Reports";
 import ComplianceWorkspace from "@/pages/ComplianceWorkspace";
 import ClientProfile, {LegacyClientSettings} from "@/pages/ClientProfile";
 import Calendar from "@/pages/Calendar";
@@ -25,7 +27,11 @@ import {FindingsRoute} from '@/pages/BrawndoActionItems';
 import RiskRegister from "@/pages/RiskRegister";
 import VendorRegister from "@/pages/VendorRegister";
 import AIGovernance from '@/pages/AIGovernance';
+import IVentureSetup from '@/components/IVentureSetup';
+import ToolCatalog from '@/components/ToolCatalog';
+import {approvedPortfolioDestination} from '@/lib/stagingWorkspace';
 import "@/App.css";
+import "@/NativeNordic.css";
 
 function Protected({ children }) {
   const location = useLocation();
@@ -36,12 +42,27 @@ function Protected({ children }) {
   return children;
 }
 
+function ClientPortfolioRoute() {
+  const {workspaceMode} = useAuth();
+  const approved = approvedPortfolioDestination(workspaceMode);
+  useEffect(() => {
+    if (approved) {
+      // A document navigation loads the supplied HTML after client-side sign-in.
+      window.location.replace(approved);
+    }
+  }, [approved]);
+  return approved ? <p role="status">Opening client portfolio…</p> : <ClientDirectory />;
+}
+
 // Internal users (super_admin, platform_admin) land on Client Directory.
 // Client users land directly in their tenant Dashboard.
 function LandingRoute() {
-  const { user } = useAuth();
+  const {user, workspaceMode} = useAuth();
   const isInternal = ["super_admin", "platform_admin"].includes(user?.role);
   const {clients, loading} = useOrg();
+  if (isInternal && approvedPortfolioDestination(workspaceMode)) {
+    return <Navigate to="/clients" replace />;
+  }
   if (loading) return <div className="p-8">Loading clients…</div>;
   if (!clients.length && user?.role !== "super_admin") return <div role="status" className="page-content">No client access is assigned. Contact your administrator.</div>;
   return <Navigate to={isInternal && (clients.length !== 1 || user?.role === "super_admin") ? "/clients" : "/dashboard"} replace />;
@@ -78,15 +99,17 @@ function AppRouter() {
         }
       >
         <Route index element={<LandingRoute />} />
-        <Route path="clients" element={<InternalOnly><ClientDirectory /></InternalOnly>} />
+        <Route path="clients" element={<InternalOnly><ClientPortfolioRoute /></InternalOnly>} />
         <Route path="admin/clients" element={<InternalOnly><ClientManagement /></InternalOnly>} />
         <Route path="admin/users" element={<InternalOnly><PlatformAdmin /></InternalOnly>} />
         <Route path="admin/roles" element={<InternalOnly><AdminRoles /></InternalOnly>} />
         <Route path="admin/security" element={<InternalOnly><AdminSecurity /></InternalOnly>} />
         <Route path="admin/audit" element={<InternalOnly><AdminAudit /></InternalOnly>} />
+        <Route path="admin/tools" element={<InternalOnly><ToolCatalog /></InternalOnly>} />
         <Route path="account" element={<MyAccount />} />
         <Route path="client-settings" element={<InternalOnly><LegacyClientSettings /></InternalOnly>} />
         <Route path="client-profile" element={<ClientProfile />} />
+        <Route path="iv-setup" element={<IVentureSetup />} />
         <Route path="dashboard" element={<Dashboard />} />
         <Route path="calendar" element={<Calendar />} />
         <Route path="reviews" element={<RecordListPage kind="reviews" />} />
@@ -102,8 +125,9 @@ function AppRouter() {
         <Route path="tasks" element={<RecordListPage kind="tasks" />} />
         <Route path="action-items" element={<ActionItems />} />
         <Route path="evidence" element={<Evidence />} />
+        <Route path="reports" element={<Reports />} />
         <Route path="compliance/:requirementKey" element={<ComplianceWorkspace />} />
-        <Route path="onboarding" element={<Navigate to="/client-profile" replace />} />
+        <Route path="onboarding" element={<LegacyClientSettings preserveTab/>} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

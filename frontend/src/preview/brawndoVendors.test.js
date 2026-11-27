@@ -2,17 +2,22 @@ import axios from 'axios';
 import {previewAdapter} from './adapter';
 import {STORE_KEY} from './store';
 import {authorizeDemo} from './authorization';
+import {completionPayload,validateCompletionGuide} from '../lib/r4ReviewCompletion';
 const api=axios.create({adapter:previewAdapter}),cid='demo_brawndo';
 const db=()=>JSON.parse(sessionStorage.getItem(STORE_KEY));
 beforeEach(async()=>{localStorage.clear();sessionStorage.clear();await api.post('/demo/enter');});
 const create=async extra=>(await api.post('/vendors',{client_id:cid,name:'Synthetic vendor QA',service:'Synthetic service',next_review:'2026-10-15',contract_renewal:'2027-04-01',...extra})).data;
-test('Brawndo lifecycle does not require Under Review; other clients keep the original transitions',async()=>{
-  const v=await create();await api.patch('/vendors/'+v.vendor_id,{status:'active'});
-  for(const status of ['offboarding','inactive'])await api.patch('/vendors/'+v.vendor_id,{status});
+test('the native Vendor lifecycle requires Under Review before Active for every client',async()=>{
+  const v=await create(),before=sessionStorage.getItem(STORE_KEY);
+  await expect(api.patch('/vendors/'+v.vendor_id,{status:'active'})).rejects.toThrow(/stage/);
+  expect(sessionStorage.getItem(STORE_KEY)).toBe(before);
+  for(const status of ['under_review','active','offboarding','inactive'])await api.patch('/vendors/'+v.vendor_id,{status});
   expect((await api.get('/vendors/'+v.vendor_id)).data.status).toBe('inactive');
   const other=(await api.post('/clients',{name:'Other QA'})).data.client_id;
   const o=(await api.post('/vendors',{client_id:other,name:'Other vendor',service:'Service'})).data;
   await expect(api.patch('/vendors/'+o.vendor_id,{status:'active'})).rejects.toThrow(/stage/);
+  for(const status of ['under_review','active'])await api.patch('/vendors/'+o.vendor_id,{status});
+  expect((await api.get('/vendors/'+o.vendor_id)).data.status).toBe('active');
 });
 test('assurance history survives replacement; review completion cannot alter assurance or contract',async()=>{
   const a={assurance_id:'a',type:'SOC 2',report_type:'II',review_status:'reviewed',reviewed_on:'2026-08-01',reviewed_by:'Synthetic reviewer',coverage_start:'2025-07-01',coverage_end:'2026-06-30',evidence_ids:[]};
@@ -20,7 +25,24 @@ test('assurance history survives replacement; review completion cannot alter ass
   await api.patch('/vendors/'+v.vendor_id,{assurance_records:[{...a,superseded_by:'b'},{assurance_id:'b',type:'SOC 2',review_status:'awaiting_update',expected_availability:'2026-12-31',next_follow_up:'2026-12-31',evidence_ids:[]}]});
   const before=(await api.get('/vendors/'+v.vendor_id)).data;
   const r=db().reviews.find(r=>r.vendor_id===v.vendor_id&&r.vendor_purpose==='vendor');
-  await api.post('/reviews/'+r.review_id+'/complete',{occurrence_id:r.current_occurrence_id});
+  const current=(await api.get('/reviews/'+r.review_id)).data;
+  const finding=(await api.post('/reviews/'+r.review_id+'/create-finding',{
+    title:'SYNTHETIC replacement assurance document is pending',remediation_title:'Obtain the replacement assurance document',
+    occurrence_id:current.current_occurrence_id,request_id:'synthetic-retained-assurance-finding'})).data;
+  const savedReview=(await api.get('/reviews/'+r.review_id)).data;
+  const {data:guide}=await api.get('/reviews/'+r.review_id+'/completion-guide');
+  expect(guide.expected_updated_at).toBe(savedReview.updated_at??null);
+  expect(guide.occurrence_id).toBe(savedReview.current_occurrence_id);
+  const assurance=guide.steps.find(step=>step.support==='Assurance document');expect(assurance).toBeDefined();
+  const performed={...guide,results:guide.steps.map(step=>({step_id:step.step_id,
+    result:step.step_id===assurance.step_id?'Exception':'Pass',
+    reason:step.step_id===assurance.step_id?'SYNTHETIC QA: the replacement is awaiting availability; Finding '+finding.finding_id+' retains the open corrective work.':'SYNTHETIC QA: this remaining Vendor check was performed against the fixture.'})),
+    supporting_reference:'SYNTHETIC QA completed-result record RETAINED-ASSURANCE-2026: replacement pending; corrective Finding '+finding.finding_id+'. No external assurance claimed.'};
+  validateCompletionGuide(performed);
+  const completed=(await api.post('/reviews/'+r.review_id+'/complete',{
+    ...completionPayload(performed),completion_notes:'SYNTHETIC QA: review performed; replacement assurance remains pending under its normal Finding and open Action.'})).data;
+  expect(completed.occurrence).toMatchObject({checklist_outcome:'Exceptions noted',finding_count:1});
+  expect(db().tasks.find(task=>task.finding_id===finding.finding_id).status).toBe('open');
   const after=(await api.get('/vendors/'+v.vendor_id)).data;
   expect(after.assurance_records).toEqual(before.assurance_records);expect(after.contract_renewal).toBe(v.contract_renewal);
   expect(after.assurance_records[0].reviewed_by).toBe('Synthetic reviewer');expect(after.assurance_records[0].history).toHaveLength(1);

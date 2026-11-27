@@ -3,10 +3,14 @@ import {isoCompletionSnapshot} from './isoAudit';
 import {initialAuditState,auditEvidenceIds} from '../lib/isoAudit';
 import { list, record, write, now, audit, uid, clone } from './store';
 import { occurrenceId, reviewView, reviewSchedule, belongsToOccurrence, assertCurrentOccurrence } from '../lib/reviewOccurrences';
+import {policySetCoverage,advanceCoveredSchedule} from './policyReviewCoverage';
+import {authorizeDemo} from './authorization';
+import {validateDemoCompletion} from './r4ReviewCompletion';
 
 export function reviewEvent(db, review, action, occurrence, meta = {}) {
   audit(db, action, 'reviews', review, {occurrence_id:occurrence || occurrenceId(review), by_name:db.user.name, ...meta});
 }
+export const acceptedReviewOccurrence=(review,id)=>review?.occurrences?.find(occurrence=>occurrence.occurrence_id===id);
 export function history(db, review) {
   const result = [...(review.occurrences || [])], seen = new Set();
   let cursor = review;
@@ -21,16 +25,16 @@ export function history(db, review) {
   }
   return result.sort((a,b) => String(b.completed_at || '').localeCompare(String(a.completed_at || '')));
 }
-export function reviewAction(db, id, name, body) {
+export function reviewAction(db, id, name, body, executionAt=now(), annualCoverage=null) {
   if(name==='complete') {
-    const supported=['occurrence_id','completion_notes','risk_assessment','risk_outcome','risk_next_review','completion_date','spawn_next','conclusion','tested_period','tested_scope','no_evidence_reason','checklist_confirmed'];
+    const supported=['occurrence_id','completion_notes','risk_assessment','risk_outcome','risk_next_review','completion_date','spawn_next','conclusion','tested_period','tested_scope','no_evidence_reason','checklist_confirmed','expected_updated_at','checklist','supporting_reference','outcome'];
     if(Object.keys(body).some(k=>!supported.includes(k)))throw new Error('Unsupported Review completion field');
     for(const [key,limit] of [['conclusion',20000],['tested_period',4000],['tested_scope',4000],['no_evidence_reason',4000]])if(body[key]!=null&&(typeof body[key]!=='string'||body[key].length>limit))throw new Error('Invalid Review evaluation field');
     if('checklist_confirmed' in body&&typeof body.checklist_confirmed!=='boolean')throw new Error('Checklist confirmation must be boolean');
   }
   const review = record(db, 'reviews', id), current = reviewView(review);
   if(review.ai_system_id&&(db.ai_systems||[]).some(a=>a.ai_system_id===review.ai_system_id&&a.status==='retired')&&review.status!=='in_progress')throw new Error('Retired AI only permits completion of already-started closure work');
-  const previous = review.occurrences?.find(o => o.occurrence_id === body.occurrence_id);
+  const previous = acceptedReviewOccurrence(review,body.occurrence_id);
   if (name === 'complete' && previous) return {review:current, occurrence:previous, spawned:null};
   if(name==='complete'&&body.risk_next_review&&!review.risk_id)throw new Error('Schedule overrides apply only to Risk Reviews');
   if(review.vendor_id&&db.vendors.some(v=>v.vendor_id===review.vendor_id&&v.status==='inactive')&&review.vendor_purpose!=='offboarding') throw new Error('Inactive Vendors have no active recurring Reviews.');
@@ -47,17 +51,55 @@ export function reviewAction(db, id, name, body) {
   const findings = list(db,'findings',review.client_id).filter(f => f.review_id === id && belongsToOccurrence(f,review));
   const evidence = list(db,'evidence',review.client_id).filter(e => !e.archived_at&& (auditEvidenceIds(review.iso_audit).includes(e.evidence_id)||(e.linked_id === id && ['review','reviews'].includes(e.linked_type) && belongsToOccurrence(e,review)) || e.relationships?.some(r=>r.kind==='reviews'&&r.id===id&&r.occurrence_id===occurrenceId(review))));
   const {occurrences, ...execution} = current;
-  const completed = clone({...execution, ...isoCompletionSnapshot(db,review), occurrence_id:occurrenceId(review), status:'completed', completed_at:now(), completion_date:now(),
+  let completionRecord;
+  if(annualCoverage) {
+    const source=annualCoverage.source,parent=db.reviews.find(item=>item.review_id===source?.review_id&&item.client_id===review.client_id);
+    if(!parent||parent.baseline_key!=='policy-review'||parent.policy_id||occurrenceId(parent)!==source.occurrence_id||annualCoverage.member?.policy_id!==review.policy_id||annualCoverage.member?.client_id!==review.client_id)throw new Error('Annual coverage must identify this exact Policy and its authoritative source occurrence');
+    // This is covered-version provenance, not invented child checklist results.
+    completionRecord={coverage_evaluation:clone({source_review_id:source.review_id,source_occurrence_id:source.occurrence_id,
+      review_template_id:source.review_template_id,review_template_version:source.review_template_version,
+      checklist:source.checklist,checklist_results:source.checklist_results,
+      ...(source.checklist_outcome?{checklist_outcome:source.checklist_outcome}:{}),
+      supporting_reference:source.supporting_reference||'',evidence:source.evidence||[]})};
+  } else completionRecord=validateDemoCompletion(db,review,body,evidence);
+  const completed = clone({...execution, ...isoCompletionSnapshot(db,review), ...completionRecord, occurrence_id:occurrenceId(review), status:'completed', completed_at:executionAt, completion_date:executionAt,
     ...Object.fromEntries(Object.entries(body).filter(([k])=>['conclusion','tested_scope','tested_period','checklist_confirmed','no_evidence_reason'].includes(k))),
     completed_by:db.user.user_id, completed_by_name:db.user.name, notes:body.completion_notes ?? review.notes,
     outcome:findings.length ? 'findings_raised' : 'no_findings', finding_count:findings.length,
     evidence:evidence.map(e => ({evidence_id:e.evidence_id,filename:e.filename,version:e.version,sha256:e.sha256}))});
+  const coverage=policySetCoverage(db,review,completed.completed_at);
+  const coveredSchedule=coverage||annualCoverage?advanceCoveredSchedule(review,completed.completed_at):null;
+  if(coverage){
+    completed.policy_coverage=coverage;
+    completed.covered_policy_reviews=[];
+    for(const member of coverage){
+      const children=db.reviews.filter(child=>child.client_id===review.client_id&&child.policy_id===member.policy_id&&child.recurrence==='annual'&&!['completed','cancelled'].includes(child.status));
+      if(children.length>1)throw new Error('A covered Policy has conflicting annual Review obligations.');
+      const child=children[0];
+      if(child){
+        const childOccurrence=occurrenceId(child);
+        authorizeDemo(db,'post',['reviews',child.review_id,'complete'],{occurrence_id:childOccurrence});
+        const result=reviewAction(db,child.review_id,'complete',{occurrence_id:childOccurrence},completed.completed_at,{source:completed,member});
+        const saved=child.occurrences.find(item=>item.occurrence_id===childOccurrence);
+        saved.covered_by={review_id:id,occurrence_id:completed.occurrence_id};
+        saved.policy_coverage=[clone(member)];
+        completed.covered_policy_reviews.push({review_id:child.review_id,occurrence_id:result.occurrence.occurrence_id});
+      }
+      const policy=record(db,'policies',member.policy_id);
+      policy.review_history=[...(policy.review_history||[]),{review_id:id,occurrence_id:completed.occurrence_id,
+        completed_at:completed.completed_at,completed_by:completed.completed_by,subject_id:member.subject_id,version:member.version}];
+      policy.last_reviewed_at=completed.completed_at;
+      if(!child){policy.next_review_date=coveredSchedule.due;policy.schedule_from_reviews=true;}
+    }
+    review.policy_ids=coverage.map(member=>member.policy_id);
+  }
   // Recurrence stays anchored to the scheduled cycle; completion date is recorded, never used as the next anchor.
-  const next = review.risk_id?completeRiskReview(db,review,completed,body):current.next_review_date;
+  if(coveredSchedule){completed.next_review_date=coveredSchedule.due;completed.covered_schedule_skipped_dates=coveredSchedule.skipped;}
+  const next = review.risk_id?completeRiskReview(db,review,completed,body):coveredSchedule?.due||current.next_review_date;
   write(db, 'reviews', {
     occurrences:[...(occurrences || []), completed], schedule_anchor:completed.next_review_override?null:current.schedule_anchor, recurrence_due_date:null,
     ...(next ? {status:'upcoming',due_date:next,current_occurrence_id:uid('occ'),notes:null,started_by:null,started_at:null,
-      completion_date:null,completion_snapshot:null,risk_baseline:null,...(review.iso_audit?{iso_audit:initialAuditState(review.iso_audit.package_key,review.iso_audit.cycle+1)}:{})}
+      completion_date:null,completion_snapshot:null,risk_baseline:null,r4_current_checklist:null,...(review.iso_audit?{iso_audit:initialAuditState(review.iso_audit.package_key,review.iso_audit.cycle+1)}:{})}
       : {status:'completed',current_occurrence_id:occurrenceId(review),completion_date:completed.completed_at})
   }, id);
   reviewEvent(db, review, 'Review completed', completed.occurrence_id, {period:completed.period, outcome:completed.outcome, finding_count:findings.length});

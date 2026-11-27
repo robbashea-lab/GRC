@@ -1,0 +1,827 @@
+/* Nordic reference SHA256 3555a9b1f41b6fc1bf61c919cb26c3701ebc32617c499ab1375fecdbbf188d57. Mounted native shell and portals only. */
+/* Approved Nordic reference style 1; native selector scope only. *//* Nordic Teal — a light client workspace with a petrol masthead. */
+:is(html[data-native-standard="light"], .native-standard.native-standard.native-standard[data-theme="light"], html[data-native-standard="light"] .portfolio-reference.portfolio-reference[data-theme="light"]) {
+  --bg: #edf4f3; --glow: none;
+  --surface: #fff; --surface-solid: #fff; --surface-2: #f2f7f6;
+  --topbar: #0c4447; --side: #f8fbfa;
+  --text: #123438; --muted: #35565a; --faint: #50696c; --label: #496769;
+  --border: #cddcda; --divider: #dbe6e3; --border-accent: #a9c8c1;
+  --accent: #116661; --accent-soft: #e0efeb; --accent-strong: #cce5df;
+  --chip-fg: #175e58; --chip-bd: #bbd8d1;
+  --input: #fff; --input-bd: #cadbd6; --hover: #edf6f3;
+  --s1: #147a70; --s2: #bc8a41; --s3: #bd6463; --s4: #aab9b7;
+  --spark: #08796e; --spark-fill: rgba(16,132,117,.12);
+  --alert: #993e3d; --alert-dot: #b65052; --kpi-alert: #9c4341; --danger: #a94444;
+  --alert-bg: #faf0ee; --alert-bd: #e9ceca;
+  --warn: #805a20; --warn-bg: #fbf5e9; --warn-bd: #eaddbe;
+  --ok: #0f6654; --ok-bd: #bcdbce; --ok-bg: #e8f4ed; --pos: #116e62;
+  --neu: #425a5c; --neu-bg: #f0f5f4; --neu-bd: #d5e1de; --track: #e6eeec;
+  --av-bg: #e0eee8; --av-fg: #235b50;
+  --shadow: 0 1px 2px rgba(23,70,64,.035);
+  --shadow-pop: 0 10px 36px rgba(19,55,52,.16);
+  --hairline: #b7d0c9; --grad-text: #35565a;
+  --cta: #125e56; --cta-fg: #fff; --tile-ring: none;
+  --pill-bg: #115a53; --pill-fg: #fff;
+  --font: "GoverNara Native Inter",Inter,"Segoe UI",Arial,sans-serif;
+}
+.native-standard.native-standard.native-standard { background-image: none; letter-spacing: -.006em; }
+.native-standard.native-standard.native-standard .topbar {
+  height: 64px; padding: 0 28px; background: #0b4144; border: 0;
+  box-shadow: inset 0 -1px 0 rgba(0,0,0,.12);
+  backdrop-filter: none; -webkit-backdrop-filter: none;
+}
+.native-standard.native-standard.native-standard .brand { color: #f8fdfb; min-width: 178px; gap: 11px; }
+.native-standard.native-standard.native-standard .brand-name { font-size: 21px; font-weight: 600; letter-spacing: -.045em; }
+.native-standard.native-standard.native-standard .brand-tag { font-size: 10px; letter-spacing: .005em; color: #b6d3cf; }
+.native-standard.native-standard.native-standard .brand>svg { color: #b7efe1 !important; width: 27px; height: 27px; }
+.native-standard.native-standard.native-standard .search-btn,.native-standard.native-standard.native-standard .ws-btn { background: #225456; color: #e6f3ef; border-color: #3d6b6d; border-radius: 6px; height: 33px; font-size: 12px; }
+.native-standard.native-standard.native-standard .search-btn { max-width: 344px; margin-left: 8px; color: #d0e5e0; padding: 0 10px; }
+.native-standard.native-standard.native-standard .search-btn .kbd { color: #c4ded9; border-color: #588180; border-radius: 4px; font-size: 10px; }
+.native-standard.native-standard.native-standard .ws-btn:hover,.native-standard.native-standard.native-standard .topbar .icon-btn:hover { background: #316566; }
+.native-standard.native-standard.native-standard .topbar>.top-actions>.icon-btn { color: #e0efeb; }
+.native-standard.native-standard.native-standard .avatar-btn { background: #bde4d6; color: #17473f; width: 30px; height: 30px; }
+.native-standard.native-standard.native-standard .demo-strip { background: #e2eeeb; border-bottom-color: #c7dad5; padding-block: 5px; font-size: 11px; }
+.native-standard.native-standard.native-standard .side { flex-basis: 221px; width: 221px; padding: 12px 12px 24px; border-right-color: #d6e4e0; }
+.native-standard.native-standard.native-standard .nav { min-height: 35px; border-radius: 5px; font-size: 13px; color: #365556; padding: 7px 11px; }
+.native-standard.native-standard.native-standard .nav svg { color: #51716e; stroke-width: 1.65; }
+.native-standard.native-standard.native-standard .nav[aria-current="page"] { background: #d7eae4; color: #10594f; font-weight: 650; box-shadow: inset 3px 0 0 #247d6d; }
+.native-standard.native-standard.native-standard .side-label { padding-top: 17px; font-size: 9.5px; font-weight: 700; letter-spacing: .13em; }
+.native-standard.native-standard.native-standard .ws-card { background: #fff; padding: 10px; border-radius: 6px; border-color: #d2e2dc; margin: 5px 0 4px; }
+.native-standard.native-standard.native-standard .side .ws-card .tile,.native-standard.native-standard.native-standard .dash-head>.tile { background: #cde5da !important; color: #1c6254; border: 1px solid #b6d6c5; box-shadow: none; }
+.native-standard.native-standard.native-standard .dash-head>.tile { border-radius: 11px !important; }
+.native-standard.native-standard.native-standard .ws-card .tile { border-radius: 6px !important; }
+.native-standard.native-standard.native-standard .badge-n { font-weight: 600; line-height: 18px; padding: 0 6px; border-radius: 4px; }
+.native-standard.native-standard.native-standard .main { padding: 26px clamp(24px,2.45vw,50px) 48px; }
+.native-standard.native-standard.native-standard .wrap { gap: 17px; max-width: 1580px; }
+.native-standard.native-standard.native-standard .dash-head { gap: 14px; padding: 4px 0 10px; }
+.native-standard.native-standard.native-standard .dashboard-framework-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+  margin: -3px 0 -4px;
+  padding: 0;
+  border-bottom: 1px solid var(--border-accent);
+}
+.native-standard.native-standard.native-standard .dashboard-framework-tab {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 42px;
+  padding: 8px 15px;
+  border: 1px solid transparent;
+  border-bottom: 0;
+  border-radius: 6px 6px 0 0;
+  background: transparent;
+  color: var(--muted);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.native-standard.native-standard.native-standard .dashboard-framework-tab svg { width: 15px; height: 15px; flex: none; }
+.native-standard.native-standard.native-standard .dashboard-framework-tab:hover { background: var(--hover); color: var(--text); }
+.native-standard.native-standard.native-standard .dashboard-framework-tab[aria-selected="true"] {
+  border-color: var(--border);
+  background: var(--accent-soft);
+  color: var(--chip-fg);
+}
+.native-standard.native-standard.native-standard .dashboard-framework-tab[aria-selected="true"]::after {
+  content: "";
+  position: absolute;
+  inset: auto 0 -1px;
+  height: 2px;
+  background: var(--accent);
+}
+.native-standard.native-standard.native-standard .dashboard-framework-tab:focus-visible { outline: 2px solid var(--accent); outline-offset: -4px; }
+.native-standard.native-standard.native-standard .dashboard-framework-content { display: grid; min-width: 0; gap: 16px; }
+@media (max-width: 550px) {
+  .native-standard.native-standard.native-standard .dashboard-framework-tab { padding: 8px 10px; }
+}
+
+.native-standard.native-standard.native-standard .eyebrow { margin-bottom: 4px; font-weight: 700; color: #296960; font-size: 10px; letter-spacing: .14em; }
+.native-standard.native-standard.native-standard .page-title { font-size: 38px; font-weight: 600; line-height: 1.07; letter-spacing: -.055em; }
+.native-standard.native-standard.native-standard .page-sub,.native-standard.native-standard.native-standard .page-sub.grad { font-size: 14px; color: #44615f; line-height: 1.4; background: none; letter-spacing: -.01em; margin-top: 5px; }
+.native-standard.native-standard.native-standard .seg { padding: 3px; background: #e5efeb; border-color: #c4d9d0; border-radius: 6px; }
+.native-standard.native-standard.native-standard .seg button,.native-standard.native-standard.native-standard .seg.sm button { font-size: 11.5px; min-height: 26px; padding-inline: 10px; border-radius: 4px; }
+:is(html[data-native-standard="light"], .native-standard.native-standard.native-standard[data-theme="light"], html[data-native-standard="light"] .portfolio-reference.portfolio-reference[data-theme="light"]) .seg button[aria-checked="true"] { color: #154e45; background: #fff; box-shadow: 0 1px 3px rgba(29,76,62,.13); }
+.native-standard.native-standard.native-standard .panel,.native-standard.native-standard.native-standard .disc,.native-standard.native-standard.native-standard .sec-card { border-radius: 9px; }
+.native-standard.native-standard.native-standard .panel-head,.native-standard.native-standard.native-standard .coll-btn { padding: 16px 21px; }
+.native-standard.native-standard.native-standard .panel-title { font-weight: 650; font-size: 18px; line-height: 1.25; letter-spacing: -.032em; }
+.native-standard.native-standard.native-standard .panel-desc { color: var(--faint); font-size: 12.5px; }
+.native-standard.native-standard.native-standard #v-client>.panel:has(.status-card) { border-color: #b4d2c8 !important; }
+.native-standard.native-standard.native-standard #v-client>.panel:has(.status-card)>.panel-head { background: #e3f0e9; border-color: #cbded5; }
+.native-standard.native-standard.native-standard #v-client>.panel:has(.status-card)>.note { background: #f1f7f3; }
+.native-standard.native-standard.native-standard .status-card { padding: 18px 21px; gap: 24px; grid-template-columns: minmax(180px,.90fr) minmax(0,3fr); align-items: stretch; }
+.native-standard.native-standard.native-standard .status-card>div:first-child { border-right: 1px solid #d2e4db; padding-right: 12px; }
+.native-standard.native-standard.native-standard .status-card>div:first-child>.sub:first-child { color: #456760; font-size: 12px; }
+.native-standard.native-standard.native-standard .impl-big { font-size: 53px; font-weight: 500; color: #0c5c53; letter-spacing: -.075em; }
+.native-standard.native-standard.native-standard .impl-big small { font-size: 24px; color: #3b756b; letter-spacing: -.05em; margin-left: 3px; }
+.native-standard.native-standard.native-standard .stack { height: 10px; border-radius: 3px; }
+.native-standard.native-standard.native-standard .stat4 { gap: 12px; margin-top: 18px; }
+.native-standard.native-standard.native-standard .stat-btn { padding: 5px 6px; margin: -5px -6px; border-radius: 4px; }
+.native-standard.native-standard.native-standard .stat4 .lab { font-size: 12px; gap: 6px; }
+.native-standard.native-standard.native-standard .stat4 .lab i { border-radius: 2px; width: 7px; height: 7px; }
+.native-standard.native-standard.native-standard .stat4 .val { font-weight: 550; font-size: 22px; color: #244540; margin-top: 5px; }
+.native-standard.native-standard.native-standard .stat4 .val small { font-size: 11px; margin-left: 5px; }
+.native-standard.native-standard.native-standard .note,.native-standard.native-standard.native-standard .gt-foot { font-size: 11.5px; padding: 9px 21px; background: #f5f8f6; }
+.native-standard.native-standard.native-standard .link-btn { font-size: 12.5px; color: #16685d; font-weight: 600; }
+.native-standard.native-standard.native-standard .cta,.native-standard.native-standard.native-standard .ghost,.native-standard.native-standard.native-standard .ghost.sm,.native-standard.native-standard.native-standard .field,.native-standard.native-standard.native-standard .input,.native-standard.native-standard.native-standard .select,.native-standard.native-standard.native-standard .tab,.native-standard.native-standard.native-standard .filter-btn { border-radius: 5px; box-shadow: none; }
+.native-standard.native-standard.native-standard .coll-sum { background: transparent; border: 0; font-size: 12px; }
+.native-standard.native-standard.native-standard #hist-body>div:first-child { padding-top: 10px !important; }
+.native-standard.native-standard.native-standard .hist { grid-template-columns: minmax(0,1fr) minmax(205px,24%); padding: 12px 21px 16px; gap: 20px; align-items: stretch; }
+.native-standard.native-standard.native-standard .side-card { gap: 0; border-left: 1px solid var(--divider); margin-left: 2px; padding-left: 16px; justify-content: center; }
+.native-standard.native-standard.native-standard .side-card .mini { border: 0; background: #f0f7f3; border-radius: 6px 6px 0 0; padding: 15px 16px; }
+.native-standard.native-standard.native-standard .side-card .mini+.mini { border-top: 1px solid #d3e4db; border-radius: 0 0 6px 6px; }
+.native-standard.native-standard.native-standard .est-big { font-weight: 550; font-size: 28px; letter-spacing: -.05em; }
+.native-standard.native-standard.native-standard .est-txt { font-size: 12px; }
+.native-standard.native-standard.native-standard .chart-wrap svg text,.native-standard.native-standard.native-standard .radar-wrap svg text { font-family: var(--font); }
+.native-standard.native-standard.native-standard .chart-wrap svg stop:first-child { stop-opacity: .16; }
+.native-standard.native-standard.native-standard .chart-legend i { width: 8px; height: 8px; border-radius: 2px; }
+.native-standard.native-standard.native-standard .rm-cell,.native-standard.native-standard.native-standard .st,.native-standard.native-standard.native-standard .fchip { border-radius: 4px; }
+.native-standard.native-standard.native-standard .gt-head,.native-standard.native-standard.native-standard .reg-head,.native-standard.native-standard.native-standard .dom-table th { background: #edf5f1; color: #43615c; }
+.native-standard.native-standard.native-standard .dash-grid { gap: 17px; }
+@media(max-width:1100px) {
+ .native-standard.native-standard.native-standard .hist,.native-standard.native-standard.native-standard .status-card { grid-template-columns: 1fr; }
+ .native-standard.native-standard.native-standard .status-card>div:first-child { border-right: 0; }
+ .native-standard.native-standard.native-standard .side-card { border-left: 0; padding-left: 0; }
+}
+@media(max-width:900px) {
+ .native-standard.native-standard.native-standard .main { padding: 20px 15px 40px; }
+ .native-standard.native-standard.native-standard .topbar { padding: 0 12px; gap: 8px; }
+ .native-standard.native-standard.native-standard .brand { min-width: 0; }
+}
+@font-face { font-family: "GoverNara Direction"; src: url(data:font/woff;base64,d09GRgABAAAAAAPAAA8AAAAABDwAAl64AAAAAAAAAAAAAAAAAAAAAAAAAABHREVGAAACrAAAABMAAAAUAA8AAkdQT1MAAALAAAAAIAAAACBEdkx1R1NVQgAAAuAAAAB6AAAAliekP8NNQVRIAAADXAAAAGIAAAD2CT8zhE9TLzIAAAHIAAAATQAAAFaLj5CiY21hcAAAAiAAAAAqAAAANAAMIepnYXNwAAACoAAAAAwAAAAMAAcAB2dseWYAAAJUAAAAMAAAADDKnADkaGVhZAAAAVgAAAA2AAAANi4T3tdoaGVhAAABkAAAACAAAAAkDi4F6WhtdHgAAAIYAAAACAAAAAgLgQGGbG9jYQAAAkwAAAAGAAAABgAYAABtYXhwAAABsAAAABcAAAAgAAQAC25hbWUAAAKEAAAABgAAAAYABgAAcG9zdAAAAowAAAATAAAAIP/bAFoAAQAAAAJeuPQ6JZxfDzz1AB8IAAAAAADg+tE5AAAAAOcmZQIBIAA0BZ8EswAAAAgAAgAAAAAAAHicY2BkYGDP/SfLwMC2hVGBUZR1PgNQBAUwAQBSogMpeJxjYGRgYGBi4GIA0QxQEgkAAAGXABAAeJxjYGThY5zAwMrAwGrMOpOBgVEOQjNfZ0hjEmJgYOJmY2bmYGFiYmGAAAUozRCQ5prC4KA4XXE6m8g/EcZZ7LmMj4HCjCA5AH7NCkUAAAAEzQBmBrQBIHicY2BgYGJgYGAGYhEgyQimWRgUgDQLEAL5itP//4eQ97LA8gwAXHsHFAAAAAAAAAAYAAAAAQEgADQFnwSzAAkAAAEXESMRAScBITUFYD+p/KJ4A17+tgSzP/3UAUr8ongDXqkAAAAAAAYAAHicY2BmAIP/NxiiGLAAADMvAjUAAAAAAgAIAAL//wADeJxjYGRgYOBhgABGCAQAAOsAEgAAAQAAAAoAHAAeAAFERkxUAAgABAAAAAD//wAAAAAAAHicPY6xDUIxEEONREXNAAyDqChZwEEhh/JzkY5QQH0TIPb9XBpcPFmWZRkbADt88MX+eDpf8KYxwWlN4cl4h1+pj6BkC75sgZfcwxfLFS7U6EhOkVQq4Qv7YXLEQuMQuNaZ9MIGt6dGc9y0BGXuYxsfsK746we3qS2qAAB4nGNgZGBg4GJ4wPCCIYDBhoeB/S6Qz8DUxMDAksDAwHqVAQxAbGQA4zNmQNmhDAQBIx/Q3DLC6hiiIGpBNJyNZAaKeBQSvwjBZrJgYPjdD2TbwLVqAH3JBTGEgQEAdk8N8wAA) format("woff"); font-style: normal; font-weight: 100 900; unicode-range: U+2197; }
+.native-standard.native-standard.native-standard .side-card .est-big.num[style*="--pos"] { font-family: "GoverNara Direction", var(--font); }
+.native-standard.native-standard.native-standard .ws-card .sub.ellip { white-space: normal; line-height: 1.25; }
+.native-standard.native-standard.native-standard .rm div.rm-cell { opacity: .85 !important; color: #375853; }
+
+.native-standard.native-standard.native-standard .ws-card .sub.ellip{white-space:normal;line-height:1.35;text-overflow:clip}
+:is(html[data-native-standard="light"], .native-standard.native-standard.native-standard[data-theme="light"], html[data-native-standard="light"] .portfolio-reference.portfolio-reference[data-theme="light"]) .rm div.rm-cell{opacity:1!important;color:#495354}
+:is(html[data-native-standard="light"], .native-standard.native-standard.native-standard[data-theme="light"], html[data-native-standard="light"] .portfolio-reference.portfolio-reference[data-theme="light"]) .rm div.rm-cell[style*=".32"]{color:#493b3c}
+
+.native-standard.native-standard.native-standard .nh-panel { container-type:inline-size; }
+.native-standard.native-standard.native-standard .nh-panel .nh-header { display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; column-gap:16px; row-gap:9px; padding:14px 22px; }
+.native-standard.native-standard.native-standard .nh-panel .nh-toggle { display:flex; flex:1 1 200px; align-items:center; gap:12px; text-align:left; border-radius:4px; min-width:0; }
+.native-standard.native-standard.native-standard .nh-panel .nh-title-group { display:flex; flex-direction:column; gap:3px; }
+.native-standard.native-standard.native-standard .nh-panel .nh-chevron { display:grid; place-items:center; width:21px;height:21px; border-radius:4px; color:#54726e; }
+.native-standard.native-standard.native-standard .nh-panel .nh-toggle:hover .nh-chevron { background:#e7f2ee; }
+.native-standard.native-standard.native-standard .nh-panel .nh-toggle[aria-expanded=true] .nh-chevron { transform:rotate(180deg); }
+.native-standard.native-standard.native-standard .nh-panel .nh-chevron svg { width:14px; height:14px; }
+.native-standard.native-standard.native-standard .nh-panel .nh-collapsed { font-size:12px; color:var(--muted); margin-left:auto; }
+.native-standard.native-standard.native-standard .nh-panel .nh-range { margin-left:auto; }
+.native-standard.native-standard.native-standard .nh-panel .nh-range button { font-variant-numeric:tabular-nums; min-height:28px; }
+.native-standard.native-standard.native-standard .nh-panel #hist-body { border-top:1px solid #dae6e2; }
+.native-standard.native-standard.native-standard .nh-panel #hist-body .nh-summary { display:flex; align-items:center; justify-content:space-between; gap:14px 35px; padding:20px 26px 14px!important; }
+.native-standard.native-standard.native-standard .nh-panel .nh-label { font-size:11px; font-weight:650; line-height:1.35; color:#4c6964; }
+.native-standard.native-standard.native-standard .nh-panel .nh-change-row { display:flex; flex-wrap:wrap; align-items:baseline; gap:0 14px; margin-top:3px; }
+.native-standard.native-standard.native-standard .nh-panel .nh-value { color:#085e55; font-size:40px; font-weight:550; letter-spacing:-.065em; line-height:1.12; }
+.native-standard.native-standard.native-standard .nh-panel .nh-value span { font-weight:500; font-size:21px; letter-spacing:-.035em; }
+.native-standard.native-standard.native-standard .nh-panel .nh-value.nh-nohistory { font-size:22px; letter-spacing:-.035em; }
+.native-standard.native-standard.native-standard .nh-panel .nh-context { color:#385953; font-size:13px; line-height:1.45; }
+.native-standard.native-standard.native-standard .nh-panel .nh-estimate { width:max-content; max-width:min(390px,40%); padding-left:17px; border-left:2px solid #c5ddd4; display:grid; column-gap:12px; row-gap:2px; grid-template-columns:1fr; justify-items:start; }
+.native-standard.native-standard.native-standard .nh-panel .nh-date { font-size:17px; font-weight:600; letter-spacing:-.035em; color:#243f3b; line-height:1.25; }
+.native-standard.native-standard.native-standard .nh-panel .nh-assumption { font-size:11.5px; color:#506862; line-height:1.45; }
+.native-standard.native-standard.native-standard .nh-panel .nh-graphic { padding:2px 21px 1px; min-width:0; }
+.native-standard.native-standard.native-standard .nh-panel .nh-foot { display:flex; flex-wrap:wrap; align-items:center; gap:6px 14px; padding:12px 25px 13px; border-top:1px solid #e3ebe7; font-size:11px; color:#546964; }
+.native-standard.native-standard.native-standard .nh-panel .nh-key { display:inline-flex; align-items:center; gap:8px; font-weight:600; color:#355951; }
+.native-standard.native-standard.native-standard .nh-panel .nh-key i { width:20px; height:2px; background:#167666; display:inline-block; position:relative; }
+.native-standard.native-standard.native-standard .nh-panel .nh-key i:before { content:""; width:5px; height:5px; position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); border:1.5px solid #167666; border-radius:50%; background:white; }
+.native-standard.native-standard.native-standard .nh-panel .nh-foot-date { border-left:1px solid #cbd9d3; padding-left:14px; }
+.native-standard.native-standard.native-standard .nh-panel .nh-demo { margin-left:auto; }
+.native-standard.native-standard.native-standard .nh-panel .nh-plot { position:relative; min-width:0; }
+.native-standard.native-standard.native-standard .nh-panel .nh-svg { display:block; max-width:100%; width:100%; font-family:var(--font); font-variant-numeric:tabular-nums; }
+.native-standard.native-standard.native-standard .nh-panel .nh-tip { max-width:calc(100% - 8px); box-sizing:border-box; }
+.native-standard.native-standard.native-standard .nh-panel .nh-graphic .chart-empty { height:140px; margin-bottom:15px; }
+@container(max-width:640px){
+ .native-standard.native-standard.native-standard .nh-panel .nh-header { padding:13px 15px; }
+ .native-standard.native-standard.native-standard .nh-panel .nh-range { margin-left:0; }
+ .native-standard.native-standard.native-standard .nh-panel .nh-range button { padding:5px 7px; }
+ .native-standard.native-standard.native-standard .nh-panel #hist-body .nh-summary { padding:15px 16px 10px!important; gap:14px; align-items:flex-start; }
+ .native-standard.native-standard.native-standard .nh-panel .nh-value { font-size:32px; }
+ .native-standard.native-standard.native-standard .nh-panel .nh-value span { font-size:16px; }
+ .native-standard.native-standard.native-standard .nh-panel .nh-context { font-size:11.5px; }
+ .native-standard.native-standard.native-standard .nh-panel .nh-estimate { padding-left:9px; max-width:45%; }
+ .native-standard.native-standard.native-standard .nh-panel .nh-assumption { font-size:10.5px; }
+ .native-standard.native-standard.native-standard .nh-panel .nh-graphic { padding-left:9px; padding-right:9px; }
+ .native-standard.native-standard.native-standard .nh-panel .nh-foot { padding:10px 14px; gap:6px 10px; }
+ .native-standard.native-standard.native-standard .nh-panel .nh-foot-date { padding-left:10px; }
+ .native-standard.native-standard.native-standard .nh-panel .nh-collapsed { display:none; }
+}
+@container(max-width:410px){
+ .native-standard.native-standard.native-standard .nh-panel .nh-toggle { flex-basis:100%; justify-content:space-between; }
+ .native-standard.native-standard.native-standard .nh-panel .nh-value { font-size:30px; }
+ .native-standard.native-standard.native-standard .nh-panel .nh-demo { margin-left:0; }
+}
+/* Approved Nordic reference style 2; native selector scope only. */
+/* Nordic Teal across the shell, working records, forms and reports. */
+:is(html[data-native-standard], .native-standard.native-standard.native-standard) {
+  --font: "GoverNara Native Inter",Inter,"Segoe UI",Arial,sans-serif;
+  --mono: "JetBrains Mono",ui-monospace,SFMono-Regular,Consolas,"Liberation Mono",monospace;
+  --control-radius: 5px;
+  --card-radius: 9px;
+  --focus: #087867;
+  --brand-header: #0b4144;
+  --brand-header-fg: #f3fbf8;
+}
+:is(html[data-native-standard="light"], .native-standard.native-standard.native-standard[data-theme="light"], html[data-native-standard="light"] .portfolio-reference.portfolio-reference[data-theme="light"]) {
+  --well: #edf5f0; --surface-header: #f0f6f3; --well-border: #d6e5dd;
+  --selected: #e0eee8; --selected-fg: #145b50;
+  --input-hover-border: #7ea298; --input-fg: #123438; --cta-hover: #084d48;
+  --scrim: rgba(10,37,35,.40);
+}
+:is(html[data-native-standard="dark"], .native-standard.native-standard.native-standard[data-theme="dark"], html[data-native-standard="dark"] .portfolio-reference.portfolio-reference[data-theme="dark"]) {
+  color-scheme: dark;
+  --bg: #122325; --glow: none; --surface: #1a2d2e; --surface-solid: #1a2d2e;
+  --surface-2: #213637; --side: #172a2c; --topbar: #0e373a;
+  --text: #e9f3ef; --muted: #c1d2ca; --faint: #a0b7af; --label: #a1b9ad;
+  --accent: #8ad9c0; --accent-soft: #203f39; --accent-strong: #2b5349;
+  --border: #38514c; --divider: #324a46; --border-accent: #57796e;
+  --input: #172c2b; --input-bd: #59736a; --input-hover-border: #85a398; --input-fg: #ebf6ef;
+  --chip-fg: #a3dfc6; --chip-bd: #466e5e; --hover: #263e3a;
+  --cta: #99dbc5; --cta-hover: #b7ecd8; --cta-fg: #0c342b;
+  --alert: #f5aaa4; --alert-dot: #e78e87; --danger: #a03e42; --kpi-alert: #f4a69f;
+  --alert-bg: #412f30; --alert-bd: #855351;
+  --warn: #edcd91; --warn-bg: #403a2d; --warn-bd: #7a6944;
+  --ok: #96d6b4; --ok-bg: #244034; --ok-bd: #52745e;
+  --neu: #c3d2cc; --neu-bg: #2a3a39; --neu-bd: #50645c; --pos: #95dcbf;
+  --s1: #65bba4; --s2: #d4ae68; --s3: #da8e86; --s4: #8c9b97;
+  --track: #344c46; --spark: #79cbb3; --spark-fill: rgba(115,206,176,.15);
+  --av-bg: #28433e; --av-fg: #b1e3d2;
+  --well: #233b35; --well-border: #3d594d; --surface-header: #203631;
+  --selected: #284b40; --selected-fg: #c4eddb;
+  --focus: #94e4cb; --brand-header: #0e373a;
+  --shadow: 0 1px 2px rgba(0,0,0,.10); --shadow-pop: 0 12px 40px rgba(0,0,0,.32);
+  --hairline: #547568; --grad-text: #c0dbce; --tile-ring: none;
+  --pill-bg: #a4dfc9; --pill-fg: #143c30; --scrim: rgba(4,15,16,.62);
+}
+.native-standard.native-standard.native-standard { text-rendering: optimizeLegibility; }
+.native-standard.native-standard.native-standard :where(button,input,select,textarea,summary,a,[role="button"]) { -webkit-tap-highlight-color: transparent; }
+.native-standard.native-standard.native-standard :focus-visible,.native-standard.native-standard.native-standard .seg-btn:focus-visible,.native-standard.native-standard.native-standard .reg-row:focus-visible,.native-standard.native-standard.native-standard .dom-table tr[data-dom]:focus-visible,.native-standard.native-standard.native-standard .tl-hit:focus-visible,.native-standard.native-standard.native-standard .ivs-row[role="button"]:focus-visible { outline-color: var(--focus); }
+.native-standard.native-standard.native-standard :where(button,a) { touch-action: manipulation; }
+.native-standard.native-standard.native-standard .topbar { background: var(--brand-header); }
+.native-standard.native-standard.native-standard .topbar :is(a,button):focus-visible { outline-color: #b6f0da; }
+.native-standard.native-standard.native-standard .top-actions .pop { color: var(--text); }
+.native-standard.native-standard.native-standard .top-actions .pop :is(.pop-item,.pop-head) { text-shadow: none; }
+.native-standard.native-standard.native-standard .nav:hover,.native-standard.native-standard.native-standard .tip-row:hover,.native-standard.native-standard.native-standard .pop-item:hover { background-color: var(--hover); }
+.native-standard.native-standard.native-standard .grad { background: none; color: var(--accent); -webkit-text-fill-color: currentColor; }
+.native-standard.native-standard.native-standard .page-sub.grad { color: var(--muted); }
+.native-standard.native-standard.native-standard .page-head .page-title,.native-standard.native-standard.native-standard .dash-head .page-title { overflow-wrap: anywhere; }
+.native-standard.native-standard.native-standard .page-sub { line-height: 1.5; }
+.native-standard.native-standard.native-standard .callout,.native-standard.native-standard.native-standard .banner,.native-standard.native-standard.native-standard .strip,.native-standard.native-standard.native-standard .bulk-bar,.native-standard.native-standard.native-standard .svc-strip { border-radius: 7px; }
+.native-standard.native-standard.native-standard .kpi-value,.native-standard.native-standard.native-standard .tile-val,.native-standard.native-standard.native-standard .lead-stats dd,.native-standard.native-standard.native-standard .prof-stats b,.native-standard.native-standard.native-standard .kchip b { font-variant-numeric: tabular-nums; letter-spacing: -.045em; }
+.native-standard.native-standard.native-standard .kpi-label,.native-standard.native-standard.native-standard .tile-lbl,.native-standard.native-standard.native-standard .kchip .kl { font-weight: 600; }
+.native-standard.native-standard.native-standard .kpi-btn,.native-standard.native-standard.native-standard .kpi-cell,.native-standard.native-standard.native-standard .kpi-tap { min-width: 0; }
+.native-standard.native-standard.native-standard .stat-btn .stat-go { line-height: 1.35; }
+.native-standard.native-standard.native-standard :is(.modal,.drawer,.palette) .m-title { font-weight: 600; letter-spacing: -.035em; }
+.native-standard.native-standard.native-standard .m-head,.native-standard.native-standard.native-standard .panel-head,.native-standard.native-standard.native-standard .dr-tabs,.native-standard.native-standard.native-standard .page-tabs { border-color: var(--divider); }
+.native-standard.native-standard.native-standard .m-foot,.native-standard.native-standard.native-standard .item-save { background: var(--surface-header); }
+.native-standard.native-standard.native-standard .m-foot .end,.native-standard.native-standard.native-standard .item-save .end,.native-standard.native-standard.native-standard .form .end { flex-wrap: wrap; }
+.native-standard.native-standard.native-standard .drawer>.m-head,.native-standard.native-standard.native-standard .modal>.m-head { background: var(--surface-header); }
+.native-standard.native-standard.native-standard .scrim { backdrop-filter: none; -webkit-backdrop-filter: none; }
+.native-standard.native-standard.native-standard .modal,.native-standard.native-standard.native-standard .pop,.native-standard.native-standard.native-standard .pop-fixed,.native-standard.native-standard.native-standard .palette,.native-standard.native-standard.native-standard .toast,.native-standard.native-standard.native-standard .ob-intro,.native-standard.native-standard.native-standard .ob-win { border-radius: 9px; box-shadow: var(--shadow-pop); }
+.native-standard.native-standard.native-standard .modal { background: var(--surface-solid); }
+.native-standard.native-standard.native-standard .drawer { box-shadow: var(--shadow-pop); }
+.native-standard.native-standard.native-standard .pop-item,.native-standard.native-standard.native-standard .pal-list>button,.native-standard.native-standard.native-standard .prog-tab,.native-standard.native-standard.native-standard .role-ic,.native-standard.native-standard.native-standard .btn-danger,.native-standard.native-standard.native-standard .choice,.native-standard.native-standard.native-standard .dn-row,.native-standard.native-standard.native-standard .tab,.native-standard.native-standard.native-standard .tabs button,.native-standard.native-standard.native-standard .folder,.native-standard.native-standard.native-standard .type-chip,.native-standard.native-standard.native-standard .step { border-radius: var(--control-radius); }
+.native-standard.native-standard.native-standard .callout strong,.native-standard.native-standard.native-standard .panel-title,.native-standard.native-standard.native-standard .g-title,.native-standard.native-standard.native-standard .st,.native-standard.native-standard.native-standard .kv dd,.native-standard.native-standard.native-standard .item-title { text-wrap: pretty; }
+.native-standard.native-standard.native-standard .gt-head,.native-standard.native-standard.native-standard .thead,.native-standard.native-standard.native-standard .mt-head,.native-standard.native-standard.native-standard .grp-head,.native-standard.native-standard.native-standard .cov-head,.native-standard.native-standard.native-standard .svc-head,.native-standard.native-standard.native-standard .ivs-head,.native-standard.native-standard.native-standard .cal-head,.native-standard.native-standard.native-standard .ag-group,.native-standard.native-standard.native-standard .cap-table thead th {
+  background: var(--surface-header); color: var(--label);
+}
+.native-standard.native-standard.native-standard .gt-head,.native-standard.native-standard.native-standard .thead,.native-standard.native-standard.native-standard .mt-head,.native-standard.native-standard.native-standard .ag-group,.native-standard.native-standard.native-standard .cal-head span { letter-spacing: .085em; }
+.native-standard.native-standard.native-standard .gt-row,.native-standard.native-standard.native-standard .reg-row,.native-standard.native-standard.native-standard .cal-cell { font-variant-numeric: tabular-nums; }
+.native-standard.native-standard.native-standard .dr-tabs,.native-standard.native-standard.native-standard .page-tabs { overflow-x: auto; }
+.native-standard.native-standard.native-standard .dr-tabs button,.native-standard.native-standard.native-standard .page-tabs button { flex-shrink: 0; }
+.native-standard.native-standard.native-standard .dr-tabs button[aria-selected="true"]::after,.native-standard.native-standard.native-standard .page-tabs button[aria-selected="true"]::after { background: var(--accent); }
+.native-standard.native-standard.native-standard :is(.field,.select,.input,.ghost):enabled:hover,.native-standard.native-standard.native-standard .field:hover { border-color: var(--input-hover-border); }
+.native-standard.native-standard.native-standard :is(.input,.select):focus,.native-standard.native-standard.native-standard .field:focus-within { border-color: var(--focus); box-shadow: 0 0 0 2px color-mix(in srgb,var(--focus) 15%,transparent); }
+.native-standard.native-standard.native-standard input::placeholder,.native-standard.native-standard.native-standard textarea::placeholder { color: var(--faint); opacity: .9; }
+.native-standard.native-standard.native-standard :is(.input,.select,.field input,textarea.input) { color: var(--input-fg); }
+.native-standard.native-standard.native-standard input[type="checkbox"],.native-standard.native-standard.native-standard input[type="radio"],.native-standard.native-standard.native-standard .g-ack input,.native-standard.native-standard.native-standard .chk input,.native-standard.native-standard.native-standard .sel-cell input,.native-standard.native-standard.native-standard .check input { accent-color: var(--accent); }
+.native-standard.native-standard.native-standard .cta { background: var(--cta); color: var(--cta-fg); box-shadow: none; border: 1px solid transparent; }
+.native-standard.native-standard.native-standard .cta:not(:disabled):hover { background: var(--cta-hover); }
+.native-standard.native-standard.native-standard .ghost:not(:disabled):hover,.native-standard.native-standard.native-standard .choice:not(:disabled):hover { background-color: var(--hover); }
+.native-standard.native-standard.native-standard .ghost[aria-expanded="true"],.native-standard.native-standard.native-standard .pill-btn[aria-pressed="true"] { border-color: var(--border-accent); }
+.native-standard.native-standard.native-standard .btn-danger { background: var(--danger); color: #fff; }
+.native-standard.native-standard.native-standard .btn-danger:not(:disabled):hover { filter: brightness(1.1); }
+.native-standard.native-standard.native-standard .link-btn:not(:disabled):hover { text-underline-offset: 3px; }
+.native-standard.native-standard.native-standard .frow>label,.native-standard.native-standard.native-standard .frow>.lbl { color: var(--muted); font-weight: 600; }
+.native-standard.native-standard.native-standard .help,.native-standard.native-standard.native-standard .err,.native-standard.native-standard.native-standard .kv dd,.native-standard.native-standard.native-standard .code,.native-standard.native-standard.native-standard .mini-table .mt-row { overflow-wrap: anywhere; }
+.native-standard.native-standard.native-standard .help,.native-standard.native-standard.native-standard .text-body,.native-standard.native-standard.native-standard .disc-body,.native-standard.native-standard.native-standard .dlg-list { line-height: 1.55; }
+.native-standard.native-standard.native-standard .st { gap: 5px; }
+.native-standard.native-standard.native-standard .st i { flex-shrink: 0; }
+.native-standard.native-standard.native-standard .mini-chip,.native-standard.native-standard.native-standard .chip,.native-standard.native-standard.native-standard .ref-chip,.native-standard.native-standard.native-standard .scope,.native-standard.native-standard.native-standard .g-reqtag,.native-standard.native-standard.native-standard .cov-pchip,.native-standard.native-standard.native-standard .rec-tag,.native-standard.native-standard.native-standard .onb-lvl { border-radius: 4px; }
+.native-standard.native-standard.native-standard .g-card,.native-standard.native-standard.native-standard .g-box,.native-standard.native-standard.native-standard .g-rows,.native-standard.native-standard.native-standard .g-sugg,.native-standard.native-standard.native-standard .acc,.native-standard.native-standard.native-standard .ov-card,.native-standard.native-standard.native-standard .card,.native-standard.native-standard.native-standard .sec-card,.native-standard.native-standard.native-standard .role-card,.native-standard.native-standard.native-standard .rep-card,.native-standard.native-standard.native-standard .pf-card,.native-standard.native-standard.native-standard .onb-prog,.native-standard.native-standard.native-standard .onb-pol,.native-standard.native-standard.native-standard .onb-steps,.native-standard.native-standard.native-standard .onb-rail,.native-standard.native-standard.native-standard .onb-ai,.native-standard.native-standard.native-standard .look-row,.native-standard.native-standard.native-standard .svc-card,.native-standard.native-standard.native-standard .tc-card {
+  border-radius: var(--card-radius);
+}
+.native-standard.native-standard.native-standard .g-card { background: var(--surface-header); }
+.native-standard.native-standard.native-standard .g-bar span,.native-standard.native-standard.native-standard .tog[aria-checked="true"],.native-standard.native-standard.native-standard .onb-step.on .onb-n,.native-standard.native-standard.native-standard .cal-cell.today .cal-day,.native-standard.native-standard.native-standard .ob-launch { background: var(--cta); color: var(--cta-fg); }
+.native-standard.native-standard.native-standard .tog[aria-checked="true"] span { background: var(--cta-fg); }
+.native-standard.native-standard.native-standard .onb-step.on { box-shadow: inset 0 -2px 0 var(--accent); }
+.native-standard.native-standard.native-standard .onb-step.done .onb-n,.native-standard.native-standard.native-standard .banner.ok { background: var(--ok-bg); border-color: var(--ok-bd); }
+.native-standard.native-standard.native-standard .req-trig mark,.native-standard.native-standard.native-standard .g-box mark { color: var(--selected-fg); background: var(--accent-strong); }
+.native-standard.native-standard.native-standard .just-applied { box-shadow: 0 0 0 3px color-mix(in srgb,var(--accent) 14%,transparent); }
+.native-standard.native-standard.native-standard .req-official { border-left-color: var(--accent); }
+.native-standard.native-standard.native-standard .cal-head { border-bottom-color: var(--border); }
+.native-standard.native-standard.native-standard .cal-cell.sel { box-shadow: inset 0 0 0 1px var(--border-accent); }
+.native-standard.native-standard.native-standard .cal-day,.native-standard.native-standard.native-standard .ev { border-radius: 4px; }
+.native-standard.native-standard.native-standard .ev { line-height: 1.35; }
+.native-standard.native-standard.native-standard .ev:not(.over):hover { border-color: var(--border-accent); }
+.native-standard.native-standard.native-standard .ev.over:hover { border-left-color: var(--alert); }
+.native-standard.native-standard.native-standard .ev.done { opacity: .76; }
+.native-standard.native-standard.native-standard .choice[aria-checked="true"],.native-standard.native-standard.native-standard .tile-btn[aria-pressed="true"],.native-standard.native-standard.native-standard .folder[aria-pressed="true"] { box-shadow: inset 0 0 0 1px var(--border-accent); }
+.native-standard.native-standard.native-standard .ptile { border-radius: 6px; font-variant-numeric: tabular-nums; }
+.native-standard.native-standard.native-standard .ptile-ai { border-radius: 3px; }
+.native-standard.native-standard.native-standard .rp-page { background: var(--surface-solid); color: var(--text); border: 1px solid var(--border); border-radius: 8px; box-shadow: var(--shadow); }
+.native-standard.native-standard.native-standard .rp-head { border-color: var(--border-accent); }
+.native-standard.native-standard.native-standard .rp-kicker,.native-standard.native-standard.native-standard .rp-page h3 { color: var(--accent); }
+.native-standard.native-standard.native-standard .rp-kicker { letter-spacing: .10em; }
+.native-standard.native-standard.native-standard .rp-title,.native-standard.native-standard.native-standard .rp-stats b { color: var(--text); letter-spacing: -.035em; }
+.native-standard.native-standard.native-standard .rp-page .sub,.native-standard.native-standard.native-standard .rp-stats span,.native-standard.native-standard.native-standard .rp-stats em,.native-standard.native-standard.native-standard .rp-foot { color: var(--faint); }
+.native-standard.native-standard.native-standard .rp-foot,.native-standard.native-standard.native-standard .rp-stats>div,.native-standard.native-standard.native-standard .rp-table td { border-color: var(--divider); }
+.native-standard.native-standard.native-standard .rp-stats>div { border-radius: 6px; }
+.native-standard.native-standard.native-standard .rp-table th,.native-standard.native-standard.native-standard .rp-page .callout { background: var(--surface-header); color: var(--muted); border-color: var(--divider); }
+.native-standard.native-standard.native-standard .rp-page .ref-chip { color: var(--chip-fg); background: var(--accent-soft); border-color: var(--chip-bd); }
+.native-standard.native-standard.native-standard .rp-badge { color: var(--warn); background: var(--warn-bg); border-color: var(--warn-bd); }
+.native-standard.native-standard.native-standard #login-ov { background: var(--bg); color: var(--text); }
+.native-standard.native-standard.native-standard .lg-brand svg { stroke: var(--accent); }
+.native-standard.native-standard.native-standard .lg-h { color: var(--text); font-size: clamp(36px,5vw,65px); font-weight: 600; letter-spacing: -.055em; }
+.native-standard.native-standard.native-standard .lg-h .grad { color: var(--accent); }
+.native-standard.native-standard.native-standard .lg-p,.native-standard.native-standard.native-standard .lg-panel label { color: var(--muted); }
+.native-standard.native-standard.native-standard .lg-panel { background: var(--surface-solid); border: 1px solid var(--border); border-top: 3px solid var(--accent); border-radius: 9px; box-shadow: var(--shadow); }
+.native-standard.native-standard.native-standard .lg-panel .input { background: var(--input); color: var(--input-fg); border-color: var(--input-bd); }
+.native-standard.native-standard.native-standard .lg-or { color: var(--faint); }
+.native-standard.native-standard.native-standard .lg-or::before,.native-standard.native-standard.native-standard .lg-or::after { background: var(--divider); }
+/* Solid treatments in the first concept now follow the night palette. */
+:is(html[data-native-standard="dark"], .native-standard.native-standard.native-standard[data-theme="dark"], html[data-native-standard="dark"] .portfolio-reference.portfolio-reference[data-theme="dark"]) .demo-strip { background: var(--well); border-color: var(--well-border); }
+:is(html[data-native-standard="dark"], .native-standard.native-standard.native-standard[data-theme="dark"], html[data-native-standard="dark"] .portfolio-reference.portfolio-reference[data-theme="dark"]) .side { border-right-color: var(--divider); }
+:is(html[data-native-standard="dark"], .native-standard.native-standard.native-standard[data-theme="dark"], html[data-native-standard="dark"] .portfolio-reference.portfolio-reference[data-theme="dark"]) .nav { color: var(--muted); }
+:is(html[data-native-standard="dark"], .native-standard.native-standard.native-standard[data-theme="dark"], html[data-native-standard="dark"] .portfolio-reference.portfolio-reference[data-theme="dark"]) .nav svg { color: var(--faint); }
+:is(html[data-native-standard="dark"], .native-standard.native-standard.native-standard[data-theme="dark"], html[data-native-standard="dark"] .portfolio-reference.portfolio-reference[data-theme="dark"]) .nav[aria-current="page"] { background: var(--selected); color: var(--selected-fg); box-shadow: inset 3px 0 0 var(--accent); }
+:is(html[data-native-standard="dark"], .native-standard.native-standard.native-standard[data-theme="dark"], html[data-native-standard="dark"] .portfolio-reference.portfolio-reference[data-theme="dark"]) .nav[aria-current="page"] svg { color: var(--accent); }
+:is(html[data-native-standard="dark"], .native-standard.native-standard.native-standard[data-theme="dark"], html[data-native-standard="dark"] .portfolio-reference.portfolio-reference[data-theme="dark"]) .ws-card { background: var(--surface-2); border-color: var(--border); }
+:is(html[data-native-standard="dark"], .native-standard.native-standard.native-standard[data-theme="dark"], html[data-native-standard="dark"] .portfolio-reference.portfolio-reference[data-theme="dark"]) :is(.side .ws-card,.dash-head)>.tile { background: var(--accent-strong) !important; color: var(--selected-fg); border-color: var(--border-accent); }
+:is(html[data-native-standard="dark"], .native-standard.native-standard.native-standard[data-theme="dark"], html[data-native-standard="dark"] .portfolio-reference.portfolio-reference[data-theme="dark"]) :is(.eyebrow,.link-btn) { color: var(--accent); }
+:is(html[data-native-standard="dark"], .native-standard.native-standard.native-standard[data-theme="dark"], html[data-native-standard="dark"] .portfolio-reference.portfolio-reference[data-theme="dark"]) :is(.page-sub,.page-sub.grad) { color: var(--muted); }
+:is(html[data-native-standard="dark"], .native-standard.native-standard.native-standard[data-theme="dark"], html[data-native-standard="dark"] .portfolio-reference.portfolio-reference[data-theme="dark"]) .seg { background: var(--input); border-color: var(--border); }
+:is(html[data-native-standard="dark"], .native-standard.native-standard.native-standard[data-theme="dark"], html[data-native-standard="dark"] .portfolio-reference.portfolio-reference[data-theme="dark"]) .seg button[aria-checked="true"] { color: var(--selected-fg); background: var(--selected); box-shadow: inset 0 0 0 1px var(--chip-bd); }
+:is(html[data-native-standard="dark"], .native-standard.native-standard.native-standard[data-theme="dark"], html[data-native-standard="dark"] .portfolio-reference.portfolio-reference[data-theme="dark"]) #v-client>.panel:has(.status-card) { border-color: var(--border-accent) !important; }
+:is(html[data-native-standard="dark"], .native-standard.native-standard.native-standard[data-theme="dark"], html[data-native-standard="dark"] .portfolio-reference.portfolio-reference[data-theme="dark"]) #v-client>.panel:has(.status-card)>.panel-head { background: var(--well); border-color: var(--well-border); }
+:is(html[data-native-standard="dark"], .native-standard.native-standard.native-standard[data-theme="dark"], html[data-native-standard="dark"] .portfolio-reference.portfolio-reference[data-theme="dark"]) #v-client>.panel:has(.status-card)>.note,:is(html[data-native-standard="dark"], .native-standard.native-standard.native-standard[data-theme="dark"], html[data-native-standard="dark"] .portfolio-reference.portfolio-reference[data-theme="dark"]) :is(.note,.gt-foot,.side-card .mini) { background: var(--surface-header); }
+:is(html[data-native-standard="dark"], .native-standard.native-standard.native-standard[data-theme="dark"], html[data-native-standard="dark"] .portfolio-reference.portfolio-reference[data-theme="dark"]) .status-card>div:first-child,:is(html[data-native-standard="dark"], .native-standard.native-standard.native-standard[data-theme="dark"], html[data-native-standard="dark"] .portfolio-reference.portfolio-reference[data-theme="dark"]) .side-card .mini+.mini { border-color: var(--well-border); }
+:is(html[data-native-standard="dark"], .native-standard.native-standard.native-standard[data-theme="dark"], html[data-native-standard="dark"] .portfolio-reference.portfolio-reference[data-theme="dark"]) .status-card>div:first-child>.sub:first-child { color: var(--muted); }
+:is(html[data-native-standard="dark"], .native-standard.native-standard.native-standard[data-theme="dark"], html[data-native-standard="dark"] .portfolio-reference.portfolio-reference[data-theme="dark"]) .impl-big { color: var(--accent); }
+:is(html[data-native-standard="dark"], .native-standard.native-standard.native-standard[data-theme="dark"], html[data-native-standard="dark"] .portfolio-reference.portfolio-reference[data-theme="dark"]) .impl-big small { color: var(--muted); }
+:is(html[data-native-standard="dark"], .native-standard.native-standard.native-standard[data-theme="dark"], html[data-native-standard="dark"] .portfolio-reference.portfolio-reference[data-theme="dark"]) .stat4 .val { color: var(--text); }
+:is(html[data-native-standard="dark"], .native-standard.native-standard.native-standard[data-theme="dark"], html[data-native-standard="dark"] .portfolio-reference.portfolio-reference[data-theme="dark"]) :is(.gt-head,.reg-head,.dom-table th) { background: var(--surface-header); color: var(--label); }
+:is(html[data-native-standard="dark"], .native-standard.native-standard.native-standard[data-theme="dark"], html[data-native-standard="dark"] .portfolio-reference.portfolio-reference[data-theme="dark"]) .rm div.rm-cell { color: var(--muted); }
+:is(html[data-native-standard="dark"], .native-standard.native-standard.native-standard[data-theme="dark"], html[data-native-standard="dark"] .portfolio-reference.portfolio-reference[data-theme="dark"]) .btn-danger { border: 1px solid #bf6e68; }
+@media (max-width:900px) {
+ .native-standard.native-standard.native-standard .topbar { min-height: 58px; height: auto; padding-block: 7px; }
+ .native-standard.native-standard.native-standard .brand { min-width: 0; }
+ .native-standard.native-standard.native-standard .page-head,.native-standard.native-standard.native-standard .dash-head { gap: 10px 14px; }
+ .native-standard.native-standard.native-standard .role-grid,.native-standard.native-standard.native-standard .rep-grid,.native-standard.native-standard.native-standard .prof-grid { grid-template-columns: repeat(auto-fit,minmax(min(100%,275px),1fr)); }
+ .native-standard.native-standard.native-standard .page-tabs { gap: 2px; }
+ .native-standard.native-standard.native-standard .dash-head .page-title,.native-standard.native-standard.native-standard .page-head .page-title { font-size: 32px; }
+ .native-standard.native-standard.native-standard .panel-head,.native-standard.native-standard.native-standard .coll-btn { padding: 14px 16px; }
+ .native-standard.native-standard.native-standard .kpi-cell,.native-standard.native-standard.native-standard .kpi-btn,.native-standard.native-standard.native-standard .kpi-tap { padding: 16px; }
+ .native-standard.native-standard.native-standard .toolbar { gap: 8px; padding: 12px 15px; }
+}
+@media (max-width:600px) {
+ .native-standard.native-standard.native-standard .main { padding: 18px 12px 36px; }
+ .native-standard.native-standard.native-standard .wrap { gap: 12px; }
+ .native-standard.native-standard.native-standard .dash-head .page-title,.native-standard.native-standard.native-standard .page-head .page-title { font-size: 29px; }
+ .native-standard.native-standard.native-standard .page-sub { font-size: 13px; }
+ .native-standard.native-standard.native-standard .dash-head>.tile { width: 44px !important; height: 44px !important; }
+ .native-standard.native-standard.native-standard .dash-head>div:first-of-type { flex-basis: 185px !important; }
+ .native-standard.native-standard.native-standard .dash-head,.native-standard.native-standard.native-standard .page-head { align-items: flex-start; }
+ .native-standard.native-standard.native-standard .dash-head>div:last-child,.native-standard.native-standard.native-standard .page-head>div:last-child { max-width: 100%; }
+ .native-standard.native-standard.native-standard .item-head { gap: 10px; }
+ .native-standard.native-standard.native-standard .item-id { min-width: 47px; height: 47px; font-size: 14px; }
+ .native-standard.native-standard.native-standard .help,.native-standard.native-standard.native-standard .empty { font-size: 12px; }
+ .native-standard.native-standard.native-standard .card,.native-standard.native-standard.native-standard .m-head,.native-standard.native-standard.native-standard .m-body,.native-standard.native-standard.native-standard .m-foot,.native-standard.native-standard.native-standard .item-save,.native-standard.native-standard.native-standard .panel-head { padding-left: 14px; padding-right: 14px; }
+ .native-standard.native-standard.native-standard .m-foot .end,.native-standard.native-standard.native-standard .item-save .end { margin-left: 0; }
+ .native-standard.native-standard.native-standard .kv { grid-template-columns: minmax(82px,32%) minmax(0,1fr); gap: 0 8px; }
+ .native-standard.native-standard.native-standard .lg-wrap { padding: 20px 16px; }
+ .native-standard.native-standard.native-standard .lg-grid { gap: 24px; }
+ .native-standard.native-standard.native-standard .lg-panel { padding: 20px; }
+ .native-standard.native-standard.native-standard .rp-page { padding: 18px 14px; }
+ .native-standard.native-standard.native-standard .rp-head { gap: 10px; flex-wrap: wrap; }
+ .native-standard.native-standard.native-standard .rp-stats { grid-template-columns: repeat(2,minmax(0,1fr)); }
+ .native-standard.native-standard.native-standard .rp-table { overflow-wrap: anywhere; }
+ .native-standard.native-standard.native-standard .choice,.native-standard.native-standard.native-standard .step { white-space: normal; }
+}
+@media print {
+ .native-standard.native-standard.native-standard .rp-page { --surface-solid: white; --text: #123438; --muted: #35565a; --faint: #50696c; --accent: #116661; --divider: #dbe6e3; --border: #cddcda; --border-accent: #a9c8c1; --surface-header: #f0f6f3; color-scheme: light; box-shadow: none; }
+}
+/* The history summary shares the typography and separators of the record panels. */
+:is(html[data-native-standard="dark"], .native-standard.native-standard.native-standard[data-theme="dark"], html[data-native-standard="dark"] .portfolio-reference.portfolio-reference[data-theme="dark"]) .nh-panel :is(.nh-chevron,.nh-context,.nh-key) { color: var(--muted); }
+:is(html[data-native-standard="dark"], .native-standard.native-standard.native-standard[data-theme="dark"], html[data-native-standard="dark"] .portfolio-reference.portfolio-reference[data-theme="dark"]) .nh-panel :is(.nh-label,.nh-assumption,.nh-foot) { color: var(--faint); }
+:is(html[data-native-standard="dark"], .native-standard.native-standard.native-standard[data-theme="dark"], html[data-native-standard="dark"] .portfolio-reference.portfolio-reference[data-theme="dark"]) .nh-panel .nh-value { color: var(--pos); }
+:is(html[data-native-standard="dark"], .native-standard.native-standard.native-standard[data-theme="dark"], html[data-native-standard="dark"] .portfolio-reference.portfolio-reference[data-theme="dark"]) .nh-panel .nh-date { color: var(--text); }
+:is(html[data-native-standard="dark"], .native-standard.native-standard.native-standard[data-theme="dark"], html[data-native-standard="dark"] .portfolio-reference.portfolio-reference[data-theme="dark"]) .nh-panel :is(#hist-body,.nh-estimate,.nh-foot,.nh-foot-date) { border-color: var(--divider); }
+:is(html[data-native-standard="dark"], .native-standard.native-standard.native-standard[data-theme="dark"], html[data-native-standard="dark"] .portfolio-reference.portfolio-reference[data-theme="dark"]) .nh-panel .nh-toggle:hover .nh-chevron { background: var(--hover); }
+:is(html[data-native-standard="dark"], .native-standard.native-standard.native-standard[data-theme="dark"], html[data-native-standard="dark"] .portfolio-reference.portfolio-reference[data-theme="dark"]) .nh-panel .nh-key i { background: var(--spark); }
+:is(html[data-native-standard="dark"], .native-standard.native-standard.native-standard[data-theme="dark"], html[data-native-standard="dark"] .portfolio-reference.portfolio-reference[data-theme="dark"]) .nh-panel .nh-key i::before { border-color: var(--spark); background: var(--surface-solid); }
+.native-standard.native-standard.native-standard .prof-top .leg-track>span[style*="linear-gradient"],.native-standard.native-standard.native-standard .pfs-meter .leg-track>span[style*="linear-gradient"] { background: var(--cta) !important; }
+/* The portfolio uses the same Nordic materials and interaction states as client pages. */
+.native-standard.native-standard.native-standard #v-portfolio .page-head{padding:5px 0 7px}
+.native-standard.native-standard.native-standard #v-portfolio .toolbar{background:var(--surface-solid);padding:15px 18px}
+.native-standard.native-standard.native-standard #v-portfolio .pf-kstrip{background:var(--surface-2);border-block:1px solid var(--divider)}
+.native-standard.native-standard.native-standard #v-portfolio .thead{background:var(--surface-solid);font-size:10px;letter-spacing:.09em}
+.native-standard.native-standard.native-standard #v-portfolio .trow{padding:17px 24px;background:var(--surface-solid);transition:background .12s}
+.native-standard.native-standard.native-standard #v-portfolio .trow:focus-within,.native-standard.native-standard.native-standard #v-portfolio .trow:hover{background:var(--hover)}
+.native-standard.native-standard.native-standard #v-portfolio .trow:focus-within .chev,.native-standard.native-standard.native-standard #v-portfolio .trow:hover .chev{background:var(--accent-soft);color:var(--accent)}
+.native-standard.native-standard.native-standard #v-portfolio .trow .client-name{font-size:15px;line-height:1.4;color:var(--text)}
+.native-standard.native-standard.native-standard #v-portfolio .trow .tile,.native-standard.native-standard.native-standard #side-global .tile,.native-standard.native-standard.native-standard #modal .tile,.native-standard.native-standard.native-standard #pop-ws .tile{box-shadow:none;border-radius:7px!important}
+.native-standard.native-standard.native-standard #v-portfolio .prog{border-radius:6px;padding-block:6px}
+.native-standard.native-standard.native-standard #v-portfolio .prog-open{opacity:1;color:var(--accent);font-size:11px;font-weight:600}
+.native-standard.native-standard.native-standard #v-portfolio .prog-pct{font-variant-numeric:tabular-nums}
+.native-standard.native-standard.native-standard #v-portfolio .prog-open svg{width:12px;height:12px}
+.native-standard.native-standard.native-standard #v-portfolio .bar,.native-standard.native-standard.native-standard #v-portfolio .bar span{border-radius:2px}
+.native-standard.native-standard.native-standard #v-portfolio .lead-card{border-radius:8px;background:var(--surface-solid)}
+.native-standard.native-standard.native-standard #v-portfolio .trow .badge-n,.native-standard.native-standard.native-standard #v-portfolio .trow .cov-pchip{font-weight:550}
+.native-standard.native-standard.native-standard #modal{border-radius:12px;border-color:var(--border);background:var(--surface-solid)}
+.native-standard.native-standard.native-standard #modal .m-head{background:var(--surface-solid);padding:17px 22px}
+.native-standard.native-standard.native-standard #modal .m-title{font-size:24px;letter-spacing:-.04em;font-weight:650}
+.native-standard.native-standard.native-standard #modal .m-body{scrollbar-gutter:stable;padding:18px 22px;gap:14px;background:var(--bg)}
+.native-standard.native-standard.native-standard #modal .m-foot{padding:10px 22px}
+.native-standard.native-standard.native-standard #modal .acc,.native-standard.native-standard.native-standard #modal .card,.native-standard.native-standard.native-standard #modal .impl,.native-standard.native-standard.native-standard #modal .tile-btn{border-radius:7px;background:var(--surface-solid)}
+.native-standard.native-standard.native-standard #modal .acc-row{gap:12px}
+.native-standard.native-standard.native-standard #modal .acc-btn{padding:11px 15px;min-height:44px}
+.native-standard.native-standard.native-standard #modal .acc-list{background:var(--surface-solid);max-height:250px}
+.native-standard.native-standard.native-standard #modal .acc-btn:hover,.native-standard.native-standard.native-standard #modal .item:hover{background:var(--hover)}
+.native-standard.native-standard.native-standard #modal .prog-tabs{margin:2px 0 -4px}
+.native-standard.native-standard.native-standard #modal .prog-tab{min-height:26px;border-radius:4px}
+.native-standard.native-standard.native-standard #modal .prog-tab:hover{background:var(--accent-strong)}
+.native-standard.native-standard.native-standard #modal .impl{padding:19px 21px}
+.native-standard.native-standard.native-standard #modal .impl-big{font-size:48px;letter-spacing:-.055em;font-weight:600}
+.native-standard.native-standard.native-standard #modal .tile-btn{padding:12px 14px}
+.native-standard.native-standard.native-standard #modal .tile-btn[aria-pressed=true]{background:var(--accent-soft);box-shadow:inset 0 0 0 1px var(--accent)}
+.native-standard.native-standard.native-standard #modal .est{border-left:3px solid var(--accent)}
+.native-standard.native-standard.native-standard #modal .chart-card{border-radius:6px}
+.native-standard.native-standard.native-standard .nportfolio-result{display:flex;flex-flow:column;align-items:flex-start;justify-content:center;gap:2px;text-align:left;padding:8px 12px;line-height:1.35;white-space:normal}
+.native-standard.native-standard.native-standard .nportfolio-result small{color:var(--faint);font-size:11.5px}
+.native-standard.native-standard.native-standard #login-ov{background:var(--bg);color:var(--text)}
+.native-standard.native-standard.native-standard #login-ov .lg-brand svg{stroke:var(--accent)}
+.native-standard.native-standard.native-standard #login-ov .lg-p,.native-standard.native-standard.native-standard #login-ov .lg-panel label{color:var(--muted)}
+.native-standard.native-standard.native-standard #login-ov .lg-panel{background:var(--surface-solid);border:1px solid var(--border);box-shadow:var(--shadow-pop);border-radius:10px}
+.native-standard.native-standard.native-standard #login-ov .lg-panel .input{background:var(--surface-2);border-color:var(--border);color:var(--muted)}
+.native-standard.native-standard.native-standard #login-ov .lg-h .grad{color:var(--accent);background:none}
+.native-standard.native-standard.native-standard #login-ov .lg-or{color:var(--faint)}
+.native-standard.native-standard.native-standard #login-ov .lg-or:before,.native-standard.native-standard.native-standard #login-ov .lg-or:after{background:var(--divider)}
+.native-standard.native-standard.native-standard #login-ov .lg-ms-account{padding:12px;margin-top:7px;display:grid;gap:7px;background:var(--surface-2);border:1px solid var(--border);border-radius:6px}
+.native-standard.native-standard.native-standard #login-ov .lg-ms-account button{line-height:1.4;white-space:normal}
+@media(max-width:750px){
+ .native-standard.native-standard.native-standard #v-portfolio .toolbar{padding:12px}
+ .native-standard.native-standard.native-standard #view-clients>div{min-width:0!important}
+ .native-standard.native-standard.native-standard #v-portfolio .thead{display:none}
+ .native-standard.native-standard.native-standard #v-portfolio .trow{grid-template-columns:minmax(0,1fr) auto;grid-template-areas:"client arrow" "prog prog" "lead lead";gap:12px;padding:15px}
+ .native-standard.native-standard.native-standard #v-portfolio .client{grid-area:client}
+ .native-standard.native-standard.native-standard #v-portfolio .prog,.native-standard.native-standard.native-standard #v-portfolio .no-prog{grid-area:prog;margin:0;padding:8px;border:1px solid var(--divider)}
+ .native-standard.native-standard.native-standard #v-portfolio .lead{grid-area:lead}
+ .native-standard.native-standard.native-standard #v-portfolio .lead:before{content:"GRC lead";font-size:11px;color:var(--faint)}
+ .native-standard.native-standard.native-standard #v-portfolio .chev{grid-area:arrow}
+ .native-standard.native-standard.native-standard #v-portfolio .trow .lead .av{width:22px;height:22px;font-size:9px}
+ .native-standard.native-standard.native-standard #v-portfolio .prog-open{font-size:10.5px}
+ .native-standard.native-standard.native-standard #modal .m-head,.native-standard.native-standard.native-standard #modal .m-body{padding:12px}
+ .native-standard.native-standard.native-standard #modal .acc-row,.native-standard.native-standard.native-standard #modal .impl,.native-standard.native-standard.native-standard #modal .est{grid-template-columns:1fr}
+ .native-standard.native-standard.native-standard #modal .tiles{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .native-standard.native-standard.native-standard #modal .item{grid-template-columns:minmax(0,1fr) max-content 24px;gap:5px;padding:9px}
+ .native-standard.native-standard.native-standard #modal .leg-row{grid-template-columns:minmax(95px,1fr) minmax(40px,.5fr) auto;gap:6px}
+ .native-standard.native-standard.native-standard #modal .tile-btn{padding:9px 12px}
+}
+.native-standard.native-standard.native-standard #kpis .kchip[aria-pressed=true]{background:var(--accent-soft);box-shadow:inset 0 -2px var(--accent);color:var(--accent)}
+.native-standard.native-standard.native-standard #kpis button.kchip{cursor:pointer}
+.native-standard.native-standard.native-standard #shown [data-action=nportfolio-clear-metric]{margin-left:8px;min-height:26px;font-size:12px}
+.native-standard.native-standard.native-standard #page-sub .nportfolio-total{font:inherit;color:inherit;border-bottom:1px dotted var(--border-accent)}
+.native-standard.native-standard.native-standard #page-sub .nportfolio-total:hover,.native-standard.native-standard.native-standard #page-sub .nportfolio-total[aria-pressed=true]{color:var(--accent);border-color:var(--accent)}
+@media print {
+  @page { margin: 14mm; }
+  .native-standard.native-standard.native-standard:has(#dlg-scrim:not([hidden]) .rp-page) { background: white !important; color: #172a31; height: auto; overflow: visible !important; }
+  .native-standard.native-standard.native-standard:has(#dlg-scrim:not([hidden]) .rp-page) > :not(#dlg-scrim) { display: none !important; }
+  .native-standard.native-standard.native-standard #dlg-scrim:has(.rp-page),.native-standard.native-standard.native-standard #dlg:has(.rp-page),.native-standard.native-standard.native-standard #dlg:has(.rp-page) .m-body { display: block !important; position: static !important; width: auto !important; height: auto !important; max-height: none !important; overflow: visible !important; padding: 0 !important; margin: 0 !important; border: 0 !important; box-shadow: none !important; background: white !important; }
+  .native-standard.native-standard.native-standard #dlg:has(.rp-page) > .m-head,.native-standard.native-standard.native-standard #dlg:has(.rp-page) > .m-foot { display: none !important; }
+  .native-standard.native-standard.native-standard #dlg .rp-page { color: #182c31; width: auto; max-width: none; background: white; border: none; padding: 0; }
+  .native-standard.native-standard.native-standard #dlg .rp-page tr { break-inside: avoid; }
+  .native-standard.native-standard.native-standard #dlg .rp-page thead { display: table-header-group; }
+  .native-standard.native-standard.native-standard #dlg .rp-head,.native-standard.native-standard.native-standard #dlg .rp-page h3 { break-after: avoid; }
+}
+:is(html[data-native-standard], .native-standard.native-standard.native-standard) { --nh-dim:var(--faint); --nh-ink:#154d49; --nh-line:#08786e; --nh-grid:#cbdad7; }
+:is(html[data-native-standard="dark"], .native-standard.native-standard.native-standard[data-theme="dark"], html[data-native-standard="dark"] .portfolio-reference.portfolio-reference[data-theme="dark"]) { --nh-ink:#b3eadc; --nh-line:#69c8b5; --nh-grid:#38504d; }
+.native-standard.native-standard.native-standard .nh-overview-chart .nh-plot { position:relative; min-width:0; }
+.native-standard.native-standard.native-standard .nh-overview-chart .nh-svg { display:block; max-width:100%; width:100%; font-family:var(--font); font-variant-numeric:tabular-nums; }
+.native-standard.native-standard.native-standard .nh-overview-chart .nh-tip { max-width:calc(100% - 8px); box-sizing:border-box; }
+.native-standard.native-standard.native-standard .nh-overview-chart+.chart-legend { margin-top:9px; }
+.native-standard.native-standard.native-standard .nh-panel .nh-plot [data-position]:focus-visible,.native-standard.native-standard.native-standard .nh-overview-chart [data-position]:focus-visible { outline:2px solid var(--accent); outline-offset:3px; }
+:is(html[data-native-standard="dark"], .native-standard.native-standard.native-standard[data-theme="dark"], html[data-native-standard="dark"] .portfolio-reference.portfolio-reference[data-theme="dark"]) .nh-panel :is(.nh-label,.nh-assumption,.nh-demo,.nh-foot,.nh-chevron){color:var(--faint)}
+:is(html[data-native-standard="dark"], .native-standard.native-standard.native-standard[data-theme="dark"], html[data-native-standard="dark"] .portfolio-reference.portfolio-reference[data-theme="dark"]) .nh-panel :is(.nh-context,.nh-date,.nh-key) {color:var(--text)}
+:is(html[data-native-standard="dark"], .native-standard.native-standard.native-standard[data-theme="dark"], html[data-native-standard="dark"] .portfolio-reference.portfolio-reference[data-theme="dark"]) .nh-panel .nh-value {color:var(--nh-line)}
+:is(html[data-native-standard="dark"], .native-standard.native-standard.native-standard[data-theme="dark"], html[data-native-standard="dark"] .portfolio-reference.portfolio-reference[data-theme="dark"]) .nh-panel :is(#hist-body,.nh-estimate,.nh-foot,.nh-foot-date) {border-color:var(--divider)}
+:is(html[data-native-standard="dark"], .native-standard.native-standard.native-standard[data-theme="dark"], html[data-native-standard="dark"] .portfolio-reference.portfolio-reference[data-theme="dark"]) .nh-panel .nh-key i {background:var(--nh-line)}
+:is(html[data-native-standard="dark"], .native-standard.native-standard.native-standard[data-theme="dark"], html[data-native-standard="dark"] .portfolio-reference.portfolio-reference[data-theme="dark"]) .nh-panel .nh-key i:before {border-color:var(--nh-line);background:var(--surface-solid)}
+:is(html[data-native-standard="dark"], .native-standard.native-standard.native-standard[data-theme="dark"], html[data-native-standard="dark"] .portfolio-reference.portfolio-reference[data-theme="dark"]) .nh-panel .nh-toggle:hover .nh-chevron {background:var(--hover)}
+/* Domain implementation profile */
+.native-standard.native-standard.native-standard .np-domain {
+  --np-ink: #214642;
+  --np-dim: #526c68;
+  --np-line: #157b70;
+  --np-wash: #eaf4f0;
+  --np-grid: #c6d9d3;
+  --np-axes: #d8e5df;
+  --np-surface: #fff;
+  --np-row: #edf5f1;
+  container: domain-card / inline-size;
+  min-width: 0;
+}
+:is(html[data-native-standard="dark"], .native-standard.native-standard.native-standard[data-theme="dark"], html[data-native-standard="dark"] .portfolio-reference.portfolio-reference[data-theme="dark"]) .np-domain {
+  --np-ink: #daeee8;
+  --np-dim: #b1c6bf;
+  --np-line: #6bd3bb;
+  --np-wash: #203c36;
+  --np-grid: #46655d;
+  --np-axes: #344f48;
+  --np-surface: #152921;
+  --np-row: #243f37;
+}
+.native-standard.native-standard.native-standard .np-domain .np-layout {
+  display:grid; grid-template-columns:minmax(0,1.16fr) minmax(0,1fr);
+  gap:12px; align-items:center; padding:14px 18px 8px;
+}
+.native-standard.native-standard.native-standard .np-domain .np-figure { container: domain-plot / inline-size; min-width:0; }
+.native-standard.native-standard.native-standard .np-domain .radar-wrap {position:relative; }
+.native-standard.native-standard.native-standard .np-domain .radar-wrap svg { display:block; width:100%; height:auto; font:normal 13px var(--font); }
+.native-standard.native-standard.native-standard .np-domain .radar-wrap .np-compact { display:none; }
+.native-standard.native-standard.native-standard .np-domain .np-ring { fill:none; stroke:var(--np-grid); stroke-width:1; }
+.native-standard.native-standard.native-standard .np-domain .np-spoke { stroke:var(--np-axes); stroke-width:1; }
+.native-standard.native-standard.native-standard .np-domain .np-shape { fill:var(--np-line); fill-opacity:.12; stroke:var(--np-line); stroke-width:2.3; stroke-linejoin:round; }
+.native-standard.native-standard.native-standard .np-domain .np-scale { fill:var(--np-dim); font-size:10px; font-weight:500; paint-order:stroke; stroke:var(--np-surface); stroke-width:2.4; }
+.native-standard.native-standard.native-standard .np-domain .np-node { cursor:pointer; outline:0; }
+.native-standard.native-standard.native-standard .np-domain .np-name { font-size:12.8px; font-weight:540; fill:var(--np-ink); }
+.native-standard.native-standard.native-standard .np-domain .np-chart-rate { fill:var(--np-line); font-size:12px; font-weight:680; }
+.native-standard.native-standard.native-standard .np-domain .np-leader { stroke:var(--np-grid); stroke-width:1; fill:none; }
+.native-standard.native-standard.native-standard .np-domain .np-dot { fill:var(--np-surface); stroke:var(--np-line); stroke-width:1.8; }
+.native-standard.native-standard.native-standard .np-domain .np-focus { fill:var(--np-wash); stroke:var(--np-line); stroke-width:1; opacity:0; }
+.native-standard.native-standard.native-standard .np-domain .np-hit { fill:transparent; }
+.native-standard.native-standard.native-standard .np-domain .np-node:is(:focus-visible,.on) .np-focus { opacity:1; }
+.native-standard.native-standard.native-standard .np-domain .np-node:is(:focus-visible,.on) .np-dot { fill:var(--np-line); }
+.native-standard.native-standard.native-standard .np-domain .np-node:is(:focus-visible,.on) .np-name,.native-standard.native-standard.native-standard .np-domain .np-node:is(:focus-visible,.on) .np-chart-rate { fill:var(--np-line); }
+.native-standard.native-standard.native-standard .np-domain .np-node:is(:focus-visible,.on) .np-leader { stroke:var(--np-line); }
+.native-standard.native-standard.native-standard .np-domain .np-index { fill:var(--np-row); stroke:var(--np-grid); stroke-width:.8; }
+.native-standard.native-standard.native-standard .np-domain .np-index-no { font-size:11px; font-weight:650; fill:var(--np-ink); }
+.native-standard.native-standard.native-standard .np-domain .np-node:is(:focus-visible,.on) .np-index { stroke:var(--np-line); stroke-width:2; }
+.native-standard.native-standard.native-standard .np-domain .np-table-wrap { min-width:0; }
+.native-standard.native-standard.native-standard .np-domain .dom-table { width:100%; border-spacing:0; font-variant-numeric:tabular-nums; table-layout:auto; }
+.native-standard.native-standard.native-standard .np-domain .dom-table th { padding:8px 5px; letter-spacing:0; text-transform:none; font-size:11px; font-weight:650; color:var(--np-dim); background:var(--surface-2); white-space:nowrap; }
+.native-standard.native-standard.native-standard .np-domain .dom-table td { padding:6px 5px; line-height:1.28; font-size:12.2px; color:var(--np-ink); }
+.native-standard.native-standard.native-standard .np-domain .dom-table tr.g td { padding:11px 5px 5px; font-size:10px; color:var(--np-dim); }
+.native-standard.native-standard.native-standard .np-domain .dom-table .np-count { width:1%; }
+.native-standard.native-standard.native-standard .np-domain .dom-table .np-pct { width:1%; }
+.native-standard.native-standard.native-standard .np-domain .np-row-link { font-weight:510; width:100%; text-align:left; display:flex; align-items:baseline; gap:6px; color:var(--np-ink); border-radius:3px; }
+.native-standard.native-standard.native-standard .np-domain .np-row-link:focus-visible { outline:2px solid var(--np-line); outline-offset:2px; }
+.native-standard.native-standard.native-standard .np-domain .np-row-index { display:none; flex:0 0 17px; background:var(--np-row); border-radius:4px; text-align:center; font-size:10px; line-height:16px; color:var(--np-dim); font-variant-numeric:tabular-nums; }
+.native-standard.native-standard.native-standard .np-domain .np-rate { font-weight:680; }
+.native-standard.native-standard.native-standard .np-domain .np-ready { color:var(--ok) !important; }
+.native-standard.native-standard.native-standard .np-domain .np-watch { color:var(--warn) !important; }
+.native-standard.native-standard.native-standard .np-domain .dom-table tr[data-dom]:hover td,
+.native-standard.native-standard.native-standard .np-domain .dom-table tr[data-dom].on td { background:var(--np-wash); }
+.native-standard.native-standard.native-standard .np-domain .np-legend { display:flex; flex-wrap:wrap; justify-content:space-between; gap:4px 12px; color:var(--np-dim); padding:6px 18px 14px; font-size:11.5px; }
+.native-standard.native-standard.native-standard .np-domain .np-key { display:inline-flex; gap:7px; align-items:center; color:var(--np-ink); }
+.native-standard.native-standard.native-standard .np-domain .np-key i { width:17px; height:3px; background:var(--np-line); border-radius:2px; }
+.native-standard.native-standard.native-standard .np-domain .np-tip {
+  position:fixed; inset:auto; margin:0; box-sizing:border-box;
+  max-height:calc(100dvh - 16px); width:min(286px,calc(100vw - 16px));
+  overflow:auto; pointer-events:auto; padding:14px 15px; z-index:60;
+  background:var(--surface-solid); color:var(--text);
+  border:1px solid var(--border-accent); border-radius:7px;
+  box-shadow:var(--shadow-pop); font:normal 13px/1.37 var(--font);
+}
+.native-standard.native-standard.native-standard .np-domain .np-tip .dt-title { font-size:14px; line-height:1.3; }
+.native-standard.native-standard.native-standard .np-domain .np-tip .dt-rate { flex-wrap:wrap; gap:2px 10px; margin-top:5px; }
+.native-standard.native-standard.native-standard .np-domain .np-tip .dt-rate span:first-child {font-size:25px; font-weight:620; color:var(--np-ink);}
+.native-standard.native-standard.native-standard .np-domain .np-tip .dt-row { padding:3px 0; }
+.native-standard.native-standard.native-standard .np-domain .np-tip .dt-call { border-radius:4px; margin-top:8px; }
+.native-standard.native-standard.native-standard .np-domain .np-tip .dt-hint { color:var(--accent); cursor:pointer; }
+@container domain-card (max-width:668px) {
+  .native-standard.native-standard.native-standard .np-domain .np-layout { grid-template-columns:minmax(0,1fr); gap:7px; }
+  .native-standard.native-standard.native-standard .np-domain .np-figure { width:100%; max-width:460px; justify-self:center; }
+  .native-standard.native-standard.native-standard .np-domain .np-table-wrap { border-top:1px solid var(--divider); }
+}
+@container domain-card (max-width:456px) {
+  .native-standard.native-standard.native-standard .np-domain .np-layout { padding:8px 10px; }
+  .native-standard.native-standard.native-standard .np-domain .np-legend { padding-inline:10px; }
+  .native-standard.native-standard.native-standard .np-domain .dom-table th { font-size:10px; padding:7px 3px; }
+  .native-standard.native-standard.native-standard .np-domain .dom-table td { padding:6px 3px; font-size:11.6px; }
+}
+@container domain-plot (max-width:306px) {
+  .native-standard.native-standard.native-standard .np-domain .radar-wrap .np-full { display:none; }
+  .native-standard.native-standard.native-standard .np-domain .radar-wrap .np-compact { display:block; width:100%; max-width:275px; margin-inline:auto; }
+}
+@container domain-card (max-width:326px) {
+  .native-standard.native-standard.native-standard .np-domain .np-row-index { display:inline-block; }
+}
+/* Colors for discrete series and risk bands, with contrast against each mode. */
+:is(html[data-native-standard="light"], .native-standard.native-standard.native-standard[data-theme="light"], html[data-native-standard="light"] .portfolio-reference.portfolio-reference[data-theme="light"]) {
+  --plot-blue:#396f87; --plot-indigo:#5c628f; --plot-plum:#795c83;
+  --plot-teal:#277469; --plot-slate:#65767a; --plot-amber:#8c6728;
+  --plot-orange:#a35f37; --plot-red:#a14e4a;
+  --plot-point-ink:#fff; --plot-over-ink:#fff; --plot-hatch:#d6e2de;
+  --plot-risk-critical:#eac7c4; --plot-risk-high:#f1d4b9;
+  --plot-risk-moderate:#f1e6c5; --plot-risk-low:#d7e9dc; --plot-matrix-ink:#243c38;
+}
+:is(html[data-native-standard="dark"], .native-standard.native-standard.native-standard[data-theme="dark"], html[data-native-standard="dark"] .portfolio-reference.portfolio-reference[data-theme="dark"]) {
+  --plot-blue:#8bb1c3; --plot-indigo:#a3a9d3; --plot-plum:#c0a1c9;
+  --plot-teal:#86bcaf; --plot-slate:#a4b2b4; --plot-amber:#d2b47e;
+  --plot-orange:#d9a981; --plot-red:#dc9a95;
+  --plot-point-ink:#14262a; --plot-over-ink:#282023; --plot-hatch:#344049;
+  --plot-risk-critical:#6c3f44; --plot-risk-high:#604739;
+  --plot-risk-moderate:#4e4838; --plot-risk-low:#304d45; --plot-matrix-ink:#f4f3eb;
+}
+.native-standard.native-standard.native-standard #tl2-panel > .panel-head { align-items:center; }
+.native-standard.native-standard.native-standard .plot-quarter-switch { padding:3px 4px; border-radius:6px; border:1px solid var(--border); background:var(--surface-2); }
+.native-standard.native-standard.native-standard .plot-quarter-switch .icon-btn { width:29px; height:29px; border-radius:3px; color:var(--muted); }
+.native-standard.native-standard.native-standard .plot-quarter-switch .icon-btn:hover,.native-standard.native-standard.native-standard .plot-quarter-switch .icon-btn:focus-visible { background:var(--accent-soft); color:var(--accent); }
+.native-standard.native-standard.native-standard .plot-quarter-switch .num { font-size:13px; letter-spacing:.015em; }
+.native-standard.native-standard.native-standard #tl2-panel .tl2 { padding:17px 18px 0; }
+.native-standard.native-standard.native-standard #tl2-panel .tl2 > .scroll-x { border:1px solid var(--divider); border-radius:6px; background:var(--surface-solid); padding:8px 6px 1px; }
+.native-standard.native-standard.native-standard #tl2-panel .tl2 svg { font-family:var(--font); }
+.native-standard.native-standard.native-standard .plot-lane-row { stroke:var(--divider); stroke-width:.55px; }
+.native-standard.native-standard.native-standard .plot-lane-label { font-size:13px; font-weight:600; }
+.native-standard.native-standard.native-standard .plot-lane-n { font-size:12px; font-variant-numeric:tabular-nums; fill:var(--muted); }
+.native-standard.native-standard.native-standard .plot-month-band { rx:3px; fill:var(--surface-2); stroke:var(--divider); }
+.native-standard.native-standard.native-standard .plot-month { font-size:13px; }
+.native-standard.native-standard.native-standard .plot-week-label { fill:var(--muted); font-size:11.5px; font-variant-numeric:tabular-nums; }
+.native-standard.native-standard.native-standard .plot-month-grid { stroke:var(--border-accent); stroke-width:1.25px; }
+.native-standard.native-standard.native-standard .plot-week-grid { stroke-dasharray:2 4; }
+.native-standard.native-standard.native-standard .plot-today-rule { stroke-dasharray:4 3; stroke-width:1.6px; }
+.native-standard.native-standard.native-standard #tl2-panel .tl-b:hover .plot-mark,.native-standard.native-standard.native-standard #tl2-panel .tl-b:focus-visible .plot-mark { stroke:var(--text); stroke-width:2.4px; filter:none; }
+.native-standard.native-standard.native-standard #tl2-panel .tl2-tip { width:min(310px,calc(100% - 8px)); border-radius:7px; }
+.native-standard.native-standard.native-standard #tl2-panel .tl2-legend { font-size:12px; padding:12px 20px; line-height:1.4; color:var(--muted); }
+.native-standard.native-standard.native-standard #tl2-panel .lg-past { background:repeating-linear-gradient(45deg,var(--plot-hatch) 0 1px,transparent 1px 5px); }
+.native-standard.native-standard.native-standard #tl2-panel .tl2-lists { padding:16px 21px; gap:10px 25px; }
+.native-standard.native-standard.native-standard #tl2-panel .tl2-h { font-size:11px; font-weight:700; letter-spacing:.085em; }
+.native-standard.native-standard.native-standard #tl2-panel .tl-item { padding:8px 7px; border-radius:4px; }
+.native-standard.native-standard.native-standard #tl2-panel .tl-dot { width:7px; height:7px; }
+.native-standard.native-standard.native-standard #tl2-panel .tl2-lists>div+div { padding-left:22px; border-left:1px solid var(--divider); }
+.native-standard.native-standard.native-standard #tl2-panel .tl2-tip .cc-kicker { color:var(--accent); }
+.native-standard.native-standard.native-standard #tl2-panel .tl2-tip .tip-row + .tip-row { border-top:1px solid var(--divider); }
+.native-standard.native-standard.native-standard #tl2-panel .vd summary { color:var(--accent); }
+.native-standard.native-standard.native-standard .rm div.rm-cell,.native-standard.native-standard.native-standard .rm button.rm-cell { border-radius:4px; color:var(--plot-matrix-ink); }
+.native-standard.native-standard.native-standard .rm div.rm-cell { opacity:1 !important; }
+.native-standard.native-standard.native-standard .rm button.rm-cell[data-action="risk-cell"],.native-standard.native-standard.native-standard .rm button.rm-cell[data-action="dash-risk"] { border:1px solid color-mix(in srgb,var(--plot-matrix-ink) 42%,transparent) !important; }
+.native-standard.native-standard.native-standard .rm button.rm-cell>.num { font-size:16px; font-weight:700; line-height:1.15; }
+.native-standard.native-standard.native-standard .rm button.rm-cell>b { font-size:11px; font-weight:600; color:var(--plot-matrix-ink); }
+.native-standard.native-standard.native-standard .rm button.rm-cell:is(:hover,:focus-visible,.on) { outline:2px solid var(--accent); outline-offset:1px; }
+.native-standard.native-standard.native-standard .rm-y,.native-standard.native-standard.native-standard .rm-x,.native-standard.native-standard.native-standard .rm-axis,.native-standard.native-standard.native-standard .rm-legend { color:var(--muted); font-variant-numeric:tabular-nums; }
+.native-standard.native-standard.native-standard .rm-legend i { border:1px solid color-mix(in srgb,var(--text) 17%,transparent); border-radius:2px; }
+.native-standard.native-standard.native-standard .rp-body > div+div { padding-top:14px; border-top:1px solid var(--divider); }
+.native-standard.native-standard.native-standard .rp-body .occ-l { color:var(--label); font-weight:650; letter-spacing:.08em; }
+.native-standard.native-standard.native-standard .rp-body .prof-bar { grid-template-columns:minmax(115px,.95fr) minmax(56px,1.35fr) 24px; margin:0; padding:6px 1px; border-radius:4px; color:var(--muted); }
+.native-standard.native-standard.native-standard .rp-body .prof-bar:disabled { opacity:1; }
+.native-standard.native-standard.native-standard .rp-body .prof-bar:focus-visible { outline-color:var(--accent); }
+.native-standard.native-standard.native-standard .rp-body .pb-t { height:7px; background:var(--track); }
+.native-standard.native-standard.native-standard .rp-body .pb-t,.native-standard.native-standard.native-standard .rp-body .pb-t span { border-radius:2px; }
+.native-standard.native-standard.native-standard .rp-body .pb-n { font-weight:650; font-variant-numeric:tabular-nums; }
+.native-standard.native-standard.native-standard .plot-policy-status .stack { height:10px; border-radius:3px; gap:3px; }
+.native-standard.native-standard.native-standard .plot-policy-status .stat4 { margin-top:15px; row-gap:12px; }
+.native-standard.native-standard.native-standard .plot-policy-status .stat-btn[aria-pressed=true] { outline:1px solid var(--accent); background:var(--accent-soft); }
+.native-standard.native-standard.native-standard .plot-policy-status .stat-btn .lab i { border-radius:2px; }
+.native-standard.native-standard.native-standard .plot-policy-status .mini { border-radius:5px; border-color:var(--divider); padding:10px 12px; }
+@media(max-width:900px){
+ .native-standard.native-standard.native-standard #tl2-panel .tl2-lists>div+div { border-left:0; border-top:1px solid var(--divider); padding-left:0; padding-top:13px; }
+ .native-standard.native-standard.native-standard #tl2-panel .tl2 { padding-inline:12px; }
+}
+@media(max-width:600px){
+ .native-standard.native-standard.native-standard #tl2-panel .plot-quarter-switch { margin-left:0 !important; }
+ .native-standard.native-standard.native-standard #tl2-panel .tl2-legend>span:last-child { flex:1 1 100%; margin-left:0 !important; }
+ .native-standard.native-standard.native-standard .plot-policy-status .stat4 { grid-template-columns:repeat(auto-fit,minmax(100px,1fr)) !important; }
+ .native-standard.native-standard.native-standard .rp-body .prof-bar { grid-template-columns:minmax(102px,1fr) minmax(40px,.75fr) 18px; }
+}
+
+/* Existing native surfaces and portalled editors consume these canonical tokens. */
+html[data-native-standard], .native-standard.native-standard.native-standard {
+ --font:"GoverNara Native Inter",Inter,"Segoe UI",Arial,sans-serif;
+ --font-body:var(--font); --font-heading:var(--font); --font-mono:var(--mono);
+ --radius:5px; --radius-control:5px; --radius-panel:9px;
+ --color-bg-app:var(--bg); --color-bg-surface:var(--surface-solid); --color-bg-subtle:var(--surface-2); --color-bg-tablehead:var(--surface-header);
+ --color-bg-row-hover:var(--hover); --color-bg-card:var(--surface-solid);
+ --color-text-primary:var(--text); --color-text-secondary:var(--muted); --color-text-muted:var(--faint); --color-text-help:var(--faint);
+ --color-border:var(--border); --color-border-strong:var(--border-accent); --color-input-border:var(--input-bd); --color-control-active-border:var(--accent);
+ --color-link:var(--accent); --color-link-hover:var(--chip-fg); --color-focus-ring:var(--focus);
+ --color-brand-accent:var(--cta); --color-brand-accent-hover:var(--cta-hover); --color-brand-on-accent:var(--cta-fg); --color-brand-lime:var(--accent);
+ --color-success:var(--ok); --color-success-bg:var(--ok-bg); --color-success-border:var(--ok-bd);
+ --color-critical:var(--alert); --color-critical-bg:var(--alert-bg); --color-critical-border:var(--alert-bd);
+ --color-high:var(--warn); --color-high-bg:var(--warn-bg); --color-high-border:var(--warn-bd);
+ --color-moderate:var(--warn); --color-moderate-text:var(--warn); --color-moderate-bg:var(--warn-bg); --color-moderate-border:var(--warn-bd);
+ --color-duesoon:var(--warn); --color-duesoon-text:var(--warn); --color-duesoon-bg:var(--warn-bg); --color-duesoon-border:var(--warn-bd);
+ --color-info:var(--accent); --color-info-bg:var(--accent-soft); --color-info-border:var(--chip-bd);
+ --color-neutral:var(--neu); --color-neutral-bg:var(--neu-bg); --color-neutral-border:var(--neu-bd);
+ --color-accepted:var(--neu); --color-accepted-bg:var(--neu-bg); --color-accepted-border:var(--neu-bd);
+ --bwp-focus:var(--focus); --bp-focus:var(--focus);
+ --gn-card:var(--surface-solid); --gn-line:var(--border); --gn-ink:var(--text); --gn-muted:var(--muted); --gn-accent:var(--accent);
+}
+/* Adapt the approved geometry to preserved native components and route names. */
+.native-standard.native-standard.native-standard > .topbar { min-height:64px; height:64px; padding:0 28px; gap:16px; color:var(--brand-header-fg); background:var(--brand-header); border:0; }
+.native-standard.native-standard.native-standard .topbar :is(.brand-name,.icon-btn) { color:var(--brand-header-fg); }
+.native-standard.native-standard.native-standard .topbar .brand-tag { color:#b6d3cf; }
+.native-standard.native-standard.native-standard .topbar .native-mobile-nav { flex:none; }
+.native-standard.native-standard.native-standard .topbar .native-theme { font-size:16px; }
+.native-standard.native-standard.native-standard .topbar .ws-btn { color:#e6f3ef; }
+.native-standard.native-standard.native-standard .side { flex:0 0 221px; width:221px; padding:12px 12px 24px; border-color:var(--divider); }
+.native-standard.native-standard.native-standard > .shell > .main { width:calc(100% - 221px); padding:26px clamp(24px,2.45vw,50px) 48px; }
+.native-standard.native-standard.native-standard > .shell > .main > * { max-width:1580px; }
+/* The authenticated shell owns the page gutter. These program views also run outside it. */
+.native-standard.native-standard.native-standard {
+  display:flex;
+  flex-direction:column;
+}
+.native-standard.native-standard.native-standard > .shell { flex:1; }
+html[data-native-standard] .native-standard .brawndo-demo-dashboard[data-theme],
+html[data-native-standard] .native-standard.native-standard .bcis:is(.brawndo-cis-visual,.soc-cis-program-visual,.iso-cis-program-visual)[data-theme] {
+  margin:0;
+  padding:0;
+  max-width:none;
+  background:transparent;
+}
+.native-standard .platform-page-heading-copy {flex:1 1 360px;min-width:0}
+.native-standard .platform-page-head .eyebrow {text-transform:uppercase}
+.native-standard.native-standard .admin-security-page .admin-body {max-width:none}
+.native-standard .tool-catalog-category {padding:16px 22px}
+.native-standard .tool-catalog-category .tc-grid {margin-top:10px}
+.native-standard.native-standard .brawndo-onboarding .content {padding:0;gap:17px;max-width:none}
+.native-standard .brawndo-onboarding .v3-workspace-head,
+.native-standard .brawndo-onboarding .panel-c {margin-block:0}
+.native-standard .brawndo-onboarding .native-step-body .fws {grid-template-columns:repeat(auto-fill,minmax(min(100%,220px),1fr));gap:12px}
+@media (min-width:1101px) {
+  .native-standard .brawndo-onboarding .wiz {grid-template-columns:minmax(0,1fr) 300px}
+}
+@media (max-width:1100px) {
+  .native-standard .brawndo-onboarding .stepper {grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+html[data-native-standard] .ui-dialog.client-organization-dialog {
+  display:flex;flex-direction:column;gap:0;padding:0;overflow:hidden;
+  max-height:92dvh;width:min(560px,calc(100vw - 32px));max-width:none;
+  top:4vh;transform:translateX(-50%);animation:none;transition:none;
+}
+html[data-native-standard] .client-organization-header {padding:20px 48px 20px 24px;border-bottom:1px solid var(--divider);background:var(--surface-header);text-align:left}
+html[data-native-standard] .client-organization-fields {display:grid;gap:16px;padding:20px 24px 24px;overflow:auto;min-height:0}
+html[data-native-standard] .client-organization-footer {padding:14px 24px;flex-shrink:0;border-top:1px solid var(--divider);background:var(--surface-header)}
+html[data-native-standard] .client-field-pair {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+@media (max-width:560px) {
+  html[data-native-standard] .client-field-pair {grid-template-columns:minmax(0,1fr)}
+}
+.native-standard.native-standard.native-standard :is(.page-header,.bpage-head,.bd-header) { margin-bottom:17px; gap:16px 24px; }
+.native-standard.native-standard.native-standard :is(.page-header h1,.bpage-head h1,.bd-header h1,.crr-root h1,.cia-page h1,.cis-risks-concept h1,.bdcal h1,.brawndo-additional h1,.airf-page h1) { font:600 38px/1.07 var(--font); letter-spacing:-.055em; color:var(--text); }
+.native-standard.native-standard.native-standard :is(.page-eyebrow,.bpage-eyebrow) { margin-bottom:4px; font-size:10px; font-weight:700; letter-spacing:.14em; color:var(--accent); }
+.native-standard.native-standard.native-standard :is(.page-subtitle,.bpage-subtitle,.page-header p) { font:400 14px/1.5 var(--font); color:var(--muted); background:none; -webkit-text-fill-color:currentColor; }
+.native-standard.native-standard.native-standard :is(.page-content,.admin-body) { gap:17px; }
+.native-standard.native-standard.native-standard :is(.admin-panel,.bpage-panel,.register-table-frame,.quarter-card,.matrix-panel,.cia-register,.bapv-card,.bac-card,.bae-card,.airf-page .register,.bdcal .pcard,.admin-details,.reports-form,.rep-card,.admin-role-card) { border-radius:9px; background:var(--surface-solid); border-color:var(--border); box-shadow:var(--shadow); }
+.native-standard.native-standard.native-standard :is(.admin-panel-head,.bpage-panel-head,.register-heading,.cia-register-head,.cv-register-heading,.bdcal .card-head) { padding:16px 21px; }
+.native-standard.native-standard.native-standard :is(.admin-panel-head h2,.bpage-panel-head h2,.register-heading h2,.cia-register-head h2,.cv-register-heading h2,.bdcal .card-head h2) { font:650 18px/1.25 var(--font); letter-spacing:-.032em; }
+.native-standard.native-standard.native-standard :is(.ui-control,input.input,select.select,textarea,.ui-button,.admin-notice,.native-summary .kstrip,.native-evidence-folder,.native-evidence-archive-status,.native-service-provenance) { border-radius:5px; }
+.native-standard.native-standard.native-standard :is(.admin-toolbar,.admin-filter-grid) :is(input,select,button[role=combobox]),
+.native-standard.native-standard.native-standard :is(.crr-root,.cia-root,.cis-risks-concept,.airf-page) :is(.button,.bda-button,.icon-button,.this-quarter,.profile-button) { border-radius:5px; }
+.native-standard.native-standard.native-standard :is(.admin-badge,.mini-chip,.pill,.scope,.tag) { border-radius:4px; }
+.native-standard.native-standard.native-standard .admin-panel .admin-table th { background:var(--surface-header); color:var(--label); font-size:10.5px; letter-spacing:.085em; }
+.native-standard.native-standard.native-standard .admin-panel .admin-table :is(th,td) { border-color:var(--divider); }
+.native-standard.native-standard.native-standard .native-summary .kstrip { background:var(--surface-2); }
+.native-standard.native-standard.native-standard .native-risk-profile .critical .pb-t span { background:var(--plot-red); }
+.native-standard.native-standard.native-standard .native-risk-profile .high .pb-t span { background:var(--plot-orange); }
+.native-standard.native-standard.native-standard .native-risk-profile .moderate .pb-t span { background:var(--plot-amber); }
+.native-standard.native-standard.native-standard .native-risk-profile .low .pb-t span { background:var(--plot-teal); }
+.native-standard.native-standard.native-standard :is(.r4-guided-assessment,.r4-assessment-context,.r4-framework-source,.r4-guide-recommendation) { border-radius:7px; }
+.native-standard.native-standard.native-standard .r4-framework-source a { color:var(--accent); }
+html[data-native-standard] :is(.ui-dialog,.ui-menu,.ui-popover,.ui-select-content,.ui-floating,.native-service-provenance) { border-radius:9px; }
+html[data-native-standard] .ui-overlay { backdrop-filter:none; }
+html[data-native-standard] :is(.ui-dialog,.ui-sheet) :is(input:not([type=checkbox]):not([type=radio]),textarea,button[role=combobox],select,.ui-button),
+html[data-native-standard] :is(.native-report-dialog,.native-completion-export) :is(.cta,.ghost) { border-radius:5px; }
+html[data-native-standard] .ui-sheet { border-radius:0; }
+html[data-native-standard] :is(.ui-dialog,.ui-sheet,.ui-menu) :focus-visible,
+.native-standard.native-standard.native-standard :is(button,a,input,select,textarea,summary):focus-visible { outline-color:var(--focus); }
+html[data-native-standard] :is(.shared-program-omni,.brawndo-cis-visual-omni) .omni-free-dock .omni-launch-button { background:var(--cta); color:var(--cta-fg); box-shadow:var(--shadow-pop); }
+html[data-native-standard] .omni-workspace-window { border-radius:9px!important; box-shadow:var(--shadow-pop)!important; }
+html[data-native-standard] .omni-workspace-window .omni-panel-header { border-radius:9px 9px 0 0; }
+@media(max-width:900px) {
+ .native-standard.native-standard.native-standard > .topbar { min-height:58px; height:auto; padding:7px 12px; gap:8px; }
+ .native-standard.native-standard.native-standard > .shell > .main { width:100%; padding:20px 15px 40px; }
+ .native-standard.native-standard.native-standard[data-native-navigation=open] .side { top:58px; }
+ .native-standard.native-standard.native-standard .native-nav-scrim { inset:58px 0 0; }
+ .native-standard.native-standard.native-standard :is(.page-header h1,.bpage-head h1,.bd-header h1,.crr-root h1,.cia-page h1,.cis-risks-concept h1,.bdcal h1,.brawndo-additional h1,.airf-page h1) { font-size:32px; }
+}
+@media(max-width:600px) {
+ .native-standard.native-standard.native-standard > .shell > .main { padding:18px 12px 36px; }
+ .native-standard.native-standard.native-standard :is(.page-header h1,.bpage-head h1,.bd-header h1,.crr-root h1,.cia-page h1,.cis-risks-concept h1,.bdcal h1,.brawndo-additional h1,.airf-page h1) { font-size:29px; }
+}
+
+/* Semantic primary buttons share the approved CTA in the mounted shell and body portals. */
+html[data-native-standard] .ui-button.bg-primary,
+html[data-native-standard] .bae-btn.bae-primary,
+html[data-native-standard] .native-standard .admin-surface[data-theme] .bpage-head .ui-button.bg-primary {
+ background:var(--cta); border-color:var(--cta); color:var(--cta-fg);
+}
+html[data-native-standard] .ui-button.bg-primary:not(:disabled):hover,
+html[data-native-standard] .bae-btn.bae-primary:not(:disabled):hover,
+html[data-native-standard] .native-standard .admin-surface[data-theme] .bpage-head .ui-button.bg-primary:not(:disabled):hover {
+ background:var(--cta-hover); border-color:var(--cta-hover);
+}
+html[data-native-standard] .ui-button:disabled { opacity:.5; }

@@ -1,6 +1,8 @@
 **
 !backend
 !backend/*.py
+!backend/fonts
+!backend/fonts/**
 !backend/common_passwords.txt
 !backend/requirements-runtime.txt
 !backend/routes
@@ -22,6 +24,8 @@
 !shared
 !shared/catalogs
 !shared/catalogs/**
+!shared/fixtures
+!shared/fixtures/approvedV3Scenario.json
 !deploy
 !deploy/render_staging.py
 **/.env

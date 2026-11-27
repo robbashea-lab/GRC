@@ -1,0 +1,348 @@
+import axios from 'axios';
+import {previewAdapter} from './adapter';
+import {STORE_KEY,readStore,saveStore,saveStoreAsync,resetStore,clearEvidenceFiles,write} from './store';
+import {decodeDemoStore} from './demoStorageCodec';
+import {clearFileCache,getEvidenceCacheRevision} from './evidenceStorage';
+import * as reporting from './portfolioReporting';
+
+const {CompressionStream:NativeCompressionStream,WritableStream}=require('node:stream/web');
+const api=axios.create({adapter:previewAdapter}),cid='demo_brawndo';
+const settle=promise=>promise.then(value=>({value}),error=>({error}));
+const create=(title,key,options={})=>api.post('/tasks',{client_id:cid,title},{...options,headers:{'Idempotency-Key':key}});
+let compressionDescriptor,storage,releases=[],bridgeCase;
+function gateCompression(){
+ let release,started;
+ const ready=new Promise(resolve=>{started=resolve;}),gate=new Promise(resolve=>{release=resolve;});
+ releases.push(release);
+ globalThis.CompressionStream=class{constructor(format){const native=new NativeCompressionStream(format),writer=native.writable.getWriter();this.readable=native.readable;this.writable=new WritableStream({async write(bytes){started();await gate;await writer.write(bytes);},close:()=>writer.close(),abort:error=>writer.abort(error)});}};
+ return {ready,release};
+}
+function forceRawQuota(allWrites=false){
+ const original=Storage.prototype.setItem;
+ storage=jest.spyOn(Storage.prototype,'setItem').mockImplementation(function(key,value){
+  if(key===STORE_KEY&&(allWrites||!Object.hasOwn(JSON.parse(value),'demo_storage_codec')))throw new DOMException('Synthetic physical quota','QuotaExceededError');
+  return original.call(this,key,value);
+ });
+}
+beforeEach(async()=>{
+ compressionDescriptor=Object.getOwnPropertyDescriptor(globalThis,'CompressionStream');
+ releases=[];
+ globalThis.CompressionStream=NativeCompressionStream;
+ localStorage.clear();sessionStorage.clear();clearFileCache();
+ await api.post('/demo/enter');
+});
+afterEach(async()=>{
+ const bridge=bridgeCase;bridgeCase=null;
+ if(bridge){
+  bridge.active=false;bridge.controller.abort();
+  if(globalThis.Date===bridge.Date)globalThis.Date=bridge.RealDate;
+  await bridge.pending?.catch(()=>undefined);
+ }
+ for(const release of releases)release();
+ storage?.mockRestore();storage=null;
+ // Drain any rejected or interrupted case before replacing its native stream.
+ await api.get('/tasks',{params:{client_id:cid}}).catch(()=>undefined);
+ if(compressionDescriptor)Object.defineProperty(globalThis,'CompressionStream',compressionDescriptor);else delete globalThis.CompressionStream;
+ jest.useRealTimers();
+ jest.restoreAllMocks();
+});
+
+test('Evidence hashing cannot observe caller mutations to an already authorized object request',async()=>{
+ const db=readStore(),foreign=db.clients.find(row=>row.client_id!==cid).client_id;
+ const ownTask=db.tasks.find(row=>row.client_id===cid),foreignTask=db.tasks.find(row=>row.client_id===foreign);
+ expect(ownTask).toBeTruthy();expect(foreignTask).toBeTruthy();
+ db.user={...db.user,user_id:'synthetic-scoped-contributor',role:'client_contributor',client_ids:[cid]};saveStore(db);
+ let release,started;
+ const gate=new Promise(resolve=>{release=resolve;}),ready=new Promise(resolve=>{started=resolve;});releases.push(release);
+ const digest=globalThis.crypto.subtle.digest.bind(globalThis.crypto.subtle);
+ jest.spyOn(globalThis.crypto.subtle,'digest').mockImplementation(async(...args)=>{started();await gate;return digest(...args);});
+ const body={client_id:cid,filename:'synthetic owned intent.bin',content_base64:btoa('original bytes'),linked_type:'task',linked_id:ownTask.task_id};
+ const params={client_id:cid},headers={'Idempotency-Key':'original-evidence-intent'};
+ const pending=settle(previewAdapter({url:'/evidence',method:'post',data:body,params,headers}));await ready;
+ body.client_id=foreign;body.linked_id=foreignTask.task_id;body.filename='must not persist';
+ params.client_id=foreign;headers['Idempotency-Key']='changed-external-intent';release();
+ const result=await pending;
+ expect(result.error).toBeUndefined();
+ expect(result.value.data).toMatchObject({client_id:cid,linked_id:ownTask.task_id,filename:'synthetic owned intent.bin'});
+ const persisted=readStore();
+ expect(persisted.evidence.find(row=>row.evidence_id===result.value.data.evidence_id)).toMatchObject({client_id:cid,linked_id:ownTask.task_id});
+ expect(persisted.evidence.some(row=>row.filename==='must not persist')).toBe(false);
+});
+
+test('queued object bodies, params and plain headers retain their arrival-time intent',async()=>{
+ const gate=gateCompression();forceRawQuota();
+ const first=create('Synthetic queue blocker','owned-queue-blocker');await gate.ready;
+ const actor=readStore().user.user_id,body={client_id:cid,title:'Synthetic original queued object'},params={client_id:cid},headers={'Idempotency-Key':'owned-arrival-key'};
+ const pending=settle(previewAdapter({url:'/tasks',method:'post',data:body,params,headers}));
+ body.title='Must not replace arrival title';body.client_id='missing-foreign-client';params.client_id='missing-foreign-client';headers['Idempotency-Key']='changed-after-arrival';
+ gate.release();await first;
+ const result=await pending;expect(result.error).toBeUndefined();
+ expect(result.value.data).toMatchObject({client_id:cid,title:'Synthetic original queued object'});
+ const db=readStore(),original=JSON.stringify([actor,cid,'owned-arrival-key']);
+ expect(db.create_requests[original].record_id).toBe(result.value.data.task_id);
+ expect(Object.keys(db.create_requests).some(key=>key.includes('changed-after-arrival'))).toBe(false);
+ expect(db.tasks.some(row=>row.title==='Must not replace arrival title')).toBe(false);
+});
+
+test('the public adapter rejects malformed URLs through its Promise contract',async()=>{
+ let pending;
+ expect(()=>{pending=previewAdapter({url:'http://[',method:'get'});}).not.toThrow();
+ expect(pending).toBeInstanceOf(Promise);
+ await expect(pending).rejects.toBeTruthy();
+});
+
+test('synchronous and native asynchronous store bridges preserve complete native documents',async()=>{
+ const RealDate=Date,clock=new RealDate('2026-10-22T18:00:00.000Z').getTime();
+ const owner={active:true,pending:null,controller:new AbortController(),RealDate};
+ owner.Date=class extends RealDate{constructor(...args){super(...(args.length?args:[clock]));}static now(){return clock;}};
+ bridgeCase=owner;globalThis.Date=owner.Date;
+ try{
+ const base=sessionStorage.getItem(STORE_KEY),source=readStore();
+ source.synthetic_unknown=JSON.parse('{"__proto__":{"retained":true},"nested":["日本語",null,{"original":true}]}');
+ const risk=source.risks.find(row=>row.client_id===cid),task=source.tasks.find(row=>row.client_id===cid);
+ expect(risk).toBeTruthy();expect(task).toBeTruthy();
+ const mutations=[
+  db=>{db.clients.find(row=>row.client_id===cid).notes='Synthetic bridge client note';},
+  db=>{db.framework_assessments.find(row=>row.client_id===cid&&row.framework_key==='cis-ig1').status='addressed';},
+  db=>write(db,'risks',{...db.risks.find(row=>row.risk_id===risk.risk_id),notes:'Synthetic bridge risk note'},risk.risk_id),
+  db=>write(db,'tasks',{...db.tasks.find(row=>row.task_id===task.task_id),description:'Synthetic bridge action description'},task.task_id),
+  db=>{db.evidence=[];write(db,'evidence',{client_id:cid,filename:'synthetic 日本語.bin',mime_type:'application/octet-stream',content_base64:btoa(String.fromCharCode(0,255,1,128,...new TextEncoder().encode('café 日本語 🔐')))});}
+ ];
+ forceRawQuota();
+ for(const mutate of mutations){
+  const candidate=JSON.parse(JSON.stringify(source));mutate(candidate);
+  // Restore identical bytes without invoking either bridge before each branch.
+  storage.mockRestore();storage=null;sessionStorage.setItem(STORE_KEY,base);forceRawQuota();
+  const sync=saveStore(JSON.parse(JSON.stringify(candidate)));
+  const syncSaved=JSON.stringify(decodeDemoStore(sessionStorage.getItem(STORE_KEY))),syncRead=JSON.stringify(readStore()),syncReturned=JSON.stringify(sync);
+  storage.mockRestore();storage=null;sessionStorage.setItem(STORE_KEY,base);forceRawQuota();
+   const asynchronous=await (owner.pending=saveStoreAsync(JSON.parse(JSON.stringify(candidate)),{expectedSaved:base,signal:owner.controller.signal}));
+   if(!owner.active)return;
+  expect(JSON.stringify(decodeDemoStore(sessionStorage.getItem(STORE_KEY)))).toBe(syncSaved);
+  expect(JSON.stringify(readStore())).toBe(syncRead);
+  expect(JSON.stringify(asynchronous)).toBe(syncReturned);
+  expect(readStore().synthetic_unknown.nested).toEqual(['日本語',null,{original:true}]);
+ }
+ }finally{
+  if(globalThis.Date===owner.Date)globalThis.Date=RealDate;
+ }
+});
+
+test('overlapping mutations, ordinary reads, AI reads and audited export wait for durable commit',async()=>{
+ const gate=gateCompression(),before=sessionStorage.getItem(STORE_KEY);forceRawQuota();
+ let acknowledged=false;
+ const first=create('Synthetic first queued commit','native-first').then(response=>{acknowledged=true;return response;});
+ await gate.ready;
+ const second=create('Synthetic second queued commit','native-second');
+ let observed=false;const get=api.get('/tasks',{params:{client_id:cid}}).then(response=>{observed=true;return response;});
+ const ai=api.get('/ai_systems',{params:{client_id:cid}});
+ const exported=api.get('/frameworks/cis-ig1/export',{params:{client_id:cid}});
+ expect(acknowledged).toBe(false);expect(observed).toBe(false);expect(sessionStorage.getItem(STORE_KEY)).toBe(before);
+ gate.release();
+ const [a,b,listed]=await Promise.all([first,second,get,ai,exported]);
+ expect(listed.data.map(row=>row.task_id)).toEqual(expect.arrayContaining([a.data.task_id,b.data.task_id]));
+ const reloaded=readStore();
+ expect(reloaded.tasks.filter(row=>['Synthetic first queued commit','Synthetic second queued commit'].includes(row.title))).toHaveLength(2);
+});
+
+test.each(['save','reset','clear'])('a direct %s during compression cannot be overwritten by the pending adapter snapshot',async operation=>{
+ const prior=readStore();prior.clients[0].name='Synthetic distinguishable prior';saveStore(prior);
+ const gate=gateCompression();forceRawQuota();
+ const pending=settle(create('Synthetic stale pending task','external-'+operation));await gate.ready;
+ if(operation==='save'){const external=readStore();external.clients[0].name='Synthetic external save';saveStore(external);}
+ if(operation==='reset')resetStore();
+ if(operation==='clear')clearEvidenceFiles();
+ const external=sessionStorage.getItem(STORE_KEY);gate.release();
+ const result=await pending;expect(result.error?.response?.status).toBe(409);
+ expect(sessionStorage.getItem(STORE_KEY)).toBe(external);
+ expect(readStore().tasks.some(row=>row.title==='Synthetic stale pending task')).toBe(false);
+});
+
+test('logout and reentry invalidate both pending commit and requests queued in the former session',async()=>{
+ const gate=gateCompression();forceRawQuota();
+ const pending=settle(create('Synthetic ended session','ended'));await gate.ready;
+ const queued=settle(api.get('/tasks',{params:{client_id:cid}}));
+ await api.post('/auth/logout');await api.post('/demo/enter');
+ const current=sessionStorage.getItem(STORE_KEY);gate.release();
+ expect((await pending).error?.response?.status).toBe(401);
+ expect((await queued).error?.response?.status).toBe(401);
+ expect(sessionStorage.getItem(STORE_KEY)).toBe(current);
+ await expect(api.get('/tasks',{params:{client_id:cid}})).resolves.toHaveProperty('status',200);
+});
+
+test('changed persisted authority rejects a pending save; cancellation leaves the queue usable',async()=>{
+ const gate=gateCompression();forceRawQuota();
+ const pending=settle(create('Synthetic former actor','former-actor'));await gate.ready;
+ const authority=readStore();authority.user={...authority.user,user_id:'synthetic-other-actor',role:'client_viewer',client_ids:[cid]};saveStore(authority);
+ const bytes=sessionStorage.getItem(STORE_KEY);gate.release();
+ expect((await pending).error?.response?.status).toBe(409);expect(sessionStorage.getItem(STORE_KEY)).toBe(bytes);
+ storage.mockRestore();storage=null;const restored=readStore();restored.user={...restored.user,user_id:'synthetic-owner',role:'super_admin'};saveStore(restored);
+ const cancelledGate=gateCompression();forceRawQuota();const controller=new AbortController();
+ const cancelled=settle(create('Synthetic cancelled task','cancelled',{signal:controller.signal}));await cancelledGate.ready;controller.abort();cancelledGate.release();
+ expect((await cancelled).error?.code).toBe('ERR_CANCELED');
+ const recovered=await create('Synthetic queue recovery','recovery');expect(readStore().tasks.some(row=>row.task_id===recovered.data.task_id)).toBe(true);
+ expect(readStore().tasks.some(row=>row.title==='Synthetic cancelled task')).toBe(false);
+});
+
+test('failed physical writes publish neither record nor replay receipt; retry commits once',async()=>{
+ const before=sessionStorage.getItem(STORE_KEY);forceRawQuota(true);
+ await expect(create('Synthetic atomic replay','atomic-replay')).rejects.toBeTruthy();
+ expect(sessionStorage.getItem(STORE_KEY)).toBe(before);
+ storage.mockRestore();storage=null;
+ const first=(await create('Synthetic atomic replay','atomic-replay')).data;
+ const retry=(await create('Synthetic atomic replay','atomic-replay')).data;
+ expect(retry.task_id).toBe(first.task_id);
+ expect(readStore().tasks.filter(row=>row.title==='Synthetic atomic replay')).toHaveLength(1);
+});
+
+test('native compressed Evidence commit preserves exact binary and Unicode bytes after cache loss and reload',async()=>{
+ const db=readStore();db.evidence=[];saveStore(db);forceRawQuota();
+ const samples=[{filename:'synthetic.bin',content:btoa(String.fromCharCode(...Array.from({length:256},(_,index)=>index)))},{filename:'日本語 résumé.txt',content:btoa(String.fromCharCode(...new TextEncoder().encode('café 日本語 🔐')))}];
+ const uploaded=[];
+ for(const sample of samples)uploaded.push((await api.post('/evidence',{client_id:cid,filename:sample.filename,mime_type:'application/octet-stream',content_base64:sample.content})).data);
+ clearFileCache();readStore();
+ for(let index=0;index<samples.length;index++){
+  const download=(await api.get('/evidence/'+uploaded[index].evidence_id+'/download')).data;
+  expect(download.content_base64).toBe(samples[index].content);
+  expect(readStore().evidence.find(row=>row.evidence_id===uploaded[index].evidence_id).filename).toBe(samples[index].filename);
+ }
+});
+
+
+test('request-owned comparison baseline is independent, consumed once and never hides changed storage',async()=>{
+  const before=readStore(),row=before.tasks.find(item=>item.client_id===cid);expect(row).toBeTruthy();
+  const db=readStore({comparisonBaseline:true}),saved=sessionStorage.getItem(STORE_KEY),priorHistory=JSON.stringify(before.portfolio_reporting);
+  db.tasks.find(item=>item.task_id===row.task_id).title='SYNTHETIC request-owned comparison';
+  await saveStoreAsync(db,{expectedSaved:saved});
+  expect(readStore().tasks.find(item=>item.task_id===row.task_id).title).toBe('SYNTHETIC request-owned comparison');
+  expect(JSON.stringify(before.portfolio_reporting)).toBe(priorHistory);
+  const stale=readStore({comparisonBaseline:true}),staleSaved=sessionStorage.getItem(STORE_KEY),external=readStore();
+  external.tasks.find(item=>item.task_id===row.task_id).title='SYNTHETIC external native save';saveStore(external);
+  await expect(saveStoreAsync(stale,{expectedSaved:staleSaved})).rejects.toMatchObject({status:409});
+  expect(readStore().tasks.find(item=>item.task_id===row.task_id).title).toBe('SYNTHETIC external native save');
+});
+
+test('Review completion retries preserve saved bytes, independent history and current client authority',async()=>{
+  const review=(await api.post('/reviews',{client_id:cid,title:'Synthetic independent recurrence',review_type:'access',recurrence:'monthly',due_date:'2027-01-31'})).data;
+  const first=(await api.post(`/reviews/${review.review_id}/complete`,{occurrence_id:review.current_occurrence_id,completion_notes:'First accepted occurrence'})).data;
+  const frozen=JSON.parse(JSON.stringify(first.occurrence)),saved=sessionStorage.getItem(STORE_KEY),before=readStore();
+  const writes=jest.spyOn(Storage.prototype,'setItem');
+  try{
+    const replay=(await api.post(`/reviews/${review.review_id}/complete`,{occurrence_id:review.current_occurrence_id})).data;
+    expect(replay.occurrence).toEqual(frozen);
+    expect(replay.review.current_occurrence_id).toBe(first.review.current_occurrence_id);
+    expect(writes.mock.calls.filter(([key])=>key===STORE_KEY)).toHaveLength(0);
+    expect(sessionStorage.getItem(STORE_KEY)).toBe(saved);
+    replay.occurrence.notes='Caller-local edit';
+    expect(readStore().reviews.find(row=>row.review_id===review.review_id).occurrences).toEqual([frozen]);
+  }finally{writes.mockRestore();}
+  const second=(await api.post(`/reviews/${review.review_id}/complete`,{occurrence_id:first.review.current_occurrence_id,completion_notes:'Second accepted occurrence'})).data;
+  const persisted=readStore().reviews.find(row=>row.review_id===review.review_id);
+  expect(persisted.occurrences).toEqual([frozen,second.occurrence]);
+  expect(before.reviews.find(row=>row.review_id===review.review_id).occurrences).toEqual([frozen]);
+  expect(persisted.due_date.slice(0,10)).toBe('2027-03-31');
+  for(const actor of [{role:'client_readonly',client_ids:[cid]},{role:'client_contributor',client_ids:['unrelated-client']}]){
+    const db=readStore();db.user={...db.user,...actor,all_clients:false};saveStore(db);
+    const deniedSaved=sessionStorage.getItem(STORE_KEY);
+    await expect(api.post(`/reviews/${review.review_id}/complete`,{occurrence_id:review.current_occurrence_id})).rejects.toMatchObject({response:{status:403}});
+    expect(sessionStorage.getItem(STORE_KEY)).toBe(deniedSaved);
+    expect(readStore().reviews.find(row=>row.review_id===review.review_id).occurrences).toEqual([frozen,second.occurrence]);
+  }
+});
+
+test('only an accepted completion retry skips its comparison fork after API path normalization',async()=>{
+  const review=(await api.post('/reviews',{client_id:cid,title:'Synthetic comparison boundary',review_type:'access',recurrence:'monthly',due_date:'2027-01-31'})).data;
+  const nativePair=reporting.readPortfolioStorePair,comparisons=[];
+  jest.spyOn(reporting,'readPortfolioStorePair').mockImplementation((...args)=>{
+    const result=nativePair(...args);comparisons.push(!!result.before);return result;
+  });
+  const endpoint=`/api/reviews/${encodeURIComponent(review.review_id)}/complete`;
+  const first=(await api.post(endpoint,{occurrence_id:review.current_occurrence_id})).data;
+  expect(comparisons).toEqual([true]);
+  const saved=sessionStorage.getItem(STORE_KEY);
+  await api.post(endpoint,{occurrence_id:review.current_occurrence_id});
+  expect(comparisons).toEqual([true,false]);
+  expect(sessionStorage.getItem(STORE_KEY)).toBe(saved);
+  for(const body of [{},{occurrence_id:'stale-unaccepted-occurrence'}]){
+    await expect(api.post(endpoint,body)).rejects.toMatchObject({response:{status:400,data:{detail:'This occurrence is closed or has changed. Reload the Review.'}}});
+    expect(comparisons.at(-1)).toBe(true);
+    expect(sessionStorage.getItem(STORE_KEY)).toBe(saved);
+  }
+  const second=(await api.post(endpoint,{occurrence_id:first.review.current_occurrence_id})).data;
+  expect(comparisons).toEqual([true,false,true,true,true]);
+  expect(second.review.occurrences).toEqual([first.occurrence,second.occurrence]);
+  expect(readStore().reviews.find(row=>row.review_id===review.review_id).occurrences).toEqual([first.occurrence,second.occurrence]);
+});
+
+test.each([false,true])('late parser errors retain the original save failure and bytes (request baseline %s)',async comparisonBaseline=>{
+  const db=readStore({comparisonBaseline}),saved=sessionStorage.getItem(STORE_KEY),parse=JSON.parse;
+  expect(saved.length).toBeGreaterThan(100000);
+  db.tasks.find(item=>item.client_id===cid).title='SYNTHETIC late parser failure';
+  let wholeReads=0;
+  const parser=jest.spyOn(JSON,'parse').mockImplementation(text=>{
+    if(typeof text==='string'&&text.length>100000){wholeReads++;throw new Error('Synthetic previous-store parser failure');}
+    return parse(text);
+  });
+  try{
+    await expect(saveStoreAsync(db,{expectedSaved:saved})).rejects.toMatchObject({storage_code:'WRITE_FAILED'});
+    expect(wholeReads).toBe(1);expect(sessionStorage.getItem(STORE_KEY)).toBe(saved);
+  }finally{parser.mockRestore();}
+});
+
+test.each([false,true])('late restoration callbacks retain their failure before commit (request baseline %s)',async comparisonBaseline=>{
+  const db=readStore({comparisonBaseline}),saved=sessionStorage.getItem(STORE_KEY),nativeMap=Array.prototype.map;
+  expect(decodeDemoStore(saved).portfolio_reporting.snapshots.some(row=>Object.hasOwn(row.current,'_portfolio_scope_index'))).toBe(true);
+  db.tasks.find(item=>item.client_id===cid).title='SYNTHETIC late restore failure';
+  let restoredArrays=0;
+  const mapping=jest.spyOn(Array.prototype,'map').mockImplementation(function(callback,thisArg){
+    if(this.some(row=>row?.current&&Object.hasOwn(row.current,'_portfolio_scope_index'))){
+      restoredArrays++;throw new Error('Synthetic restore callback failure');
+    }
+    return nativeMap.call(this,callback,thisArg);
+  });
+  try{
+    await expect(saveStoreAsync(db,{expectedSaved:saved})).rejects.toMatchObject({storage_code:'WRITE_FAILED'});
+    expect(restoredArrays).toBe(1);expect(sessionStorage.getItem(STORE_KEY)).toBe(saved);
+  }finally{mapping.mockRestore();}
+});
+
+test.each(['saved-bytes','session','role','evidence-revision'])('R4 remaining contract digest refuses a concurrent %s change without stale disclosure or persistence',async mode=>{
+ const review=(await api.post('/reviews',{client_id:cid,title:'SYNTHETIC contract digest boundary',review_type:'governance',recurrence:'annual',due_date:'2027-12-01'})).data;
+ let release,started,active=true,captured=false,contractInput,decodeError;
+ const gate=new Promise(resolve=>{release=resolve;}),ready=new Promise(resolve=>{started=resolve;});
+ releases.push(()=>{active=false;release();});
+ const digest=globalThis.crypto.subtle.digest.bind(globalThis.crypto.subtle);
+ jest.spyOn(globalThis.crypto.subtle,'digest').mockImplementation(async(...args)=>{
+  if(active&&!captured){
+   captured=true;
+   try{contractInput=JSON.parse(new TextDecoder().decode(args[1]));}catch(error){decodeError=error;}
+   started();await gate;
+  }
+  return digest(...args);
+ });
+ const before=sessionStorage.getItem(STORE_KEY),revision=getEvidenceCacheRevision();
+ const pending=settle(api.get('/reviews/'+review.review_id+'/completion-guide'));
+ await ready;if(!active)return;
+ expect(decodeError).toBeUndefined();
+ expect(contractInput).toMatchObject({template_id:'custom'});
+ expect(Array.isArray(contractInput.steps)).toBe(true);
+ expect(contractInput).not.toHaveProperty('payload');
+ if(mode==='saved-bytes')sessionStorage.setItem(STORE_KEY,before+' ');
+ if(mode==='session'){
+  await api.post('/auth/logout');if(!active)return;
+  await api.post('/demo/enter');if(!active)return;
+ }
+ if(mode==='role'){
+  const authority=readStore();authority.user={...authority.user,role:'client_readonly',client_ids:[cid],all_clients:false};saveStore(authority);
+ }
+ if(mode==='evidence-revision'){
+  clearFileCache();
+  expect(getEvidenceCacheRevision()).not.toBe(revision);
+  expect(sessionStorage.getItem(STORE_KEY)).toBe(before);
+ }
+ const external=sessionStorage.getItem(STORE_KEY);release();
+ const result=await pending;if(!active)return;
+ expect(result.error?.response?.status).toBe(mode==='session'?401:409);
+ expect(result.value).toBeUndefined();
+ expect(sessionStorage.getItem(STORE_KEY)).toBe(external);
+});

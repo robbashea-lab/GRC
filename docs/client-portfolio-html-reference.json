@@ -1,0 +1,79 @@
+{
+  "reference": {
+    "library_id": "libfile_a9324189e5bc8191b6c6f415f6f589d4",
+    "filename": "GoverNara Client Portfolio.html",
+    "version": 0,
+    "bytes": 133758,
+    "sha256": "9cc22ef7751f88a1b6ade516097d1fd9ad7cec0bb142443c9ecb256725eee643"
+  },
+  "base_commit": "3394388b3a3a1c3ae6ee67f70edb19f7c04fcfbb",
+  "scope": "Portfolio presentation and its overview modal; native data, authorization, client switching and record destinations retained. Show/movie logos are the owner's explicit exception to the reference. No main merge or production.",
+  "logos": {
+    "assets": [
+      {
+        "height": 1004,
+        "sha256": "a00462a3c813bab87fba740af2befc5664ff9419fd72e8ee394e0fa47bd01e1c",
+        "public_path": "/client-logos-reference/brawndo.png",
+        "client": "Brawndo",
+        "width": 692,
+        "artwork_url": "https://fictionalbrandsarchive.com/public/fba_logos/brawndonew.png",
+        "verification": "Viewed unaltered transparent lightning-bolt BRAWNDO mark and source archive movie still. Source catalog ties artwork to Idiocracy (2006). Third-party archive; production-original file provenance is not established.",
+        "bytes": 465770,
+        "source_url": "https://fictionalbrandsarchive.com/brawndo",
+        "file": "brawndo.png"
+      },
+      {
+        "height": 600,
+        "sha256": "d51cc96cb6d89b89cd2e70e0c4f76a5b3c10eb543908dc2ee887fed6025edce3",
+        "public_path": "/client-logos-reference/initech.png",
+        "client": "Initech",
+        "width": 600,
+        "artwork_url": "https://images.seeklogo.com/logo-png/19/1/initech-logo-png_seeklogo-193302.png",
+        "verification": "Viewed unaltered green/black three-cube INITECH logo. Third-party logo repository; production-original file provenance is not established. Original white padding remains.",
+        "bytes": 9006,
+        "source_url": "https://seeklogo.com/vector-logo/193302/initech",
+        "file": "initech.png"
+      },
+      {
+        "height": 430,
+        "sha256": "588bc7d5cf89cb4218dea54f901f7f8eb40425eb3b8dcf2c5342e61b40b4e97e",
+        "public_path": "/client-logos-reference/krusty-krab.png",
+        "client": "Krusty Krab",
+        "width": 860,
+        "artwork_url": "https://www.pngitem.com/pimgs/m/343-3433384_krusty-krab-logo-png-transparent-png.png",
+        "verification": "Viewed unaltered clamshell/blue-base/red-letter THE KRUSTY KRAB mark; excludes candidate with added burger and slogan. Third-party published artwork; production-original provenance not established. Original light-grey padding remains.",
+        "bytes": 138847,
+        "source_url": "https://www.pngitem.com/middle/hRxTToR_krusty-krab-logo-png-transparent-png/",
+        "file": "krusty-krab.png"
+      },
+      {
+        "height": 313,
+        "sha256": "545f7c1deefd61dee64f6c737c033f66d25873fc565c98a1123d92b9a726d164",
+        "public_path": "/client-logos-reference/dunder-mifflin.svg",
+        "client": "Dunder Mifflin",
+        "width": 500,
+        "artwork_url": "https://upload.wikimedia.org/wikipedia/commons/9/9c/Dunder_Mifflin%2C_Inc.svg",
+        "verification": "Downloaded original published SVG unchanged and visually inspected Wikimedia-generated PNG rendering: DUNDER MIFFLIN, INC. PAPER COMPANY on black. Commons traces image to Superrcat on Flickr (2006), later optimized SVG.",
+        "bytes": 9285,
+        "source_url": "https://commons.wikimedia.org/wiki/File:Dunder_Mifflin,_Inc.svg",
+        "file": "dunder-mifflin.svg"
+      },
+      {
+        "height": 600,
+        "sha256": "0e19c925e03d6a798bc96a1bb6a77a34502392bb4ccb4bb02b401347c2ef1838",
+        "public_path": "/client-logos-reference/prestige-worldwide.jpg",
+        "client": "Prestige Worldwide",
+        "width": 600,
+        "artwork_url": "https://ih1.redbubble.net/image.635989265.7397/st%2Clarge%2C507x507-pad%2C600x600%2Cf8f8f8.jpg",
+        "verification": "Viewed clean, unchanged published globe logo-art preview: blue/green globe and irregular white PRESTIGE WORLDWIDE wordmark. Third-party fan reproduction by myronmhouse, not a verified production-original file. Original sticker edging and pale padding remain; no crop, caption addition, redraw, or image modification performed.",
+        "bytes": 58070,
+        "source_url": "https://www.redbubble.com/i/sticker/Step-Brothers-Prestige-Worldwide-by-myronmhouse/33827397.EJUG5",
+        "file": "prestige-worldwide.jpg"
+      }
+    ],
+    "created_utc": "2026-11-17T16:15:59.3757228Z",
+    "artwork_mutations": "None. All images are downloaded published bytes, unaltered. No AI generation, recoloring, cropping or redrawing.",
+    "limits": "No production-original source found for Brawndo, Initech, Krusty Krab or Prestige Worldwide; these are sourced, visually reviewed published reproductions. Application wiring, 42px visual QA, trusted-demo eligibility and native behavior are root implementation responsibilities.",
+    "scope": "Only new Portfolio demo logo assets; no changes to global logo assets or renderer."
+  }
+}

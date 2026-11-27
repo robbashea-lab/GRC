@@ -14,9 +14,16 @@ class ActionItemTests(ClientDashboardSourcesTests):
         await self.client.patch('/api/tasks/'+second['task_id'], json={"status":"done"})
         self.assertEqual((await server.db.findings.find_one({"finding_id":"multi"}))["status"], "in_remediation")
         self.sign_in('admin')
-        self.assertEqual((await self.client.post('/api/findings/multi/validate',json={"rationale":"Checked"})).status_code,409)
+        pending = await server.db.findings.find_one({"finding_id":"multi"})
+        self.assertEqual((await self.client.post('/api/findings/multi/validate',json={"rationale":"Checked",
+            "expected_updated_at":pending.get('updated_at'),"request_id":"multi-premature-validation"})).status_code,409)
+        # The work submitter must remain separate from the original admin validator.
+        self.sign_in('member')
         await self.client.patch('/api/tasks/'+third['task_id'], json={"status":"done"})
-        closed = await self.client.post('/api/findings/multi/validate',json={"rationale":"All remediation verified"})
+        self.sign_in('admin')
+        pending = await server.db.findings.find_one({"finding_id":"multi"})
+        closed = await self.client.post('/api/findings/multi/validate',json={"rationale":"All remediation verified",
+            "expected_updated_at":pending.get('updated_at'),"request_id":"multi-completed-validation"})
         self.assertEqual(closed.status_code,200,closed.text)
         self.assertEqual(closed.json()['status'],'closed')
         self.assertEqual(closed.json()['validated_by'],'admin')

@@ -1,0 +1,132 @@
+@font-face{font-family:'GoverNara AI Inter';font-style:normal;font-weight:400 700;font-display:swap;src:url('../assets/fonts/inter-dashboard-latin.woff2') format('woff2')}
+/* AI concept tokens override the former blue palette only in owned surfaces. */
+.brawndo-additional.baai-page,:root .ui-dialog.aic-dialog{
+  --bg:#F4F6F9; --surface:#FFFFFF; --subtle:#F7F9FB; --tablehead:#F9FAFC; --hover:#F2F5F9; --border:#E3E8EF; --border-strong:#CDD5E0;
+  --fg:#0F1B2D; --fg2:#46566B; --muted:#5A687B; --link:#1F56C3; --selected:#EDF2FC; --rail:#215BC1; --focus:#215BC1;
+  --good:#05603A; --good-bg:#E7F6EF; --bad:#B42318; --bad-bg:#FDECEA; --warn:#93370D; --warn-bg:#FEF3E2;
+  --chrome:#FFFFFF; --banner:#FAFBFC; --brand:#1D4FA8; --avatar:#1D4FA8; --avatar-fg:#FFFFFF; --scrim:rgba(15,27,45,.38);
+  --c-part:#E2AA30; --c-sched:#215BC1; --c-due:#B7791F; --c-over:#D64550; --m-rev:#215BC1; --m-asr:#B7791F; --m-ren:#0F8A7A;
+  --seg-on:#FFFFFF; --tip-bg:#FFFFFF;
+  --shadow-sm:0 1px 2px rgba(15,27,45,.05), 0 1px 1px rgba(15,27,45,.02);
+  --shadow-seg:0 1px 2px rgba(15,27,45,.10), 0 0 0 1px rgba(15,27,45,.06);
+  --shadow-tip:0 0 0 1px rgba(15,27,45,.05), 0 12px 28px -8px rgba(15,27,45,.24);
+  --shadow:0 0 0 1px rgba(15,27,45,.06), 0 28px 64px -16px rgba(15,27,45,.34);
+  --font:'GoverNara AI Inter', Inter, 'Segoe UI', system-ui, -apple-system, Arial, sans-serif;
+  /* Rebind shared text tokens here; inherited shell tokens already resolve to its font. */
+  --font-heading:var(--font); --font-body:var(--font);}
+.brawndo-workspace-pilot[data-theme=dark] .baai-page,:root[data-additional-theme=dark] .ui-dialog.aic-dialog{
+  --bg:#0A0F16; --surface:#111823; --subtle:#151D29; --tablehead:#131B26; --hover:#19222F; --border:#222C3A; --border-strong:#34404F;
+  --fg:#EDF1F7; --fg2:#A7B3C4; --muted:#8E9BAE; --link:#8EC5FF; --selected:#1B2738; --rail:#8EC5FF; --focus:#8EC5FF;
+  --good:#3DC79F; --good-bg:rgba(61,199,159,.13); --bad:#F2828C; --bad-bg:rgba(242,130,140,.13); --warn:#E9B65A; --warn-bg:rgba(233,182,90,.13);
+  --chrome:#0D131B; --banner:#0D131B; --brand:#8CC4FF; --avatar:#2F6FD6; --avatar-fg:#FFFFFF; --scrim:rgba(0,0,0,.6);
+  --c-part:#D4A13C; --c-sched:#4A8BDB; --c-due:#C2862F; --c-over:#E66767; --m-rev:#4A8BDB; --m-asr:#C2862F; --m-ren:#1F9E89;
+  --seg-on:#243042; --tip-bg:#161F2B;
+  --shadow-sm:none; --shadow-seg:0 1px 2px rgba(0,0,0,.4);
+  --shadow-tip:0 0 0 1px rgba(255,255,255,.05), 0 12px 32px -8px rgba(0,0,0,.65);
+  --shadow:0 0 0 1px rgba(255,255,255,.06), 0 28px 64px -16px rgba(0,0,0,.75);
+  color-scheme:dark;}
+.brawndo-additional.baai-page{background:var(--bg)}
+/* Exact AI concept values, scoped to the verified AI route and its owned dialog. */
+.baai-page .baai-tools{grid-template-columns:repeat(auto-fill,minmax(220px,1fr))}
+.baai-page .baai-tool{grid-template-columns:auto minmax(0,1fr) auto}
+.baai-page .baai-tool b,.baai-page .baai-tool small{grid-column:2}
+.baai-page .baai-tool .baai-tool-logo{grid-row:1/span 2;grid-column:1;width:32px;height:32px;border-radius:8px;background:#fff;border:1px solid var(--border);padding:5px;display:grid;place-items:center}
+.baai-page .baai-tool-logo img{width:100%;height:100%;display:block}
+.baai-page .baai-tool .baai-tool-add{grid-row:1/span 2;grid-column:3}
+.baai-page .baai-tool-other .baai-tool-logo{background:transparent;border-style:dashed;color:var(--muted);font-size:16px;padding:0}
+.baai-page .baai-thead,.baai-page .baai-row{grid-template-columns:36px minmax(240px,2.6fr) 130px 170px minmax(140px,1fr) 150px 12px}
+.baai-page .baai-record-logo{display:grid;place-items:center;width:36px;height:36px;border-radius:9px;background:var(--subtle);border:1px solid var(--border);font-size:12px;font-weight:700;color:var(--muted)}
+.baai-page .baai-thead>span:first-child{font-size:0}
+.aic-dialog{font:13.5px/1.5 var(--font);font-optical-sizing:auto;-webkit-font-smoothing:antialiased;color:var(--fg)}
+.aic-dialog :is(h2,h3,p,ul){margin:0}
+.aic-dialog :is(button,input,select,textarea){font-family:inherit;color:inherit}
+.aic-dialog :is(button,input,select,textarea,summary):focus-visible{outline:2px solid var(--focus);outline-offset:2px}
+:root .ui-dialog.aic-dialog.brawndo-full-record[data-state][data-testid][role=dialog]>.aic-header{display:block;flex:none;text-align:left;padding:18px 56px 16px 24px;border-bottom:1px solid var(--border)}
+.aic-header .aic-identity{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--muted);margin-bottom:4px;text-transform:none}
+:root .ui-dialog.aic-dialog .aic-header h2{font:650 18px/1.3 var(--font);letter-spacing:-.02em;color:var(--fg)}
+.aic-dialog .aic-body{flex:1;min-height:0;overflow:auto;padding:20px 24px;display:grid;gap:16px;align-content:start;overscroll-behavior:contain}
+.aic-dialog .aic-form{display:grid;gap:16px;padding:0;margin:0;border:0;min-width:0}
+.aic-dialog .aic-fields{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:14px}
+.aic-dialog .aic-field{display:grid;gap:5px;font-size:12px;font-weight:500;color:var(--muted);min-width:0}
+.aic-dialog .aic-field>div>span{font-size:12px;font-weight:500;color:var(--muted)}
+:root .ui-dialog.aic-dialog :is(.aic-field input,.aic-field select){width:100%;height:34px;min-height:34px;padding:0 10px;border:1px solid var(--border-strong);border-radius:7px;background:var(--surface);font:400 13px/1.5 var(--font);color:var(--fg)}
+:root .ui-dialog.aic-dialog .aic-field textarea{width:100%;min-height:64px;padding:8px 10px;border:1px solid var(--border-strong);border-radius:7px;background:var(--surface);font:400 13px/1.5 var(--font);color:var(--fg);resize:vertical}
+.aic-dialog :disabled{opacity:.6;cursor:not-allowed}
+.aic-dialog .aic-chips{display:flex;flex-wrap:wrap;gap:6px}
+.aic-dialog .baai-toggle{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:999px;box-shadow:inset 0 0 0 1px var(--border-strong);background:var(--surface);font-size:12px;font-weight:500;color:var(--fg2)}
+.aic-dialog .baai-toggle:hover{background:var(--hover)}
+.aic-dialog .baai-toggle[aria-pressed=true]{background:var(--selected);color:var(--fg);box-shadow:inset 0 0 0 1.5px var(--rail)}
+.aic-dialog .baai-toggle[aria-pressed=true]:before{content:'✓';font-size:11px;color:var(--rail)}
+.aic-dialog .aic-questions{display:grid;border:1px solid var(--border);border-radius:8px;color:var(--fg);font-weight:400;overflow:hidden}
+.aic-dialog .aic-question{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px;align-items:center;padding:8px 12px;font-size:12.5px}
+.aic-dialog .aic-question+.aic-question{border-top:1px solid var(--border)}
+.aic-dialog .aic-question small{display:block;font-size:11px;color:var(--muted)}
+.aic-dialog .aic-question .baai-segments button{padding:2px 10px;font-size:12px}
+.aic-dialog .aic-suggested{display:inline-block;margin-left:6px;font-size:10.5px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--link);background:color-mix(in srgb,var(--link) 12%,transparent);padding:1px 6px;border-radius:5px}
+.aic-dialog .aic-result{display:flex;align-items:flex-start;gap:12px;padding:12px 14px;border:1px solid var(--border);border-radius:8px}
+.aic-dialog .aic-result b{font-size:15px}
+.aic-dialog .aic-result>span:last-child{display:grid;font-size:12.5px;color:var(--fg2)}
+.aic-dialog .aic-result small{font-size:12px;color:var(--muted)}
+.aic-dialog .aic-block{display:grid;gap:6px;padding:14px 16px;border:1px solid var(--border);border-radius:8px;background:var(--subtle);font-size:12.5px;color:var(--fg2)}
+:root .ui-dialog.aic-dialog .aic-block h3{display:flex;align-items:center;justify-content:space-between;gap:8px;font:600 11px/1.5 var(--font);letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.aic-dialog .aic-block fieldset{background:transparent}
+.aic-dialog .aic-template{display:flex;gap:12px;align-items:flex-start;border:1px solid color-mix(in srgb,var(--link) 40%,var(--border));background:color-mix(in srgb,var(--link) 7%,var(--surface));border-radius:10px;padding:12px 14px;font-size:13px}
+.aic-dialog .aic-template>img{width:34px;height:34px;border-radius:9px;background:#fff;border:1px solid var(--border);padding:6px;flex-shrink:0}
+.aic-dialog .aic-template ul{margin:6px 0 0;padding-left:18px;color:var(--muted)}
+.aic-dialog .aic-template li{margin-top:2px}
+.aic-dialog .aic-list-label{list-style:none}
+.aic-dialog .aic-callout{display:flex;align-items:center;gap:8px;padding:10px 12px;border-radius:8px;font-size:12.5px;font-weight:600}
+.aic-dialog .aic-pending{background:var(--warn-bg);color:var(--warn)}
+.aic-dialog .aic-rejected{background:var(--bad-bg);color:var(--bad)}
+.aic-dialog .aic-approved{background:var(--good-bg);color:var(--good)}
+.aic-dialog .aic-alerts{display:grid;gap:4px;margin:0;padding-left:18px;font-size:12.5px;color:var(--warn)}
+.aic-dialog .aic-note{font-size:12px;color:var(--muted)}
+.aic-dialog .aic-error{font-size:13px;color:var(--bad)}
+.aic-dialog .aic-link{color:var(--link);text-align:left;font-size:12.5px}
+.aic-dialog .aic-link:hover{text-decoration:underline}
+.aic-dialog .aic-actions{display:flex;flex-wrap:wrap;gap:8px}
+.aic-dialog .aic-footer{flex:none;display:flex;justify-content:flex-end;flex-wrap:wrap;gap:8px;padding:12px 24px;border-top:1px solid var(--border);background:var(--subtle)}
+:root .ui-dialog.aic-dialog .aic-footer .ui-button{height:32px;min-height:32px;padding:0 12px;border:1px solid var(--border-strong);border-radius:7px;background:var(--surface);font:600 12.5px/1.5 var(--font);color:var(--fg);box-shadow:var(--shadow-sm)}
+:root .ui-dialog.aic-dialog .aic-footer .ui-button:last-child{background:var(--rail);border-color:var(--rail);color:var(--surface)}
+@container(max-width:900px){.baai-page .baai-row{grid-template-columns:36px minmax(0,1fr) auto;grid-template-areas:'id item item' 'tier tier appr' 'owner owner risk';row-gap:8px;padding-block:14px}}
+@media(max-width:500px){.aic-dialog .aic-fields{grid-template-columns:minmax(0,1fr)}.aic-dialog .aic-body{padding:20px 16px}.baai-page .baai-tools{grid-template-columns:minmax(0,1fr)}}
+@media(prefers-reduced-motion:reduce){.aic-dialog *{transition:none!important;animation:none!important}}
+
+.aic-dialog .aic-governance>summary{cursor:pointer;font-size:12.5px;font-weight:600;color:var(--fg)}
+.aic-dialog .aic-governance[open]>summary{margin-bottom:12px}
+.aic-dialog .aic-governance dd{margin:0 0 8px;overflow-wrap:anywhere}
+.aic-dialog .aic-governance section{display:grid;gap:8px}
+.aic-dialog .aic-block :is(input,select){font-size:13px;height:34px;border:1px solid var(--border-strong);border-radius:7px;background:var(--surface);color:var(--fg)}
+
+:root .ui-dialog.aic-dialog .aic-header h2{margin-top:0}
+
+:root .ui-popover.aic-owner-portal[data-state]{
+  --bg:#F4F6F9; --surface:#FFFFFF; --subtle:#F7F9FB; --tablehead:#F9FAFC; --hover:#F2F5F9; --border:#E3E8EF; --border-strong:#CDD5E0;
+  --fg:#0F1B2D; --fg2:#46566B; --muted:#5A687B; --link:#1F56C3; --selected:#EDF2FC; --rail:#215BC1; --focus:#215BC1;
+  --good:#05603A; --good-bg:#E7F6EF; --bad:#B42318; --bad-bg:#FDECEA; --warn:#93370D; --warn-bg:#FEF3E2;
+  --chrome:#FFFFFF; --banner:#FAFBFC; --brand:#1D4FA8; --avatar:#1D4FA8; --avatar-fg:#FFFFFF; --scrim:rgba(15,27,45,.38);
+  --c-part:#E2AA30; --c-sched:#215BC1; --c-due:#B7791F; --c-over:#D64550; --m-rev:#215BC1; --m-asr:#B7791F; --m-ren:#0F8A7A;
+  --seg-on:#FFFFFF; --tip-bg:#FFFFFF;
+  --shadow-sm:0 1px 2px rgba(15,27,45,.05), 0 1px 1px rgba(15,27,45,.02);
+  --shadow-seg:0 1px 2px rgba(15,27,45,.10), 0 0 0 1px rgba(15,27,45,.06);
+  --shadow-tip:0 0 0 1px rgba(15,27,45,.05), 0 12px 28px -8px rgba(15,27,45,.24);
+  --shadow:0 0 0 1px rgba(15,27,45,.06), 0 28px 64px -16px rgba(15,27,45,.34);
+  --font:'GoverNara AI Inter', Inter, 'Segoe UI', system-ui, -apple-system, Arial, sans-serif;}
+:root[data-additional-theme=dark] .ui-popover.aic-owner-portal[data-state]{
+  --bg:#0A0F16; --surface:#111823; --subtle:#151D29; --tablehead:#131B26; --hover:#19222F; --border:#222C3A; --border-strong:#34404F;
+  --fg:#EDF1F7; --fg2:#A7B3C4; --muted:#8E9BAE; --link:#8EC5FF; --selected:#1B2738; --rail:#8EC5FF; --focus:#8EC5FF;
+  --good:#3DC79F; --good-bg:rgba(61,199,159,.13); --bad:#F2828C; --bad-bg:rgba(242,130,140,.13); --warn:#E9B65A; --warn-bg:rgba(233,182,90,.13);
+  --chrome:#0D131B; --banner:#0D131B; --brand:#8CC4FF; --avatar:#2F6FD6; --avatar-fg:#FFFFFF; --scrim:rgba(0,0,0,.6);
+  --c-part:#D4A13C; --c-sched:#4A8BDB; --c-due:#C2862F; --c-over:#E66767; --m-rev:#4A8BDB; --m-asr:#C2862F; --m-ren:#1F9E89;
+  --seg-on:#243042; --tip-bg:#161F2B;
+  --shadow-sm:none; --shadow-seg:0 1px 2px rgba(0,0,0,.4);
+  --shadow-tip:0 0 0 1px rgba(255,255,255,.05), 0 12px 32px -8px rgba(0,0,0,.65);
+  --shadow:0 0 0 1px rgba(255,255,255,.06), 0 28px 64px -16px rgba(0,0,0,.75);
+  color-scheme:dark;}
+.aic-owner-portal{font:14px/1.5 'GoverNara AI Inter',Inter,system-ui,sans-serif;color:var(--fg);background:var(--surface);border-color:var(--border)}
+.aic-owner-portal :is(button,input){font:inherit;color:inherit;background:var(--surface);border-color:var(--border-strong)}
+.aic-owner-portal button:hover{background:var(--hover)}
+:root .ui-popover.aic-owner-portal[data-state]{--font-body:'GoverNara AI Inter',Inter,system-ui,sans-serif;--font:var(--font-body);font:13px/1.5 var(--font-body)}
+:root .ui-dialog.aic-dialog[data-state][data-testid][role=dialog] .aic-field button[aria-haspopup=dialog]{font:500 13px/1.5 var(--font);height:34px;min-height:34px;padding:0 10px;border:1px solid var(--border-strong);border-radius:7px;background:var(--surface);color:var(--fg)}
+:root .ui-dialog.aic-dialog[data-state][data-testid][role=dialog] .aic-field select{font-weight:500}
+.aic-dialog .aic-field>div:has(button[aria-haspopup=dialog]){display:grid;gap:5px;grid-template-rows:minmax(0,1fr) auto}

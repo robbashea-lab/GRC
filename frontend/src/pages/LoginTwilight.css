@@ -1,0 +1,95 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300..700&display=swap');
+
+/* Restore reference browser defaults beneath the application's Tailwind reset. */
+#login-governara { min-height:100vh; isolation:isolate; color-scheme:normal; }
+/* The fixed reference also uses the default scheme for document scrollbars.
+   Account themes resume automatically as soon as the login unmounts. */
+html:has(#login-governara) { color-scheme:normal; }
+#login-governara h1, #login-governara h2 { font-family:inherit; }
+#login-governara button, #login-governara input { font-family:inherit; line-height:inherit; letter-spacing:normal; }
+#login-governara button { padding:1px 6px; text-transform:none; }
+#login-governara svg { display:inline; vertical-align:baseline; }
+#login-governara .chk input { margin:3px 3px 3px 4px; padding:0; appearance:auto; }
+#login-governara input::placeholder { opacity:1; }
+#login-governara .skip { position:absolute; left:28px; top:20px; z-index:2; padding:8px 14px; background:var(--navy); color:var(--ink); transform:translateY(-200%); }
+#login-governara .skip:focus { transform:none; }
+
+/* Layout: full-bleed twilight scene with the owl between the headline and a frosted sign-in card.
+   One headline, one supporting line, Microsoft single sign-on first, labelled fields, and a footer with the trust links. */
+#login-governara { --navy:#081120; --ink:#EEF2FA; --ink2:#B4BFD3; --muted:#8793AA; --line:rgba(255,255,255,.12); --field:rgba(8,17,32,.55); --sky:#85C4FF; --peri:#91B2FF; --lav:#9698FE; --lilac:#C4B5FD; --bad:#FDA4AF; --font:Inter, 'Segoe UI', system-ui, sans-serif; }
+#login-governara, #login-governara * { box-sizing:border-box; }
+#login-governara { margin:0; background:var(--navy); color:var(--ink); font:14px/1.5 var(--font); -webkit-font-smoothing:antialiased; overflow-x:hidden; }
+#login-governara :focus-visible { outline:2px solid var(--sky); outline-offset:2px; }
+#login-governara .scene { position:fixed; inset:0; z-index:0; background:var(--navy) url('../assets/login-background.jpg') no-repeat; background-size:cover; background-position:50% 50%; }
+#login-governara .scene::after { content:""; position:absolute; inset:0;
+  background:linear-gradient(90deg, #081120CC 0%, #08112099 24%, #08112033 40%, #08112000 50%, #08112000 66%, #08112066 80%, #081120B3 100%),
+             linear-gradient(180deg, #08112099 0%, #08112000 18%, #08112000 70%, #081120E6 100%); }
+#login-governara .page { position:relative; z-index:1; min-height:100vh; display:grid; grid-template-rows:auto 1fr auto;
+  padding:max(20px, env(safe-area-inset-top)) max(28px, env(safe-area-inset-right)) max(16px, env(safe-area-inset-bottom)) max(28px, env(safe-area-inset-left)); }
+#login-governara header { display:flex; align-items:center; justify-content:space-between; gap:16px; }
+#login-governara .logo { display:flex; align-items:center; gap:10px; font-size:24px; font-weight:650; letter-spacing:-.03em; color:var(--ink); text-decoration:none; }
+#login-governara .logo svg { width:38px; height:38px; }
+#login-governara .demo-link { color:var(--ink2); font-size:13px; font-weight:500; text-decoration:none; padding:8px 14px; border-radius:10px; border:1px solid var(--line); background:rgba(255,255,255,.03); }
+#login-governara .demo-link:hover { color:var(--ink); border-color:rgba(255,255,255,.25); }
+#login-governara .main { display:grid; grid-template-columns:minmax(0,1fr) 470px; align-items:center; gap:32px; padding:32px 0; }
+#login-governara .hero { max-width:780px; padding-left:clamp(0px, 1.5vw, 24px); }
+#login-governara h1 { margin:0; font-size:clamp(44px, 3.8vw, 72px); line-height:1.02; font-weight:400; letter-spacing:-.035em; }
+#login-governara h1 span { display:block; white-space:nowrap; }
+#login-governara h1 .grad { background:linear-gradient(90deg, var(--sky), var(--lav) 55%, var(--lilac)); -webkit-background-clip:text; background-clip:text; color:transparent; padding-bottom:.08em; }
+#login-governara h1 .sub { margin-top:.32em; font-size:.56em; line-height:1.15; letter-spacing:-.02em; }
+#login-governara .card { position:relative; padding:36px 36px 28px; border-radius:22px; background:linear-gradient(180deg, rgba(20,32,56,.72), rgba(10,18,34,.82)); border:1px solid rgba(150,152,254,.35);
+  box-shadow:0 0 0 1px rgba(255,255,255,.03) inset, 0 30px 80px -20px rgba(0,0,0,.8), 0 0 60px -20px rgba(150,152,254,.35); -webkit-backdrop-filter:blur(18px) saturate(1.2); backdrop-filter:blur(18px) saturate(1.2); }
+#login-governara .card h2 { margin:0; font-size:28px; font-weight:500; letter-spacing:-.02em; }
+#login-governara .card .sub { margin:6px 0 24px; color:var(--ink2); font-size:14px; }
+#login-governara .btn { display:flex; align-items:center; justify-content:center; gap:10px; width:100%; height:50px; border-radius:12px; font:inherit; font-size:15px; font-weight:600; cursor:pointer; transition:transform .12s, filter .12s, background .12s, border-color .12s; }
+#login-governara .btn:active { transform:translateY(1px); }
+#login-governara .ms { background:#fff; color:#1B1F2A; border:0; }
+#login-governara .ms:hover { filter:brightness(.95); }
+#login-governara .ms svg { width:18px; height:18px; }
+#login-governara .or { display:grid; grid-template-columns:1fr auto 1fr; align-items:center; gap:12px; margin:20px 0; color:var(--muted); font-size:12.5px; }
+#login-governara .or::before, #login-governara .or::after { content:""; height:1px; background:var(--line); }
+#login-governara .field { display:grid; gap:7px; margin-bottom:16px; }
+#login-governara .field label { font-size:13px; font-weight:500; color:var(--ink2); }
+#login-governara .inp { position:relative; }
+#login-governara .inp svg.lead { position:absolute; left:14px; top:50%; width:17px; height:17px; transform:translateY(-50%); color:var(--muted); pointer-events:none; }
+#login-governara .inp input { width:100%; height:50px; padding:0 46px 0 44px; border-radius:12px; border:1px solid var(--line); background:var(--field); color:var(--ink); font:inherit; font-size:15px; transition:border-color .12s, box-shadow .12s; }
+#login-governara .inp input::placeholder { color:#6B7790; }
+#login-governara .inp input:focus { outline:none; border-color:var(--peri); box-shadow:0 0 0 3px rgba(145,178,255,.22); }
+#login-governara .inp input[aria-invalid="true"] { border-color:var(--bad); }
+#login-governara .eye { position:absolute; right:8px; top:50%; transform:translateY(-50%); display:grid; place-items:center; width:34px; height:34px; border:0; border-radius:8px; background:none; color:var(--muted); cursor:pointer; }
+#login-governara .eye:hover { color:var(--ink); background:rgba(255,255,255,.06); }
+#login-governara .eye svg { width:18px; height:18px; }
+#login-governara .err { min-height:0; font-size:12.5px; color:var(--bad); }
+#login-governara .row { display:flex; justify-content:space-between; align-items:center; gap:10px; margin:2px 0 22px; font-size:13px; }
+#login-governara .chk { display:inline-flex; align-items:center; gap:8px; color:var(--ink2); cursor:pointer; }
+#login-governara .chk input { width:16px; height:16px; accent-color:var(--lav); }
+#login-governara a.link, #login-governara button.link { color:#C7D2FE; font:inherit; font-size:13px; font-weight:500; text-decoration:none; background:none; border:0; padding:0; cursor:pointer; }
+#login-governara a.link:hover, #login-governara button.link:hover { color:#fff; text-decoration:underline; text-underline-offset:3px; }
+#login-governara .go { border:0; color:#0B1630; background:linear-gradient(90deg, var(--peri), var(--sky) 50%, var(--lav)); box-shadow:0 10px 30px -10px rgba(133,196,255,.6); }
+#login-governara .go:hover { filter:brightness(1.07); }
+#login-governara .go svg { width:18px; height:18px; transition:transform .15s; } #login-governara .go:hover svg { transform:translateX(3px); }
+#login-governara .go[aria-busy="true"] { filter:saturate(.6); cursor:progress; }
+#login-governara .spin { width:18px; height:18px; border-radius:50%; border:2px solid #0B163055; border-top-color:#0B1630; animation:login-twilight-spin .7s linear infinite; }
+@keyframes login-twilight-spin { to { transform:rotate(360deg); } }
+#login-governara .alt { margin-top:18px; padding-top:18px; border-top:1px solid var(--line); text-align:center; font-size:13px; color:var(--ink2); }
+#login-governara .caps { display:none; margin-top:6px; font-size:12.5px; color:#FDE68A; } #login-governara .caps.on { display:block; }
+#login-governara .status { margin-top:12px; font-size:13px; text-align:center; color:#C7D2FE; min-height:1.2em; }
+#login-governara footer { display:flex; justify-content:space-between; align-items:center; gap:10px 20px; flex-wrap:wrap; padding-top:14px; border-top:1px solid rgba(255,255,255,.07); font-size:12.5px; color:var(--muted); }
+#login-governara footer nav { display:flex; gap:18px; flex-wrap:wrap; }
+#login-governara footer a { color:var(--ink2); text-decoration:none; } #login-governara footer a:hover { color:#fff; }
+@media (max-width:1100px) { #login-governara .main { grid-template-columns:minmax(0,1fr) 400px; } #login-governara .card { padding:30px 28px 24px; } }
+@media (max-width:900px) {
+  #login-governara h1 span { white-space:normal; }
+  #login-governara .scene { position:absolute; height:420px; background-size:cover; background-position:44% 55%; }
+  #login-governara .scene::after { background:linear-gradient(180deg, #08112066 0%, #08112000 30%, #081120 100%); }
+  #login-governara .main { grid-template-columns:minmax(0,1fr); padding-top:250px; gap:28px; }
+  #login-governara .hero { padding-left:0; }
+  #login-governara h1 { font-size:clamp(40px, 11vw, 60px); }
+  #login-governara .card { -webkit-backdrop-filter:none; backdrop-filter:none; }
+}
+@media (prefers-reduced-motion: reduce) { #login-governara, #login-governara * { transition:none !important; animation:none !important; } }
+
+/* Only native flags and pending operations differ from the normal reference state. */
+#login-governara .demo-link { font-family:inherit; line-height:inherit; cursor:pointer; }
+#login-governara button:disabled { cursor:not-allowed; }
+#login-governara .auth-notice { color:var(--ink2); font-size:13px; margin-top:12px; }

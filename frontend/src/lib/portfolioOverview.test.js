@@ -29,6 +29,17 @@ test('activity uses meaningful named events and rejects noise, invalid and futur
   expect(result.get('a')).toEqual({at:logs[0].at,label:'Review completed'});expect(result.has('b')).toBe(false);
 });
 const row=(id,fields={})=>({name:id,client_id:id,grc_lead_id:id,assigned_owner_id:id,grc_lead:{name:id},frameworks:[],past_due:0,due_30d:0,critical_high_issues:0,significant_risks:0,unassigned:0,...fields});
+test('native assessment saves are meaningful; failures, cancellations and proven no-op saves are not',()=>{
+  const now=new Date('2026-09-15T12:00:00Z');
+  const saved={audit_id:'saved',client_id:'a',entity_type:'framework_assessments',action:'Framework assessment updated',at:'2026-09-10T12:00:00Z'};
+  const noise=[{...saved,audit_id:'noop',at:'2026-09-11T12:00:00Z'},
+    ...['failed','denied','cancelled','requested'].map(outcome=>({...saved,at:'2026-09-12T12:00:00Z',outcome})),
+    {...saved,at:'2026-09-12T12:00:00Z',committed:false},
+    {...saved,at:'2026-09-12T12:00:00Z',meta:{_portfolio_activity_noop:true}},
+    {...saved,at:'2026-09-12T12:00:00Z',meta:{outcome:'error'}},
+    {...saved,entity_type:'clients',action:'update',at:'2026-09-12T12:00:00Z'}];
+  expect(latestPortfolioActivity([saved,...noise],now,{noop:{eligible:false}}).get('a')).toEqual({at:saved.at,label:'Assessment saved'});
+});
 test('Monday-morning order: past due, critical/high, due ≤30d, significant risks, unassigned, staleness, name',()=>{
   const rows=[row('Z',{critical_high_issues:1}),row('A',{past_due:4}),row('B',{significant_risks:10}),row('D',{unassigned:2}),row('C',{due_30d:4}),
     row('F',{last_activity:{at:'2026-09-20T12:00:00Z'}}),row('E',{last_activity:{at:'2026-07-01T12:00:00Z'}}),row('G')];

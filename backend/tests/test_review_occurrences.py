@@ -4,6 +4,7 @@ from review_occurrences import schedule, snapshot
 
 
 class OccurrenceTests(ClientDashboardSourcesTests):
+    r4_valid_completion_fixture = True
     async def test_calendar_move_preserves_cycle_replay_and_completed_history(self):
         action = await self.seed('monthly', '2026-01-31')
         self.sign_in('admin')
@@ -145,10 +146,14 @@ class OccurrenceTests(ClientDashboardSourcesTests):
         self.assertEqual(changed.status_code,200,changed.text)
         self.assertEqual(changed.json()["completed_by"],"member")
         self.assertTrue(changed.json()["completed_at"])
-        self.assertEqual((await server.db.findings.find_one({"finding_id":fid}))["status"],"remediated")
-        self.assertEqual((await self.client.post("/api/findings/"+fid+"/validate",json={"rationale":"BIA checked"})).status_code,403)
+        pending_finding = await server.db.findings.find_one({"finding_id":fid})
+        self.assertEqual(pending_finding["status"],"remediated")
+        decision = {"rationale":"Approved BIA checked", "expected_updated_at":pending_finding["updated_at"],
+                    "request_id":"independent-occurrence-validation"}
+        denied = await self.client.post("/api/findings/"+fid+"/validate",json=decision)
+        self.assertEqual(denied.status_code,403,denied.text)
         self.sign_in("admin")
-        validated = await self.client.post("/api/findings/"+fid+"/validate",json={"rationale":"Approved BIA checked"})
+        validated = await self.client.post("/api/findings/"+fid+"/validate",json=decision)
         self.assertEqual(validated.status_code,200,validated.text)
         self.assertEqual(validated.json()["closed_by"],"admin")
         linked = (await self.client.get("/api/related?entity_type=reviews&entity_id=bcp&occurrence_id=occ_bcp")).json()

@@ -1,3 +1,4 @@
+jest.mock('react-router-dom',()=>({useLocation:()=>({pathname:'/calendar',search:''})}),{virtual:true});
 import React,{act} from 'react';
 import {createRoot} from 'react-dom/client';
 import Calendar from './Calendar';
@@ -66,6 +67,27 @@ test('errors are explicit and retryable, not rendered as successful empty calend
   await act(async()=>button('Retry Calendar').click());
   expect(container.querySelector('[role="alert"]')).toBeNull();
   expect(container.textContent).toContain('Current work');
+});
+
+test.each([['reviews',[]],['findings',42],['tasks',true],['vendor_dates',[]],['reviews',{invalid:{}}]])('malformed %s buckets are rejected instead of published as an empty Calendar',async(kind,bucket)=>{
+  const original=api.get.getMockImplementation();
+  api.get.mockImplementation(async(path,options)=>path==='/calendar'?{data:{reviews:{},findings:{},tasks:{},[kind]:bucket}}:original(path,options));
+  await act(async()=>root.render(<Calendar/>));
+  expect(container.querySelector('[role="alert"]')?.textContent).toContain('Calendar records do not match the selected client.');
+  expect(container.textContent).not.toContain('No dated items');
+  expect(container.querySelector('[data-testid^="cal-item-"]')).toBeNull();
+  expect(api.patch).not.toHaveBeenCalled();
+  api.get.mockImplementation(original);
+  await act(async()=>button('Retry Calendar').click());
+  expect(container.querySelector('[role="alert"]')).toBeNull();
+  expect(container.textContent).toContain('Current work');
+});
+
+test('valid empty Calendar dictionaries may omit optional Vendor dates',async()=>{
+  api.get.mockResolvedValue({data:{reviews:{},findings:{},tasks:{}}});
+  await act(async()=>root.render(<Calendar/>));
+  expect(container.querySelector('[role="alert"]')).toBeNull();
+  expect(container.textContent).toContain('No dated items');
 });
 
 function drop(key,target) {

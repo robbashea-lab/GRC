@@ -2,6 +2,7 @@ from test_client_dashboard_sources import ClientDashboardSourcesTests, server
 
 
 class ReviewLifecycleTests(ClientDashboardSourcesTests):
+    r4_valid_completion_fixture = True
     async def test_finding_action_recurrence_and_tenant_links(self):
         self.sign_in("member")
         await server.db.reviews.insert_many([
@@ -36,16 +37,8 @@ class ReviewLifecycleTests(ClientDashboardSourcesTests):
         fresh = (await self.client.get(f'/api/related?entity_type=reviews&entity_id={next_review["review_id"]}')).json()
         self.assertEqual(len(fresh["findings"]), 1)
         self.assertEqual(old["occurrence_id"], "occ_tabletop")
-        await self.client.patch(f'/api/tasks/{task["task_id"]}', json={"status": "done"})
-        current = await server.db.findings.find_one({"finding_id": finding["finding_id"]})
-        self.assertEqual(current["status"], "remediated")
-        self.sign_in("admin")
-        validated = await self.client.post(f'/api/findings/{finding["finding_id"]}/validate', json={"rationale": "Approved BIA checked"})
-        self.assertEqual(validated.status_code, 200, validated.text)
-        self.sign_in("member")
-        self.assertEqual((await server.db.findings.find_one({"finding_id": finding["finding_id"]}))["status"], "closed")
-        denied = await self.client.get("/api/related?entity_type=reviews&entity_id=private")
-        self.assertEqual(denied.status_code, 403)
+        # Exercise tenant validation while the Action is editable; completed work
+        # now has the stronger independent historical-immutability guard.
         moved = await self.client.patch(f'/api/tasks/{task["task_id"]}', json={"client_id": "b"})
         self.assertEqual(moved.status_code, 403)
         self.sign_in('admin')
@@ -53,6 +46,30 @@ class ReviewLifecycleTests(ClientDashboardSourcesTests):
         self.assertEqual(moved.status_code, 422)
         cross_link = await self.client.patch(f'/api/tasks/{task["task_id"]}', json={"review_id": "private"})
         self.assertEqual(cross_link.status_code, 422)
+        unchanged = await server.db.tasks.find_one({"task_id": task["task_id"]})
+        self.assertEqual((unchanged['client_id'], unchanged['review_id']), ('a', 'tabletop'))
+        self.sign_in('member')
+        await self.client.patch(f'/api/tasks/{task["task_id"]}', json={"status": "done"})
+        current = await server.db.findings.find_one({"finding_id": finding["finding_id"]})
+        self.assertEqual(current["status"], "remediated")
+        decision = {"rationale": "Approved BIA checked", "expected_updated_at": current["updated_at"],
+                    "request_id": "independent-lifecycle-validation"}
+        denied = await self.client.post(f'/api/findings/{finding["finding_id"]}/validate', json=decision)
+        self.assertEqual(denied.status_code, 403, denied.text)
+        self.sign_in("admin")
+        validated = await self.client.post(f'/api/findings/{finding["finding_id"]}/validate', json=decision)
+        self.assertEqual(validated.status_code, 200, validated.text)
+        self.assertEqual(validated.json()["validated_by"], "admin")
+        self.sign_in("member")
+        self.assertEqual((await server.db.findings.find_one({"finding_id": finding["finding_id"]}))["status"], "closed")
+        denied = await self.client.get("/api/related?entity_type=reviews&entity_id=private")
+        self.assertEqual(denied.status_code, 403)
+        self.sign_in('admin')
+        historical_edit = await self.client.patch(f'/api/tasks/{task["task_id"]}', json={"title": "Rewrite completed work"})
+        self.assertEqual(historical_edit.status_code, 409, historical_edit.text)
+        retained = await server.db.tasks.find_one({"task_id": task["task_id"]})
+        self.assertEqual((retained['client_id'], retained['review_id'], retained['title']),
+                         ('a', 'tabletop', 'Develop and approve a Business Impact Analysis'))
 
     async def test_empty_finding_does_not_create_records(self):
         self.sign_in("member")

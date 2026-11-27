@@ -1,4 +1,5 @@
 import unittest
+from r4_fixture_inputs import validate_with_independent_actor
 from unittest.mock import patch
 from framework_summary import progress, ongoing
 from framework_catalog import active_definitions
@@ -9,6 +10,7 @@ server = harness.server
 
 
 class Phase6VisibilityTests(unittest.IsolatedAsyncioTestCase):
+    r4_valid_completion_fixture = True
     asyncSetUp = harness.ClientDashboardSourcesTests.asyncSetUp
     sign_in = harness.ClientDashboardSourcesTests.sign_in
 
@@ -141,7 +143,10 @@ class Phase6VisibilityTests(unittest.IsolatedAsyncioTestCase):
         await self.client.patch('/api/tasks/'+task['task_id'],json={'status':'done'})
         summary=(await self.summary())['items'][0]
         self.assertEqual((summary['open_findings'],summary['open_actions']),(1,0))
-        await self.client.post('/api/findings/'+fid+'/validate',json={'rationale':'Corrective work checked'})
+        ready = await server.db.findings.find_one({'finding_id': fid})
+        await validate_with_independent_actor(self, server, fid, {
+            'rationale': 'Corrective work checked', 'request_id': 'phase6-validation-' + fid,
+            'expected_updated_at': ready.get('updated_at')})
         self.assertEqual((await self.summary())['items'][0]['open_findings'],0)
 
     async def test_summary_authorization_minimal_payload_and_read_has_no_side_effects(self):
@@ -168,7 +173,10 @@ class Phase6VisibilityTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual([(r['kind'],r['status']) for r in active],[('finding','remediated')])
         past=await self.calendar('history')
         self.assertEqual([(r['id'],r['due_date_iso'],r['can_reschedule']) for r in past],[(task['task_id'],'2026-10-02',False)])
-        await self.client.post('/api/findings/'+f['finding_id']+'/validate',json={'rationale':'Approved document checked'})
+        ready = await server.db.findings.find_one({'finding_id': f['finding_id']})
+        await validate_with_independent_actor(self, server, f['finding_id'], {
+            'rationale': 'Approved document checked', 'request_id': 'calendar-validation-' + f['finding_id'],
+            'expected_updated_at': ready.get('updated_at')})
         self.assertEqual(await self.calendar('active'),[])
         self.assertEqual({r['status'] for r in await self.calendar('history')},{'done','closed'})
 

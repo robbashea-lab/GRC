@@ -1,11 +1,21 @@
 import axios from 'axios';
 import {previewAdapter} from './adapter';
+import {ids,saveStore} from './store';
 import {aggregateClientDashboard} from '../lib/clientDashboard';
 import {dashboardPosture} from '../lib/dashboardPosture';
 import {validateFrameworkConfig} from './frameworks';
 
 const api=axios.create({adapter:previewAdapter});
-beforeEach(async()=>{sessionStorage.clear();localStorage.clear();await api.post('/demo/enter');});
+beforeEach(async()=>{
+  sessionStorage.clear();
+  localStorage.clear();
+  const user={user_id:'operating_model_admin',name:'Synthetic operating model administrator',
+    email:'operating-model@example.test',role:'super_admin',status:'active',workspace_mode:'demo',client_ids:[]};
+  const tables=Object.fromEntries(Object.keys(ids).map(kind=>[kind,[]]));
+  // These tests create their own records through the adapter. A small store avoids serializing unrelated Demo history on every request.
+  saveStore({...tables,user,users:[user],logs:[],notifications:[],baselines:{}},{resetFiles:true});
+  await api.post('/demo/enter');
+});
 
 test('framework cadence configuration rejects impossible dates instead of rolling them forward',()=>{
   const config=due_date=>({framework_reviews:{'account-authorization':{due_date,recurrence:'annual'}}});

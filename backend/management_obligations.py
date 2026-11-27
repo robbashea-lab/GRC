@@ -156,7 +156,15 @@ async def load_records(db, query, projection=None):
     # Complete management input, not register pagination or a top-N queue.
     import review_occurrences
     import vendor_governance
-    records = {kind: await db[kind].find(query, projection or {'_id': 0}).to_list(None) for kind in KINDS}
+    from r4_services import require_settled_population
+    fields = dict(projection or {'_id': 0})
+    if any(value for key, value in fields.items() if key != '_id'):
+        fields['_r4_context_pending'] = 1
+    else:
+        fields.pop('_r4_context_pending', None)
+    records = {kind: await db[kind].find(query, fields).to_list(None) for kind in KINDS}
+    # Vendor views remove private markers; check the complete raw population first.
+    await require_settled_population(db, query, (row for rows in records.values() for row in rows))
     records['reviews'] = [review_occurrences.view(r) for r in records['reviews']]
     records['risks'] = [assessed_risk(r) for r in records['risks']]
     reviews_by_vendor = {}

@@ -2,12 +2,15 @@
 // Uses jsdom's quota-limited sessionStorage; the ten-year characterization suite
 // intentionally uses unbounded storage and cannot establish browser capacity.
 import axios from 'axios';
+import {decodeDemoStore} from './demoStorageCodec';
 import {previewAdapter} from './commandTestAdapter';
-import {STORE_KEY} from './store';
+import {STORE_KEY, readStore, saveStore} from './store';
 import baseline from '@catalogs/onboardingCatalog.json';
 import {CATALOGS, FRAMEWORKS, activePlans} from '../lib/frameworks';
 import {auditPackage,blankAuditItem} from '../lib/isoAudit';
 import timeline from '@contracts/program-lifecycle.json';
+import {currentReviewCompletion} from '../testUtils/r4ReviewFixture';
+import {belongsToOccurrence} from '../lib/reviewOccurrences';
 
 const api = axios.create({adapter: previewAdapter});
 const {setImmediate: yieldEventLoop} = jest.requireActual('timers');
@@ -61,7 +64,12 @@ test.each(timeline.frameworks)('%s fresh client retains the configured program l
   const nextOwner=(await get('/users')).find(u=>u.status==='active'&&u.user_id!==owner);
   await patch('/users/'+nextOwner.user_id+'/client-memberships',{client_ids:[...new Set([...(nextOwner.client_ids||[]),cid])]});
   const sessionUser=(await get('/auth/me')).user_id;
-  const departing=(await get('/users')).find(u=>u.status==='active'&&![owner,nextOwner.user_id,sessionUser].includes(u.user_id));
+  // Identity-only fixture: the actual corrective worker cannot validate their
+  // own submission. No business record or historical worker is rewritten.
+  const validator={user_id:'qa_'+framework+'_lifecycle_validator',name:'Synthetic independent validator',
+    email:framework+'-validator@example.test',role:'platform_admin',status:'active',client_ids:[cid],all_clients:false};
+  const identities=readStore();identities.users.push(validator);saveStore(identities);
+  const departing=(await get('/users')).find(u=>u.status==='active'&&![owner,nextOwner.user_id,sessionUser,validator.user_id].includes(u.user_id));
   expect(departing).toBeTruthy();
   await patch('/users/'+departing.user_id+'/client-memberships',{client_ids:[...new Set([...(departing.client_ids||[]),cid])]});
   for (const r of initialReviews) await patch('/reviews/' + r.review_id, {owner_id: owner, expected_occurrence_id: r.current_occurrence_id});
@@ -90,7 +98,16 @@ test.each(timeline.frameworks)('%s fresh client retains the configured program l
     await patch('/tasks/'+task.task_id,{status:'in_progress'});
     await patch('/tasks/'+task.task_id,{status:'done'});
     expect((await get('/findings/'+finding.finding_id)).status).toBe('remediated');
-    return post('/findings/'+finding.finding_id+'/validate',{rationale:'DEMO: independently sampled corrective operation and verified effectiveness'});
+    const actor=copy(readStore().user),validationStore=readStore();
+    validationStore.user=copy(validator);saveStore(validationStore);
+    try{
+      const validated=await post('/findings/'+finding.finding_id+'/validate',{rationale:'DEMO: independently sampled corrective operation and verified effectiveness'});
+      expect(validated.validated_by).toBe(validator.user_id);
+      expect(validated.validated_by).not.toBe((await get('/tasks/'+task.task_id)).completed_by);
+      return validated;
+    }finally{
+      const restored=readStore();restored.user=actor;saveStore(restored);
+    }
   }
 
   const checkpoints=[],events=[];
@@ -184,7 +201,39 @@ test.each(timeline.frameworks)('%s fresh client retains the configured program l
         }
         due=await patch('/reviews/'+due.review_id+'/iso-audit',{report_evidence_id:evidence.evidence_id,occurrence_id:due.current_occurrence_id,expected_updated_at:due.updated_at??null});
       }
-      const command={occurrence_id:due.current_occurrence_id};
+      const sourcePolicy=due.policy_id?await get('/policies/'+due.policy_id):null;
+      const sourceVendor=due.vendor_id?await get('/vendors/'+due.vendor_id):null;
+      const sourceRisk=due.risk_id?await get('/risks/'+due.risk_id):null;
+      const approvalGap=sourcePolicy&&sourcePolicy.status!=='approved';
+      const assuranceGap=sourceVendor?.assurance_required&&(sourceVendor.assurance_records||[]).some(item=>item.required!==false
+        &&(!item.evidence_ids?.length||!item.received_at||!item.refresh_due||item.refresh_due.slice(0,10)<new Date().toISOString().slice(0,10)));
+      const currentFindings=(await get('/findings',cid)).filter(f=>f.review_id===due.review_id&&belongsToOccurrence(f,due));
+      if((approvalGap||assuranceGap)&&!currentFindings.length)currentFindings.push(await post('/reviews/'+due.review_id+'/create-finding',{
+        occurrence_id:due.current_occurrence_id,title:approvalGap?'Synthetic policy approval remains outstanding':'Synthetic supplier assurance remains outstanding',
+        description:approvalGap?'The native linked policy is not approved; this lifecycle Review does not approve it.':'Required supplier assurance is missing or expired; this lifecycle Review does not establish assurance.',
+        remediation_title:approvalGap?'Obtain a separate policy approval decision':'Obtain current required supplier assurance',severity:'medium'}));
+      const command=await currentReviewCompletion(api,due.review_id,{
+        expectedOccurrenceId:due.current_occurrence_id,
+        supportingReference:'DEMO synthetic lifecycle only; current-occurrence evidence '+evidence.evidence_id+'. External operation and attestation are outside this fixture.',
+        resultForStep:(step,{guide,review})=>{
+          const answer=(result,reason)=>({step_id:step.step_id,result,reason});
+          const gaps=currentFindings.map(f=>f.finding_id+': '+f.title).join('; ');
+          if(guide.template_id==='risk_rec'){
+            switch(step.support){
+              case 'Updated risk record':return answer('Pass','Synthetic walkthrough inspected the retained risk '+sourceRisk.risk_id+': '+sourceRisk.title);
+              case 'Rating change':return answer('Pass','Inspected retained likelihood '+sourceRisk.likelihood_score+' and impact '+sourceRisk.impact_score+'; no rating change is requested.');
+              case 'Action status':return answer('N/A','This record-lifecycle fixture does not independently verify treatment effectiveness or complete corrective work.');
+              case 'Approver and date':return answer('N/A','No new acceptance or closure decision is made by this occurrence; existing decisions remain separate.');
+              case 'Next review':return answer('Pass','Inspected native scheduled successor '+review.next_review_date+'; the anchored recurrence assertions below verify completion.');
+              default:throw new Error('Unmodeled synthetic risk check: '+step.support);
+            }
+          }
+          if(guide.template_id==='policy_rec'&&step.support==='Approved version')return answer(approvalGap?'Exception':'Pass',approvalGap?'The current native policy is not approved; retain '+gaps:'The separately approved native policy version '+sourcePolicy.version+' remains approved.');
+          if(['vendor_rec','assure_rec'].includes(guide.template_id)&&assuranceGap&&['Assurance document','Period dates','Review notes','Follow-up date'].includes(step.support))return answer('Exception','Required supplier assurance remains unresolved: '+gaps);
+          return answer('N/A','This synthetic record-lifecycle characterization does not perform this external control, communication or business decision: '+step.text);
+        }
+      });
+      if(currentFindings.length)command.outcome='Exceptions noted';
       const completed = await post('/reviews/'+due.review_id+'/complete', command);
       expect((await post('/reviews/'+due.review_id+'/complete',command)).occurrence).toEqual(completed.occurrence);
       expect(completed.occurrence.evidence.map(e=>e.evidence_id)).toContain(evidence.evidence_id);
@@ -282,7 +331,7 @@ test.each(timeline.frameworks)('%s fresh client retains the configured program l
     checkpoints.push(counts);
     if(process.env.FRAMEWORK_LIFECYCLE_EXPORT_DIR){
       const fs=jest.requireActual('fs'),nodePath=jest.requireActual('path');fs.mkdirSync(process.env.FRAMEWORK_LIFECYCLE_EXPORT_DIR,{recursive:true});
-      fs.writeFileSync(nodePath.join(process.env.FRAMEWORK_LIFECYCLE_EXPORT_DIR,framework+'-'+year+'.json'),JSON.stringify({synthetic_lifecycle_fixture:true,client_id:cid,checkpoint:counts,store:JSON.parse(sessionStorage.getItem(STORE_KEY))}));
+      fs.writeFileSync(nodePath.join(process.env.FRAMEWORK_LIFECYCLE_EXPORT_DIR,framework+'-'+year+'.json'),JSON.stringify({synthetic_lifecycle_fixture:true,client_id:cid,checkpoint:counts,store:decodeDemoStore(sessionStorage.getItem(STORE_KEY))}));
     }
   }
   clock(endYear+'-12-31');
@@ -316,7 +365,7 @@ test.each(timeline.frameworks)('%s fresh client retains the configured program l
   const oldFile = await get('/evidence-library/items/'+firstEvidence.evidence_id);
   expect(oldFile.created_at).toBe(firstEvidence.created_at);
   expect(oldFile.references.filter(r=>r.kind==='framework_assessments')).toHaveLength(2);
-  const snapshot = JSON.parse(sessionStorage.getItem(STORE_KEY));
+  const snapshot = decodeDemoStore(sessionStorage.getItem(STORE_KEY));
   expect(snapshot.evidence.filter(e=>e.evidence_id===firstEvidence.evidence_id)).toHaveLength(1);
   expect(snapshot.evidence.reduce((bytes,e)=>bytes+(e.content_base64?.length||0)*2,0)).toBeLessThanOrEqual(64*1024);
   // Read through a new client instance to ensure results are persisted, not API-local state.
@@ -331,7 +380,7 @@ test.each(timeline.frameworks)('%s fresh client retains the configured program l
   if(process.env.FRAMEWORK_LIFECYCLE_EXPORT_DIR){
     const fs=jest.requireActual('fs'),nodePath=jest.requireActual('path');
     fs.mkdirSync(process.env.FRAMEWORK_LIFECYCLE_EXPORT_DIR,{recursive:true});
-    fs.writeFileSync(nodePath.join(process.env.FRAMEWORK_LIFECYCLE_EXPORT_DIR,framework+'.json'),JSON.stringify({synthetic_lifecycle_fixture:true,client_id:cid,events,store:JSON.parse(sessionStorage.getItem(STORE_KEY))}));
+    fs.writeFileSync(nodePath.join(process.env.FRAMEWORK_LIFECYCLE_EXPORT_DIR,framework+'.json'),JSON.stringify({synthetic_lifecycle_fixture:true,client_id:cid,events,store:decodeDemoStore(sessionStorage.getItem(STORE_KEY))}));
   }
   const finalProbe=finalReviews.find(r=>r.review_id===probe.review_id);
   expect(finalProbe.occurrences[0].completed_at.slice(0,10)).toBe(timeline.month_end_probe.early_completion);

@@ -2,7 +2,7 @@ import {omniGroups,refinedSummary,recordedOmniReasons,multipleOmniSources} from 
 import {visibleQuestions,versionForSafeguard,validateAnswers} from './guidedAssessment';
 import {focusedResult} from './focusedOmni';
 
-const complete=id=>Object.fromEntries(visibleQuestions(id,{[id==='1.1'?'inventory':'process']:'Yes'},versionForSafeguard(id,true)).map(q=>[q.id,q.type==='matrix'?Object.fromEntries(q.rows.map(row=>[row,'Yes'])):q.type==='text'?'':q.type==='date'?'2026-10-01':q.type==='multi'?['Quarantine or isolate']:q.id==='frequency'?(id==='1.1'?'Every six months':'Weekly'):q.id==='sources'?'One source':q.id==='unresolved'?'No':'Yes']));
+const complete=id=>Object.fromEntries(visibleQuestions(id,{[id==='1.1'?'inventory':'process']:'Yes'},versionForSafeguard(id,true)).map(q=>[q.id,q.optional?'No':q.type==='matrix'?Object.fromEntries(q.rows.map(row=>[row,'Yes'])):q.type==='text'?'':q.type==='date'?'2026-10-01':q.type==='multi'?['Quarantine or isolate']:q.id==='frequency'?(id==='1.1'?'Every six months':'Weekly'):q.id==='sources'?'One source':q.id==='unresolved'?'No':'Yes']));
 test.each(['1.1','1.2'])('%s groups retain every active production question exactly once, including exclusions and notes',id=>{
   const version=versionForSafeguard(id,true);
   for(const value of ['Yes','Partially','No','Not sure']){

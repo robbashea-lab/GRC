@@ -1,0 +1,19 @@
+/* Existing record components own their scroll areas, footers and nested dialogs. */
+@media (min-width: 760px) {
+  :root[data-native-standard] body :is(.ui-dialog, .ui-sheet)[role="dialog"][data-state]:is([data-record-surface], [data-assessment-shell], .guided-panel) {
+    position: fixed;
+    inset: 0;
+    margin: auto;
+    transform: none;
+    /* Full-record and Evidence sheets have legacy important widths. */
+    width: min(900px, 88vw) !important;
+    max-width: calc(100vw - 32px) !important;
+    height: fit-content;
+    max-height: min(80vh, 700px, 72vw);
+    max-height: min(80dvh, 700px, 72vw);
+    border: 1px solid var(--border-accent);
+    border-radius: var(--card-radius, 10px);
+    box-shadow: var(--shadow-pop);
+    animation: none;
+  }
+}

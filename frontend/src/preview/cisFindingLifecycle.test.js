@@ -1,6 +1,6 @@
 import axios from 'axios';
 import {previewAdapter} from './adapter';
-import {readStore} from './store';
+import {readStore,saveStore} from './store';
 const api=axios.create({adapter:previewAdapter}),cid='demo_brawndo';
 beforeEach(async()=>{localStorage.clear();sessionStorage.clear();await api.post('/demo/enter');});
 const safeguard=id=>readStore().framework_assessments.find(a=>a.client_id===cid&&a.framework_key==='cis-ig1'&&a.definition_id===id);
@@ -18,9 +18,16 @@ test('safeguard → Finding → one Action → Pending Validation → validated,
   expect((await api.get('/findings/'+f.finding_id)).data.status).toBe('remediated');
   const work=(await api.get('/frameworks/cis-ig1',{params:{client_id:cid}})).data.work[a.framework_assessment_id];
   expect(work.finding_ids).toContain(f.finding_id);
-  await api.post(`/findings/${f.finding_id}/validate`,{rationale:'Inventory reconciled'});
+  const db=readStore(),worker=db.user,validator={user_id:'cis-independent-validator',name:'Synthetic independent validator',email:'cis-validator@example.invalid',role:'platform_admin',status:'active',client_ids:[cid]};
+  db.users.push(validator);db.user=validator;saveStore(db);
+  try{
+    const current=(await api.get('/findings/'+f.finding_id)).data;
+    await api.post(`/findings/${f.finding_id}/validate`,{request_id:'inventory-validation',expected_updated_at:current.updated_at,rationale:'Inventory reconciled'});
+  }finally{const current=readStore();current.user=worker;saveStore(current);}
   const closed=(await api.get('/findings/'+f.finding_id)).data;
   expect(closed).toMatchObject({status:'closed',framework_assessment_id:a.framework_assessment_id});
+  expect(closed.validated_by).toBe(validator.user_id);
+  expect((await api.get('/tasks/'+tasks[0].task_id)).data.completed_by).toBe(worker.user_id);
 });
 test('omitted owner is inherited; invalid owner or date is rejected without creating records',async()=>{
   const a=safeguard('2.3'),before=readStore().findings.length;

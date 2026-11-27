@@ -9,7 +9,9 @@ def is_open(kind, row):
     return row.get('status') not in CLOSED.get(kind, [])
 
 def risk_level(score):
-    return next((name for minimum, name in RULES['riskBands'] if score is not None and score >= minimum), None)
+    if type(score) is not int or not 1 <= score <= 25:
+        return None
+    return next((name for minimum, name in RULES['riskBands'] if score >= minimum), None)
 
 def assessed_risk(row):
     values = [row.get('likelihood_score'), row.get('impact_score')]

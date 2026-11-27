@@ -7,6 +7,8 @@ from soc_readiness import configuration as soc_configuration
 from framework_catalog import client_configuration
 from management_obligations import calendar_day, active_record
 import review_occurrences
+import shared_review_plans
+from r4_services import assert_settled
 
 
 def progress(rows, key):
@@ -44,13 +46,16 @@ def ongoing(reviews, today):
 
 
 async def bounded(collection, query, fields):
-    rows = await collection.find(query, {'_id': 0, **dict.fromkeys(fields, 1)}).to_list(20001)
+    rows = await collection.find(query, {'_id': 0, '_r4_context_pending': 1, **dict.fromkeys(fields, 1)}).to_list(20001)
     if len(rows) > 20000:
         raise HTTPException(413, 'Framework summary exceeds its supported size; no partial totals are shown.')
+    for row in rows:
+        assert_settled(row)
     return rows
 
 
 async def read(s, client, detail=None, offset=0, limit=25):
+    assert_settled(client)
     cid = client['client_id']
     programs = await s.db.requirements.distinct('baseline_key', {'client_id': cid, 'baseline_response': 'applies'})
     items = []
@@ -66,10 +71,11 @@ async def read(s, client, detail=None, offset=0, limit=25):
                                         ['framework_assessment_id', 'definition_id', 'status', 'related_links', 'last_assessed',
                                          'na_rationale', 'soa_applicability', 'soa_justification'])
             configuration = None
-            if key in ('soc-2','cis-ig1'):
+            if key in ('soc-2','cis-ig1','cmmc'):
                 scoped_client = await s.db.clients.find_one({'client_id': cid}, {'_id': 0, 'framework_settings': 1})
                 configuration = client_configuration(key,scoped_client or {})
             if key=='cis-ig1':item.update(implementation_group=configuration['implementation_group'],label=f"CIS IG{configuration['implementation_group']}")
+            if key=='cmmc':item.update(level=configuration['level'],label=f"CMMC Level {configuration['level']}",unit='mapped checks' if configuration['level']==1 else 'requirements')
             active = {d['id'] for d in active_definitions(key, configuration)}
             assessments = [a for a in assessments if a['definition_id'] in active]
             counts = Counter(a.get('status') for a in assessments)
@@ -79,7 +85,7 @@ async def read(s, client, detail=None, offset=0, limit=25):
             # Match the existing framework relationship model in one batch, not one call per safeguard.
             reviews = await bounded(s.db.reviews, {'client_id': cid, '$or': [
                 {'review_id': {'$in': direct('reviews')}}, {'framework_assessment_id': {'$in': aids}},
-                {'framework_key': key, 'framework_safeguards': {'$in': definitions}}]},
+                shared_review_plans.mapping_query(key, definitions)]},
                 ['review_id', 'client_id', 'title', 'status', 'due_date', 'recurrence',
                  'custom_recurrence_days', 'schedule_anchor', 'archived', 'archived_at'])
             health, obligations = ongoing(reviews, s._now())

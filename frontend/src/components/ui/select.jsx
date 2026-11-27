@@ -4,8 +4,10 @@ import { Check, ChevronDown, ChevronUp } from "lucide-react"
 
 import { cn } from "@/lib/utils"
 import { useSurfaceRef } from "@/lib/useSurfaceRef"
+import { useAssessmentPopupState, useAssessmentPopupContentProps } from "@/lib/assessmentSurfaceAvailability"
 
-const Select = SelectPrimitive.Root
+const Select = props => <SelectPrimitive.Root {...props} {...useAssessmentPopupState(props)} />
+Select.displayName = SelectPrimitive.Root.displayName
 
 const SelectGroup = SelectPrimitive.Group
 
@@ -48,7 +50,9 @@ const SelectScrollDownButton = React.forwardRef(({ className, ...props }, ref) =
 SelectScrollDownButton.displayName =
   SelectPrimitive.ScrollDownButton.displayName
 
-const SelectContent = React.forwardRef(({ className, children, position = "popper", ...props }, ref) => (
+const SelectContent = React.forwardRef(({ className, children, position = "popper", ...props }, ref) => {
+  const suspension=useAssessmentPopupContentProps(props,false);
+  return (
   <SelectPrimitive.Portal>
     <SelectPrimitive.Content
       ref={useSurfaceRef(ref)}
@@ -59,7 +63,7 @@ const SelectContent = React.forwardRef(({ className, children, position = "poppe
         className
       )}
       position={position}
-      {...props}>
+      {...props} {...suspension}>
       <SelectScrollUpButton />
       <SelectPrimitive.Viewport
         className={cn("p-1", position === "popper" &&
@@ -69,7 +73,8 @@ const SelectContent = React.forwardRef(({ className, children, position = "poppe
       <SelectScrollDownButton />
     </SelectPrimitive.Content>
   </SelectPrimitive.Portal>
-))
+  );
+})
 SelectContent.displayName = SelectPrimitive.Content.displayName
 
 const SelectLabel = React.forwardRef(({ className, ...props }, ref) => (

@@ -3,7 +3,7 @@ import { ColumnControl, TableFilterChips, FilterEmpty } from '@/components/Table
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import api, { formatError } from "@/lib/api";
-import PageHeader from "@/components/PageHeader";
+import PlatformPageHeading from "@/components/PlatformPageHeading";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -106,15 +106,10 @@ function computeRange(preset, customStart, customEnd) {
 
 export default function AdminAudit() {
   const [params, setParams] = useSearchParams();
-  const initialClient = params.get("client") || "__all__";
-  const [clientFilter, setClientFilter] = useState(initialClient);
-  const [userFilter, setUserFilter] = useState(params.get("user") || "__all__");
-  const [actionFilter, setActionFilter] = useState(params.get("action") || "__all__");
-  const [entityFilter, setEntityFilter] = useState(params.get("entity") || "__all__");
-  const [datePreset, setDatePreset] = useState(params.get("date") || "30");
-  const [customStart, setCustomStart] = useState(params.get("start") || "");
-  const [customEnd, setCustomEnd] = useState(params.get("end") || "");
-  const [q, setQ] = useState(params.get("q") || "");
+  const clientFilter=params.get('client') || '__all__', userFilter=params.get('user') || '__all__';
+  const actionFilter=params.get('action') || '__all__', entityFilter=params.get('entity') || '__all__';
+  const datePreset=params.get('date') || '30', customStart=params.get('start') || '', customEnd=params.get('end') || '';
+  const q=params.get('q') || '';
   const [debouncedQ, setDebouncedQ] = useState(q);
   const [page, setPage] = useState(1);
   const pageSize = 50;
@@ -134,12 +129,14 @@ export default function AdminAudit() {
 
   // Load filter facets once
   useEffect(() => {
+    const request=new AbortController();
     (async () => {
       try {
-        const { data } = await api.get("/audit-logs/facets");
-        setFacets(data || {});
-      } catch (e) { toast.error(formatError(e)); }
+        const { data } = await api.get("/audit-logs/facets",{signal:request.signal});
+        if(!request.signal.aborted)setFacets(data || {});
+      } catch (e) { if(!request.signal.aborted)toast.error(formatError(e)); }
     })();
+    return ()=>request.abort();
   }, []);
 
   const buildQuery = useCallback(() => {
@@ -155,35 +152,32 @@ export default function AdminAudit() {
     return query;
   }, [clientFilter, userFilter, actionFilter, entityFilter, datePreset, customStart, customEnd, debouncedQ, page]);
 
-  const fetchRows = useCallback(async () => {
+  useEffect(() => {
+    const request=new AbortController();
     setLoading(true);
-    try {
-      const { data } = await api.get("/audit-logs", { params: buildQuery() });
-      setRows(data.items || []);
-      setTotal(data.total || 0);
-    } catch (e) { toast.error(formatError(e)); setRows([]); setTotal(0); }
-    finally { setLoading(false); }
+    api.get("/audit-logs", { params: buildQuery(),signal:request.signal }).then(({data})=>{
+      if(!request.signal.aborted){setRows(data.items || []);setTotal(data.total || 0);}
+    }).catch(e=>{
+      if(!request.signal.aborted){toast.error(formatError(e));setRows([]);setTotal(0);}
+    }).finally(()=>{if(!request.signal.aborted)setLoading(false);});
+    return ()=>request.abort();
   }, [buildQuery]);
-
-  useEffect(() => { fetchRows(); }, [fetchRows]);
 
   // Reset to page 1 whenever filters change.
   useEffect(() => { setPage(1); },
     [clientFilter, userFilter, actionFilter, entityFilter, datePreset, customStart, customEnd, debouncedQ]);
 
-  // Persist filters in URL for shareable/back-nav parity.
-  useEffect(() => {
-    const next = new URLSearchParams();
-    if (clientFilter !== "__all__") next.set("client", clientFilter);
-    if (userFilter !== "__all__") next.set("user", userFilter);
-    if (actionFilter !== "__all__") next.set("action", actionFilter);
-    if (entityFilter !== "__all__") next.set("entity", entityFilter);
-    if (datePreset !== "30") next.set("date", datePreset);
-    if (datePreset === "custom" && customStart) next.set("start", customStart);
-    if (datePreset === "custom" && customEnd) next.set("end", customEnd);
-    if (debouncedQ) next.set("q", debouncedQ);
-    setParams(next, { replace: true });
-  }, [clientFilter, userFilter, actionFilter, entityFilter, datePreset, customStart, customEnd, debouncedQ, setParams]);
+  // Only a filter interaction may change the URL. Loading the register must leave
+  // an in-progress sidebar navigation in control of the destination.
+  function changeFilters(changes) {
+    const next=new URLSearchParams(params);
+    for(const [key,value] of Object.entries(changes)) {
+      if(!value || (key!=='q' && value==='__all__') || (key==='date' && value==='30'))next.delete(key);
+      else next.set(key,value);
+    }
+    if(next.get('date')!=='custom'){next.delete('start');next.delete('end');}
+    if(next.toString()!==params.toString())setParams(next,{replace:true});
+  }
 
   const totalPages = Math.max(1, Math.ceil(total / pageSize));
 
@@ -202,26 +196,24 @@ export default function AdminAudit() {
     finally { setExporting(false); }
   }
 
-  function resetFilters() {
-    setClientFilter("__all__"); setUserFilter("__all__");
-    setActionFilter("__all__"); setEntityFilter("__all__");
-    setDatePreset("30"); setCustomStart(""); setCustomEnd(""); setQ("");
+  function resetFilters(date='30') {
+    changeFilters({client:'',user:'',action:'',entity:'',date,start:'',end:'',q:''});
   }
 
   // Controlled adapter: column menus and toolbar share the existing server query.
   const columnBindings = [
-    ['date', 'Date / Time', datePreset, setDatePreset, '__any__', DATE_PRESETS.filter(o => o.value !== '__any__')],
-    ['client', 'Client', clientFilter, setClientFilter, '__all__', [{value:'platform',label:'Platform Activity'}, ...(facets.clients || []).map(c => ({value:c.client_id,label:c.name}))]],
-    ['user', 'User', userFilter, setUserFilter, '__all__', (facets.users || []).map(u => ({value:u.user_id,label:u.name || u.email}))],
-    ['action', 'Action', actionFilter, setActionFilter, '__all__', ACTION_OPTIONS.filter(o => o.value !== '__all__')],
-    ['entity', 'Entity', entityFilter, setEntityFilter, '__all__', (facets.entity_types || []).map(e => ({value:e,label:humanEntity(e)}))],
+    ['date', 'Date / Time', datePreset, '__any__', DATE_PRESETS.filter(o => o.value !== '__any__')],
+    ['client', 'Client', clientFilter, '__all__', [{value:'platform',label:'Platform Activity'}, ...(facets.clients || []).map(c => ({value:c.client_id,label:c.name}))]],
+    ['user', 'User', userFilter, '__all__', (facets.users || []).map(u => ({value:u.user_id,label:u.name || u.email}))],
+    ['action', 'Action', actionFilter, '__all__', ACTION_OPTIONS.filter(o => o.value !== '__all__')],
+    ['entity', 'Entity', entityFilter, '__all__', (facets.entity_types || []).map(e => ({value:e,label:humanEntity(e)}))],
   ];
   const table = {
-    columns: columnBindings.map(([key,label,,,,options]) => ({key,label,options,filter:true,sortable:false,single:true})),
-    state: {filters:Object.fromEntries(columnBindings.filter(([, ,value,,empty]) => value !== empty).map(([key,,value]) => [key,[value]]))},
+    columns: columnBindings.map(([key,label,,,options]) => ({key,label,options,filter:true,sortable:false,single:true})),
+    state: {filters:Object.fromEntries(columnBindings.filter(([, ,value,empty]) => value !== empty).map(([key,,value]) => [key,[value]]))},
     options:c => c.options,
-    setFilter:(key,values) => { const binding = columnBindings.find(b => b[0] === key); binding[3](values.at(-1) || binding[4]); },
-    clear:() => { resetFilters(); setDatePreset('__any__'); },
+    setFilter:(key,values) => { const binding = columnBindings.find(b => b[0] === key); changeFilters({[key]:values.at(-1) || binding[3]}); },
+    clear:() => resetFilters('__any__'),
   };
 
   const activeFilterCount = useMemo(() => {
@@ -236,14 +228,27 @@ export default function AdminAudit() {
   }, [clientFilter, userFilter, actionFilter, entityFilter, datePreset, debouncedQ]);
 
   return (
-    <div>
-      <PageHeader
+    <div className="wrap admin-page admin-audit-page">
+      <PlatformPageHeading
         eyebrow="Administration"
         title="Audit Log"
-        subtitle="Application audit records are append-only through the Omnisciente interface."
+        subtitle="Application audit records and their recorded changes."
+        action={<Button variant="outline" size="sm" onClick={exportCsv} disabled={exporting} className="h-9" data-testid="audit-export"><Download className="h-3.5 w-3.5 mr-1.5" /> Export CSV</Button>}
       />
-      <div className="page-gutter pt-4 pb-2 flex items-center gap-3 flex-wrap" data-testid="audit-filters">
-        <Select value={clientFilter} onValueChange={setClientFilter}>
+      <div className="admin-body"><section className="panel admin-panel">
+      <div className="panel-head admin-panel-head"><div><h2>Audit events</h2><p>Application audit records are append-only through the Omnisciente interface.</p></div>
+        <span className="admin-record-meta" data-testid="audit-count">{loading ? "Loading…" : `${total.toLocaleString()} event${total === 1 ? "" : "s"}`}{total > 0 && ` · Page ${page} of ${totalPages}`}</span>
+      </div>
+      <div className="admin-toolbar" data-testid="audit-filters">
+        <div className="admin-search relative">
+          <Search className="h-3.5 w-3.5 text-ink-help" />
+          <Input value={q} onChange={(e) => changeFilters({q:e.target.value})} placeholder="Search action, entity, user, record…"
+            aria-label="Search audit events" className="pl-8 h-9 text-sm" data-testid="audit-search" />
+        </div>
+        <span className="admin-record-meta">Displayed in your local time zone</span>
+        <div className="admin-filter-grid">
+        <label><span>Client</span>
+        <Select value={clientFilter} onValueChange={value=>changeFilters({client:value})}>
           <SelectTrigger className="h-9 w-56 text-sm" aria-label="Client filter" data-testid="audit-filter-client">
             <SelectValue placeholder="All clients" />
           </SelectTrigger>
@@ -255,8 +260,10 @@ export default function AdminAudit() {
             ))}
           </SelectContent>
         </Select>
+        </label>
 
-        <Select value={userFilter} onValueChange={setUserFilter}>
+        <label><span>User</span>
+        <Select value={userFilter} onValueChange={value=>changeFilters({user:value})}>
           <SelectTrigger className="h-9 w-56 text-sm" aria-label="User filter" data-testid="audit-filter-user">
             <SelectValue placeholder="All users" />
           </SelectTrigger>
@@ -267,8 +274,10 @@ export default function AdminAudit() {
             ))}
           </SelectContent>
         </Select>
+        </label>
 
-        <Select value={actionFilter} onValueChange={setActionFilter}>
+        <label><span>Action</span>
+        <Select value={actionFilter} onValueChange={value=>changeFilters({action:value})}>
           <SelectTrigger className="h-9 w-44 text-sm" aria-label="Action filter" data-testid="audit-filter-action">
             <SelectValue placeholder="All actions" />
           </SelectTrigger>
@@ -278,8 +287,10 @@ export default function AdminAudit() {
             ))}
           </SelectContent>
         </Select>
+        </label>
 
-        <Select value={entityFilter} onValueChange={setEntityFilter}>
+        <label><span>Entity</span>
+        <Select value={entityFilter} onValueChange={value=>changeFilters({entity:value})}>
           <SelectTrigger className="h-9 w-44 text-sm" aria-label="Object or event type filter" data-testid="audit-filter-entity">
             <SelectValue placeholder="All entities" />
           </SelectTrigger>
@@ -290,8 +301,10 @@ export default function AdminAudit() {
             ))}
           </SelectContent>
         </Select>
+        </label>
 
-        <Select value={datePreset} onValueChange={setDatePreset}>
+        <label><span>Date range</span>
+        <Select value={datePreset} onValueChange={value=>changeFilters({date:value})}>
           <SelectTrigger className="h-9 w-40 text-sm" aria-label="Date range filter" data-testid="audit-filter-date">
             <SelectValue placeholder="Last 30 days" />
           </SelectTrigger>
@@ -301,45 +314,31 @@ export default function AdminAudit() {
             ))}
           </SelectContent>
         </Select>
+        </label>
 
         {datePreset === "custom" && (
           <>
-            <Input type="date" value={customStart ? customStart.slice(0, 10) : ""}
-              onChange={(e) => setCustomStart(e.target.value ? new Date(e.target.value).toISOString() : "")}
-              aria-label="Audit range start" className="h-9 w-40 text-sm" data-testid="audit-filter-start" />
-            <Input type="date" value={customEnd ? customEnd.slice(0, 10) : ""}
-              onChange={(e) => setCustomEnd(e.target.value ? new Date(new Date(e.target.value).setHours(23, 59, 59, 999)).toISOString() : "")}
-              aria-label="Audit range end" className="h-9 w-40 text-sm" data-testid="audit-filter-end" />
+            <label><span>Range start</span><Input type="date" value={customStart ? customStart.slice(0, 10) : ""}
+              onChange={(e) => changeFilters({start:e.target.value ? new Date(e.target.value).toISOString() : ""})}
+              aria-label="Audit range start" className="h-9 w-40 text-sm" data-testid="audit-filter-start" /></label>
+            <label><span>Range end</span><Input type="date" value={customEnd ? customEnd.slice(0, 10) : ""}
+              onChange={(e) => changeFilters({end:e.target.value ? new Date(new Date(e.target.value).setHours(23, 59, 59, 999)).toISOString() : ""})}
+              aria-label="Audit range end" className="h-9 w-40 text-sm" data-testid="audit-filter-end" /></label>
           </>
         )}
-
-        <div className="relative w-72 ml-auto">
-          <Search className="h-3.5 w-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-ink-help" />
-          <Input value={q} onChange={(e) => setQ(e.target.value)}
-            placeholder="Search action, entity, user, record…"
-            aria-label="Search audit events" className="pl-8 h-9 text-sm" data-testid="audit-search" />
         </div>
 
-        <Button variant="outline" size="sm" onClick={exportCsv} disabled={exporting}
-          className="h-9" data-testid="audit-export">
-          <Download className="h-3.5 w-3.5 mr-1.5" /> Export CSV
-        </Button>
-
         {activeFilterCount > 0 && (
-          <Button variant="ghost" size="sm" onClick={resetFilters} className="h-9 text-xs" data-testid="audit-reset">
+          <Button variant="ghost" size="sm" onClick={()=>resetFilters()} className="h-9 text-xs" data-testid="audit-reset">
             <X className="h-3.5 w-3.5 mr-1" /> Clear filters
           </Button>
         )}
       </div>
 
-      <div className="page-gutter pb-8">
+      <div>
         <TableFilterChips table={table} />
-        <div className="text-xs text-ink-help mb-2" data-testid="audit-count">
-          {loading ? "Loading…" : `${total.toLocaleString()} event${total === 1 ? "" : "s"}`}
-          {total > 0 && ` · Page ${page} of ${totalPages}`}
-        </div>
-        <div className="register-table-frame bg-surface-card border border-line rounded-lg overflow-x-auto" data-testid="audit-table">
-          <table className="w-full text-sm">
+        <div className="register-table-frame bg-surface-card border border-line rounded-lg overflow-x-auto admin-table-wrap" data-testid="audit-table">
+          <table className="w-full text-sm admin-table">
             <thead className="bg-surface-subtle text-xs font-mono uppercase tracking-widest text-ink-secondary border-b border-line">
               <tr>
                 <th className="tbl-cell text-left"><ColumnControl table={table} columnKey="date" /></th>
@@ -367,28 +366,28 @@ export default function AdminAudit() {
                     </td>
                     <td className="tbl-cell text-xs">
                       {isPlatform ? (
-                        <span className="inline-flex px-2 py-0.5 rounded-full border border-line text-xs uppercase tracking-widest text-ink-secondary bg-surface-subtle">Platform</span>
+                        <span className="inline-flex px-2 py-0.5 rounded-full border border-line text-xs uppercase tracking-widest text-ink-secondary bg-surface-subtle admin-badge is-muted">Platform</span>
                       ) : (
                         <span className="text-ink-primary">{r.client_name || r.client_id}</span>
                       )}
                     </td>
                     <td className="tbl-cell text-xs">
-                      <div className="text-ink-primary">{r.user_name || r.user_email || "—"}</div>
+                      <div className="text-ink-primary admin-record-title">{r.user_name || r.user_email || "—"}</div>
                       {r.user_email && r.user_name && r.user_email !== r.user_name && (
-                        <div className="text-xs text-ink-help">{r.user_email}</div>
+                        <div className="text-xs text-ink-help admin-record-meta">{r.user_email}</div>
                       )}
                     </td>
-                    <td className="tbl-cell text-xs text-ink-primary">{humanAction(r.action)}</td>
+                    <td className="tbl-cell text-xs text-ink-primary"><span className="admin-badge is-muted">{humanAction(r.action)}</span></td>
                     <td className="tbl-cell text-xs text-ink-secondary">{humanEntity(r.entity_type)}</td>
                     <td className="tbl-cell text-xs">
-                      <div className="text-ink-primary truncate max-w-[220px]">{r.entity_name || r?.meta?.title || r?.meta?.name || r.entity_id || "—"}</div>
-                      <div className="text-xs text-ink-help font-mono truncate max-w-[220px]">{r.entity_id}</div>
+                      <div className="text-ink-primary truncate max-w-[220px] admin-record-title">{r.entity_name || r?.meta?.title || r?.meta?.name || r.entity_id || "—"}</div>
+                      <div className="text-xs text-ink-help font-mono truncate max-w-[220px] admin-record-meta">{r.entity_id}</div>
                     </td>
-                    <td className="tbl-cell text-right">
+                    <td className="tbl-cell text-right"><div className="admin-row-actions">
                       <Button variant="ghost" size="sm" aria-label={`View ${humanAction(r.action)} event for ${r.entity_name || r.entity_id || "platform"}`} className="h-7 text-xs"
                         onClick={(e) => { e.stopPropagation(); setSelected(r); }}
                         data-testid={`audit-view-${i}`}>View</Button>
-                    </td>
+                    </div></td>
                   </tr>
                 );
               })}
@@ -396,7 +395,7 @@ export default function AdminAudit() {
           </table>
         </div>
 
-        <div className="mt-3 flex items-center justify-between text-xs text-ink-help">
+        <div className="mt-3 flex items-center justify-between text-xs text-ink-help admin-pagination">
           <div>{total > 0 && `Showing ${(page - 1) * pageSize + 1}–${Math.min(page * pageSize, total)} of ${total.toLocaleString()}`}</div>
           <div className="flex items-center gap-2">
             <Button variant="outline" size="sm" className="h-8" disabled={page <= 1}
@@ -411,6 +410,7 @@ export default function AdminAudit() {
           </div>
         </div>
       </div>
+      </section></div>
 
       <AuditDetailDrawer event={selected} onClose={() => setSelected(null)} />
     </div>

@@ -1,16 +1,23 @@
 import {validateVendor,ensureVendorReviews,syncVendorReview} from './vendors';
 import { ensureRiskReview } from './risks';
 import { syncPolicyReview, ensurePolicyReview } from './policyReviews';
+import {isCisClient} from './cisCapability';
 import { initializeRiskIds, allocateRiskId } from './riskIds';
 import { prepareTask } from './actionItems';
+import {workSubmissionPatch} from '../lib/r4Remediation';
 import { validateAssignment } from './assignmentEligibility';
 import { validateClientRelationships } from './clientRelationships';
 import { buildDemoStore } from './demoSeed';
+import {demoDates} from './demoPortfolio';
 import { reconcileFramework, frameworkRequest } from './frameworks';
 import {finishDemoStore} from './demoHistory';
+import {captureDemoReporting,canForkPortfolioStore,readPortfolioStore,readPortfolioStorePair,writePortfolioStore,writePortfolioStoreAsync} from './portfolioReporting';
+import {enrichBrawndoReportingHistory} from './brawndoReportingHistory';
 import {finishDunder} from './programs/dunder';
 import {addInitech,finishInitech} from './programs/initech';
 import {removeRetiredDemoClients} from './retiredClients';
+import {applyCisDemoRollout} from './cisDemoRollout';
+import {refreshCanonicalCisDemo} from './cisDemoRefresh';
 import {action} from './workflows';
 import fixtures from './demoConfiguration.json';
 import { reviewView, reviewSchedule } from '../lib/reviewOccurrences';
@@ -19,14 +26,16 @@ import {validateGovernanceContext} from '../lib/requirementBasis';
 import {actionTitle} from '../lib/actionItems';
 import {normalizeRecordWrite} from '../lib/recordContracts';
 import {demoStorageError} from '../lib/demoStorageErrors';
-import {lightweightStore,rememberFiles,restoreFiles,clearFileCache,storageDiagnostics} from './evidenceStorage';
+import {lightweightEvidence,lightweightStore,rememberFiles,restoreFiles,clearFileCache,storageDiagnostics} from './evidenceStorage';
+import {decodeDemoStore} from './demoStorageCodec';
+import {prepareDunderNativeOnboarding} from './programs/dunderNativeOnboarding';
+import {createDunderEightYearCandidate} from './programs/dunderEightYearScenario';
+import {EIGHT_YEAR_ANCHOR} from './programs/isoSocEightYearSupport';
+import prestigeEightYearFixture from './programs/prestigeEightYearFixtureData.json';
+import {installPrestigeEightYearFixture} from './programs/prestigeEightYearFixture';
+import {addMissingApprovedClients,freshApprovedDemo,isApprovedOnlyStore} from './approvedV3Demo';
 export const STORE_KEY = 'grc_interactive_demo_v3';
-// v2 held the retired seven-client portfolio. Drop it so those clients never reappear
-// and two full stores never compete for the session quota.
-const LEGACY_STORE_KEYS = ['grc_interactive_demo_v2'];
-function dropLegacyStores() {
-  for (const key of LEGACY_STORE_KEYS) { try { sessionStorage.removeItem(key); } catch { /* unavailable storage is reported by the read below */ } }
-}
+// Older Demo stores remain recoverable; a rollout never deletes a prior session key.
 export const clone = value => JSON.parse(JSON.stringify(value));
 export const ids = {
   organizational_controls:'control_id',
@@ -57,7 +66,8 @@ function normalizePolicyDates(db) {
   }
   return db;
 }
-export function seedStore(clock=new Date()) {
+// Kept as a separate stage for retained v1 fixture compatibility and its tests.
+export function buildLegacyDemoStore(clock=new Date()) {
   const db = normalizePolicyDates(initializeRiskIds(buildDemoStore(Object.keys(ids),clock)));
   db.risks.forEach(risk => ensureRiskReview(db, risk));
   db.vendors.forEach(vendor => ensureVendorReviews(db, vendor));
@@ -67,67 +77,129 @@ export function seedStore(clock=new Date()) {
   for(const client of db.clients)reconcileFramework(db,client.client_id,db.baselines[client.client_id]);
   const finished=finishDunder(finishDemoStore(db,clock,{action,write,frameworkRequest}),clock);
   // Policy dates derive from their Review history once that history exists.
-  finished.reviews.filter(r=>r.client_id==='demo_brawndo'&&r.policy_id).forEach(r=>syncPolicyReview(finished,r));
+  finished.reviews.filter(r=>isCisClient(finished,r.client_id)&&r.policy_id).forEach(r=>syncPolicyReview(finished,r));
   addInitech(finished,clock);
   reconcileFramework(finished,'demo_initech',finished.baselines.demo_initech);
   finishInitech(finished,clock);
+  // Raw seeds use the native UTC-day clock; persisted saves/reset events keep their exact time.
+  enrichBrawndoReportingHistory(finished,new Date(demoDates(clock)(0)+'T12:00:00.000Z'));
+  // Fresh fictional data is deterministic per UTC day; retained upgrades use their actual clock.
+  applyCisDemoRollout(finished,{clock:new Date(demoDates(clock)(0)+'T00:00:00.000Z'),fresh:true});
   return finished;
 }
-function installCanonicalDunder(db){
-  if(db.clients.some(c=>c.client_id==='demo_dunder'&&c.demo_program_version==='iso27001-year2-v1'))return false;
-  // Upgrades existing Demo-seeded stores only; a store without the seeded Demo clients
-  // (e.g. imported backend fixtures) is left exactly as saved.
-  if(!db.clients.some(c=>['demo_brawndo','demo_prestige'].includes(c.client_id)))return false;
-  const canonical=seedStore(),cid='demo_dunder';
-  for(const [key,value] of Object.entries(canonical))if(Array.isArray(value)&&key!=='users')(db[key]||=[]).push(...value.filter(row=>row.client_id===cid));
-  db.users.push(...canonical.users.filter(user=>user.user_id.startsWith(cid+'_')));
-  for(const user of [...db.users,db.user].filter(Boolean)){const source=canonical.users.find(candidate=>candidate.user_id===user.user_id);if(source?.client_ids.includes(cid)&&!(user.client_ids||[]).includes(cid))(user.client_ids||=[]).push(cid);}
-  for(const field of ['baselines','drafts','riskSequences','ai_intake','ai_counters'])if(canonical[field]?.[cid]!==undefined){db[field]||={};db[field][cid]=canonical[field][cid];}
-  return true;
+// Explicit source-authoring baseline; normal fresh entry additionally installs qualified Prestige records below.
+export function seedStoreBeforePrestige(clock=new Date()) {
+  const privateDunder=process.env.REACT_APP_PREVIEW==='true'&&process.env.REACT_APP_DUNDER_EIGHT_YEAR_QA==='true';
+  const seedClock=privateDunder?new Date(EIGHT_YEAR_ANCHOR):clock;
+  const db=buildLegacyDemoStore(seedClock);
+  refreshCanonicalCisDemo(db,{clock:seedClock,fresh:true});
+  if(privateDunder)return createDunderEightYearCandidate(db,{clock:seedClock}).db;
+  // Private source-QA build only; retained reads never call this preparation.
+  if(process.env.REACT_APP_PREVIEW==='true'&&process.env.REACT_APP_DUNDER_EIGHT_YEAR_ONBOARDING_QA==='true')
+    return prepareDunderNativeOnboarding(db,{clock,purpose:'native_onboarding_qa'}).db;
+  // Dunder's fixed source is available from its anchor; other clients keep the caller's clock.
+  if(process.env.REACT_APP_PREVIEW==='true'&&new Date(clock)>=new Date(EIGHT_YEAR_ANCHOR))
+    return createDunderEightYearCandidate(db,{clock:new Date(EIGHT_YEAR_ANCHOR)}).db;
+  return db;
 }
-export function readStore() {
-  dropLegacyStores();
+export function seedStore(clock=new Date()) {
+  const db=seedStoreBeforePrestige(clock);
+  const privateSource=['REACT_APP_DUNDER_EIGHT_YEAR_QA','REACT_APP_DUNDER_EIGHT_YEAR_ONBOARDING_QA',
+    'REACT_APP_PRESTIGE_EIGHT_YEAR_ONBOARDING_QA'].some(key=>process.env[key]==='true');
+  if(process.env.REACT_APP_PREVIEW==='true'&&!privateSource&&new Date(clock)>=new Date(EIGHT_YEAR_ANCHOR))
+    return installPrestigeEightYearFixture(db,prestigeEightYearFixture,{fresh:true,clock}).db;
+  return db;
+}
+const requestBaselines=new WeakMap();
+function freshEntryStore() {
+  if(process.env.REACT_APP_STANDARD_SIGN_IN!=='true')return seedStore();
+  const privateSource=process.env.REACT_APP_PREVIEW==='true'&&[
+    process.env.REACT_APP_DUNDER_EIGHT_YEAR_QA,process.env.REACT_APP_DUNDER_EIGHT_YEAR_ONBOARDING_QA,
+    process.env.REACT_APP_PRESTIGE_EIGHT_YEAR_ONBOARDING_QA].includes('true');
+  return privateSource?seedStore():freshApprovedDemo();
+}
+export const releaseStoreBaseline=db=>{if(db)requestBaselines.delete(db);};
+export function transferStoreBaseline(from,to){
+  const prepared=requestBaselines.get(from);requestBaselines.delete(from);
+  if(prepared)requestBaselines.set(to,prepared);
+}
+export function readStore({comparisonBaseline=false,needsComparison}={}) {
   let saved;
   try {saved=sessionStorage.getItem(STORE_KEY);}catch(error){throw demoStorageError(error,'read');}
   if (saved) {
-    let db;try{db=JSON.parse(saved);}catch(error){throw demoStorageError(error,'parse');}
+    let db,pair;try{pair=comparisonBaseline?readPortfolioStorePair(saved,{needsComparison}):null;db=pair?pair.current:readPortfolioStore(saved);}catch(error){throw demoStorageError(error,'parse');}
     if(!db||!Array.isArray(db.clients)||!Array.isArray(db.evidence))throw demoStorageError(null,'parse');
-    const retired=removeRetiredDemoClients(db),installed=installCanonicalDunder(db);
+    const approvedOnly=isApprovedOnlyStore(db);
+    const retired=removeRetiredDemoClients(db);
     const initech=db.clients.some(c=>['demo_brawndo','demo_prestige'].includes(c.client_id))&&addInitech(db);
     if(initech){reconcileFramework(db,'demo_initech',db.baselines.demo_initech);finishInitech(db);}
-    const light=lightweightStore(db,db.evidence);
-    if(retired||installed||initech||light.evidence.some((e,i)=>e!==db.evidence[i]))saveStore(db);
-    return restoreFiles(normalizePolicyDates(initializeRiskIds(db)));
+    const cisRollout=!approvedOnly&&applyCisDemoRollout(db,{fresh:false});
+    const cisRefresh=!approvedOnly&&refreshCanonicalCisDemo(db,{fresh:false});
+    const lightEvidence=lightweightEvidence(db.evidence,db.evidence);
+    const enriched=!approvedOnly&&enrichBrawndoReportingHistory(db);
+    const added=process.env.REACT_APP_STANDARD_SIGN_IN==='true'&&addMissingApprovedClients(db);
+    const reconciled=added||retired||initech||cisRollout||cisRefresh||enriched||lightEvidence.some((e,i)=>e!==db.evidence[i]);
+    if(reconciled)saveStore(db);
+    const result=restoreFiles(normalizePolicyDates(initializeRiskIds(db)));
+    if(pair?.before&&!reconciled&&sessionStorage.getItem(STORE_KEY)===saved)requestBaselines.set(result,{saved,before:pair.before});
+    return result;
   }
   clearFileCache();
-  const db = seedStore();
+  const db = freshEntryStore();
   saveStore(db);
   return db;
 }
+function prepareSavedStore(db,previous){
+  const persisted=lightweightStore(db,previous?.evidence||[]);
+  captureDemoReporting(persisted,previous,new Date().toISOString());
+  if(!isApprovedOnlyStore(persisted))enrichBrawndoReportingHistory(persisted);
+  return persisted;
+}
 export function saveStore(db,{resetFiles=false}={}) {
+  releaseStoreBaseline(db);
   // Persist before responding: quota failures must never masquerade as saved changes.
   try {
-    const previous=resetFiles?null:JSON.parse(sessionStorage.getItem(STORE_KEY)||'null');
-    const persisted=lightweightStore(db,previous?.evidence||[]);
-    sessionStorage.setItem(STORE_KEY, JSON.stringify(persisted));
+    const previous=resetFiles?null:readPortfolioStore(sessionStorage.getItem(STORE_KEY)||'null');
+    const persisted=prepareSavedStore(db,previous);
+    writePortfolioStore(sessionStorage,STORE_KEY,persisted);
     rememberFiles(db,persisted);
+    return persisted;
   } catch (error) {
     throw demoStorageError(error);
   }
 }
+// Adapter commands await this path; startup/reset/clear retain synchronous saves.
+export async function saveStoreAsync(db,{expectedSaved,beforeCommit,signal}={}){
+  try{
+    if(sessionStorage.getItem(STORE_KEY)!==expectedSaved)
+      throw Object.assign(new Error('Demo data changed; reload before retrying. Changes were not saved.'),{status:409});
+    const prepared=requestBaselines.get(db);releaseStoreBaseline(db);
+    const previous=prepared?.saved===expectedSaved&&canForkPortfolioStore()?prepared.before:readPortfolioStore(expectedSaved||'null');
+    const persisted=prepareSavedStore(db,previous);
+    await writePortfolioStoreAsync(sessionStorage,STORE_KEY,persisted,{beforeCommit,signal,
+      afterCommit(){rememberFiles(db,persisted);}});
+    return persisted;
+  }catch(error){
+    if(error.status||error.name==='AbortError'||signal?.aborted)throw error;
+    throw demoStorageError(error);
+  }finally{releaseStoreBaseline(db);}
+}
 export function resetStore() {
-  saveStore(seedStore(),{resetFiles:true});
+  saveStore(freshEntryStore(),{resetFiles:true});
   clearFileCache();
 }
 export function clearEvidenceFiles(){
   let db;
-  try{db=JSON.parse(sessionStorage.getItem(STORE_KEY));}catch(error){throw demoStorageError(error,'read');}
+  try{db=decodeDemoStore(sessionStorage.getItem(STORE_KEY));}catch(error){throw demoStorageError(error,'read');}
   if(!db)throw demoStorageError(null,'read');
   db.evidence=(db.evidence||[]).map(({content_base64,...metadata})=>({...metadata,demo_file_storage:'cleared'}));
   saveStore(db);clearFileCache();
 }
 export function demoDiagnostics(){
-  try{const saved=sessionStorage.getItem(STORE_KEY)||'{}';return storageDiagnostics(saved,JSON.parse(saved));}
+  try{
+    const saved=sessionStorage.getItem(STORE_KEY)||'{}',decoded=decodeDemoStore(saved);
+    return {...storageDiagnostics(saved,decoded),uncompressed_json_bytes:JSON.stringify(decoded).length*2};
+  }
   catch(error){const failure=demoStorageError(error,'read');return {storage:'sessionStorage',last_error:failure.storage_code};}
 }
 export const list = (db, kind, cid) => (db[kind] || []).filter(r => !cid || r.client_id === cid);
@@ -136,12 +208,12 @@ export function record(db, kind, id) {
   if (!found) throw new Error('Record not found.');
   return found;
 }
-export function audit(db, action, kind, row, meta = {}) {
+export function audit(db, action, kind, row, meta = {}, entityId=row[ids[kind]]) {
   db.logs.unshift({
     audit_id: uid('audit'),
     action,
     entity_type: kind,
-    entity_id: row[ids[kind]],
+    entity_id: entityId,
     client_id: row.client_id,
     at: now(),
     user_id: db.user.user_id,
@@ -163,7 +235,7 @@ export function validate(db, kind, body, existing) {
   if (field && !String(body[field] || '').trim()) throw new Error(`${field === 'name' ? 'Name' : 'Title'} is required.`);
   if (kind === 'reviews' && !body.review_type) throw new Error('Review type is required.');
   // Brawndo: one active recurring Review per Policy; completed history is retained, never duplicated.
-  if (kind === 'reviews' && body.client_id === 'demo_brawndo' && body.policy_id && !['completed','cancelled'].includes(body.status)
+  if (kind === 'reviews' && isCisClient(db,body.client_id) && body.policy_id && !['completed','cancelled'].includes(body.status)
     && db.reviews.some(r => r.client_id === body.client_id && r.policy_id === body.policy_id && r.review_id !== body.review_id && !['completed','cancelled'].includes(r.status)))
     throw new Error('This Policy already has an active Review; open it instead.');
   if (kind === 'contacts' && !body.not_applicable && !body.name && !body.email && !body.role) throw new Error('Enter a contact name, email, or role.');
@@ -196,6 +268,8 @@ export function write(db, kind, body, id) {
   body = { ...body };
   delete body.expected_updated_at;
   validateAssignment(db, kind, { ...existing, ...body }, existing);
+  if(kind==='tasks'&&existing?.status==='done'
+    &&Object.entries(body).every(([key,value])=>JSON.stringify(value)===JSON.stringify(existing[key])))return existing;
   const defaults = {
     clients: {
       status: 'onboarding',
@@ -216,7 +290,8 @@ export function write(db, kind, body, id) {
     risks: {
       status: 'open',
       category: 'operational',
-      date_identified: now()
+      // Retained Risks may use created_at for Added; an edit must not invent identification history.
+      ...(!existing ? {date_identified: now()} : {})
     },
     policies: {
       status: 'draft'
@@ -252,7 +327,13 @@ export function write(db, kind, body, id) {
     prepareTask(db,row,existing);
     if ('assignee_id' in body && existing && 'owner_id' in existing) row.owner_id=null;
   }
-  if(kind==='vendors') {validateVendor(db,row,existing);row.service=row.service||row.services;}
+  if(kind==='vendors') {
+    validateVendor(db,row,existing);row.service=row.service||row.services;
+    if(existing?.criticality_provisional&&(body.confirm_criticality===true||('criticality' in body&&body.criticality!==existing.criticality))) {
+      row.criticality_provisional=false;row.criticality_confirmed_at=now();row.criticality_confirmed_by=db.user.user_id;
+    }
+    delete row.confirm_criticality;
+  }
   validate(db, kind, row, existing);
   if (kind === 'clients') {
     validateClientRelationships(db, row, existing);
@@ -278,8 +359,7 @@ export function write(db, kind, body, id) {
   }
   if (kind === 'tasks' && existing && row.status !== existing.status) {
     if (row.status === 'in_progress' && !row.started_at) {row.started_at=now();row.started_by=db.user.user_id;}
-    row.completed_by = row.status === 'done' ? db.user.user_id : null;
-    row.completed_at = row.status === 'done' ? now() : null;
+    Object.assign(row,workSubmissionPatch(existing,body,db.user.user_id,now()));
   }
   if (kind === 'tasks' && row.review_id && (!existing || row.status !== existing.status || row.assignee_id !== existing.assignee_id)) {
     const review = db.reviews.find(r => r.review_id === row.review_id && r.client_id === row.client_id);

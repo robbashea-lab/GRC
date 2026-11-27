@@ -1,0 +1,39 @@
+FAIL src/components/GuidedLifecycleNative.test.jsx
+  × native adapter itself refuses CIS summary writes when joined context is unavailable (139 ms)
+  ○ skipped Omni evidence navigation reuses the real parent download handler exactly once
+  ○ skipped Omni Finding navigation retains the existing native RecordDrawer callback
+  ○ skipped scoped Omni save reuses native PATCH, CAS and fields without changing verification
+  ○ skipped stale native snapshot refuses PATCH and retains the native record
+  ○ skipped native rejection does not claim successful assessment saving
+  ○ skipped native save adapter uses the same authoritative path for newly authorized CIS safeguard 1.2
+  ○ skipped native save adapter uses the same authoritative path for newly authorized CIS safeguard 2.1
+  ○ skipped native save adapter refuses excluded configuration or identity {"definition_id":"1.3"}
+  ○ skipped native save adapter refuses excluded configuration or identity {"framework_key":"soc-2","definition_id":"CC1.1"}
+  ○ skipped native save adapter refuses excluded configuration or identity {"framework_key":"iso-27001","definition_id":"A.5.1"}
+  ○ skipped native save adapter refuses excluded configuration or identity {"client_id":"foreign-client"}
+  ○ skipped native adapter guards duplicate pending submissions
+
+  ● native adapter itself refuses CIS summary writes when joined context is unavailable
+
+    expect(jest.fn()).not.toHaveBeenCalled()
+
+    Expected number of calls: 0
+    Received number of calls: 1
+
+    1: "/framework_assessments/native-1.1", {"addressable_decision": "", "addressable_rationale": "", "cis_assessment_criteria": [], "expected_last_assessed": null, "guided_assessment_source": {"generated_at": "2026-10-09T12:00:00Z", "revision": 9, "version": "cis-v8.1-control1-3"}, "implementation": "Reviewed synthetic inventory", "na_rationale": "", "notes": "", "owner_id": null, "process_owner_id": null, "status": "in_progress", "technology": "", "verification": "verified"}
+
+       96 |   // real parent's callback boundary instead of masking it with the child guard.
+       97 |   await click('Save Omni native assessment');
+    >  98 |   expect(api.patch).not.toHaveBeenCalled();expect(api.post).not.toHaveBeenCalled();expect(api.delete).not.toHaveBeenCalled();
+          |                         ^
+       99 |   expect(JSON.stringify(saved)).toBe(original);expect(container.textContent).toContain('Synthetic native adapter context failure');expect(container.textContent).not.toContain('Assessment saved.');
+      100 | });
+      101 |
+
+      at Object.<anonymous> (src/components/GuidedLifecycleNative.test.jsx:98:25)
+
+Test Suites: 1 failed, 1 total
+Tests:       1 failed, 12 skipped, 13 total
+Snapshots:   0 total
+Time:        1.748 s, estimated 2 s
+Ran all test suites within paths "src/components/GuidedLifecycleNative.test.jsx".

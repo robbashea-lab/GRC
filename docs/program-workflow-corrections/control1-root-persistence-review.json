@@ -1,0 +1,42 @@
+{
+  "reviewer": "/root/soc2_review",
+  "classification": "Independent non-author source review and focused automated execution",
+  "sourceOwnerCommit": "729598ce45bc758a78e16f88e6d791a7ee0b4a8b",
+  "integratedRootCommit": "8e4466607255b0ca926f7da7181ff8e7c190e8d3",
+  "identicalRootAndOwnerGitBlobs": {
+    "frontend/src/lib/guidedAssessment.js": "ac5010ede21266dc9ee4a122df67098da22c6ffc",
+    "backend/assessment_items.py": "c6748cd46c9a8262fe798a2a6c27d6659b022b74"
+  },
+  "findingsInRootOriginDelta": [],
+  "sourceDisposition": "Bounded root-origin correction is coherent. Exact current Control1V5 unknown/missing root gains source-authored confirmation/verification. Existing writer now receives a real signal; canonical server derives the same origin from trusted question/answer scope. Native status and separate verification are not changed by Item resolution.",
+  "reviewedInvariants": [
+    "Frontend gate is exact control1V5.version; backend gate is exact CONTROL1_V5 version within the existing current generic CIS path. Historical readers/program versions are not extended.",
+    "Frontend message and backend Item text use the authored root unknown template and actual detail, with verification kind; no confirmed gap/absence is manufactured.",
+    "Root question is always present in the scoped Control1 definitions. Hidden retained children/No-intent extra context stay filtered by existing active-question logic.",
+    "New frontend lines follow status calculation and do not replace status; existing writer state follows true verification signal instead of guessing from status or text.",
+    "Native origin key is exact root question_id + verification; stable Item identity/fingerprint/notes reconcile from answer/detail, without unrelated record, permission, source-capture or lifecycle changes.",
+    "Completed native application and exact guided replay remain subject to existing actor/scope/current-token validation. Item resolution leaves native implementation/status/verification/save/history untouched."
+  ],
+  "independentFrontendRun": {
+    "command": "CI=true node node_modules/@craco/craco/dist/bin/craco.js test --watchAll=false --runInBand --runTestsByPath src/lib/control1InlineSupport.test.js src/preview/control1UnknownItems.test.js src/lib/assessmentUnknowns.test.js src/lib/inlineContextSentences.test.js",
+    "suitesPassed": 4,
+    "testsPassed": 32,
+    "testsFailed": 0,
+    "seconds": 3.792,
+    "log": "control1-root-independent-frontend.log"
+  },
+  "independentBackendRun": {
+    "command": "python -m pytest -c backend/pytest.ini -n 0 backend/tests/test_assessment_unknowns.py backend/tests/test_assessment_items.py",
+    "testsPassed": 27,
+    "testsFailed": 0,
+    "warnings": 4,
+    "seconds": 5.44,
+    "log": "control1-root-independent-backend.log",
+    "subtestCount": "Not printed by this configured run; source-owner6832 is separate author evidence and is not borrowed."
+  },
+  "verifiedBehavior": ["all5 current root unknown-only output has no false supported controls", "missing root guarded before completion and produces truthful draft confirmation", "affirmative known support stays distinct from an overall unassessed conclusion", "known No/Partial remain gap dispositions", "source-authored exact root verification origins", "inactive retained child/extra values ignored", "resolved Item notes stable on unchanged reconciliation", "native ASGI and Demo current1.3/1.4/1.5 accepted application produces one verification Item", "unchanged guided/native repeat retains Item ID/note/revision/history/status/verification/implementation/save time", "existing JS/Python full origin parity suite", "historical readers retain prior behavior"],
+  "separateIndependentReviewer": "CIS reviewer owns25-root-choice/19-byte-historical-snapshot receipt and broader source/writer vectors. Those counts are not this reviewer's execution.",
+  "storageBoundary": "Backend cases use existing isolated mocked Mongo harness and real ASGI routes. Parent reported assigned loopback Mongo already stopped; reviewer did not attempt a connection or restart. Final combined CI real-storage harness evidence is separately owned by coordinator.",
+  "connectedCounterevidence": "Current SOC backend Item terminal-period duplication was independently reproduced during this review and reported separately in soc-backend-item-terminal-period-repro.json. It is unrelated to the successful Control1 root-origin correction; coupled SOC/ISO label correction is being authored.",
+  "limits": ["Compiled current1.3 acceptance belongs to root and its actual artifacts are reviewed separately", "No source editing or hosted/browser/account/provider operations by this reviewer", "Focused counts overlap previous semantic suites and must not be summed"]
+}

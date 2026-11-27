@@ -4,6 +4,7 @@ import {STORE_KEY} from './store';
 import baseline from '@catalogs/onboardingCatalog.json';
 import {FRAMEWORKS,CATALOGS} from '../lib/frameworks';
 import {controlGap} from '../lib/socReadiness';
+import {currentReviewCompletion} from '../testUtils/r4ReviewFixture';
 const api=axios.create({adapter:previewAdapter});
 let cid;
 const get=async path=>(await api.get(path,{params:{client_id:cid}})).data;
@@ -40,10 +41,17 @@ test('Review evaluations survive replay, reload and changes to the recurring def
   const review=(await get('/reviews'))[0],path='/reviews/'+review.review_id;
   const scheduled=(await api.patch(path,{due_date:'2026-09-30',recurrence:'quarterly',expected_occurrence_id:review.current_occurrence_id})).data;
   const evaluation={conclusion:'Operating gap remains',tested_scope:'Provider and client recovery responsibilities',tested_period:'2026 Q3',checklist_confirmed:true,no_evidence_reason:'Existing records examined, no separate artifact'};
-  const done=(await api.post(path+'/complete',{occurrence_id:scheduled.current_occurrence_id,...evaluation})).data;
+  const completion=await currentReviewCompletion(api,review.review_id,{
+    expectedOccurrenceId:scheduled.current_occurrence_id,
+    resultForStep:step=>({step_id:step.step_id,result:'N/A',reason:'This synthetic evaluation-retention case does not perform the external control or business decision: '+step.text}),
+    supportingReference:'Synthetic native Review '+review.review_id+' occurrence '+scheduled.current_occurrence_id+'; the supplied evaluation text is retained test data, not a completed external assessment.'
+  });
+  const command={...completion,...evaluation};
+  const done=(await api.post(path+'/complete',command)).data;
   expect(done.occurrence).toMatchObject(evaluation);expect(done.occurrence.outcome).toBe('no_findings');
   await api.patch(path,{title:'Changed definition',expected_occurrence_id:done.review.current_occurrence_id});
-  const replay=(await api.post(path+'/complete',{occurrence_id:scheduled.current_occurrence_id,conclusion:'Do not overwrite'})).data;
+  expect((await api.post(path+'/complete',command)).data.occurrence).toEqual(done.occurrence);
+  const replay=(await api.post(path+'/complete',{...command,conclusion:'Do not overwrite'})).data;
   expect(replay.occurrence).toEqual(done.occurrence);
   expect((await get(path+'/history'))[0]).toEqual(done.occurrence);
   await expect(api.post(path+'/complete',{occurrence_id:replay.review.current_occurrence_id,effectiveness_score:100})).rejects.toThrow('Unsupported');
@@ -98,6 +106,17 @@ test('four frameworks reuse existing work and control descriptions do not imply 
   }
   expect(after.some(r=>r.framework_drivers.some(d=>d.framework_key==='soc-2'))).toBe(true);
   const snapshot=JSON.parse(sessionStorage.getItem(STORE_KEY));
-  expect(snapshot.framework_assessments.filter(a=>a.client_id===cid)).toHaveLength(288);
+  const rows=snapshot.framework_assessments.filter(a=>a.client_id===cid);
+  expect(rows).toHaveLength(293);
+  expect(Object.fromEntries(['cis-ig1','hipaa','iso-27001','soc-2'].map(key=>[key,rows.filter(a=>a.framework_key===key).length]))).toEqual({'cis-ig1':56,hipaa:81,'iso-27001':123,'soc-2':33});
+  const hipaa=rows.filter(a=>a.framework_key==='hipaa'),retained=['164.302','164.105','164.530'];
+  const children={'164.308(b)(2)':'164.308(b)(1)','164.314(a)(2)(i)':'164.314(a)(1)',
+    '164.314(a)(2)(ii)':'164.314(a)(1)','164.314(a)(2)(iii)':'164.314(a)(1)','164.314(b)(2)':'164.314(b)(1)'};
+  expect(new Set(hipaa.map(a=>a.definition_id)).size).toBe(81);
+  expect(hipaa.filter(a=>!retained.includes(a.definition_id))).toHaveLength(78);
+  expect(hipaa.filter(a=>retained.includes(a.definition_id)).map(a=>a.definition_id).sort()).toEqual([...retained].sort());
+  expect(hipaa.filter(a=>!Object.hasOwn(children,a.definition_id))).toHaveLength(76);
+  expect(Object.fromEntries(CATALOGS.hipaa.requirements.filter(d=>d.parent_assessment_id).map(d=>[d.id,d.parent_assessment_id]))).toEqual(children);
+  expect(hipaa.filter(a=>Object.hasOwn(children,a.definition_id)).map(a=>a.definition_id).sort()).toEqual(Object.keys(children).sort());
   expect(snapshot.framework_assessments.filter(a=>a.client_id===cid).every(a=>a.status==='not_assessed')).toBe(true);
 });

@@ -10,7 +10,10 @@
       "implemented": true,
       "version": "45 CFR 164 · 2026-09-18",
       "workspace": "generic",
-      "capabilities": ["addressability"]
+      "capabilities": [
+        "addressability",
+        "guided_assessment"
+      ]
     },
     {
       "key": "cis-ig1",
@@ -22,7 +25,12 @@
       "version": "8.1",
       "implementation_group": 1,
       "workspace": "cis",
-      "capabilities": ["verification", "verification_checklist", "cis_assessment_criteria", "cis_operation"]
+      "capabilities": [
+        "verification",
+        "verification_checklist",
+        "cis_assessment_criteria",
+        "cis_operation"
+      ]
     },
     {
       "key": "nist-csf-2",
@@ -33,7 +41,10 @@
       "implemented": true,
       "version": "2.0",
       "workspace": "generic",
-      "capabilities": ["csf_profile"]
+      "capabilities": [
+        "csf_profile",
+        "guided_assessment"
+      ]
     },
     {
       "key": "iso-27001",
@@ -44,7 +55,10 @@
       "implemented": true,
       "version": "2022 + Amd 1:2024",
       "workspace": "iso",
-      "capabilities": ["statement_of_applicability", "internal_audit"]
+      "capabilities": [
+        "statement_of_applicability",
+        "internal_audit"
+      ]
     },
     {
       "key": "cmmc",
@@ -52,9 +66,14 @@
       "label": "CMMC",
       "category": "Certification / Contractual Programs",
       "selectable": true,
-      "implemented": false,
+      "implemented": true,
       "workspace": "generic",
-      "capabilities": []
+      "capabilities": [
+        "cmmc_scope",
+        "verification",
+        "guided_assessment"
+      ],
+      "version": "NIST SP 800-171 Rev 2"
     },
     {
       "key": "soc-2",
@@ -65,7 +84,11 @@
       "implemented": true,
       "version": "2017 TSC · revised points of focus 2022",
       "workspace": "soc",
-      "capabilities": ["verification", "soc_assessment_checks", "management_controls"]
+      "capabilities": [
+        "verification",
+        "soc_assessment_checks",
+        "management_controls"
+      ]
     }
   ]
 }

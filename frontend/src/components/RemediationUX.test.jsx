@@ -4,8 +4,12 @@ import RecordDrawer from './RecordDrawer';
 import ActionSourceChain from './ActionSourceChain';
 import api from '@/lib/api';
 import {completionHandoff,remediationOrigin} from '@/lib/remediation';
+import {buildLegacyDemoStore,readStore,saveStore} from '../preview/store';
+import {currentReviewCompletion} from '../testUtils/r4ReviewFixture';
 
-jest.mock('@/context/AuthContext',()=>({useAuth:()=>({user:{user_id:'demo_admin',role:'super_admin'}})}));
+let mockUser={user_id:'demo_admin',role:'super_admin'},mockOrg;
+jest.mock('@/context/AuthContext',()=>({useAuth:()=>({user:mockUser,workspaceMode:'demo',loading:false,error:''})}));
+jest.mock('@/context/OrgContext',()=>({useOrg:()=>mockOrg}));
 jest.mock('@/lib/api',()=>({__esModule:true,default:require('axios').default.create({adapter:require('../preview/commandTestAdapter').previewAdapter}),formatError:e=>e.message,API:'/api'}));
 jest.mock('react-router-dom',()=>({Link:({children,to})=><a href={to}>{children}</a>}),{virtual:true});
 jest.mock('@/components/ui/sheet',()=>({Sheet:({open,children})=>open?<div>{children}</div>:null,SheetContent:({children,...props})=><section {...props}>{children}</section>,SheetHeader:({children})=><header>{children}</header>,SheetTitle:({children})=><h2>{children}</h2>}));
@@ -16,10 +20,17 @@ const setText=async(label,value)=>act(async()=>{const el=container.querySelector
 let root,container,client,review,finding,task,members;
 const button=(text)=>Array.from(container.querySelectorAll('button')).find(b=>b.textContent===text);
 const click=async text=>act(async()=>button(text).click());
+const scopedActor=(user_id,client_id)=>({user_id,name:'Synthetic '+user_id,email:user_id+'@example.invalid',role:'platform_admin',status:'active',client_ids:[client_id]});
+async function asExternalActor(actor,perform){
+  const db=readStore(),original=db.user;db.users.push(actor);db.user=actor;saveStore(db);
+  try{return await perform();}finally{const current=readStore();current.user=original;saveStore(current);}
+}
 beforeEach(async()=>{
+  mockUser={user_id:'demo_admin',role:'super_admin'};
   global.IS_REACT_ACT_ENVIRONMENT=true;sessionStorage.clear();localStorage.clear();
   container=document.createElement('div');document.body.appendChild(container);root=createRoot(container);
   await api.post('/demo/enter');client=(await api.post('/clients',{name:'Phase 2 component client'})).data;
+  mockOrg={currentClientId:client.client_id,currentClient:client,clients:[client],loading:false,error:''};
   review=(await api.post('/reviews',{client_id:client.client_id,title:'Policy Review and Approval',review_type:'policy',recurrence:'quarterly',due_date:'2026-09-30'})).data;
   finding=(await api.post(`/reviews/${review.review_id}/create-finding`,{occurrence_id:review.current_occurrence_id,request_id:'single',title:'NO ISP',description:'Policy is not documented.',remediation_title:'MAKE AN ISP'})).data;
   task=(await api.get('/tasks',{params:{client_id:client.client_id}})).data[0];
@@ -36,12 +47,20 @@ test('Review groups current statuses, refreshes transitions and preserves Q3 ori
   await api.patch('/tasks/'+task.task_id,{status:'in_progress'});
   await click('Related');
   expect(container.querySelector('[data-ticket-id]').textContent).toContain('in progress');
-  const next=(await api.post(`/reviews/${review.review_id}/complete`,{occurrence_id:review.current_occurrence_id})).data.review;
+  const completion=await currentReviewCompletion(api,review.review_id,{expectedOccurrenceId:review.current_occurrence_id,
+    resultForStep:step=>({step_id:step.step_id,result:'N/A',reason:'This synthetic status/occurrence walkthrough does not perform the external policy or operational assessment in this question.'}),
+    supportingReference:'Native Finding '+finding.finding_id+' records the missing policy and its corrective Action.'});
+  completion.outcome='Exceptions noted';
+  const next=(await api.post(`/reviews/${review.review_id}/complete`,completion)).data.review;
   await act(async()=>root.render(<RecordDrawer open kind="reviews" record={next} clientId={client.client_id} onOpenChange={()=>{}}/>));
   await click('Related');expect(container.textContent).toContain('Q3 2026');
   await api.patch('/tasks/'+task.task_id,{status:'done'});await click('Related');
   expect(container.querySelector('[data-ticket-id]').textContent).toContain('pending validation');
-  await api.post(`/findings/${finding.finding_id}/validate`,{rationale:'Policy approval verified'});await click('Related');
+  // This is another actor's native decision followed by an explicit Related refresh.
+  await asExternalActor(scopedActor('related-validator',client.client_id),async()=>{
+    const current=(await api.get('/findings/'+finding.finding_id)).data;
+    await api.post(`/findings/${finding.finding_id}/validate`,{request_id:'related-independent-validation',expected_updated_at:current.updated_at,rationale:'Policy approval verified'});
+  });await click('Related');
   expect(container.querySelectorAll('[data-ticket-id]')).toHaveLength(0);
   await click('Show completed / closed records (1)');
   expect(container.querySelector('[data-ticket-id]').textContent).toContain('completed');
@@ -54,11 +73,25 @@ test('Finding-linked completion and validation remain in the same stable ticket'
   expect(container.textContent).toContain('Policy is not documented.');
   expect(container.textContent).toContain('Q3 2026');
   expect(container.querySelector('h2').textContent).toBe('MAKE AN ISP');
+  const workerTicket=container.querySelector('[data-testid="remediation-ticket-drawer"]');
   await click('Complete work');
   expect(container.textContent).toContain('Pending validation');
   expect(onClose).not.toHaveBeenCalled();expect(onSaved).toHaveBeenCalled();
+  expect(container.querySelector('[data-testid="remediation-ticket-drawer"]')).toBe(workerTicket);
+  expect(button('Validate and complete').disabled).toBe(true);
+  const submitted=(await api.get('/tasks/'+task.task_id)).data;
+  expect(submitted.completed_by).toBe(mockUser.user_id);
+  // Independent validation starts a fresh authenticated view, never an auth-switched draft.
+  await act(async()=>root.render(null));expect(workerTicket.isConnected).toBe(false);
+  const validator=scopedActor('ticket-validator',client.client_id),db=readStore();db.users.push(validator);db.user=validator;saveStore(db);mockUser=validator;
+  const onValidatedSaved=jest.fn();
+  await act(async()=>root.render(<RecordDrawer open kind="tasks" record={submitted} clientId={client.client_id} onSaved={onValidatedSaved} onOpenChange={onClose}/>));
+  const validatorTicket=container.querySelector('[data-testid="remediation-ticket-drawer"]');
   await setText('Validation rationale','Policy approval verified');await click('Validate and complete');
   expect((await api.get('/findings/'+finding.finding_id)).data.status).toBe('closed');
+  expect((await api.get('/findings/'+finding.finding_id)).data.validated_by).toBe(validator.user_id);
+  expect(container.querySelector('[data-testid="remediation-ticket-drawer"]')).toBe(validatorTicket);
+  expect(onValidatedSaved).toHaveBeenCalled();expect(onClose).not.toHaveBeenCalled();
   expect(container.querySelectorAll('[data-testid="remediation-ticket-drawer"]')).toHaveLength(1);
   expect(container.textContent).toContain('finding:'+finding.finding_id);
 });
@@ -77,10 +110,18 @@ test('multiple Actions remain in one ticket and outstanding work prevents valida
 });
 
 test('seeded framework ticket validates without changing its control conclusion',async()=>{
+  // This assertion concerns the retained v1 gap and its exact native ticket.
+  saveStore(buildLegacyDemoStore(),{resetFiles:true});await api.post('/demo/enter');
   const seeded=(await api.get('/tasks',{params:{client_id:'demo_brawndo'}})).data.find(t=>t.task_id==='demo_brawndo_cis_action_1.1');
+  await asExternalActor(scopedActor('framework-worker','demo_brawndo'),async()=>{
+    await api.patch('/tasks/'+seeded.task_id,{status:'done',expected_updated_at:seeded.updated_at});
+  });
+  const seededClients=(await api.get('/clients')).data,seededClient=seededClients.find(row=>row.client_id==='demo_brawndo');
+  expect(seededClient).toBeDefined();
+  mockOrg={currentClientId:seededClient.client_id,currentClient:seededClient,clients:seededClients,loading:false,error:''};
   await act(async()=>root.render(<RecordDrawer open kind="tasks" record={seeded} clientId="demo_brawndo" onOpenChange={()=>{}}/>));
   expect(container.textContent).not.toContain('Primary Action unavailable');
-  await click('Complete work');expect(container.textContent).toContain('Pending validation');
+  expect(container.textContent).toContain('Pending validation');
   expect((await api.get('/findings/'+seeded.finding_id)).data.status).toBe('remediated');
   await setText('Validation rationale','Synthetic validation of the corrective work');await click('Validate and complete');
   expect(container.textContent).toContain('Ticket completed. Validation saved.');

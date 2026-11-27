@@ -26,7 +26,7 @@ FIELDS = {
 async def eligible(db, ident, client_id, can_access):
     """An active User with access to the client may receive new work."""
     account = await db.users.find_one({"user_id": ident}, {
-        "_id": 0, "user_id": 1, "status": 1, "role": 1, "client_ids": 1,
+        "_id": 0, "user_id": 1, "status": 1, "role": 1, "client_ids": 1, "all_clients": 1,
     })
     return bool(account) and account.get("status") == "active" and can_access(account, client_id)
 

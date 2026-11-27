@@ -1,0 +1,22 @@
+{
+  "operator": "root/non-author selected operational retest",
+  "product": "28b806716024ec149af2ec5da621a5a618c669d5",
+  "qa_head": "c8f394e726dc66844bab7b46eb98092ac544742b",
+  "cases": [
+    "test_platform_ten_year_lifecycle.PlatformTenYearTests.test_calendar_date_only_boundaries",
+    "test_platform_ten_year_lifecycle.PlatformTenYearTests.test_oracle_counts_and_new_york_date_only_boundaries"
+  ],
+  "boundaries": [
+    "Real loopback Mongo with modeled ASGI subjects, not hosted permissions.",
+    "No authentication/recovery/account mutation methods selected.",
+    "No five-campaign rerun or ten-year independent execution claim."
+  ],
+  "sha256_lf_normalized": {
+    "test_platform_scale_reliability.py": "b7c10dfa9baa4f8348a8f96f69edc4eab9cb96fc785768e62009b827c07b781a",
+    "test_platform_iso_inventory.py": "9cba91f74772d808bd1a59de1cd9cd2351e1a736f83012215691e374daf0c41f",
+    "test_platform_ten_year_lifecycle.py": "e4a9e317af8d14b70c4b2e61b134577b97b36db9b997caf343ec3d218cb0e517"
+  },
+  "exit_code": 0,
+  "duration_seconds": 2.8910000000032596,
+  "log_sha256": "062753df3d28055f1a50dbcf7d6a0aaca36b67477bba8de4c819bb4a46e95845"
+}

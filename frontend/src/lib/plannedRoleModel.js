@@ -8,6 +8,14 @@ export const PLANNED_ROLES = [
   {key:'client_contributor',legacyKey:'client_contributor',label:'Client Contributor',scope:'THEIR CLIENT',detail:'Works assigned activities, uploads evidence and contributes comments. Cannot administer or approve governance decisions.'},
   {key:'client_read_only',legacyKey:'client_readonly',label:'Client Read Only',scope:'THEIR CLIENT',detail:'Reads authorized client content. No business-record mutations or governance approvals.'},
 ];
+export function nativeRoleDefinition(role) {
+  const key = role === 'client_viewer' ? 'client_readonly' : role;
+  return PLANNED_ROLES.find(item => item.legacyKey === key);
+}
+// Labels never change the stored role or its server-side entitlements.
+export function nativeRoleLabel(role) {
+  return nativeRoleDefinition(role)?.label || role || '';
+}
 const row=(label,capabilities,values)=>({label,capabilities,roles:Object.fromEntries(PLANNED_ROLES.map((role,i)=>[role.key,values[i]]))});
 export const PLANNED_CAPABILITIES=[
   row('View authorized client records',['view'],['Yes','Assigned Clients','Their Client','Their Client','Their Client']),

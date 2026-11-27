@@ -6,6 +6,7 @@ export const AI_PILOT_DEFAULTS={environment:'',restrictions:'',data_settings:'',
 export const AI_PILOT_KEYS=Object.keys(AI_PILOT_DEFAULTS);
 export const AI_APPROVAL_LABELS={pending_assessment:'Pending Assessment',approved:'Approved',approved_with_conditions:'Approved with Conditions',not_approved:'Not Approved'};
 export const aiInactive=row=>['suspended','retired'].includes(row.status);
+export const aiNeedsAttention=row=>!aiInactive(row)&&row.alerts?.length>0;
 export const aiThirdParty=row=>row.screening?.third_party===true||!!row.vendor_id;
 export const aiCustomerFacing=row=>row.screening?.customer_facing===true||row.purposes?.includes('Customer-Facing');
 export const aiApproval=row=>Object.prototype.hasOwnProperty.call(AI_APPROVAL_LABELS,row.approval_status)?AI_APPROVAL_LABELS[row.approval_status]:'Approval not recorded';
@@ -24,5 +25,5 @@ export function aiMatches(row,view,showInactive=false,today=managementDay()){
   }
 }
 export function aiScope(row){
-  return Object.fromEntries(['name','product_model','provider','vendor_id','description','purposes','data_types','access','screening','human_review_required','human_approval_required','oversight_notes',...AI_PILOT_KEYS].map(key=>[key,row[key]??null]));
+  return Object.fromEntries(['name','product_model','provider','vendor_id','description','purposes','data_types','no_client_data','access','screening','human_review_required','human_approval_required','oversight_notes',...AI_PILOT_KEYS].map(key=>[key,key==='no_client_data'?row[key]===true:row[key]??null]));
 }

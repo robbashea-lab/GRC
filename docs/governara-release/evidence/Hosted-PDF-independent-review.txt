@@ -1,0 +1,29 @@
+Independent hosted-PDF artifact review — October 13, 2026
+
+Disposition: no material content/metric inconsistency or clipping/overlap identified in the handed-off six PDF artifacts and the 21 representative rendered pages inspected. This is artifact-derived evidence, not independent browser/session/provider verification or whole-release acceptance.
+
+Origin and scope
+Agent1 reports that the files were downloaded through the normal authenticated hosted UI after staging bf59aa8b7618c96d0abfa2a9fb1cd4243f1f5ce0 became Live in deployment dep-db780cij9qps73bcu1sg. This reviewer did not observe that deployment/download path or receive session custody. The reviewed files are the actual supplied bytes, not locally generated substitutes. All six SHA256 values remained unchanged before and after extraction/render review.
+
+Files and page counts
+SOC Full: hosted-soc-full.pdf, 29 pages, SHA256 76a9a558e26931217381f70355386b35b8c56228a15a9f03de490189d77b1f15.
+SOC Executive: hosted-soc-executive.pdf, 5 pages, SHA256 cc9058af2b34c6a6e023c97170cb7b21bb41ff7ecca13d041b70e93d4c5f1c68.
+CIS Full: hosted-cis-full.pdf, 35 pages, SHA256 3490971123fe8392650cf1e3d55d13a61da90338830893503f54f30eb8487127.
+CIS Executive: hosted-cis-executive.pdf, 5 pages, SHA256 aa77b9998824cd578412c15eed43dfb211272b4b5c98e9ca9202667c2329e807.
+ISO Full: hosted-iso-full.pdf, 69 pages, SHA256 ebbc34a0f5d3223c15939b005adcee8473180c4efaae624f7de5beeae8a988a9.
+ISO Executive: hosted-iso-executive.pdf, 5 pages, SHA256 d670e5389f29baa016c181463b0b39ec0a6b86561ab581ed7a83534d04a417d5.
+
+Verified artifact content
+- SOC: paired summaries/groups agree at 0 addressed, 0 partial, 2 needing remediation/validation, 36 unassessed, total 38; native implementation 0/38 and separate assessment resolution 0/38; all 38 unverified. Full CC1.4 preserves the complete ordered wording and punctuation of the supplied 7351-character native write-up after layout whitespace/page-furniture normalization in both pdfplumber and pypdf. All 55 numbered QA lines and END marker appear in order across pages 7–11, with all three native em dashes retained and no replacement characters in the in-memory extraction. The first synthetic marker and readiness/verification caveats remain explicit. Executive omits detailed narratives/Items as intended.
+- SOC Items: Full page 29 contains three unique OPEN Items, the retained 76-character resolution/reopen wording, and one explicit existing Finding ID on the originating synthetic task. The supplied linked-title UI receipt does not contain the native Finding ID, so exact native-ID correspondence is not independently established. PDF presence/state/text/link are proved; the actual resolve/reopen/create/reload lifecycle and one native Finding/Action remain the owner's UI evidence.
+- CIS: paired summaries/groups agree at all 56 unassessed, implementation 0/56 and separate resolution 0/56; all 56 unverified. Full 1.1 preserves the complete 689-character baseline wording under the same exact ordered-text/layout-whitespace comparison, retains Not Assessed/Not verified, and does not fabricate structured Items from legacy narrative headings. The report's structured checklist is empty. Current/historical interview access and absence of a new native CIS save remain owner-reported UI facts.
+- ISO: paired summaries/groups agree at raw 1 Implemented plus 122 Not Assessed = 123. Native implementation uses 31 units: 30 ISMS clauses plus one included Annex control; the one implemented unit is an ISMS clause, so displayed 1/31 = 3.2%. The 92 undetermined Annex decisions stay outside this denominator, separately disclosed; they are not labeled formally excluded. Separate resolution 1/123 displays 1%; all 123 unverified. Full A.5.9 page 26 is blank/Not Assessed/Not verified/SoA not yet determined and discloses its legacy save date without claiming a confirmed judgment date. The structured checklist is empty. No ISO-save/SoA-edit claims are inferred from PDF inspection.
+- Every Full/Executive pair has the same content snapshot identifier, separately recorded generation/read windows and session operation times. Six-month history remains expressly partial current-catalog assessment-event evidence, with historical percentages/program comparisons unavailable and current snapshot coverage distinguished. No verification, certification or auditor opinion is inferred from implementation counts.
+
+Visual scope
+Bundled Poppler rendered pages at 110 dpi. Visually inspected SOC Full 1,2,3,7,8,9,10,11,29; CIS Full 1,6,35; ISO Full 1,2,3,5,26,69; and page 1 of each Executive, total 21 pages. Charts, labels, long narrative continuation/end, representative group tables, Items, native-row disclosures, headers/footers and numbering were legible and free of observed clipping/overlap. All 148 pages were text-extracted; extracted character bounds were within each page. That bounds check is not whole-report visual certification.
+
+Tools and boundaries
+Existing primary runtime: pdfplumber 0.11.9, pypdf 6.10.0, bundled Poppler pdfinfo/pdftoppm. No installations, PDF/source edits, application tests, private Store access, browser/session/provider operations or real-resource writes occurred. Two collaborating reviewers independently checked metric/provenance and native text content; their receipts remain separate from this reviewer's rendered-page observations. The referenced native JSON/text/UI capture files are supplied comparison artifacts, not independent database reads. I authored PR75 and do not self-certify its original implementation through this PDF review.
+
+Not checked: every page visually, live database persistence/authorization, exact native Finding ID equality, restricted-role/logout/fault campaigns, browser workflow or deployment/provider state. Those remain separately attributed release gates.

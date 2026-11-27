@@ -1,0 +1,1107 @@
+{
+  "version": "prestige-current-control-facts-v1",
+  "client_id": "demo_prestige",
+  "anchor": "2026-11-02T00:00:00.000Z",
+  "provenance": "Newly authored fictional scenario facts. Native IDs, recording dates and tested workpaper bytes are resolved separately; these facts alone do not establish operating effectiveness.",
+  "planning_source_sha256": "7983245609dcfd350c95e1ecfc743f29e360041d45e9f03d653eab108157f17b",
+  "controls": [
+    {
+      "key": "C01",
+      "request_id": "prestige-current-control-v1:C01",
+      "design": {
+        "name": "Role-specific procedure communication, conduct and escalation",
+        "description": "Role-specific briefs connect conduct, customer handling and escalation procedures to performed work. Material changes carry version and acknowledgement checks; concern routes include a conflicted-supervisor bypass.",
+        "frequency": "Per material procedure change; annual reinforcement",
+        "design": "adequate",
+        "owner_id": "demo_prestige_user_0"
+      },
+      "criterion_ids": [
+        "CC1.1",
+        "CC2.2",
+        "CC5.3"
+      ],
+      "links": {
+        "policy_fact_keys": [
+          "policy-information-security-policy",
+          "policy-security-awareness-training-policy"
+        ],
+        "review_plan_keys": [
+          "soc-awareness",
+          "soc-policy-review"
+        ],
+        "vendor_fact_keys": [],
+        "evidence_subject_slots": [
+          "briefing-conduct"
+        ]
+      },
+      "populations": [
+        {
+          "key": "C01-publication",
+          "request_id": "prestige-current-observation-v1:C01-publication",
+          "period_start": "2026-10-23",
+          "period_end": "2026-10-29",
+          "operating": "effective",
+          "expected_instances": 7,
+          "collected_instances": 7,
+          "notes": "NEW fictional test 2026-10-30. Inspect all seven material procedure-change packages published after current versions became effective: correct version, role briefing, acknowledgement and one performed-procedure check each. No missing package or unresolved departure; effective for this population. This is not a claim that every staff member was sampled.",
+          "count_unit": "Material procedure communication package"
+        },
+        {
+          "key": "C01-concern",
+          "request_id": "prestige-current-observation-v1:C01-concern",
+          "period_start": "2026-10-23",
+          "period_end": "2026-10-29",
+          "operating": "effective",
+          "expected_instances": 1,
+          "collected_instances": 1,
+          "notes": "NEW fictional exercise performed 2026-10-28; evaluated 2026-10-30. One deliberately selected confidential-export concern exercises reporting, conflicted-supervisor bypass, hold and accountable response. Expected route worked; no unresolved exception. Exercise, not a real misconduct case.",
+          "count_unit": "Escalation exercise"
+        }
+      ]
+    },
+    {
+      "key": "C02",
+      "request_id": "prestige-current-control-v1:C02",
+      "design": {
+        "name": "Executive oversight, role authority and accountability",
+        "description": "Robert reviews delegated authority, owner accountability, missed work and engineering challenge. Sponsor conflicts route to the retained provider lead for independent internal challenge, without granting a new platform role.",
+        "frequency": "Quarterly oversight; material exception escalation",
+        "design": "adequate",
+        "owner_id": "demo_prestige_user_1"
+      },
+      "criterion_ids": [
+        "CC1.2",
+        "CC1.3",
+        "CC1.5"
+      ],
+      "links": {
+        "policy_fact_keys": [
+          "policy-information-security-policy"
+        ],
+        "review_plan_keys": [
+          "soc-risk-assessment"
+        ],
+        "vendor_fact_keys": [],
+        "evidence_subject_slots": [
+          "oversight-responsibilities"
+        ]
+      },
+      "populations": [
+        {
+          "key": "C02-oversight",
+          "request_id": "prestige-current-observation-v1:C02-oversight",
+          "period_start": "2026-10-23",
+          "period_end": "2026-10-29",
+          "operating": "effective",
+          "expected_instances": 1,
+          "collected_instances": 1,
+          "notes": "NEW fictional review performed 2026-10-29; evaluated 2026-10-30. Inspect the complete quarterly package: six named role responsibilities, delegated authority, owner confirmations, missed-work escalation, engineering challenge and sponsor-conflict route. Provider challenge remains an internal business role, not a CPA opinion. No unresolved process exception.",
+          "count_unit": "Oversight review package"
+        }
+      ]
+    },
+    {
+      "key": "C03",
+      "request_id": "prestige-current-control-v1:C03",
+      "design": {
+        "name": "Practical competence and deputy evaluation",
+        "description": "Named roleholders demonstrate relevant security and customer-handling work and deputy arrangements. Practical competence is evaluated separately from briefing attendance.",
+        "frequency": "Annual role evaluation; before changed duties",
+        "design": "adequate",
+        "owner_id": "demo_prestige_user_0"
+      },
+      "criterion_ids": [
+        "CC1.4"
+      ],
+      "links": {
+        "policy_fact_keys": [
+          "policy-security-awareness-training-policy"
+        ],
+        "review_plan_keys": [
+          "soc-awareness"
+        ],
+        "vendor_fact_keys": [],
+        "evidence_subject_slots": [
+          "competence-deputies"
+        ]
+      },
+      "populations": [
+        {
+          "key": "C03-competence",
+          "request_id": "prestige-current-observation-v1:C03-competence",
+          "period_start": "2026-08-01",
+          "period_end": "2026-10-29",
+          "operating": "effective",
+          "expected_instances": 6,
+          "collected_instances": 6,
+          "notes": "NEW fictional test 2026-10-30. Full selected population is the six named operating roleholders, not the workforce headcount. Check technical recovery, independent validation, rights handling, creative handling, personnel steps and executive decisions/deputies. All six meet the selected role criteria; no unresolved competency gap.",
+          "count_unit": "Named-role practical evaluation"
+        }
+      ]
+    },
+    {
+      "key": "C04",
+      "request_id": "prestige-current-control-v1:C04",
+      "design": {
+        "name": "Decision-input reconciliation",
+        "description": "Reconcile identity, cloud, repository, rights/retention, telemetry, dependency, endpoint and provider inputs before management decisions. Missing or unreliable inputs receive an accountable disposition.",
+        "frequency": "Monthly",
+        "design": "adequate",
+        "owner_id": "demo_prestige_user_0"
+      },
+      "criterion_ids": [
+        "CC2.1"
+      ],
+      "links": {
+        "policy_fact_keys": [
+          "policy-asset-management-policy"
+        ],
+        "review_plan_keys": [],
+        "vendor_fact_keys": [
+          "okta",
+          "datadog",
+          "snyk"
+        ],
+        "evidence_subject_slots": [
+          "source-quality"
+        ]
+      },
+      "populations": [
+        {
+          "key": "C04-inputs",
+          "request_id": "prestige-current-observation-v1:C04-inputs",
+          "period_start": "2026-08-01",
+          "period_end": "2026-10-29",
+          "operating": "effective",
+          "expected_instances": 3,
+          "collected_instances": 3,
+          "notes": "NEW fictional test 2026-10-30. Inspect all August, September and October batches, each reconciling Okta, AWS, GitHub, rights/retention, Datadog, Snyk, Jamf and provider-notice inputs. Check completeness, timeliness, gaps and resulting decisions. No unresolved unreliable input; three batches are not 24 independent business populations.",
+          "count_unit": "Monthly source-reconciliation batch"
+        }
+      ]
+    },
+    {
+      "key": "C05",
+      "request_id": "prestige-current-control-v1:C05",
+      "design": {
+        "name": "Customer and provider communication case handling",
+        "description": "Route customer terms, provider notices and concerns to accountable recipients with the correct obligation and authorized response. Case selection does not establish a universal notification deadline.",
+        "frequency": "Per relevant commitment, notice or concern",
+        "design": "adequate",
+        "owner_id": "demo_prestige_user_0"
+      },
+      "criterion_ids": [
+        "CC2.3"
+      ],
+      "links": {
+        "policy_fact_keys": [
+          "policy-incident-response-policy",
+          "policy-data-classification-handling-policy"
+        ],
+        "review_plan_keys": [],
+        "vendor_fact_keys": [
+          "zendesk"
+        ],
+        "evidence_subject_slots": [
+          "external-communications"
+        ]
+      },
+      "populations": [
+        {
+          "key": "C05-comms",
+          "request_id": "prestige-current-observation-v1:C05-comms",
+          "period_start": "2026-08-01",
+          "period_end": "2026-10-29",
+          "operating": "effective",
+          "expected_instances": 6,
+          "collected_instances": 6,
+          "notes": "NEW fictional test 2026-10-30. Deliberate risk-based sample: two customer-commitment changes, two provider notices and two customer concerns. Check recipient, obligations, authorized wording, routing and disposition. Six complete case files, no process exception; no universal notification deadline or whole-population inference.",
+          "count_unit": "Communication case file"
+        }
+      ]
+    },
+    {
+      "key": "C06",
+      "request_id": "prestige-current-control-v1:C06",
+      "design": {
+        "name": "Objective, risk, fraud and control-selection workshop",
+        "description": "Reconcile service objectives, fraud and other scenarios, native ratings, decisions and control rationale. Robert sponsors objectives and tolerance; residual decisions remain distinct from treatment and Review completion.",
+        "frequency": "Annual; reassess material changes",
+        "design": "adequate",
+        "owner_id": "demo_prestige_user_0"
+      },
+      "criterion_ids": [
+        "CC3.1",
+        "CC3.2",
+        "CC3.3",
+        "CC5.1"
+      ],
+      "links": {
+        "policy_fact_keys": [
+          "policy-risk-management-policy"
+        ],
+        "review_plan_keys": [
+          "soc-risk-assessment"
+        ],
+        "vendor_fact_keys": [],
+        "evidence_subject_slots": [
+          "risk-design-workshop"
+        ],
+        "risk_binding": "Resolve the actual current Risk manifest; selecting all30 is a new reconciliation-population choice, not30 completed Risk Reviews."
+      },
+      "populations": [
+        {
+          "key": "C06-workshop",
+          "request_id": "prestige-current-observation-v1:C06-workshop",
+          "period_start": "2026-10-23",
+          "period_end": "2026-10-29",
+          "operating": "effective",
+          "expected_instances": 1,
+          "collected_instances": 1,
+          "notes": "NEW fictional workshop 2026-10-27; evaluated 2026-10-30. One complete package reconciles all 30 selected current Risk records to scenarios, native ratings, decisions and control rationale, including fraud and AI. Robert approves objectives/tolerances. Thirty is a deliberately selected reconciliation population, not 30 completed Risk Reviews. No unresolved mandatory implementation failure.",
+          "count_unit": "Objective/risk/control workshop package"
+        }
+      ]
+    },
+    {
+      "key": "C07",
+      "request_id": "prestige-current-control-v1:C07",
+      "design": {
+        "name": "Significant-change impact review",
+        "description": "Assess portal, customer-term, retention and provider changes before acceptance, identifying ownership and customer impacts. Confirm the changed operation without rewriting the original migration failures.",
+        "frequency": "Before significant change; post-change confirmation",
+        "design": "adequate",
+        "owner_id": "demo_prestige_user_0"
+      },
+      "criterion_ids": [
+        "CC3.4"
+      ],
+      "links": {
+        "policy_fact_keys": [
+          "policy-change-management-policy",
+          "policy-risk-management-policy"
+        ],
+        "review_plan_keys": [],
+        "vendor_fact_keys": [
+          "aws"
+        ],
+        "evidence_subject_slots": [
+          "significant-change"
+        ]
+      },
+      "populations": [
+        {
+          "key": "C07-changes",
+          "request_id": "prestige-current-observation-v1:C07-changes",
+          "period_start": "2026-08-01",
+          "period_end": "2026-10-29",
+          "operating": "effective",
+          "expected_instances": 4,
+          "collected_instances": 4,
+          "notes": "NEW fictional test 2026-10-30. Full authored population is four significant changes: portal routing, customer handling terms, retention procedure and provider configuration. Check pre-acceptance risk/ownership/customer effects and post-change confirmation. Four complete reviews; no retroactive clean-migration claim or unresolved process exception.",
+          "count_unit": "Significant-change review"
+        }
+      ]
+    },
+    {
+      "key": "C08",
+      "request_id": "prestige-current-control-v1:C08",
+      "design": {
+        "name": "Separate internal evaluation cycle",
+        "description": "Evaluate current design, operating workpapers, exceptions and later validation using evaluators separate from the work challenged. The coverage index covers the full enrolled program; this Control contributes specifically to CC4.1.",
+        "frequency": "Annual risk-based internal evaluation",
+        "design": "adequate",
+        "owner_id": "demo_prestige_user_0"
+      },
+      "criterion_ids": [
+        "CC4.1"
+      ],
+      "links": {
+        "policy_fact_keys": [],
+        "review_plan_keys": [],
+        "vendor_fact_keys": [],
+        "evidence_subject_slots": [
+          "internal-evaluation"
+        ]
+      },
+      "populations": [
+        {
+          "key": "C08-evaluation",
+          "request_id": "prestige-current-observation-v1:C08-evaluation",
+          "period_start": "2026-10-23",
+          "period_end": "2026-10-30",
+          "operating": "effective",
+          "expected_instances": 1,
+          "collected_instances": 1,
+          "notes": "NEW fictional evaluation performed 2026-10-30. Complete cycle has an index for all 38 enrolled criteria and the 25 selected Controls. Dale challenges engineering/business operation; the retained provider lead challenges Dale/sponsor work where conflicted. Design, collected instances, exceptions and conclusions remain separate. No unreviewed criterion; no external attestation. The coverage index is context; this Control's contribution edge is CC4.1 only.",
+          "count_unit": "Internal evaluation cycle"
+        }
+      ]
+    },
+    {
+      "key": "C09",
+      "request_id": "prestige-current-control-v1:C09",
+      "design": {
+        "name": "Deficiency-to-validation chain reconciliation",
+        "description": "Inspect original deficiencies, scheduled work, corrective completion, fresh independent validation and retained Finding closure as separate events. A current reconciliation does not create new historical closures.",
+        "frequency": "Monthly follow-up; validate each completed correction",
+        "design": "adequate",
+        "owner_id": "demo_prestige_user_0"
+      },
+      "criterion_ids": [
+        "CC4.2"
+      ],
+      "links": {
+        "policy_fact_keys": [],
+        "review_plan_keys": [],
+        "vendor_fact_keys": [],
+        "evidence_subject_slots": [
+          "deficiency-validation"
+        ],
+        "historical_chain_slots": [
+          "shared-access",
+          "contractor-removal",
+          "recovery-dependency",
+          "migration-role",
+          "retention",
+          "index-recovery"
+        ]
+      },
+      "populations": [
+        {
+          "key": "C09-chains",
+          "request_id": "prestige-current-observation-v1:C09-chains",
+          "period_start": "2026-10-23",
+          "period_end": "2026-10-29",
+          "operating": "effective",
+          "expected_instances": 6,
+          "collected_instances": 6,
+          "notes": "NEW fictional test 2026-10-30. Inspect all six selected historical chains: shared access, contractor removal, recovery dependency, migration role, retention and index recovery. Check original failure/due dates, Action completion, later independent validation and Finding closure. These are current inspections of retained chains, not six new closures. No missing chain stage.",
+          "count_unit": "Historical deficiency-chain reconciliation"
+        }
+      ]
+    },
+    {
+      "key": "C10",
+      "request_id": "prestige-current-control-v1:C10",
+      "design": {
+        "name": "Technical configuration and vulnerability posture review",
+        "description": "Review approved configurations, service dependencies and dependency, advisory and endpoint findings. Follow corrections through retest or explicit time-bound exceptions without equating ticket completion with validation.",
+        "frequency": "Monthly; significant configuration or advisory changes",
+        "design": "adequate",
+        "owner_id": "demo_prestige_user_2"
+      },
+      "criterion_ids": [
+        "CC5.2",
+        "CC7.1"
+      ],
+      "links": {
+        "policy_fact_keys": [
+          "policy-configuration-management-policy",
+          "policy-vulnerability-patch-management-policy"
+        ],
+        "review_plan_keys": [
+          "soc-vulnerability"
+        ],
+        "vendor_fact_keys": [
+          "aws",
+          "github",
+          "snyk",
+          "jamf"
+        ],
+        "evidence_subject_slots": [
+          "technical-posture"
+        ]
+      },
+      "populations": [
+        {
+          "key": "C10-posture",
+          "request_id": "prestige-current-observation-v1:C10-posture",
+          "period_start": "2026-08-01",
+          "period_end": "2026-10-29",
+          "operating": "effective",
+          "expected_instances": 3,
+          "collected_instances": 3,
+          "notes": "NEW fictional test 2026-10-30. Inspect all three monthly configuration/vulnerability review batches, covering dependencies, approved baselines, dependency/advisory/endpoint coverage and accountable dispositions. Follow correction/retest or explicit time-bound exception rather than equating a closed ticket with validation. No unresolved mandatory failure. Current Policy version check occurs after 2026-10-23 only.",
+          "count_unit": "Monthly technical posture batch"
+        }
+      ]
+    },
+    {
+      "key": "C11",
+      "request_id": "prestige-current-control-v1:C11",
+      "design": {
+        "name": "Logical access-path protection and review",
+        "description": "Review workforce, local/direct, service, privileged, portal and emergency access paths, including cross-project denial. Covered workforce MFA and SSO do not substitute for authorization on other routes.",
+        "frequency": "Monthly; material identity or authorization change",
+        "design": "adequate",
+        "owner_id": "demo_prestige_user_2"
+      },
+      "criterion_ids": [
+        "CC6.1"
+      ],
+      "links": {
+        "policy_fact_keys": [
+          "policy-access-control-identity-management-policy"
+        ],
+        "review_plan_keys": [
+          "soc-user-access"
+        ],
+        "vendor_fact_keys": [
+          "okta",
+          "aws",
+          "github",
+          "onepassword"
+        ],
+        "evidence_subject_slots": [
+          "access-paths"
+        ]
+      },
+      "populations": [
+        {
+          "key": "C11-access",
+          "request_id": "prestige-current-observation-v1:C11-access",
+          "period_start": "2026-08-01",
+          "period_end": "2026-10-29",
+          "operating": "effective",
+          "expected_instances": 3,
+          "collected_instances": 3,
+          "notes": "NEW fictional test 2026-10-30. Inspect all three scoped path batches: covered workforce MFA, direct/local/provider accounts, service credentials, privileged roles, portal grants and emergency access. Verify cross-project denial and responsible exception handling. No missing scoped route or unresolved authorization failure; no claim that all routes use SSO.",
+          "count_unit": "Monthly access-path review batch"
+        }
+      ]
+    },
+    {
+      "key": "C12",
+      "request_id": "prestige-current-control-v1:C12",
+      "design": {
+        "name": "Controlled identity and entitlement changes",
+        "description": "Authorize registration before provisioning and reconcile departures and changed entitlements across connected, direct and session routes. Registrations, departures and movers retain distinct operating populations.",
+        "frequency": "Per registration, departure or role/project change",
+        "design": "adequate",
+        "owner_id": "demo_prestige_user_2"
+      },
+      "criterion_ids": [
+        "CC6.2",
+        "CC6.3"
+      ],
+      "links": {
+        "policy_fact_keys": [
+          "policy-access-control-identity-management-policy"
+        ],
+        "review_plan_keys": [
+          "soc-user-access"
+        ],
+        "vendor_fact_keys": [
+          "okta"
+        ],
+        "evidence_subject_slots": [
+          "identity-lifecycle"
+        ]
+      },
+      "populations": [
+        {
+          "key": "C12-registration",
+          "request_id": "prestige-current-observation-v1:C12-registration",
+          "period_start": "2026-08-01",
+          "period_end": "2026-10-29",
+          "operating": "effective",
+          "expected_instances": 9,
+          "collected_instances": 9,
+          "notes": "NEW fictional test 2026-10-30. Full authored registration population: six staff/contractor and three customer-context registrations. Reconcile identity/sponsor/project and authorization-before-provisioning. All nine conform. These are fictional business-system events, not new GoverNara users or access grants.",
+          "count_unit": "Business-system registration event"
+        },
+        {
+          "key": "C12-departure",
+          "request_id": "prestige-current-observation-v1:C12-departure",
+          "period_start": "2026-08-01",
+          "period_end": "2026-10-29",
+          "operating": "effective",
+          "expected_instances": 7,
+          "collected_instances": 7,
+          "notes": "NEW fictional test 2026-10-30. Full authored population: three staff and four contractor departures. Check Okta disablement, direct/service credentials, connected applications and active-session revocation; manual steps remain explicit. Seven complete records, no current late removal. Preserve the old late-removal history separately.",
+          "count_unit": "Business-system departure event"
+        },
+        {
+          "key": "C12-mover",
+          "request_id": "prestige-current-observation-v1:C12-mover",
+          "period_start": "2026-08-01",
+          "period_end": "2026-10-29",
+          "operating": "effective",
+          "expected_instances": 11,
+          "collected_instances": 11,
+          "notes": "NEW fictional test 2026-10-30. Inspect all eleven authored role moves/project-end changes for approved duties, modification/removal and subsequent reconciliation across actual systems. Eleven complete cases, no unresolved excess entitlement. No invented whole-workforce sample claim.",
+          "count_unit": "Role/project entitlement-change event"
+        }
+      ]
+    },
+    {
+      "key": "C13",
+      "request_id": "prestige-current-control-v1:C13",
+      "design": {
+        "name": "Premises access and device/media custody review",
+        "description": "Review office/edit-suite badges, visitor sponsorship, leaver removal and device/media custody. Preserve the provider-operated hosting boundary instead of asserting Prestige data-center controls.",
+        "frequency": "Quarterly; personnel or custody changes",
+        "design": "adequate",
+        "owner_id": "demo_prestige_user_2"
+      },
+      "criterion_ids": [
+        "CC6.4"
+      ],
+      "links": {
+        "policy_fact_keys": [
+          "policy-physical-environmental-security-policy",
+          "policy-asset-management-policy"
+        ],
+        "review_plan_keys": [],
+        "vendor_fact_keys": [],
+        "evidence_subject_slots": [
+          "premises-custody"
+        ]
+      },
+      "populations": [
+        {
+          "key": "C13-premises",
+          "request_id": "prestige-current-observation-v1:C13-premises",
+          "period_start": "2025-11-02",
+          "period_end": "2026-10-29",
+          "operating": "effective",
+          "expected_instances": 4,
+          "collected_instances": 4,
+          "notes": "NEW fictional test 2026-10-30. Inspect all four authored quarterly packages from December, March, June and September. Check office/edit-suite badges, visitor sponsorship, leaver removal, device/media custody and provider responsibility boundary. Four complete packages; no unresolved physical-access exception. No Prestige-operated cloud data center claim.",
+          "count_unit": "Quarterly premises/custody review package"
+        }
+      ]
+    },
+    {
+      "key": "C14",
+      "request_id": "prestige-current-control-v1:C14",
+      "design": {
+        "name": "Authorized physical retirement and sanitization",
+        "description": "Check disposal authorization, retention/holds, sanitization verification and removal of credentials and management before custody release. Encryption alone does not establish sanitization.",
+        "frequency": "Per physical asset retirement",
+        "design": "adequate",
+        "owner_id": "demo_prestige_user_2"
+      },
+      "criterion_ids": [
+        "CC6.5"
+      ],
+      "links": {
+        "policy_fact_keys": [
+          "policy-asset-management-policy",
+          "policy-data-retention-secure-disposal-policy"
+        ],
+        "review_plan_keys": [],
+        "vendor_fact_keys": [],
+        "evidence_subject_slots": [
+          "asset-retirement"
+        ]
+      },
+      "populations": [
+        {
+          "key": "C14-retirement",
+          "request_id": "prestige-current-observation-v1:C14-retirement",
+          "period_start": "2026-08-01",
+          "period_end": "2026-10-29",
+          "operating": "effective",
+          "expected_instances": 4,
+          "collected_instances": 4,
+          "notes": "NEW fictional test 2026-10-30. Full authored population is three laptops and one media device. Verify authorization, retention/hold checks, appropriate sanitization, result verification, credential/management removal and custody release. Four complete receipts; no unresolved release exception. Encryption alone is not sanitization.",
+          "count_unit": "Retired asset release"
+        }
+      ]
+    },
+    {
+      "key": "C15",
+      "request_id": "prestige-current-control-v1:C15",
+      "design": {
+        "name": "Ingress/egress authorization and protected-transfer validation",
+        "description": "Test selected administrative boundaries, customer/project deliveries, backup transfers and contractor exports for authorization, destination, transport and logging. Signed URLs remain bearer permissions.",
+        "frequency": "Quarterly; material boundary or transfer change",
+        "design": "adequate",
+        "owner_id": "demo_prestige_user_2"
+      },
+      "criterion_ids": [
+        "CC6.6",
+        "CC6.7"
+      ],
+      "links": {
+        "policy_fact_keys": [
+          "policy-access-control-identity-management-policy",
+          "policy-cryptography-key-management-policy"
+        ],
+        "review_plan_keys": [],
+        "vendor_fact_keys": [
+          "cloudflare",
+          "aws",
+          "backblaze"
+        ],
+        "evidence_subject_slots": [
+          "boundary-transfer"
+        ]
+      },
+      "populations": [
+        {
+          "key": "C15-boundaries",
+          "request_id": "prestige-current-observation-v1:C15-boundaries",
+          "period_start": "2026-10-23",
+          "period_end": "2026-10-29",
+          "operating": "effective",
+          "expected_instances": 10,
+          "collected_instances": 10,
+          "notes": "NEW fictional exercise performed 2026-10-27; evaluated 2026-10-30. Selected set: three ingress/admin denials, three customer/project delivery cases, two backup transfers and two contractor exports. Verify authorization, scoped destination, transport and logging. All ten pass; these scenarios are not all production traffic. Signed URLs remain bearer permissions.",
+          "count_unit": "Deliberately selected boundary/transfer scenario"
+        }
+      ]
+    },
+    {
+      "key": "C16",
+      "request_id": "prestige-current-control-v1:C16",
+      "design": {
+        "name": "Endpoint prevention, coverage and clean-response validation",
+        "description": "Reconcile managed endpoint/software and malware-protection coverage. Separately exercise detection, quarantine, affected credentials and clean return before release.",
+        "frequency": "Monthly coverage; annual response exercise",
+        "design": "adequate",
+        "owner_id": "demo_prestige_user_2"
+      },
+      "criterion_ids": [
+        "CC6.8"
+      ],
+      "links": {
+        "policy_fact_keys": [
+          "policy-configuration-management-policy",
+          "policy-incident-response-policy"
+        ],
+        "review_plan_keys": [],
+        "vendor_fact_keys": [
+          "jamf"
+        ],
+        "evidence_subject_slots": [
+          "endpoint-protection"
+        ]
+      },
+      "populations": [
+        {
+          "key": "C16-coverage",
+          "request_id": "prestige-current-observation-v1:C16-coverage",
+          "period_start": "2026-08-01",
+          "period_end": "2026-10-29",
+          "operating": "effective",
+          "expected_instances": 3,
+          "collected_instances": 3,
+          "notes": "NEW fictional test 2026-10-30. All three monthly batches reconcile endpoint/software inventory, management and malware-protection coverage, installation controls and restricted media intake. Resolve or explicitly disposition gaps. No unresolved uncovered in-scope device in these reconciliations.",
+          "count_unit": "Monthly endpoint-coverage reconciliation"
+        },
+        {
+          "key": "C16-response",
+          "request_id": "prestige-current-observation-v1:C16-response",
+          "period_start": "2026-10-23",
+          "period_end": "2026-10-29",
+          "operating": "effective",
+          "expected_instances": 1,
+          "collected_instances": 1,
+          "notes": "NEW fictional exercise performed 2026-10-26; evaluated 2026-10-30. One selected untrusted-media scenario checks detection, quarantine, affected-credential review and restoration from a known-clean source before release. Expected response succeeds; no actual malware incident or universal file-scanning claim.",
+          "count_unit": "Detection/isolation/clean-return exercise"
+        }
+      ]
+    },
+    {
+      "key": "C17",
+      "request_id": "prestige-current-control-v1:C17",
+      "design": {
+        "name": "Telemetry coverage and security-event disposition",
+        "description": "Check source health and missing/delayed data with accountable routing. Assess escalated events for affected scope, significance, rationale and follow-up while keeping source batches separate from event cases.",
+        "frequency": "Continuous monitoring; monthly source check; per escalated event",
+        "design": "adequate",
+        "owner_id": "demo_prestige_user_2"
+      },
+      "criterion_ids": [
+        "CC7.2",
+        "CC7.3"
+      ],
+      "links": {
+        "policy_fact_keys": [
+          "policy-incident-response-policy"
+        ],
+        "review_plan_keys": [],
+        "vendor_fact_keys": [
+          "datadog",
+          "harbor-signal"
+        ],
+        "evidence_subject_slots": [
+          "telemetry-triage"
+        ]
+      },
+      "populations": [
+        {
+          "key": "C17-sources",
+          "request_id": "prestige-current-observation-v1:C17-sources",
+          "period_start": "2026-08-01",
+          "period_end": "2026-10-29",
+          "operating": "effective",
+          "expected_instances": 3,
+          "collected_instances": 3,
+          "notes": "NEW fictional test 2026-10-30. Inspect all three monthly batches for scoped source reporting, thresholds, missing/delayed-data behavior, routing and ownership. A deliberate missing-source injection reaches the accountable operator. No unresolved coverage gap in the selected source inventory; no inherited 365-day-retention assertion.",
+          "count_unit": "Monthly telemetry-health batch"
+        },
+        {
+          "key": "C17-events",
+          "request_id": "prestige-current-observation-v1:C17-events",
+          "period_start": "2026-08-01",
+          "period_end": "2026-10-29",
+          "operating": "effective",
+          "expected_instances": 8,
+          "collected_instances": 8,
+          "notes": "NEW fictional test 2026-10-30. Inspect all eight authored escalated events for affected scope, release/customer/provider context, significance, accountable decision and follow-up. Benign dispositions require rationale. Eight complete cases, no unresolved triage-process exception. Eight is not the total alert stream.",
+          "count_unit": "Escalated security-event disposition"
+        }
+      ]
+    },
+    {
+      "key": "C18",
+      "request_id": "prestige-current-control-v1:C18",
+      "design": {
+        "name": "Incident-response exercise",
+        "description": "Exercise media-disclosure response, deputies, containment, evidence preservation, contractual/customer assessment, authorized notices and remediation validation. Optional improvements do not manufacture a real incident.",
+        "frequency": "Annual; material response-process change",
+        "design": "adequate",
+        "owner_id": "demo_prestige_user_0"
+      },
+      "criterion_ids": [
+        "CC7.4"
+      ],
+      "links": {
+        "policy_fact_keys": [
+          "policy-incident-response-policy"
+        ],
+        "review_plan_keys": [
+          "soc-incident-response"
+        ],
+        "vendor_fact_keys": [],
+        "evidence_subject_slots": [
+          "incident-exercise"
+        ]
+      },
+      "populations": [
+        {
+          "key": "C18-response",
+          "request_id": "prestige-current-observation-v1:C18-response",
+          "period_start": "2026-10-23",
+          "period_end": "2026-10-29",
+          "operating": "effective",
+          "expected_instances": 1,
+          "collected_instances": 1,
+          "notes": "NEW fictional exercise performed 2026-10-26; evaluated 2026-10-30. One scoped media-disclosure tabletop covers deputies, containment, evidence preservation, customer/contract assessment, authorization of notices and remediation validation. Required steps pass; optional improvement work may remain open without fabricating a real incident.",
+          "count_unit": "Incident-response tabletop"
+        }
+      ]
+    },
+    {
+      "key": "C19",
+      "request_id": "prestige-current-control-v1:C19",
+      "design": {
+        "name": "Full-service recovery exercise and separate acceptance",
+        "description": "Restore media and PostgreSQL, rebuild rights/index consistency and validate project access and sample delivery. Brennan executes and Dale evaluates separately against selected recovery and data-loss objectives.",
+        "frequency": "Annual; material service recovery change",
+        "design": "adequate",
+        "owner_id": "demo_prestige_user_2"
+      },
+      "criterion_ids": [
+        "CC7.5",
+        "A1.3"
+      ],
+      "links": {
+        "policy_fact_keys": [
+          "policy-backup-restoration-policy",
+          "policy-business-continuity-disaster-recovery-policy"
+        ],
+        "review_plan_keys": [
+          "soc-backup"
+        ],
+        "vendor_fact_keys": [
+          "aws",
+          "backblaze"
+        ],
+        "evidence_subject_slots": [
+          "full-service-recovery"
+        ],
+        "historical_context_risk_fact_keys": [
+          "restore-index"
+        ]
+      },
+      "populations": [
+        {
+          "key": "C19-recovery",
+          "request_id": "prestige-current-observation-v1:C19-recovery",
+          "period_start": "2026-10-23",
+          "period_end": "2026-10-29",
+          "operating": "effective",
+          "expected_instances": 1,
+          "collected_instances": 1,
+          "notes": "NEW fictional performance date 2026-10-23; separate evaluation 2026-10-30. Restore media and PostgreSQL, rebuild rights/index consistency, validate project access and sample delivery. Brennan executes; Dale separately accepts. Current authored result is 3h10m to accepted service and 40-minute data gap versus 4h/24h objectives. No unresolved exception. Date/count are newly chosen, not legacy2h40 or 2024 evidence.",
+          "count_unit": "Full-service recovery exercise"
+        }
+      ]
+    },
+    {
+      "key": "C20",
+      "request_id": "prestige-current-control-v1:C20",
+      "design": {
+        "name": "Reviewed release and emergency-change follow-up",
+        "description": "Reconcile ordinary and emergency releases for authorized scope, independent review/checks, tests, deployment/rollback and emergency follow-up. Code-assistant output remains an untrusted contribution.",
+        "frequency": "Per production change",
+        "design": "adequate",
+        "owner_id": "demo_prestige_user_2"
+      },
+      "criterion_ids": [
+        "CC8.1"
+      ],
+      "links": {
+        "policy_fact_keys": [
+          "policy-change-management-policy"
+        ],
+        "review_plan_keys": [],
+        "vendor_fact_keys": [
+          "github",
+          "snyk"
+        ],
+        "evidence_subject_slots": [
+          "change-release"
+        ]
+      },
+      "populations": [
+        {
+          "key": "C20-release",
+          "request_id": "prestige-current-observation-v1:C20-release",
+          "period_start": "2026-08-01",
+          "period_end": "2026-10-29",
+          "operating": "effective",
+          "expected_instances": 36,
+          "collected_instances": 36,
+          "notes": "NEW fictional test 2026-10-30. Full authored population has 34 ordinary and two emergency releases. All 36 control packages are reconciled; detailed risk-based inspection selects twelve ordinary cases plus both emergency cases. Check authorization, independent review/checks, tests, release/rollback and emergency follow-up. No unresolved approval failure. Collected36 means complete packages, not 36 deep samples.",
+          "count_unit": "Production-change case package"
+        }
+      ]
+    },
+    {
+      "key": "C21",
+      "request_id": "prestige-current-control-v1:C21",
+      "design": {
+        "name": "Business disruption and deputy exercise",
+        "description": "Exercise staff/provider disruption, deputies, protected recovery-material retrieval, customer impact and authorized decisions. The exercise does not eliminate concentration risks or duplicate the technical recovery measurement.",
+        "frequency": "Annual; material business dependency change",
+        "design": "adequate",
+        "owner_id": "demo_prestige_user_1"
+      },
+      "criterion_ids": [
+        "CC9.1"
+      ],
+      "links": {
+        "policy_fact_keys": [
+          "policy-business-continuity-disaster-recovery-policy"
+        ],
+        "review_plan_keys": [],
+        "vendor_fact_keys": [
+          "harbor-signal"
+        ],
+        "evidence_subject_slots": [
+          "continuity-deputies"
+        ]
+      },
+      "populations": [
+        {
+          "key": "C21-continuity",
+          "request_id": "prestige-current-observation-v1:C21-continuity",
+          "period_start": "2026-10-23",
+          "period_end": "2026-10-29",
+          "operating": "effective",
+          "expected_instances": 1,
+          "collected_instances": 1,
+          "notes": "NEW fictional exercise performed 2026-10-28; evaluated 2026-10-30. One scenario checks Brennan unavailability plus provider disruption: alternate contacts, deputies, recovery-material retrieval, customer impact and authorized decisions. Required actions succeed; concentration risks remain in the Risk register. Not a second technical recovery measurement.",
+          "count_unit": "Business disruption/deputy exercise"
+        }
+      ]
+    },
+    {
+      "key": "C22",
+      "request_id": "prestige-current-control-v1:C22",
+      "design": {
+        "name": "Supplier diligence and obligation disposition",
+        "description": "Examine scoped supplier responsibilities, requested assurance, gaps, rationale and dated next actions. Effective disposition tracking does not imply received reports, completed Reviews, renewed contracts or AI approval.",
+        "frequency": "Risk-based annual review; onboarding and material change",
+        "design": "adequate",
+        "owner_id": "demo_prestige_user_0"
+      },
+      "criterion_ids": [
+        "CC9.2"
+      ],
+      "links": {
+        "policy_fact_keys": [
+          "policy-vendor-third-party-risk-management-policy"
+        ],
+        "review_plan_keys": [
+          "soc-vendor"
+        ],
+        "vendor_fact_keys": [],
+        "evidence_subject_slots": [
+          "supplier-disposition"
+        ],
+        "sample_vendor_fact_keys": [
+          "aws",
+          "okta",
+          "backblaze",
+          "openai"
+        ]
+      },
+      "populations": [
+        {
+          "key": "C22-suppliers",
+          "request_id": "prestige-current-observation-v1:C22-suppliers",
+          "period_start": "2026-08-01",
+          "period_end": "2026-10-29",
+          "operating": "effective",
+          "expected_instances": 4,
+          "collected_instances": 4,
+          "notes": "NEW fictional test 2026-10-30. Deliberate risk-based process sample: AWS, Okta, Backblaze and OpenAI. Inspect scope, responsibilities, assurance request/gaps, rationale and dated next action. Four complete disposition cases; pending assurance and open native obligations remain pending as authored. Effective tracking is not four reports received, four annual Reviews completed or approval. No fabricated provider report bytes/opinion.",
+          "count_unit": "Selected supplier diligence/disposition case"
+        }
+      ]
+    },
+    {
+      "key": "C23",
+      "request_id": "prestige-current-control-v1:C23",
+      "design": {
+        "name": "Capacity/load review and scaling validation",
+        "description": "Review full portal/media/rights/index workflow demand, latency/error/capacity inputs, provider constraints and planned growth. Selected service validation is distinct from GoverNara fixture-storage capacity.",
+        "frequency": "Monthly capacity review; material demand change",
+        "design": "adequate",
+        "owner_id": "demo_prestige_user_2"
+      },
+      "criterion_ids": [
+        "A1.1"
+      ],
+      "links": {
+        "policy_fact_keys": [
+          "policy-asset-management-policy",
+          "policy-configuration-management-policy"
+        ],
+        "review_plan_keys": [],
+        "vendor_fact_keys": [
+          "aws",
+          "datadog"
+        ],
+        "evidence_subject_slots": [
+          "capacity-load"
+        ]
+      },
+      "populations": [
+        {
+          "key": "C23-capacity",
+          "request_id": "prestige-current-observation-v1:C23-capacity",
+          "period_start": "2026-08-01",
+          "period_end": "2026-10-29",
+          "operating": "effective",
+          "expected_instances": 3,
+          "collected_instances": 3,
+          "notes": "NEW fictional test 2026-10-30. Inspect all three monthly packages for portal/media/rights/index demand, latency/error/capacity inputs, provider limits and planned growth. October includes an authored peak-demand/scaling validation with bottleneck and rollback checks. No unresolved capacity failure against selected service objectives. No invented uptime percentage or change to actual GoverNara/storage quotas.",
+          "count_unit": "Monthly capacity review and validation package"
+        }
+      ]
+    },
+    {
+      "key": "C24",
+      "request_id": "prestige-current-control-v1:C24",
+      "design": {
+        "name": "Backup verification and failure follow-through",
+        "description": "Reconcile media, database and index backup/copy jobs, alert on failures and retain correction/retest. Copy verification does not by itself establish immutability or complete service recoverability.",
+        "frequency": "Daily verification; per failed or stale copy",
+        "design": "adequate",
+        "owner_id": "demo_prestige_user_2"
+      },
+      "criterion_ids": [
+        "A1.2"
+      ],
+      "links": {
+        "policy_fact_keys": [
+          "policy-backup-restoration-policy"
+        ],
+        "review_plan_keys": [
+          "soc-backup"
+        ],
+        "vendor_fact_keys": [
+          "aws",
+          "backblaze"
+        ],
+        "evidence_subject_slots": [
+          "backup-verification"
+        ]
+      },
+      "populations": [
+        {
+          "key": "C24-backups",
+          "request_id": "prestige-current-observation-v1:C24-backups",
+          "period_start": "2026-08-01",
+          "period_end": "2026-10-29",
+          "operating": "effective",
+          "expected_instances": 90,
+          "collected_instances": 90,
+          "notes": "NEW fictional test 2026-10-30. All 90 daily verification batches reconcile scoped media/database/index jobs and copy availability; select nine detailed batches by risk, including the failure case and latest restore input. One initial secondary-copy failure on 2026-09-14 was alerted, rerun and checked that day; retain the original failure. No unresolved stale copy. This proves neither immutability nor full-service recovery.",
+          "count_unit": "Daily backup-verification batch"
+        }
+      ]
+    },
+    {
+      "key": "C25",
+      "request_id": "prestige-current-control-v1:C25",
+      "design": {
+        "name": "Customer-data classification, retention and authorized disposal",
+        "description": "Reconcile project sensitivity, rights, access, retention/holds and supplier/creative boundaries. Authorize disposal separately, retaining hold decisions, copy/backup expiry and follow-up.",
+        "frequency": "Per project intake, retention change or disposal decision",
+        "design": "adequate",
+        "owner_id": "demo_prestige_user_0"
+      },
+      "criterion_ids": [
+        "C1.1",
+        "C1.2"
+      ],
+      "links": {
+        "policy_fact_keys": [
+          "policy-data-classification-handling-policy",
+          "policy-data-retention-secure-disposal-policy"
+        ],
+        "review_plan_keys": [],
+        "vendor_fact_keys": [
+          "aws",
+          "clear-reel"
+        ],
+        "evidence_subject_slots": [
+          "customer-data-lifecycle"
+        ]
+      },
+      "populations": [
+        {
+          "key": "C25-intake",
+          "request_id": "prestige-current-observation-v1:C25-intake",
+          "period_start": "2026-08-01",
+          "period_end": "2026-10-29",
+          "operating": "effective",
+          "expected_instances": 13,
+          "collected_instances": 13,
+          "notes": "NEW fictional test 2026-10-30. Full authored population is thirteen new or materially changed project handling decisions. Check sensitivity, customer rights, approved access, retention tags and supplier/creative boundaries; current-version conformance checks occur after 2026-10-23. Thirteen complete cases; no unresolved classification or retention mismatch.",
+          "count_unit": "Customer-project handling/retention decision"
+        },
+        {
+          "key": "C25-disposal",
+          "request_id": "prestige-current-observation-v1:C25-disposal",
+          "period_start": "2026-08-01",
+          "period_end": "2026-10-29",
+          "operating": "effective",
+          "expected_instances": 5,
+          "collected_instances": 5,
+          "notes": "NEW fictional test 2026-10-30. Full authored population is five end-of-retention/contract decisions. Check customer instruction, holds, media versions, metadata/extracts/copies and supplier follow-up. Four authorize completed scoped disposal; one correctly defers destruction for a recorded hold. Five complete decisions, no unauthorized deletion. Backup expiry/hold is not immediate irreversible destruction.",
+          "count_unit": "Authorized customer-data disposal decision"
+        }
+      ]
+    }
+  ]
+}

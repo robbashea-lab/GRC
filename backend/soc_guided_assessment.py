@@ -7,7 +7,19 @@ import authorization
 from framework_catalog import ROOT, client_configuration
 
 CATALOG = json.loads((ROOT / 'guidedSoc2.json').read_text(encoding='utf-8'))
-VERSIONS = {CATALOG['version']: CATALOG}
+LEGACY = json.loads((ROOT / 'guidedSoc2V1.json').read_text(encoding='utf-8'))
+ROLLOUT = json.loads((ROOT / 'guidedSoc2Rollout1.json').read_text(encoding='utf-8'))
+PROPOSAL = json.loads((ROOT / 'guidedSoc2Rollout2.json').read_text(encoding='utf-8'))
+# CATALOG and ROLLOUT remain immutable readers; only new reviews select PROPOSAL.
+CURRENT_VERSION = PROPOSAL['version']
+VERSIONS = {CATALOG['version']: CATALOG, LEGACY['version']: LEGACY, ROLLOUT['version']: ROLLOUT,
+            PROPOSAL['version']: PROPOSAL}
+VERSION_FEATURES = {
+    LEGACY['version']: {'intent_gates': False, 'inline_sentences': False},
+    CATALOG['version']: {'intent_gates': True, 'inline_sentences': True},
+    ROLLOUT['version']: {'intent_gates': True, 'inline_sentences': True},
+    PROPOSAL['version']: {'intent_gates': True, 'inline_sentences': True, 'reported_work_status': True},
+}
 CHOICES = ['Yes', 'Partially', 'No', 'Not sure']
 CONTEXT_CHOICES = ['Relevant', 'Outside the selected system', 'Not sure']
 EXTRA_KEYS = {'gaps', 'unknowns', 'evidence'}
@@ -19,8 +31,20 @@ def _text(answers, key):
     return answers.get(key, '').strip(TEXT_WHITESPACE)
 
 
+def uses_intent_gates(version):
+    return VERSION_FEATURES.get(version, {}).get('intent_gates') is True
+
+
+def uses_inline_sentences(version):
+    return VERSION_FEATURES.get(version, {}).get('inline_sentences') is True
+
+
+def uses_reported_work_status(version):
+    return VERSION_FEATURES.get(version, {}).get('reported_work_status') is True
+
+
 def _definition(id, version=None):
-    catalog = VERSIONS.get(version or CATALOG['version'])
+    catalog = VERSIONS.get(version or CURRENT_VERSION)
     if not catalog or id not in catalog['definitions']:
         raise HTTPException(409, 'SOC question set is not available')
     return catalog['definitions'][id]
@@ -28,13 +52,18 @@ def _definition(id, version=None):
 
 def current_version(id):
     _definition(id)
-    return CATALOG['version']
+    return CURRENT_VERSION
 
 
 def _questions(id, version=None):
     return [{**question, 'type': question.get('type', 'select'),
              'choices': question.get('choices', CONTEXT_CHOICES if question.get('type') == 'context' else CHOICES)}
             for group in _definition(id, version)['groups'] for question in group['questions']]
+
+
+def extra_questions(version=None):
+    return VERSIONS[version or CURRENT_VERSION].get('extra_questions',
+        [{'id': key, 'type': 'text'} for key in ('gaps', 'unknowns', 'evidence')])
 
 
 def _active_questions(id, answers, version=None):
@@ -85,7 +114,7 @@ async def write_context(s, aid, user, guided=False):
 
 def validate_answers(id, answers, version=None):
     questions = {question['id']: question for question in _questions(id, version)}
-    questions.update({key: {'type': 'text'} for key in EXTRA_KEYS})
+    questions.update({question['id']: question for question in extra_questions(version)})
     if not isinstance(answers, dict):
         raise HTTPException(422, 'Invalid SOC interview answers')
     for key, value in answers.items():
@@ -98,6 +127,10 @@ def validate_answers(id, answers, version=None):
 
 def validate_completion(id, answers, version=None):
     validate_answers(id, answers, version)
+    for question in extra_questions(version):
+        condition = question.get('condition')
+        if condition and answers.get(condition['id']) == condition['equals'] and not _text(answers, question['id']):
+            raise HTTPException(422, 'Describe the additional reported work before completing the interview')
     for question in _active_questions(id, answers, version):
         if question['type'] == 'text':
             continue
@@ -113,6 +146,7 @@ def result_status(id, answers, version=None):
     meaningful = False
     partial = False
     confirmed_no = False
+    unknown = False
     for question in _active_questions(id, answers, version):
         value = answers.get(question['id'])
         if question['type'] == 'text':
@@ -120,16 +154,20 @@ def result_status(id, answers, version=None):
         if question['type'] == 'context':
             if value != 'Relevant' and not (value == 'Outside the selected system'
                                            and _text(answers, question['id'] + '_detail')):
-                partial = True
+                unknown = True
             continue
         meaningful |= value in ('Yes', 'Partially')
         confirmed_no |= value == 'No'
-        partial |= value != 'Yes'
+        partial |= value == 'Partially'
+        unknown |= value not in ('Yes', 'Partially', 'No')
+    if uses_reported_work_status(version or CURRENT_VERSION):
+        confirmed_no |= answers.get('additional_gap') == 'Yes' and bool(_text(answers, 'gaps'))
+        unknown |= answers.get('additional_confirmation') == 'Yes' and bool(_text(answers, 'unknowns'))
     if confirmed_no:
         return 'needs_attention'
-    if not meaningful:
+    if not meaningful or (version or CATALOG['version']) != LEGACY['version'] and unknown and not partial:
         return 'not_assessed'
-    return 'in_progress' if partial else 'addressed'
+    return 'in_progress' if partial or unknown else 'addressed'
 
 
 def current_base(row, client):

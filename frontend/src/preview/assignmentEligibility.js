@@ -5,8 +5,9 @@ export const assignmentFields = {
   assets: ['owner_id'], requirements: ['owner_id'], exceptions: ['owner_id'],
   framework_assessments: ['owner_id'], ai_systems: ['owner_id', 'technical_owner_id', 'oversight_owner_id'],
 };
-export const clientAccess = (user, cid) => ['super_admin','platform_admin','client_grc_manager','client_contributor','client_readonly'].includes(user?.role) &&
-  (user.role === 'super_admin' || user.role === 'platform_admin' && user.all_clients === true || !!user?.client_ids?.includes(cid));
+export const clientAccess = (user, cid) => ['super_admin','platform_admin','client_grc_manager','client_contributor','client_readonly','client_viewer'].includes(user?.role) &&
+  (user.role === 'super_admin' || user.role === 'platform_admin' && user.all_clients === true
+    || Array.isArray(user.client_ids) && user.client_ids.includes(cid));
 export const eligible = (user, cid) => user?.status === 'active' && clientAccess(user, cid);
 export function validateAssignment(db, kind, row, previous) {
   for (const field of assignmentFields[kind] || []) {
@@ -23,11 +24,11 @@ export function assignmentCandidates(db, cid, params = {}, caller = null) {
   if (search.length > 100 || !Number.isInteger(offset) || offset < 0 || offset > 10000 || !Number.isInteger(limit) || limit < 1 || limit > 100) throw new Error('Invalid candidate query');
   // Mirrors backend candidates(caller=...): read-only assigns nobody, contributors only
   // themselves, managers only client users of this client.
-  const role = caller?.role;
+  const role = caller?.role==='client_viewer'?'client_readonly':caller?.role;
   if (role === 'client_readonly') return { items: [], has_more: false };
   const clientRole = r => ['client_grc_manager', 'client_contributor', 'client_readonly'].includes(r);
   const allowed = u => role === 'client_contributor' ? u.user_id === caller.user_id
-    : role === 'client_grc_manager' ? clientRole(u.role) && !!u.client_ids?.includes(cid) : true;
+    : role === 'client_grc_manager' ? clientRole(u.role) && clientAccess(u, cid) : true;
   const rows = db.users.filter(u => eligible(u, cid) && allowed(u) && [u.name, u.email].some(v => (v || '').toLowerCase().includes(search)))
     .sort((a, b) => (a.name || '').localeCompare(b.name || '') || a.user_id.localeCompare(b.user_id));
   return { items: rows.slice(offset, offset + limit).map(({user_id, name, email}) => ({user_id, name, email})), has_more: rows.length > offset + limit };

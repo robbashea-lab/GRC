@@ -89,7 +89,10 @@ let webpackConfig = {
     configure: (webpackConfig) => {
       // Both runtimes consume the same JSON data; retain CRA's scope guard for code.
       const scope = webpackConfig.resolve.plugins.find(plugin => plugin.constructor.name === 'ModuleScopePlugin');
-      if (scope) scope.allowedPaths.push(catalogRoot + path.sep);
+      if (scope) {
+        scope.allowedPaths.push(catalogRoot + path.sep);
+        scope.allowedFiles.add(path.resolve(__dirname, '../shared/fixtures/approvedV3Scenario.json'));
+      }
 
       // Add ignored patterns to reduce watched directories
         webpackConfig.watchOptions = {
@@ -155,8 +158,14 @@ webpackConfig.devServer = (devServerConfig) =>
   makeDevServerV5Compatible(configureDevServer(devServerConfig));
 
 // Use the application's existing source alias in dashboard component tests.
+// Jest 27 does not resolve React Router 7's DOM subpath export. Use the
+// installed package's declared CommonJS entry while retaining the real router.
+const routerPackagePath = require.resolve('react-router/package.json');
+const routerDomEntry = require(routerPackagePath).exports['./dom'].node.default;
+// Keep real imports and existing virtual unit mocks on one Jest module identity.
+const routerDomPackagePath = require.resolve('react-router-dom/package.json');
 webpackConfig.jest = {
-  configure: { moduleNameMapper: { "^@/(.*)$": "<rootDir>/src/$1", "^@catalogs/(.*)$": "<rootDir>/../shared/catalogs/$1", "^@contracts/(.*)$": "<rootDir>/../shared/contracts/$1" } },
+  configure: { moduleNameMapper: { "^@/(.*)$": "<rootDir>/src/$1", "^@catalogs/(.*)$": "<rootDir>/../shared/catalogs/$1", "^@contracts/(.*)$": "<rootDir>/../shared/contracts/$1", "^react-router/dom$": path.resolve(path.dirname(routerPackagePath), routerDomEntry), "^react-router-dom$": path.resolve(path.dirname(routerDomPackagePath), require(routerDomPackagePath).main) } },
 };
 
 module.exports = webpackConfig;

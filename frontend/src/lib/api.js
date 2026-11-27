@@ -44,6 +44,12 @@ const api = axios.create({
 api.interceptors.request.use((cfg) => {
   // Axios queues this interceptor; an identity can change after the form called post.
   assertPendingCommandGeneration(cfg.pendingCommandGeneration);
+  cfg.assessmentAuthority?.('dispatch');
+  if(cfg.assessmentAuthority){
+    const transforms=cfg.transformRequest===undefined?api.defaults.transformRequest:cfg.transformRequest;
+    const guardDispatch=function(data){this.assessmentAuthority?.('dispatch');return data;};
+    cfg.transformRequest=[guardDispatch,...(Array.isArray(transforms)?transforms:[transforms]).filter(Boolean),guardDispatch];
+  }
   // A transport retry keeps the same command identity. Forms retain it for resubmission.
   if (cfg.method === 'post' && /^\/reviews\/[^/]+\/create-finding$/.test(cfg.url)) {
     const data = typeof cfg.data === 'string' ? JSON.parse(cfg.data) : {...cfg.data};
@@ -56,6 +62,7 @@ api.interceptors.request.use((cfg) => {
     delete cfg.headers.Authorization;
     cfg.adapter = async config => {
       const { previewAdapter } = await import("@/preview/adapter");
+      config.assessmentAuthority?.('dispatch');
       return previewAdapter(config);
     };
     return cfg;
@@ -76,9 +83,16 @@ api.interceptors.request.use((cfg) => {
 
 api.interceptors.response.use(response => {
   assertPendingCommandGeneration(response.config?.pendingCommandGeneration);
+  response.config?.assessmentAuthority?.('settle');
+  const config = response.config;
+  if (['post', 'put', 'patch', 'delete'].includes(config?.method?.toLowerCase())
+      && !/^\/?(?:auth|demo)(?:\/|$)/.test(config.url || '')) {
+    window.dispatchEvent(new Event('grc:portfolio-changed'));
+  }
   return response;
 }, error => {
   assertPendingCommandGeneration(error.config?.pendingCommandGeneration);
+  error.config?.assessmentAuthority?.('settle');
   return Promise.reject(error);
 });
 

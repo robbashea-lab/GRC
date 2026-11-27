@@ -1,5 +1,7 @@
 import {isStale,lacksEvidence,gapUntracked} from './cisVerification';
 import {assessmentProgress} from './frameworkOperator';
+import {reviewMapsTo} from './frameworkReviewLinks';
+import {actionAppliesTo,findingAppliesTo,findingScopes} from './frameworkWorkLinks';
 
 // Native hierarchy adapters; catalog order remains authoritative (never lexical ID sorting).
 const ISO_GROUPS={
@@ -10,6 +12,7 @@ const HIERARCHY = {
   'cis-ig1': d => [{id:String(d.control),label:`Control ${d.control} — ${d.control_name}`}],
   'nist-csf-2': d => [{id:d.function,label:d.function_name},{id:d.category,label:`${d.category} — ${d.control_name}`}],
   hipaa: d => [{id:d.control,label:d.control_name}],
+  cmmc: d => [{id:d.control,label:`${d.family} — ${d.control_name}`}],
   'iso-27001': d => [{id:d.specification,label:d.specification==='annex_control'?'Annex A / Statement of Applicability':'ISMS Requirements'},{id:d.control,label:ISO_GROUPS[d.control]||d.control_name}],
   'soc-2': d => [{id:d.category,label:d.category==='security'?'Security / Common Criteria':d.category?.replace(/^./,s=>s.toUpperCase())},{id:d.control,label:`${d.control} — ${d.control_name}`}],
 };
@@ -39,7 +42,7 @@ const VIEWS={
   overdue_actions:r=>(r.work?.overdue_actions||0)>0,
 };
 // Retained SOC criteria remain available, but are outside the default active scope.
-export const workspaceScope=(key,data,definition)=>!['soc-2','cis-ig1'].includes(key)||
+export const workspaceScope=(key,data,definition)=>!['soc-2','cis-ig1','cmmc'].includes(key)||
   (key==='cis-ig1'&&!data?.active_definition_ids?(definition.implementation_group||1)<=(data?.configuration?.implementation_group||1):!!data?.active_definition_ids?.includes(definition.definition_id??definition.id));
 export function matchesAssessment(row,filter,search=''){
   const status=filter==='all'||(VIEWS[filter]?VIEWS[filter](row):row.status===filter);
@@ -54,7 +57,7 @@ export function sourcePresentation(definition){
   const explicit=['OFFICIAL_TEXT','LICENSED_TEXT'].includes(definition.official_text_mode)&&definition.official_text;
   const mode=explicit?definition.official_text_mode:definition.source_type==='regulatory_text'?'OFFICIAL_TEXT':'REFERENCE_ONLY';
   let url=null;try{const u=new URL(definition.source_url||definition.source);if(u.protocol==='https:')url=u.href;}catch{}
-  return {mode,url,text:explicit?definition.official_text:mode==='OFFICIAL_TEXT'?definition.guidance:null,citation:definition.source_citation||definition.id};
+  return {mode,url,text:explicit?definition.official_text:mode==='OFFICIAL_TEXT'?definition.guidance:definition.source_text||null,citation:definition.source_citation||definition.id};
 }
 export function recurrencePresentation(definition,catalog){
   const plans=(catalog.review_plans||[]).filter(p=>p.safeguards.includes(definition.id));
@@ -66,20 +69,21 @@ export function recurrencePresentation(definition,catalog){
 
 // Used by the Demo read model. Backend builds the same small operational projection.
 export function findingApplies(row,f,rids,assessments=[]){
-  const explicit=new Set(assessments.filter(a=>a.client_id===row.client_id&&a.related_links?.some(l=>l.kind==='findings'&&l.id===f.finding_id)).map(a=>a.framework_assessment_id));
-  if(f.framework_assessment_id)explicit.add(f.framework_assessment_id);
-  if(row.related_links?.some(l=>l.kind==='findings'&&l.id===f.finding_id))explicit.add(row.framework_assessment_id);
-  return explicit.size?explicit.has(row.framework_assessment_id):rids.has(f.review_id);
+  const scopes=findingScopes([...assessments.filter(a=>a.client_id===row.client_id),row]);
+  return findingAppliesTo(row.framework_assessment_id,f,rids,scopes);
 }
 export function assessmentWork(row,{reviews=[],findings=[],tasks=[],evidence=[],framework_assessments=[]},today=new Date().toISOString().slice(0,10)){
   const linked=(kind,id)=>(row.related_links||[]).some(l=>l.kind===kind&&l.id===id);
-  const rs=reviews.filter(r=>r.client_id===row.client_id&&(linked('reviews',r.review_id)||(r.framework_key===row.framework_key&&r.framework_safeguards?.includes(row.definition_id))));
+  const rs=reviews.filter(r=>r.client_id===row.client_id&&(linked('reviews',r.review_id)
+    || (row.framework_assessment_id && r.framework_assessment_id===row.framework_assessment_id)
+    || reviewMapsTo(r,row.framework_key,row.definition_id)));
   const rids=new Set(rs.map(r=>r.review_id));
-  const relevant=new Set(findings.filter(f=>f.client_id===row.client_id&&findingApplies(row,f,rids,framework_assessments)).map(f=>f.finding_id));
+  const scopes=findings.length ? findingScopes([...framework_assessments.filter(a=>a.client_id===row.client_id),row]) : new Map();
+  const relevant=new Set(findings.filter(f=>f.client_id===row.client_id&&findingAppliesTo(row.framework_assessment_id,f,rids,scopes)).map(f=>f.finding_id));
   const fs=findings.filter(f=>relevant.has(f.finding_id)&&!['closed','accepted'].includes(f.status));
   const fids=new Set(fs.map(f=>f.finding_id));
   const overdue=(r,closed)=>!closed.includes(r.status)&&!!r.due_date&&r.due_date.slice(0,10)<today;
-  const ts=tasks.filter(t=>t.client_id===row.client_id&&(linked('tasks',t.task_id)||t.framework_assessment_id===row.framework_assessment_id||(t.finding_id?relevant.has(t.finding_id):!t.framework_assessment_id&&rids.has(t.review_id))));
+  const ts=tasks.filter(t=>t.client_id===row.client_id&&(linked('tasks',t.task_id)||actionAppliesTo(row.framework_assessment_id,t,rids,relevant)));
   // Evidence directly supporting this assessment (uploaded to it or linked); dates only, never content.
   // Deleted (archived) Evidence and Evidence unlinked from this assessment are not current support.
   const es=evidence.filter(e=>e.client_id===row.client_id&&!e.archived_at&&!row.unlinked_evidence_ids?.includes(e.evidence_id)&&(linked('evidence',e.evidence_id)||(['framework_assessment','framework_assessments'].includes(e.linked_type)&&e.linked_id===row.framework_assessment_id)));

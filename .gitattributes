@@ -1,0 +1,2 @@
+# Keep the approved HTML artifact byte-identical in Windows and Linux checkouts.
+frontend/public/visual-preview.html text eol=lf

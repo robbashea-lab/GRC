@@ -5,7 +5,11 @@ from test_client_dashboard_sources import ClientDashboardSourcesTests as Harness
 from test_soc_framework import SocTests
 
 
+from r4_fixture_inputs import validate_with_independent_actor
+
+
 class FrameworkProgramTests(unittest.IsolatedAsyncioTestCase):
+    r4_valid_completion_fixture = True
     asyncSetUp = Harness.asyncSetUp
     sign_in = Harness.sign_in
 
@@ -16,7 +20,7 @@ class FrameworkProgramTests(unittest.IsolatedAsyncioTestCase):
 
     async def test_five_framework_lifecycle_and_authoritative_history(self):
         await SocTests.configure(self,('cis-ig1','hipaa','iso-27001','soc-2','nist-csf-2'))
-        self.assertEqual(await server.db.framework_assessments.count_documents({'client_id':'a'}),394)
+        self.assertEqual(await server.db.framework_assessments.count_documents({'client_id':'a'}),399)
         self.assertEqual(await server.db.reviews.count_documents({'client_id':'a'}),23)
         contact=await self.ok('POST','/contacts',json={'client_id':'a','name':'Synthetic Business Owner','title':'IT Director'})
         vendor=await self.ok('POST','/vendors',json={'client_id':'a','name':'Synthetic Identity Provider','service':'Identity service','criticality':'high','business_owner_id':'member'})
@@ -43,7 +47,10 @@ class FrameworkProgramTests(unittest.IsolatedAsyncioTestCase):
             completed=await self.ok('POST','/reviews/'+rid+'/complete',json={'occurrence_id':oid})
         second=completed['review'];self.assertEqual(second['due_date'][:10],'2026-12-31')
         await self.ok('PATCH','/tasks/'+action['task_id'],json={'status':'done'})
-        await self.ok('POST','/findings/'+finding['finding_id']+'/validate',json={'rationale':'Access exceptions validated against supporting records'})
+        pending=await server.db.findings.find_one({'finding_id':finding['finding_id']})
+        await validate_with_independent_actor(self,server,finding['finding_id'],{
+            'rationale':'Access exceptions validated against supporting records',
+            'expected_updated_at':pending['updated_at'],'request_id':'framework-program-independent-validation'})
         with patch.object(server,'_now',return_value='2027-01-01T12:00:00+00:00'):
             completed=await self.ok('POST','/reviews/'+rid+'/complete',json={'occurrence_id':second['current_occurrence_id']})
         self.assertEqual(completed['review']['due_date'][:10],'2027-03-31')

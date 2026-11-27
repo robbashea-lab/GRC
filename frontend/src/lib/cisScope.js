@@ -1,4 +1,5 @@
 import cis from '@catalogs/cisIG1.json';
+import {validateCmmcSettings} from './cmmcScope';
 export const cisAvailableGroups=()=>cis.available_implementation_groups;
 export const cisScopeCounts={1:56,2:130,3:153};
 // Scope is client configuration; assessment IDs stay in the original CIS namespace.
@@ -7,9 +8,10 @@ export const cisLabel=configuration=>`CIS IG${configuration?.implementation_grou
 export const cisProgramName=(framework,configuration)=>framework.key==='cis-ig1'?`CIS Controls v${cis.version} IG${configuration?.implementation_group||1}`:framework.name;
 export const cisScopeLabel=definition=>definition.implementation_group>1?`Added in IG${definition.implementation_group}`:'IG1 baseline';
 export function validateCisSettings(settings={}){
-  if(!settings||typeof settings!=='object'||Array.isArray(settings)||Object.keys(settings).some(k=>k!=='cis-ig1'))throw new Error('Invalid onboarding framework settings');
+  if(!settings||typeof settings!=='object'||Array.isArray(settings)||Object.keys(settings).some(k=>!['cis-ig1','cmmc'].includes(k)))throw new Error('Invalid onboarding framework settings');
   const cis=Object.hasOwn(settings,'cis-ig1')?settings['cis-ig1']:{};
   if(!cis||typeof cis!=='object'||Array.isArray(cis)||Object.keys(cis).some(k=>k!=='implementation_group')||('implementation_group' in cis&&!cisAvailableGroups().includes(cis.implementation_group)))throw new Error('CIS implementation group is not available');
+  if(Object.hasOwn(settings,'cmmc'))validateCmmcSettings(settings.cmmc);
 }
 export function validateCisConfiguration(body){
   if(Object.keys(body).some(k=>!['client_id','implementation_group','expected_updated_at','confirm_reduction','reason','effective_date'].includes(k)))throw new Error('Invalid CIS configuration fields');

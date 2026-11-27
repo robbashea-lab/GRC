@@ -21,8 +21,16 @@ test('manual work starts Open and retains evidence, comments and completion meta
 test('legacy edits do not fabricate creators, start times or completion dates',async()=>{
   const db=readStore(),cid=db.clients[0].client_id;
   db.tasks.push({task_id:'legacy',client_id:cid,title:'Legacy',status:'done',priority:'low'});saveStore(db);
-  const t=(await api.patch('/tasks/legacy',{description:'Additional context'})).data;
+  const completed=JSON.parse(JSON.stringify(readStore().tasks.find(row=>row.task_id==='legacy')));
+  await expect(api.patch('/tasks/legacy',{description:'Additional context'})).rejects.toThrow(/Completed Action Items remain historical evidence/);
+  expect(readStore().tasks.find(row=>row.task_id==='legacy')).toEqual(completed);
+  for(const field of ['created_at','created_by','started_at','started_by','completed_at','completed_by']) expect(completed[field]).toBeUndefined();
+  const unfinished=readStore();
+  unfinished.tasks.push({task_id:'legacy-open',client_id:cid,title:'Unfinished legacy work',status:'open',priority:'low'});saveStore(unfinished);
+  const t=(await api.patch('/tasks/legacy-open',{description:'Additional context'})).data;
+  expect(t.description).toBe('Additional context');expect(t.status).toBe('open');
   for(const field of ['created_at','created_by','started_at','started_by','completed_at','completed_by']) expect(t[field]).toBeUndefined();
+  expect(readStore().tasks.find(row=>row.task_id==='legacy')).toEqual(completed);
 });
 test('assessments are optional real source records and cross-tenant links/owners are rejected',async()=>{
   const db=readStore(),cid=db.clients[0].client_id,other=db.clients[1].client_id;

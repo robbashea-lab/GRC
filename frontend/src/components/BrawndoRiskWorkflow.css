@@ -1,0 +1,143 @@
+/* Match the original reference four font-face declarations. */
+@font-face{font-family:'GoverNara Risk Workflow Inter';font-style:normal;font-weight:400;font-display:swap;src:url('../assets/fonts/inter-review-latin.woff2') format('woff2')}
+@font-face{font-family:'GoverNara Risk Workflow Inter';font-style:normal;font-weight:500;font-display:swap;src:url('../assets/fonts/inter-review-latin.woff2') format('woff2')}
+@font-face{font-family:'GoverNara Risk Workflow Inter';font-style:normal;font-weight:600;font-display:swap;src:url('../assets/fonts/inter-review-latin.woff2') format('woff2')}
+@font-face{font-family:'GoverNara Risk Workflow Inter';font-style:normal;font-weight:700;font-display:swap;src:url('../assets/fonts/inter-review-latin.woff2') format('woff2')}
+/* The normal native popup geometry is retained; all interior rules are Risk-only. */
+/* Native visual-surface rules have dialog-level specificity. Keep reference overrides equally scoped. */
+:root .ui-dialog.brawndo-risk-workflow[data-state][data-testid][role=dialog]{--font:'GoverNara Risk Workflow Inter',Inter,system-ui,sans-serif;--font-body:var(--font);--font-heading:var(--font);--fg:var(--rw-ink);--fg2:var(--rw-ink2);--muted:var(--rw-muted);--surface:var(--rw-card);--subtle:var(--rw-sunk);--border:var(--rw-line);--border-strong:var(--rw-line2);--link:var(--rw-accent);--focus:var(--rw-accent);--rail:var(--rw-accent);--selected:var(--rw-soft)}
+:root .ui-dialog.brawndo-risk-workflow[data-state][data-testid][role=dialog] .rw-title{font:650 20px/1.5 var(--font);color:var(--rw-ink);letter-spacing:-.01em}
+:root .ui-dialog.brawndo-risk-workflow[data-state][data-testid][role=dialog] :is(input:not([type=radio]):not([type=checkbox]):not([type=file]),select,textarea,button[role=combobox],button[aria-haspopup=dialog]){font:400 14px/1.5 var(--font);height:auto;min-height:40px;padding:9px 11px;border-radius:9px;color:var(--rw-ink);background:var(--rw-card);border:1px solid var(--rw-line2)}
+:root .ui-dialog.brawndo-risk-workflow[data-state][data-testid][role=dialog] .rw-tabs button{font-size:13.5px;line-height:1.5;padding:10px 12px;color:var(--rw-muted);height:auto;border-radius:0}
+:root .ui-dialog.brawndo-risk-workflow[data-state][data-testid][role=dialog] .rw-tabs button[aria-selected=true]{font-weight:600;color:var(--rw-ink);border-bottom-color:var(--rw-accent)}
+.brawndo-risk-workflow,.rw-risk-portal{--rw-card:#fff;--rw-sunk:#f6f8fb;--rw-line:#e2e7ef;--rw-line2:#cfd7e3;--rw-ink:#0f1a2e;--rw-ink2:#46536a;--rw-muted:#6b7686;--rw-accent:#2f64e0;--rw-accent-ink:#fff;--rw-soft:#e8efff;--rw-ok:#137a43;--rw-ok-bg:#e5f5ec;--rw-warn:#8a4b05;--rw-warn-bg:#fdf3e1;--rw-crit:#b42318;--rw-crit-bg:#fdebea;--rw-info:#2f4fa8;--rw-info-bg:#eef3ff;color:var(--rw-ink);background:var(--rw-card);font:14px/1.5 'GoverNara Risk Workflow Inter',Inter,system-ui,sans-serif}
+:root:is([data-brawndo-portal="dark"],[data-brawndo-workspace="dark"]) .brawndo-risk-workflow,:root:is([data-brawndo-portal="dark"],[data-brawndo-workspace="dark"]) .rw-risk-portal,.dark .brawndo-risk-workflow,.dark .rw-risk-portal,[data-theme="dark"] .brawndo-risk-workflow,[data-theme="dark"] .rw-risk-portal{--rw-card:#0d1729;--rw-sunk:#0a1322;--rw-line:#1c2842;--rw-line2:#2a3858;--rw-ink:#eef3fb;--rw-ink2:#b7c2d3;--rw-muted:#8793a6;--rw-accent:#6f9bff;--rw-accent-ink:#06101f;--rw-soft:#16264a;--rw-ok:#5fd394;--rw-ok-bg:#0f2e20;--rw-warn:#f5c26b;--rw-warn-bg:#3a2a12;--rw-crit:#ff8b85;--rw-crit-bg:#3a1820;--rw-info:#a9c4ff;--rw-info-bg:#15254a}
+.brawndo-risk-workflow{display:flex!important;flex-direction:column;gap:0!important;padding:0!important;overflow:hidden;border-color:var(--rw-line)}
+.brawndo-risk-workflow *{box-sizing:border-box}
+.brawndo-risk-workflow button,.brawndo-risk-workflow input,.brawndo-risk-workflow select,.brawndo-risk-workflow textarea{font-family:inherit}
+.brawndo-risk-workflow button:focus-visible,.brawndo-risk-workflow a:focus-visible{outline:2px solid var(--rw-accent);outline-offset:2px}
+.brawndo-risk-workflow .rw-header{padding:20px 24px 0;border-bottom:1px solid var(--rw-line);flex-shrink:0}
+.brawndo-risk-workflow .rw-new-header{padding-bottom:16px}
+.brawndo-risk-workflow .rw-header-top{display:flex;align-items:flex-start;gap:14px}
+.brawndo-risk-workflow .rw-icon{width:40px;height:40px;border-radius:11px;border:1px solid var(--rw-line);background:linear-gradient(135deg,#85c4ff33,#9698fe33);display:grid;place-items:center;color:var(--rw-accent);flex-shrink:0}
+.brawndo-risk-workflow .rw-title-wrap{min-width:0}
+.brawndo-risk-workflow .rw-title{margin:0;font:650 20px/1.5 'GoverNara Risk Workflow Inter',Inter,system-ui,sans-serif;letter-spacing:-.01em;color:var(--rw-ink)}
+.brawndo-risk-workflow .rw-kicker{font-size:12px;font-weight:600;letter-spacing:.04em;color:var(--rw-muted)}
+.brawndo-risk-workflow .rw-sub{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:4px 0 0;font-size:12.5px;color:var(--rw-muted)}
+.brawndo-risk-workflow .rw-close{margin-left:auto;display:grid;place-items:center;width:32px;height:32px;border-radius:8px;border:0;background:none;color:var(--rw-muted);flex-shrink:0}
+.brawndo-risk-workflow .rw-close:hover{background:var(--rw-sunk);color:var(--rw-ink)}
+.brawndo-risk-workflow .rw-chip{display:inline-flex;align-items:center;gap:5px;padding:2px 9px;border-radius:999px;font-size:11.5px;font-weight:600;white-space:nowrap}
+.brawndo-risk-workflow .rw-plain{background:var(--rw-sunk);color:var(--rw-ink2);border:1px solid var(--rw-line)}
+.brawndo-risk-workflow .rw-ok{background:var(--rw-ok-bg);color:var(--rw-ok)}
+.brawndo-risk-workflow .rw-info{background:var(--rw-info-bg);color:var(--rw-info)}
+.brawndo-risk-workflow .rw-warn{background:var(--rw-warn-bg);color:var(--rw-warn)}
+.brawndo-risk-workflow .rw-critical{background:var(--rw-crit-bg);color:var(--rw-crit)}
+.brawndo-risk-workflow .rw-band{background:color-mix(in srgb,var(--rw-band) 16%,transparent);color:var(--rw-band)}
+.brawndo-risk-workflow .rw-tabs{display:flex;gap:4px;margin-top:16px;overflow-x:auto;scrollbar-width:none}
+.brawndo-risk-workflow .rw-tabs button{border:0;border-bottom:2px solid transparent;background:none;padding:10px 12px;font-size:13.5px;white-space:nowrap;color:var(--rw-muted);display:flex;gap:6px;align-items:center}
+.brawndo-risk-workflow .rw-tabs button[aria-selected="true"]{color:var(--rw-ink);border-color:var(--rw-accent);font-weight:600}
+.brawndo-risk-workflow .rw-tabs button span{font-size:11px;padding:0 6px;border-radius:999px;background:var(--rw-sunk);color:var(--rw-muted);border:1px solid var(--rw-line)}
+.brawndo-risk-workflow .rw-body{flex:1;min-height:0;padding:22px 24px 26px;overflow:auto}
+.brawndo-risk-workflow .rw-footer{display:flex;align-items:center;gap:10px;border-top:1px solid var(--rw-line);padding:12px 24px;background:var(--rw-sunk);flex-shrink:0;flex-wrap:wrap}
+.brawndo-risk-workflow .rw-dirty{font-size:12.5px;color:var(--rw-muted)}
+.brawndo-risk-workflow .rw-spacer{flex:1}
+.brawndo-risk-workflow .rw-button{border:1px solid var(--rw-line2);background:var(--rw-card);color:var(--rw-ink);padding:8px 14px;border-radius:9px;font-size:13.5px;font-weight:500;display:inline-flex;align-items:center;gap:7px;white-space:nowrap}
+.brawndo-risk-workflow .rw-button:hover{border-color:var(--rw-accent)}
+.brawndo-risk-workflow .rw-primary{background:var(--rw-accent);border-color:var(--rw-accent);color:var(--rw-accent-ink);font-weight:600}
+.brawndo-risk-workflow button:disabled{opacity:.45;cursor:not-allowed}
+.brawndo-risk-workflow .rw-reset,.brawndo-risk-workflow .rw-scales{margin:0;padding:0;min-width:0;border:0}
+.brawndo-risk-workflow .rw-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px 16px}
+.brawndo-risk-workflow .rw-wide{grid-column:1/-1}
+.brawndo-risk-workflow .rw-field{display:flex;flex-direction:column;gap:5px;min-width:0}
+.brawndo-risk-workflow .rw-label,.brawndo-risk-workflow label{font-size:12.5px;font-weight:600;line-height:1.5;color:var(--rw-ink2)}
+.brawndo-risk-workflow input:not([type="radio"]),.brawndo-risk-workflow select,.brawndo-risk-workflow textarea,.brawndo-risk-workflow button[role="combobox"],.brawndo-risk-workflow button[aria-haspopup="dialog"]{width:100%;border:1px solid var(--rw-line2);background:var(--rw-card);color:var(--rw-ink);border-radius:9px;padding:9px 11px;font-size:14px;line-height:1.5;min-height:40px;height:auto;box-shadow:none}
+.brawndo-risk-workflow textarea{resize:vertical}
+.brawndo-risk-workflow input:focus,.brawndo-risk-workflow select:focus,.brawndo-risk-workflow textarea:focus{outline:none;border-color:var(--rw-accent);box-shadow:0 0 0 3px var(--rw-soft)}
+.brawndo-risk-workflow .rw-help{font-size:12px;font-weight:400;color:var(--rw-muted)}
+.brawndo-risk-workflow .rw-warning{color:var(--rw-warn)}
+.brawndo-risk-workflow .rw-required,.brawndo-risk-workflow .rw-error{color:var(--rw-crit)}
+.brawndo-risk-workflow .rw-error{flex-basis:100%;font-size:12.5px;margin:0}
+.brawndo-risk-workflow .rw-source-fields{display:contents}
+.brawndo-risk-workflow .rw-source-fields>p{grid-column:1/-1}
+.brawndo-risk-workflow .rw-scale{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px}
+.brawndo-risk-workflow .rw-scales>.rw-field+.rw-field{margin-top:14px}
+.brawndo-risk-workflow .rw-scale button{display:flex;flex-direction:column;gap:2px;border:1px solid var(--rw-line2);background:var(--rw-card);border-radius:10px;padding:9px 8px;text-align:left}
+.brawndo-risk-workflow .rw-scale b{font-size:16px}
+.brawndo-risk-workflow .rw-scale span{font-size:12px;color:var(--rw-ink2)}
+.brawndo-risk-workflow .rw-scale button[aria-pressed="true"]{border-color:var(--rw-accent);background:var(--rw-soft);box-shadow:0 0 0 2px var(--rw-soft)}
+.brawndo-risk-workflow .rw-scale button:hover{border-color:var(--rw-accent)}
+.brawndo-risk-workflow .rw-calc{display:flex;align-items:center;gap:16px;flex-wrap:wrap;border:1px dashed var(--rw-line2);border-radius:12px;padding:12px 14px;background:var(--rw-sunk);margin-top:14px;font-size:13.5px;color:var(--rw-ink2)}
+.brawndo-risk-workflow .rw-equation-score{font-size:18px;color:var(--rw-ink)}
+.brawndo-risk-workflow .rw-thresholds{margin-left:auto}
+.brawndo-risk-workflow .rw-matrix{display:grid;grid-template-columns:repeat(5,18px);grid-template-rows:repeat(5,18px);gap:3px;flex-shrink:0}
+.brawndo-risk-workflow .rw-matrix i{border-radius:4px;background:var(--rw-band);opacity:.28}
+.brawndo-risk-workflow .rw-matrix .rw-selected{opacity:1;box-shadow:0 0 0 2px var(--rw-card),0 0 0 4px var(--rw-band)}
+.brawndo-risk-workflow .rw-matrix .rw-previous{opacity:.7;outline:2px dashed var(--rw-band);outline-offset:1px}
+.brawndo-risk-workflow .rw-section-number{display:flex;align-items:center;gap:10px;margin:22px 0 12px;flex-wrap:wrap}
+.brawndo-risk-workflow .rw-section-number:first-child{margin-top:0}
+.brawndo-risk-workflow .rw-section-number>span{width:24px;height:24px;display:grid;place-items:center;border-radius:50%;background:var(--rw-soft);color:var(--rw-info);font-size:12px;font-weight:700}
+.brawndo-risk-workflow .rw-section-number b{font-size:14.5px}
+.brawndo-risk-workflow .rw-section-number small{font-size:12.5px;color:var(--rw-muted)}
+.brawndo-risk-workflow .rw-summary{font-size:13px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;color:var(--rw-ink2)}
+.brawndo-risk-workflow .rw-two{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);gap:16px}
+.brawndo-risk-workflow .rw-card,.brawndo-risk-workflow .rw-score{border:1px solid var(--rw-line);border-radius:14px;padding:16px 18px;min-width:0}
+.brawndo-risk-workflow .rw-card h3{margin:0 0 8px;font-size:13.5px;font-weight:650}
+.brawndo-risk-workflow .rw-card p{margin:0;color:var(--rw-ink2)}
+.brawndo-risk-workflow .rw-prewrap{white-space:pre-wrap;overflow-wrap:anywhere}
+.brawndo-risk-workflow .rw-meta{display:flex;gap:6px;flex-wrap:wrap;margin-top:12px}
+.brawndo-risk-workflow .rw-score{display:grid;grid-template-columns:auto minmax(0,1fr);gap:18px;align-items:center}
+.brawndo-risk-workflow .rw-score-number{display:flex;gap:10px;align-items:baseline;flex-wrap:wrap}
+.brawndo-risk-workflow .rw-score-number>b{font-size:34px;line-height:1;font-weight:700;letter-spacing:-.02em}
+.brawndo-risk-workflow .rw-score-number>span{font-size:14px;font-weight:650}
+.brawndo-risk-workflow .rw-score-facts{font-size:13px;color:var(--rw-ink2);margin-top:6px}
+.brawndo-risk-workflow .rw-score .rw-help{margin-top:6px;font-size:12.5px}
+.brawndo-risk-workflow .rw-link{border:0;background:none;color:var(--rw-accent);font-weight:600;padding:0;font-size:12.5px;text-align:left}
+.brawndo-risk-workflow .rw-score .rw-link{margin-top:8px}
+.brawndo-risk-workflow .rw-section{margin-top:22px}
+.brawndo-risk-workflow .rw-section>h3{font-size:13px;font-weight:650;margin:0 0 10px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.brawndo-risk-workflow .rw-section>h3>span{font-size:12.5px;font-weight:400;color:var(--rw-muted)}
+.brawndo-risk-workflow .rw-treatment{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px}
+.brawndo-risk-workflow .rw-treatment button{display:flex;flex-direction:column;gap:3px;border:1px solid var(--rw-line2);background:var(--rw-card);border-radius:10px;padding:10px;text-align:left}
+.brawndo-risk-workflow .rw-treatment button[aria-pressed="true"]{border-color:var(--rw-accent);background:var(--rw-soft)}
+.brawndo-risk-workflow .rw-treatment b{font-size:13.5px}
+.brawndo-risk-workflow .rw-treatment small{font-size:11.5px;line-height:1.35;color:var(--rw-muted)}
+.brawndo-risk-workflow .rw-action{display:flex;align-items:center;gap:12px;padding:10px 12px;border:1px solid var(--rw-line);border-radius:10px;margin-top:8px;flex-wrap:wrap}
+.brawndo-risk-workflow .rw-action>b{font-size:13.5px}
+.brawndo-risk-workflow .rw-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:16px;align-items:center}
+.brawndo-risk-workflow .rw-decide{border:1px solid var(--rw-line);border-radius:14px;margin-top:16px;overflow:hidden}
+.brawndo-risk-workflow .rw-decision-header{display:flex;align-items:center;gap:8px;padding:12px 14px;border-bottom:1px solid var(--rw-line);background:var(--rw-sunk);flex-wrap:wrap}
+.brawndo-risk-workflow .rw-decision-header>b{font-size:13.5px;margin-right:auto}
+.brawndo-risk-workflow .rw-decision-header button{border:1px solid var(--rw-line2);background:var(--rw-card);color:var(--rw-ink);border-radius:8px;padding:6px 12px;font:500 13px/1.5 'GoverNara Risk Workflow Inter',Inter,system-ui,sans-serif;height:auto}
+.brawndo-risk-workflow .rw-decision-body{padding:14px}
+.brawndo-risk-workflow .rw-decision-body p{margin:0}
+.brawndo-risk-workflow .rw-banner{display:flex;gap:12px;align-items:flex-start;border-radius:12px;padding:12px 14px;margin-bottom:14px;border:1px solid}
+.brawndo-risk-workflow .rw-banner svg{flex-shrink:0;margin-top:3px}
+.brawndo-risk-workflow .rw-banner p{margin:2px 0 0;font-size:13px;color:var(--rw-ink2)}
+.brawndo-risk-workflow .rw-accepted{background:var(--rw-warn-bg);border-color:color-mix(in srgb,var(--rw-warn) 40%,transparent)}
+.brawndo-risk-workflow .rw-closed{background:var(--rw-ok-bg);border-color:color-mix(in srgb,var(--rw-ok) 40%,transparent)}
+.brawndo-risk-workflow .rw-table-wrap{border:1px solid var(--rw-line);border-radius:12px;overflow-x:auto}
+.brawndo-risk-workflow table{width:100%;border-collapse:collapse;font-size:13.5px;min-width:560px}
+.brawndo-risk-workflow th{text-align:left;font-size:11.5px;letter-spacing:.04em;text-transform:uppercase;color:var(--rw-muted);font-weight:600;padding:10px 14px;background:var(--rw-sunk);border-bottom:1px solid var(--rw-line)}
+.brawndo-risk-workflow td{padding:11px 14px;border-bottom:1px solid var(--rw-line)}
+.brawndo-risk-workflow tr:last-child td{border-bottom:0}
+.brawndo-risk-workflow .rw-empty{text-align:center;padding:26px 12px;color:var(--rw-muted);border:1px solid var(--rw-line);border-radius:12px;font-size:13.5px}
+.brawndo-risk-workflow .rw-event{display:grid;grid-template-columns:30px 1fr auto;gap:12px;align-items:flex-start;padding:10px 0;position:relative;font-size:13.5px}
+.brawndo-risk-workflow .rw-event:not(:last-of-type)::after{content:"";position:absolute;left:14px;top:40px;bottom:-10px;width:1px;background:var(--rw-line)}
+.brawndo-risk-workflow .rw-event-icon{width:30px;height:30px;border-radius:50%;display:grid;place-items:center;border:1px solid var(--rw-line);background:var(--rw-info-bg);color:var(--rw-info)}
+.brawndo-risk-workflow .rw-event b{font-weight:600}
+.brawndo-risk-workflow .rw-event-date{font-size:12px;color:var(--rw-muted);white-space:nowrap;text-align:right}
+.brawndo-risk-workflow .rw-lock{margin-top:16px;font-size:12px;color:var(--rw-muted);display:flex;gap:6px;align-items:center}
+@media(max-width:760px){.brawndo-risk-workflow .rw-header,.brawndo-risk-workflow .rw-body{padding-left:16px;padding-right:16px}.brawndo-risk-workflow .rw-footer{padding:12px 16px}.brawndo-risk-workflow .rw-grid,.brawndo-risk-workflow .rw-two{grid-template-columns:minmax(0,1fr)}.brawndo-risk-workflow .rw-scale{gap:4px}.brawndo-risk-workflow .rw-scale button{padding:7px 5px}.brawndo-risk-workflow .rw-scale span{font-size:10.5px}.brawndo-risk-workflow .rw-treatment{grid-template-columns:1fr 1fr}.brawndo-risk-workflow .rw-score{grid-template-columns:minmax(0,1fr)}.brawndo-risk-workflow .rw-event{grid-template-columns:30px 1fr}.brawndo-risk-workflow .rw-event-date{grid-column:2;text-align:left}}
+
+.brawndo-risk-workflow [aria-invalid="true"]{border-color:var(--rw-crit)!important}.rw-risk-portal{border:1px solid var(--rw-line2);border-radius:9px}.rw-risk-portal [role="option"]{font:14px/1.5 'GoverNara Risk Workflow Inter',Inter,system-ui,sans-serif}.rw-risk-portal [data-highlighted]{background:var(--rw-soft);color:var(--rw-ink)}
+:root .ui-dialog.brawndo-risk-workflow[data-state][data-testid][role=dialog]{background:var(--rw-card);color:var(--rw-ink);border-color:var(--rw-line);font:14px/1.5 'GoverNara Risk Workflow Inter',Inter,system-ui,sans-serif}
+
+.rw-risk-portal :is(button,input){font:inherit;color:inherit;background:var(--rw-card);border-color:var(--rw-line2)}
+.rw-risk-portal button:hover{background:var(--rw-soft)}
+:root .ui-popover.rw-risk-portal[data-state]{--font-body:'GoverNara Risk Workflow Inter',Inter,system-ui,sans-serif;--font:var(--font-body);--fg:var(--rw-ink);--fg2:var(--rw-ink2);--muted:var(--rw-muted);--surface:var(--rw-card);--subtle:var(--rw-sunk);--border:var(--rw-line2);--border-strong:var(--rw-line2);--hover:var(--rw-soft);font:14px/1.5 var(--font-body)}
+:root .ui-dialog.brawndo-risk-workflow[data-state][data-testid][role=dialog] :is(input,select,textarea):focus{border-color:var(--rw-accent);outline:none;box-shadow:0 0 0 3px var(--rw-soft)}
+.brawndo-risk-workflow .rw-supporting{margin:16px 0 0;padding:0;border:0;min-width:0}
+.brawndo-risk-workflow .rw-supporting>details{border:1px solid var(--rw-line);border-radius:12px;padding:12px 14px}
+.brawndo-risk-workflow .rw-supporting summary{font-size:13.5px;font-weight:600;cursor:pointer}
+.brawndo-risk-workflow .rw-supporting section{margin-top:18px}
+.brawndo-risk-workflow .rw-supporting h3{font-size:13px;font-weight:650;margin:0 0 10px}

@@ -2,6 +2,7 @@
 // Demo show the same 403s the server returns; it never protects real data.
 import { ids } from './store';
 import { stable } from './commandRequests';
+import { clientAccess } from './assignmentEligibility';
 
 const OWNER = 'super_admin', PROVIDER = 'platform_admin', MANAGER = 'client_grc_manager';
 const CONTRIBUTOR = 'client_contributor', READER = 'client_readonly';
@@ -22,7 +23,7 @@ const SELF = [/^patch \/me$/, /^patch \/me\/password$/, /^patch \/me\/preference
 class Forbidden extends Error { constructor(message) { super(message); this.status = 403; } }
 const deny = message => { throw new Forbidden(message); };
 const roleOf = user => user?.role === 'client_viewer' ? READER : user?.role;
-const activeClientUser = (db, id, clientId) => db.users.some(u => u.user_id === id && u.status === 'active' && CLIENT_ROLES.includes(u.role) && u.client_ids?.includes(clientId));
+const activeClientUser = (db, id, clientId) => db.users.some(u => u.user_id === id && u.status === 'active' && CLIENT_ROLES.includes(u.role) && clientAccess(u, clientId));
 
 export function requireCreationAssignee(db, clientId, assigneeId) {
   const role=roleOf(db.user);
@@ -40,12 +41,18 @@ export function authorizeDemo(db, method, parts, body = {}, requestKey) {
   const user = db.user, role = roleOf(user);
   if (!ROLES.includes(role)) deny('Unsupported role');
   if (method === 'get') return;
+  if(method==='post'&&['reports/exports','reports/deliveries','frameworks/cmmc/workbook/export'].includes(parts.join('/')))return; // Export routes recheck native role and scope.
   const route = `${method} /${parts.join('/')}`;
   if (SELF.some(pattern => pattern.test(route))) return;
-  if (role === OWNER) return;
   const target = (db[parts[0]] || []).find(r => r[ids[parts[0]]] === parts[1]);
-  const cid = target?.client_id || body.client_id;
-  if (cid && (db.clients || []).some(c => c.client_id === cid && c.status === 'archived')) deny('Archived clients are read-only; ask a Super Admin to restore the client');
+  const cid = target?.client_id || (parts[0] === 'clients' ? parts[1] : body.client_id);
+  if (cid && (db.clients || []).some(c => c.client_id === cid && c.status === 'archived')) {
+    const restoring = role === OWNER && method === 'patch' && parts[0] === 'clients' && parts.length === 2
+      && ['active','onboarding','inactive'].includes(body.status)
+      && Object.keys(body).every(key => ['status','expected_updated_at'].includes(key));
+    if (!restoring) deny('Archived clients are read-only; ask a Super Admin to restore the client');
+  }
+  if (role === OWNER) return;
   if (role === PROVIDER) {
     if ((method === 'post' && route === 'post /clients') || parts[0] === 'reminders') deny('Platform Owner required');
     return;
@@ -56,9 +63,14 @@ export function authorizeDemo(db, method, parts, body = {}, requestKey) {
   const allowed = (method === 'post' && parts.length === 1 && (generic || ['evidence', 'comments'].includes(kind)))
     || (method === 'patch' && parts.length === 2 && generic)
     || (method === 'post' && kind === 'reviews' && ['start', 'complete', 'create-finding'].includes(action) && parts.length === 3)
+    || (method === 'put' && kind === 'reviews' && action === 'completion-guide' && parts.length === 3)
     || (method === 'patch' && kind === 'reviews' && action === 'iso-audit' && [3,4].includes(parts.length))
-    || (method === 'post' && kind === 'framework_assessments' && action === 'findings' && parts.length === 3);
+    || (method === 'post' && kind === 'framework_assessments' && action === 'findings' && parts.length === 3)
+    || (method === 'patch' && kind === 'framework_assessments' && action === 'items' && parts.length === 4)
+    || (method === 'post' && kind === 'framework_assessments' && action === 'items'
+      && (parts.length === 3 || parts.length === 5 && ['remove','task'].includes(parts[4])));
   const guidedWrite=method==='put'&&kind==='framework_assessments'&&action==='guided-assessment'&&parts.length===3;
+  if (route === 'put /frameworks/cmmc/workbook') return; // The workbook enforces its client and item-assignment checks.
   if (!allowed&&!guidedWrite) deny('This operation requires a service-provider administrator');
   if (method === 'post' && parts.length === 1 && generic) {
     if (kind !== 'tasks') deny('Creating this record requires a service-provider administrator');
@@ -71,7 +83,7 @@ export function authorizeDemo(db, method, parts, body = {}, requestKey) {
   }
   const row = (db[kind] || []).find(r => r[ids[kind]] === id);
   if (!row) deny('Record unavailable for this client');
-  if (!user.client_ids?.includes(row.client_id)) deny('Forbidden for this client');
+  if (!clientAccess(user, row.client_id)) deny('Forbidden for this client');
   if (kind === 'tasks' && method === 'patch' && parts.length === 2 && requestKey) {
     const receipt = db.command_requests?.[JSON.stringify([user.user_id,row.client_id,'/'+parts.join('/'),requestKey])];
     // Demo receipts are committed atomically with their effects. Replay only the

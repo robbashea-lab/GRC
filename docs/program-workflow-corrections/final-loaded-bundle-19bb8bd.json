@@ -1,0 +1,9 @@
+{
+  "scripts": [
+    "http://127.0.0.1:4341/static/js/main.a46cd0fe.js"
+  ],
+  "stylesheets": [
+    "http://127.0.0.1:4341/static/css/main.7e6897c1.css"
+  ],
+  "url": "http://127.0.0.1:4341/compliance/iso-27001?iso_view=isms_clause&assessment=fw_clients_demo_mv79rkv9_e6junuyj_assessment_iso-27001_4.2"
+}

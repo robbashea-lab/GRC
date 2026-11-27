@@ -3,7 +3,19 @@ from fastapi import HTTPException
 import create_requests
 import action_items
 import assignment_eligibility
+import remediation
 import uuid
+
+
+async def capture_finding(s, finding, after, user, at, action):
+    patch,event=s._portfolio_event_patch('finding',finding['finding_id'],finding['client_id'],user,finding,after,at,action)
+    if event and finding.get('framework_assessment_id'):
+        source=await s.db.framework_assessments.find_one({
+            'framework_assessment_id':finding['framework_assessment_id'],'client_id':finding['client_id']},
+            {'_id':0,'framework_key':1})
+        if source and isinstance(source.get('framework_key'),str):
+            event['program_keys']=[source['framework_key']]
+    return patch,event
 
 
 async def require_settled(s, finding, identity):
@@ -22,6 +34,7 @@ async def reopen(s, finding, body, user):
         current=await s.db.findings.find_one({'finding_id':fid,'client_id':cid},{'_id':0})
         await require_settled(s,current,identity)
         decision=next((d for d in current.get('decision_history',[]) if d.get('request_id')==identity),None)
+        portfolio_event_id=current.get('_portfolio_activity_decision_event_ids',{}).get(identity)
         if not decision:
             s._require_snapshot(body,current)
             if current.get('status') not in ('closed','accepted'):
@@ -53,11 +66,18 @@ async def reopen(s, finding, body, user):
                 tid=task['task_id']
             decision={'action':'reopened','by':user['user_id'],'at':s._next_write_time(current.get('updated_at')),
                       'request_id':identity,'previous_primary_task_id':current.get('primary_task_id')}
+            updates={'status':'in_remediation','primary_task_id':tid,'updated_at':decision['at']}
+            after={**current,**updates,'decision_history':[*current.get('decision_history',[]),decision]}
+            portfolio_patch,portfolio_event=await capture_finding(s,current,after,user,decision['at'],'reopen')
+            if portfolio_event:
+                portfolio_event_id=portfolio_event['event_id']
+                portfolio_patch['_portfolio_activity_decision_event_ids.'+identity]=portfolio_event_id
             await s.db.create_requests.update_one({'_id':identity},{'$set':{'primary_started':True}})
             changed=await s.db.findings.update_one({'finding_id':fid,'client_id':cid,'updated_at':current.get('updated_at')},
-                {'$set':{'status':'in_remediation','primary_task_id':tid,'updated_at':decision['at']},'$push':{'decision_history':decision}})
+                {'$set':{**updates,**portfolio_patch},'$push':{'decision_history':decision}})
             if not changed.modified_count:raise HTTPException(409,'Finding changed; reload before reopening')
-        await s.audit(user,'Remediation reopened','finding',fid,cid,meta=decision)
+        await s.audit(user,'Remediation reopened','finding',fid,cid,meta={
+            **decision,'_portfolio_activity_event_id':portfolio_event_id})
         receipt=await s.db.create_requests.find_one({'_id':identity})
         if receipt.get('reopen_task'):
             task=receipt['reopen_task']
@@ -73,10 +93,41 @@ async def reopen(s, finding, body, user):
         'findings/'+fid+'/reopen',body,execute)
 
 
+async def plan_rework(s, finding, actions, identity, user):
+    """Retain the replacement before the Finding write; insert only after it wins."""
+    receipt = await s.db.create_requests.find_one({'_id': identity})
+    if receipt.get('rework_task'):
+        task = receipt['rework_task']
+        if task.get('assignee_id') and not await assignment_eligibility.eligible(
+                s.db, task['assignee_id'], task['client_id'], s._can_access_client):
+            task = {**task, 'assignee_id': None}
+            await s.db.create_requests.update_one({'_id': identity}, {'$set': {'rework_task': task}})
+        return task
+    source = next((task for task in actions if task['task_id'] == finding.get('primary_task_id')), actions[0])
+    at = s._now()
+    task = {'task_id': 'tsk_' + uuid.uuid5(uuid.NAMESPACE_URL, identity).hex,
+            'client_id': finding['client_id'], 'finding_id': finding['finding_id'],
+            'title': source.get('title') or finding.get('remediation_title') or finding['title'],
+            'description': source.get('description'), 'assignee_id': source.get('assignee_id') or source.get('owner_id'),
+            'due_date': source.get('due_date'), 'priority': source.get('priority') or finding.get('severity', 'medium'),
+            'status': 'open', 'source_type': 'finding', 'source_id': finding['finding_id'],
+            'created_at': at, 'updated_at': at, 'created_by': user['user_id'], '_ticket_command': identity}
+    if task.get('assignee_id') and not await assignment_eligibility.eligible(
+            s.db, task['assignee_id'], task['client_id'], s._can_access_client):
+        task['assignee_id'] = None
+    task = await action_items.prepare(s.db, task, s._can_access_client)
+    await s.db.create_requests.update_one({'_id': identity}, {'$set': {'rework_task': task}})
+    return task
+
+
 async def validate(s, finding, body, user, action='validate'):
     fid, cid = finding['finding_id'], finding['client_id']
+    if action not in ('validate', 'reject', 'accept'):
+        raise HTTPException(422, 'Invalid remediation decision')
     if user.get('role') not in ('super_admin', 'platform_admin'):
         raise HTTPException(403, 'Only platform-level roles can validate remediation')
+    if not s._can_access_client(user, cid):
+        raise HTTPException(403, 'Forbidden for this client')
     if not body.rationale.strip():
         raise HTTPException(422, 'Validation rationale is required')
     payload = body.model_dump(exclude_unset=True)
@@ -86,7 +137,7 @@ async def validate(s, finding, body, user, action='validate'):
     if not body.request_id and 'expected_updated_at' not in payload:
         previous = next((d for d in reversed(finding.get('decision_history', []))
             if d.get('at') == finding.get('updated_at') and d.get('by') == user['user_id']
-            and d.get('action') == ('validated' if action == 'validate' else 'accepted')
+            and d.get('action') == {'validate': 'validated', 'reject': 'rejected', 'accept': 'accepted'}[action]
             and d.get('legacy_payload') == create_requests.digest(payload)), None)
         if previous:
             key = previous['legacy_key']
@@ -95,33 +146,56 @@ async def validate(s, finding, body, user, action='validate'):
         current = await s.db.findings.find_one({'finding_id':fid, 'client_id':cid}, {'_id':0})
         await require_settled(s,current,identity)
         decision = next((d for d in current.get('decision_history', []) if d.get('request_id') == identity), None)
+        portfolio_event_id=current.get('_portfolio_activity_decision_event_ids',{}).get(identity)
         if not decision:
-            if action == 'accept' or 'expected_updated_at' in payload:
+            if action in ('accept', 'reject') or 'expected_updated_at' in payload:
                 s._require_snapshot(payload, current)
-            if action=='validate' and current.get('status') != 'remediated':
+            if action in ('validate', 'reject') and current.get('status') != 'remediated':
                 raise HTTPException(409, 'Finding must be pending validation')
-            if action=='validate' and await s.db.tasks.find_one({'finding_id':fid, 'client_id':cid, 'status':{'$nin':['done','cancelled']}}):
-                raise HTTPException(409, 'Complete outstanding remediation first')
-            decision = {'action':'validated' if action=='validate' else 'accepted', 'by':user['user_id'], 'at':s._next_write_time(current.get('updated_at')),
+            actions = await remediation.require_independent_validator(s.db, current, user) if action in ('validate', 'reject') else []
+            rework = await plan_rework(s, current, actions, identity, user) if action == 'reject' else None
+            decision = {'action':{'validate': 'validated', 'reject': 'rejected', 'accept': 'accepted'}[action], 'by':user['user_id'], 'at':s._next_write_time(current.get('updated_at')),
                         'rationale':body.rationale.strip(), 'request_id':identity}
+            if rework:
+                decision.update(rework_task_id=rework['task_id'], previous_primary_task_id=current.get('primary_task_id'))
             if not body.request_id:
                 decision.update(legacy_key=key, legacy_payload=create_requests.digest(payload))
+            updates={'status':{'validate': 'closed', 'reject': 'in_remediation', 'accept': 'accepted'}[action],'updated_at':decision['at'],
+                **({'validated_by':user['user_id'],'validated_at':decision['at'],'closed_by':user['user_id'],'closed_at':decision['at']} if action=='validate' else {})}
+            if rework:
+                updates['primary_task_id'] = rework['task_id']
+            after={**current,**updates,'decision_history':[*current.get('decision_history',[]),decision]}
+            portfolio_patch,portfolio_event=await capture_finding(s,current,after,user,decision['at'],action)
+            if portfolio_event:
+                portfolio_event_id=portfolio_event['event_id']
+                portfolio_patch['_portfolio_activity_decision_event_ids.'+identity]=portfolio_event_id
             await s.db.create_requests.update_one({'_id':identity}, {'$set':{'primary_started':True}})
             result = await s.db.findings.update_one({'finding_id':fid, 'client_id':cid,
-                'status':current.get('status'), 'updated_at':current.get('updated_at')}, {'$set':{
-                    'status':'closed' if action=='validate' else 'accepted', 'updated_at':decision['at'],
-                    **({'validated_by':user['user_id'],'validated_at':decision['at'],'closed_by':user['user_id'],'closed_at':decision['at']} if action=='validate' else {})},
+                'status':current.get('status'), 'updated_at':current.get('updated_at')}, {'$set':{**updates,**portfolio_patch},
                 '$push':{'decision_history':decision}})
             if not result.modified_count:
                 raise HTTPException(409, 'Finding changed; reload before validating', headers={'X-Create-Rejected':'true'})
+        if action == 'reject':
+            receipt = await s.db.create_requests.find_one({'_id': identity})
+            rework = receipt.get('rework_task')
+            if not rework or rework.get('task_id') != decision.get('rework_task_id'):
+                raise HTTPException(409, 'The retained rework command needs recovery')
+            await create_requests.insert_primary(s.db, 'tasks', rework, identity)
+            await s.audit(user, 'create', 'task', rework['task_id'], cid, meta={'from_finding': fid, 'rework': True})
+            if rework.get('assignee_id') and rework['assignee_id'] != user['user_id']:
+                await s.create_notification(user_id=rework['assignee_id'], title='Reopened remediation: ' + rework['title'],
+                                            kind='task_assigned', entity_type='tasks', entity_id=rework['task_id'], client_id=cid)
         # Identity travels in the business write, surviving lost acknowledgements.
-        await s.audit(user, action, 'finding', fid, cid, meta=decision)
+        await s.audit(user, action, 'finding', fid, cid, meta={**decision,'_portfolio_activity_event_id':portfolio_event_id})
+        task_event = {'validate': 'Related Finding validated and closed', 'reject': 'Related Finding returned for correction',
+                      'accept': 'Related Finding accepted'}[action]
         for task in await s.db.tasks.find({'finding_id':fid,'client_id':cid}, {'_id':0}).to_list(None):
-            await s.audit(user, 'Related Finding validated and closed' if action=='validate' else 'Related Finding accepted', 'task', task['task_id'], cid, meta={'finding_id':fid})
+            await s.audit(user, task_event, 'task', task['task_id'], cid, meta={'finding_id':fid})
         if current.get('review_id'):
             review = await s.db.reviews.find_one({'review_id':current['review_id'],'client_id':cid}, {'_id':0})
             if review:
-                await s._review_event(user, review, 'Finding validated and closed' if action=='validate' else 'Finding accepted',
+                review_event = {'validate': 'Finding validated and closed', 'reject': 'Finding returned for correction', 'accept': 'Finding accepted'}[action]
+                await s._review_event(user, review, review_event,
                     current.get('occurrence_id') or 'occ_'+review['review_id'], finding_id=fid, title=current['title'])
         return await s.db.findings.find_one({'finding_id':fid,'client_id':cid}, {'_id':0,'_remediation_lock':0})
 

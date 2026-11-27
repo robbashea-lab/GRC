@@ -1,0 +1,36 @@
+{
+  "reviewer": "/root/governara_independent_review",
+  "disposition": "PASS — bounded corrected backend source/contract review only",
+  "evidence_class": "source-reviewed; no executable verification performed by this reviewer",
+  "reviewed_at": "2026-10-13",
+  "source_identity": "Corrected frozen working-tree file hashes, not an asserted new commit or deployed source",
+  "hashes_sha256": {
+    "backend/assessment_items.py": "6E88D0C064B3DEE94043324698A9188B65ECC86D79DC025668640F55A37E5FBA",
+    "backend/portfolio_activity.py": "BE594FFF9E250A36D33EA631599ECE3B0F8B6490487E0EEA1F7583B5B9306221",
+    "backend/framework_governance.py": "9F089ABCC53170FAF6C5B779E18D55E2BC530A8F1F8FD91B9E0F11F7579F94AE",
+    "backend/framework_reports.py": "2DBB6B18C4B2CC9423E286006BFA89136B4932E13C4C480B7938023414889642",
+    "backend/framework_report_pdf.py": "A5741FD0BA7FBE2256A3AC9AB37A4B28ADD23325C9E6805DAE49A36C063023E8",
+    "backend/tests/test_framework_reports.py": "B79332AD17D9CC1993B39DD4A069D74F63094CF47F1C8303CE507C5B562B9627"
+  },
+  "prior_receipts": ["independent-shared-contract-review.json", "independent-report-contract-review.json"],
+  "finding_dispositions": {
+    "IC1": "Corrected: new Item PATCH strips exact source-internal fields on changed and no-op replies, retaining native Items/revisions/history.",
+    "IC2": "Corrected: source and pending activity envelope are committed by the same independent Items CAS. Resolve/reopen/link audit acknowledges the exact event; collector can recover interrupted projection. Semantic comparison excludes history/clocks/source metadata; event identity includes committed Items revision for repeated same-clock transitions. Failed CAS and no-ops generate no activity. Resolution/narrative text is hashed rather than copied to minimized event DTOs.",
+    "RC1": "Corrected: report current metrics reuse Portfolio current_position/native-implementation-v1 applicability, invalid-N/A and availability rules; raw status distributions/native resolution remain separately labeled.",
+    "RC2": "Corrected: explicit CIS/SOC configuration-field mapping prevents CIS dates filtering ISO history. Retained assessment states are always partial or unavailable historical coverage, with comparable false, no retrospective implementation percentage or comparison baseline, and unproven historical program scope disclosed in source and PDF.",
+    "RC3": "Corrected: needs_attention is retained in the existing safe native status allowlist."
+  },
+  "connected_preservation": [
+    "Items revision remains independent; direct Item writes neither change nor claim a concurrently changing native implementation judgment, verification, dates or assessment history.",
+    "Native guided save retains source/answer/current-lineage validation, framework-specific leases, native and Items CAS predicates, and assessment/Items snapshot history.",
+    "Finding creation remains explicit and idempotent; linking retries only the relationship CAS and preserves current Item state/history.",
+    "Public source stripping remains precise and does not remove regular saved assessment fields.",
+    "Report snapshot source remains saved native records/Items, not unfinished interviews; source and delivery access checks are retained.",
+    "Collector initialization/run/shutdown ownership is retained; no GET-side history manufacture or source timestamp rewrite was introduced by these corrections."
+  ],
+  "test_source_reviewed": "Relevant regression assertions were read for DTO stripping, no-op/repeated transitions, privacy, interrupted projection recovery, losing CAS, concurrent native judgment, Finding linkage, applicability parity and historical truthfulness. No tests were run by this reviewer.",
+  "independent_report_subreview": "Actual child report_contract_review returned bounded source-only PASS at the exact report/renderer/test hashes. Its external receipt preserves original findings and correction dispositions.",
+  "owner_reported_not_executed_here": ["Root reports three real Mongo snapshot tests passed on an owned loopback Mongo 8.0.28", "Root reports actual pinned Agent 2 independently ran 36 passing tests"],
+  "not_checked": ["Demo parity changes", "frontend author-owned files", "executable tests", "builds", "CI", "browser", "provider", "hosted auth/authorization", "live collector capture", "deployment"],
+  "limits": "PASS resolves the five specific source integration findings only. It is not release, security or client-service acceptance. Exact composite CI, builds, actual hosted checks and existing unwaived gates remain the coordinator's responsibility. No product/repository-doc/Git/account/browser/provider mutation was performed; only external independent evidence was written."
+}

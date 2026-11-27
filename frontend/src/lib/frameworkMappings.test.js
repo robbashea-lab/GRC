@@ -4,10 +4,12 @@ import {mappingsFor} from './frameworkMappings';
 
 test('every Review cadence source driver resolves inside its own mapped definitions',()=>{
   const plans=Object.entries(CATALOGS).flatMap(([framework,catalog])=>catalog.review_plans.map(plan=>({framework,plan})));
-  expect(plans).toHaveLength(55);
+  expect(plans).toHaveLength(67);
+  expect(Object.fromEntries(Object.keys(CATALOGS).map(key=>[key,plans.filter(row=>row.framework===key).length])))
+    .toEqual({'cis-ig1':20,hipaa:8,'iso-27001':10,'soc-2':8,'nist-csf-2':9,cmmc:12});
   expect(plans.filter(({plan})=>plan.cadence_class==='A')).toHaveLength(11);
   expect(plans.filter(({plan})=>plan.cadence_class==='B')).toHaveLength(5);
-  expect(plans.filter(({plan})=>plan.cadence_class==='D')).toHaveLength(39);
+  expect(plans.filter(({plan})=>plan.cadence_class==='D')).toHaveLength(51);
   for(const {framework,plan} of plans){
     for(const id of plan.safeguards)expect(frameworkDefinition(framework,id)).toBeDefined();
     expect(['A','B','D']).toContain(plan.cadence_class);
@@ -27,7 +29,14 @@ test('every Review cadence source driver resolves inside its own mapped definiti
     }else{
       expect(plan.cadence_references).toEqual([]);
       expect(plan.source_minimum).toBeFalsy();
-      expect(plan.basis.toLowerCase()).toContain('recommend');
+      if(framework==='cmmc'){
+        expect(plan.source_minimum).toBeNull();
+        expect(plan.basis).toBe('GoverNara supporting Review template');
+        expect(plan.source_cadence).toContain('Organizational schedule');
+        expect(plan.source_cadence).toContain('FAR/FCI or NIST Rev 2/CUI duties separately');
+        expect(plan.purpose).toContain('partial support');
+        expect(plan.purpose).toContain('does not establish CMMC Status');
+      }else expect(plan.basis.toLowerCase()).toContain('recommend');
     }
   }
 });

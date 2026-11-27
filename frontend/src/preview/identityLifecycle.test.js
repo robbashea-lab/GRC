@@ -117,3 +117,36 @@ test('members match the backend contract: referenced former accounts included, c
   reader.forEach(row => expect(Object.keys(row).every(k => ['user_id', 'name', 'status', 'orphaned'].includes(k))).toBe(true));
   expect(reader.find(u => u.user_id === 'former').status).toBe('disabled');
 });
+
+test('malformed memberships disclose no unrelated account and authorize no account edit or Contact link', () => {
+  const malformed = {user_id:'malformed', name:'Unrelated account', email:'unrelated@example.com',
+    role:'client_contributor', status:'active'};
+  db.users.push(malformed);
+  for (const client_ids of ['a', 'a_foreign', ['a_foreign'], null, undefined, false, {0:'a',length:1}]) {
+    malformed.client_ids = client_ids;
+    const before = JSON.stringify(db);
+    expect(call('/clients/a/members').some(user => user.user_id === malformed.user_id)).toBe(false);
+    expect(call('/users').some(user => user.user_id === malformed.user_id)).toBe(false);
+    expect(() => call('/users/malformed', 'patch', {name:'Unauthorized edit'})).toThrow('Not authorized');
+    expect(() => call('/contacts/maya/account-link', 'post', {confirmed:true,user_id:'malformed'}))
+      .toThrow('Choose an active account already authorized');
+    expect(JSON.stringify(db)).toBe(before);
+  }
+  malformed.client_ids = 'a_foreign';
+  db.risks.push({risk_id:'historical-reference',client_id:'a',owner_id:malformed.user_id});
+  const before = JSON.stringify(db);
+  expect(call('/clients/a/members').find(user => user.user_id === malformed.user_id))
+    .toMatchObject({user_id:'malformed',client_ids:[],assignment_eligible:false,orphaned:true});
+  expect(JSON.stringify(db)).toBe(before);
+});
+
+test('account commands refuse malformed membership and nonboolean global-grant inputs before writing', () => {
+  db.user = {user_id:'owner',role:'super_admin',client_ids:[]};
+  for (const invalid of [{client_ids:'a'}, {client_ids:{0:'a',length:1}}, {all_clients:'true'}, {all_clients:1}]) {
+    const before = JSON.stringify(db);
+    expect(() => call('/users', 'post', {name:'Synthetic denied account',email:'denied@example.com',role:'platform_admin',client_ids:['a'],...invalid})).toThrow(/must be/);
+    expect(() => call('/users/alex', 'patch', invalid)).toThrow(/must be/);
+    expect(() => call('/users/alex/client-memberships', 'patch', {client_ids:['a'],...invalid})).toThrow(/must be/);
+    expect(JSON.stringify(db)).toBe(before);
+  }
+});

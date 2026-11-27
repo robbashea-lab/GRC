@@ -1,4 +1,5 @@
 import verify from './operatorGuidance/cisVerify.json';
+import {applicableCounts, currentPercentage, validImplementationPosition} from './portfolioProgress';
 
 // Derived, read-only verification view. Nothing here writes or changes an
 // assessment conclusion: it separates "we were told / the stack suggests" from
@@ -55,12 +56,14 @@ export function verificationLadder(row,{stack=[],today=new Date()}={}){
 }
 
 /** Workspace summary. Coverage (assessed) is deliberately separate from implementation. */
-export function cisSummary(rows,today=new Date()){
-  const applicable=rows.filter(r=>r.specification==='annex_control'?r.soa_applicability!=='excluded':r.status!=='not_applicable');
+export function cisSummary(rows,today=new Date(),canonical){
+  const applicable=rows.filter(r=>r.specification==='annex_control'?r.soa_applicability==='included':r.status!=='not_applicable');
   const count=s=>applicable.filter(r=>r.status===s).length;
   const assessed=applicable.filter(r=>r.status!=='not_assessed').length;
-  return {total:rows.length,applicable:applicable.length,assessed,
-    addressed:count('addressed'),partial:count('in_progress'),gap:count('needs_attention'),na:rows.length-applicable.length,notAssessed:count('not_assessed'),
+  const summary={total:rows.length,applicable:applicable.length,assessed,
+    addressed:count('addressed'),partial:count('in_progress'),gap:count('needs_attention'),
+    na:rows.filter(r=>r.specification==='annex_control'?r.soa_applicability==='excluded':r.status==='not_applicable').length,
+    scopeUndetermined:rows.filter(r=>r.specification==='annex_control'&&!['included','excluded'].includes(r.soa_applicability)).length,notAssessed:count('not_assessed'),
     coverage:applicable.length?Math.round(assessed/applicable.length*100):0,
     implemented:applicable.length?Math.round(count('addressed')/applicable.length*100):0,
     stale:rows.filter(r=>isStale(r,today)).length,
@@ -71,4 +74,12 @@ export function cisSummary(rows,today=new Date()){
     overdueActions:rows.filter(r=>(r.work?.overdue_actions||0)>0).length,
     overdueReviews:rows.filter(r=>r.work?.overdue_reviews).length,
     unremediated:rows.filter(gapUntracked).length};
+  if(!canonical)return summary;
+  const counts=Object.fromEntries(applicableCounts(canonical).map(value=>[value.key,value.count]));
+  const percentage=currentPercentage(canonical),available=validImplementationPosition(canonical);
+  return {...summary,total:canonical.total,applicable:canonical.denominator,assessed:available?canonical.denominator-(counts.not_assessed??0):null,
+    addressed:counts.addressed??0,partial:counts.in_progress??0,gap:counts.needs_attention??0,notAssessed:counts.not_assessed??0,
+    na:canonical.excluded??0,scopeUndetermined:canonical.scope_undetermined??0,available,reason:canonical.reason,
+    implementationPercentage:percentage,implemented:percentage==null?null:Math.round(percentage),
+    coverage:available&&canonical.denominator?Math.round((canonical.denominator-(counts.not_assessed??0))/canonical.denominator*100):null};
 }

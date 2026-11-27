@@ -49,3 +49,59 @@ test('absent explicit timing produces no trigger line and source link has no app
   await act(async()=>root.render(<AssessmentRequirement heading="What CIS requires" text="Requirement" trigger="Review and update at least every six months."/>));
   expect(container.textContent).toContain('Required operation / trigger: Review and update at least every six months.');
 });
+
+test('inline interview stays mounted across disclosure and tabs, with close restoring summary focus',async()=>{
+  await act(async()=>root.render(<AssessmentLayout inlineWorkflow summary="Canonical explanation" itemsToAddress={<p>Recorded items</p>} findings={<p>Native Findings</p>} interview={({open,close})=><div hidden={!open}><input aria-label="Interview answer" defaultValue="Saved answer"/><button onClick={close}>Save & close interview</button></div>}/>));
+  expect([...container.querySelectorAll('[role=tab]')].map(element=>element.textContent)).toEqual(['Requirement & implementation','Items to address','Findings']);
+  const details=container.querySelector('.assessment-summary'),answer=container.querySelector('[aria-label="Interview answer"]');
+  await act(async()=>{details.open=true;details.dispatchEvent(new Event('toggle'));});
+  await fill('Interview answer','Unsaved answer');await tab('Items to address');await tab('Requirement & implementation');
+  expect(container.querySelector('[aria-label="Interview answer"]')).toBe(answer);expect(answer.value).toBe('Unsaved answer');
+  await act(async()=>[...container.querySelectorAll('button')].find(button=>button.textContent==='Save & close interview').click());expect(details.open).toBe(false);expect(document.activeElement).toBe(details.querySelector('summary'));
+  expect(container.textContent).not.toContain('Assessment guidance & working checklist');
+});
+
+test('a caller can reveal the mounted interview while explicit close retains its draft and focus',async()=>{
+  let reveal;
+  await act(async()=>root.render(<AssessmentLayout inlineWorkflow interview={({open,close,reveal:show})=>{
+    reveal=show;
+    return <div hidden={!open}><input aria-label="Interview answer" defaultValue="Retained answer"/><button onClick={close}>Close revealed interview</button></div>;
+  }}/>));
+  const details=container.querySelector('.assessment-summary'),answer=container.querySelector('[aria-label="Interview answer"]');
+  expect(details.open).toBe(false);
+  await act(async()=>reveal());expect(details.open).toBe(true);
+  await fill('Interview answer','Unsaved reported answer');
+  await act(async()=>[...container.querySelectorAll('button')].find(element=>element.textContent==='Close revealed interview').click());
+  expect(details.open).toBe(false);expect(document.activeElement).toBe(details.querySelector('summary'));
+  await act(async()=>reveal());expect(details.open).toBe(false);
+  await act(async()=>details.querySelector('summary').click());
+  expect(container.querySelector('[aria-label="Interview answer"]')).toBe(answer);expect(answer.value).toBe('Unsaved reported answer');
+});
+
+test('a late initial reveal does not override a disclosure choice made during loading',async()=>{
+  let reveal;
+  await act(async()=>root.render(<AssessmentLayout interview={({reveal:show})=>{reveal=show;return <p>Loading interview</p>;}}/>));
+  const details=container.querySelector('.assessment-summary'),summary=details.querySelector('summary');
+  await act(async()=>{summary.click();details.open=true;details.dispatchEvent(new Event('toggle'));});
+  await act(async()=>{summary.click();details.open=false;details.dispatchEvent(new Event('toggle'));});
+  await act(async()=>reveal());expect(details.open).toBe(false);
+});
+
+test('explicit item finding creation moves focus into the selected Findings section',()=>{
+  function ItemFinding(){
+    const [finding,setFinding]=useState(false);
+    return <AssessmentLayout inlineWorkflow summary="Requirement explanation" findingDraft={finding}
+      itemsToAddress={<button onClick={()=>setFinding(true)}>Create finding</button>}
+      findings={<input aria-label="Finding title"/>}/>;
+  }
+  act(()=>root.render(<ItemFinding/>));
+  const items=[...container.querySelectorAll('[role=tab]')].find(button=>button.textContent==='Items to address');
+  act(()=>items.dispatchEvent(new MouseEvent('mousedown',{bubbles:true,button:0})));
+  const create=[...container.querySelectorAll('button')].find(button=>button.textContent==='Create finding');
+  act(()=>create.focus());expect(document.activeElement).toBe(create);
+  act(()=>create.click());
+  const findings=[...container.querySelectorAll('[role=tab]')].find(button=>button.textContent==='Findings');
+  expect(findings.getAttribute('data-state')).toBe('active');
+  expect(create.closest('[role=tabpanel]').getAttribute('data-state')).toBe('inactive');
+  expect(document.activeElement).toBe(findings);
+});

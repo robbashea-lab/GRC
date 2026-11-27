@@ -49,5 +49,17 @@ test('five frameworks share work and preserve policy records on Settings activat
   }
   expect(after.some(r=>r.framework_drivers.some(d=>d.framework_key==='nist-csf-2'))).toBe(true);
   expect(await get('/policies')).toEqual(policies);
-  const db=JSON.parse(sessionStorage.getItem(STORE_KEY));expect(db.framework_assessments.filter(a=>a.client_id===cid)).toHaveLength(394);
+  const db=JSON.parse(sessionStorage.getItem(STORE_KEY)),rows=db.framework_assessments.filter(a=>a.client_id===cid);
+  expect(rows).toHaveLength(399);
+  expect(Object.fromEntries(['cis-ig1','hipaa','iso-27001','soc-2','nist-csf-2'].map(key=>[key,rows.filter(a=>a.framework_key===key).length]))).toEqual({'cis-ig1':56,hipaa:81,'iso-27001':123,'soc-2':33,'nist-csf-2':106});
+  // Retain native HIPAA assessment units without equating each row with an independent obligation.
+  const hipaa=rows.filter(a=>a.framework_key==='hipaa'),retained=['164.302','164.105','164.530'];
+  const children={'164.308(b)(2)':'164.308(b)(1)','164.314(a)(2)(i)':'164.314(a)(1)',
+    '164.314(a)(2)(ii)':'164.314(a)(1)','164.314(a)(2)(iii)':'164.314(a)(1)','164.314(b)(2)':'164.314(b)(1)'};
+  expect(new Set(hipaa.map(a=>a.definition_id)).size).toBe(81);
+  expect(hipaa.filter(a=>!retained.includes(a.definition_id))).toHaveLength(78);
+  expect(hipaa.filter(a=>retained.includes(a.definition_id)).map(a=>a.definition_id).sort()).toEqual([...retained].sort());
+  expect(hipaa.filter(a=>!Object.hasOwn(children,a.definition_id))).toHaveLength(76);
+  expect(Object.fromEntries(CATALOGS.hipaa.requirements.filter(d=>d.parent_assessment_id).map(d=>[d.id,d.parent_assessment_id]))).toEqual(children);
+  expect(hipaa.filter(a=>Object.hasOwn(children,a.definition_id)).map(a=>a.definition_id).sort()).toEqual(Object.keys(children).sort());
 });

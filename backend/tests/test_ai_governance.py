@@ -16,7 +16,7 @@ class AIGovernanceTests(ClientDashboardSourcesTests):
         self.assertEqual(first['display_id'],'AI-001')
         second=await self.create(client_id='b',owner_id=None)
         self.assertEqual(second['display_id'],'AI-001')
-        results=await asyncio.gather(*[self.client.post('/api/ai_systems',json={'client_id':'a','name':'Parallel'}) for _ in range(8)])
+        results=await asyncio.gather(*[self.client.post('/api/ai_systems',json={'client_id':'a','name':'Parallel '+str(index)}) for index in range(8)])
         self.assertTrue(all(r.status_code==200 for r in results))
         self.assertEqual(len({r.json()['display_id'] for r in results}),8)
         url='/api/ai_systems/'+first['ai_system_id']
@@ -39,9 +39,56 @@ class AIGovernanceTests(ClientDashboardSourcesTests):
         self.assertEqual((await self.client.post('/api/ai_systems',json={'client_id':'a','name':'Denied'})).status_code,403)
         self.assertEqual((await self.client.get('/api/ai_systems?client_id=a')).status_code,200)
 
+    async def test_unenrolled_client_metadata_round_trips_without_automatic_approval_or_related_records(self):
+        values={'environment':'Synthetic workspace — 合成','restrictions':'Human review required',
+                'data_settings':'Synthetic data only','permitted_data_types':['Public','Internal']}
+        for status in ('active','onboarding'):
+            with self.subTest(client_status=status):
+                await server.db.clients.update_one({'client_id':'a'},{'$set':{'status':status}})
+                self.assertEqual(await server.db.requirements.count_documents({'client_id':'a'}),0)
+                row=await self.create(name='Synthetic '+status+' metadata',status='draft',owner_id=None,**values)
+                self.assertEqual({key:row[key] for key in values},values)
+                self.assertEqual(row['approval_status'],'pending_assessment');self.assertNotIn('approval_history',row)
+                saved=await self.client.patch('/api/ai_systems/'+row['ai_system_id'],json={
+                    'restrictions':'Explicit revised limit','expected_updated_at':row['updated_at']})
+                self.assertEqual(saved.status_code,200,saved.text)
+                loaded=(await self.client.get('/api/ai_systems',params={'client_id':'a'})).json()
+                current=next(item for item in loaded if item['ai_system_id']==row['ai_system_id'])
+                self.assertEqual(current['restrictions'],'Explicit revised limit')
+                self.assertEqual(current['environment'],values['environment'])
+                self.assertEqual(current['created_at'],row['created_at'])
+                self.assertEqual(current['related_links'],[])
+                self.assertEqual(current['approval_status'],'pending_assessment');self.assertNotIn('approval_history',current)
+                for kind in ('reviews','risks','vendors','findings','tasks','framework_assessments'):
+                    self.assertEqual(await server.db[kind].count_documents({}),0,kind)
+
+    async def test_unenrolled_metadata_keeps_native_client_lifecycle_and_readonly_denials(self):
+        self.sign_in('admin')
+        body={'client_id':'a','name':'Synthetic bounded metadata','environment':'Synthetic workspace'}
+        for changes in ({'status':'archived'},{'status':'inactive'},{'archived':True},{'archived_at':'2026-01-01'}):
+            with self.subTest(client_changes=changes):
+                await server.db.clients.update_one({'client_id':'a'},{'$set':{'status':'active'},'$unset':{'archived':'','archived_at':''}})
+                await server.db.clients.update_one({'client_id':'a'},{'$set':changes})
+                response=await self.client.post('/api/ai_systems',json=body)
+                self.assertEqual(response.status_code,403 if changes=={'status':'archived'} else 422,response.text)
+        response=await self.client.post('/api/ai_systems',json={**body,'client_id':'missing-native-client'})
+        self.assertEqual(response.status_code,404,response.text)
+        self.sign_in('member')
+        await server.db.users.update_one({'user_id':'member'},{'$set':{'role':'client_readonly'}})
+        self.assertEqual((await self.client.post('/api/ai_systems',json=body)).status_code,403)
+        self.assertEqual((await self.client.post('/api/ai_systems',json={**body,'client_id':'b'})).status_code,403)
+        for kind in ('ai_systems','reviews','risks','vendors','create_requests'):
+            self.assertEqual(await server.db[kind].count_documents({}),0,kind)
+        archive_denials=await server.db.audit_logs.count_documents({'action':'access-denied','user_id':'admin'})
+        self.assertEqual(archive_denials,1)
+        denials=await server.db.audit_logs.find({'user_id':'member'}).to_list(None)
+        self.assertEqual(len(denials),2)
+        self.assertTrue(all(event['action']=='access-denied' and event['user_id']=='member' for event in denials))
+
     async def test_review_occurrence_findings_actions_evidence_and_retirement(self):
+        self.r4_valid_completion_fixture=True
         row=await self.create();aid=row['ai_system_id'];base='/api/ai_systems/'+aid
-        schedule={'due_date':'2026-09-30','recurrence':'annual'}
+        schedule={'due_date':'2026-09-30','recurrence':'annual','owner_id':'member','expected_updated_at':row['updated_at']}
         response=await self.client.post(base+'/reviews',json=schedule)
         self.assertEqual(response.status_code,200,response.text)
         review=response.json();rid=review['review_id'];occ={'occurrence_id':review['current_occurrence_id']}
@@ -72,7 +119,7 @@ class AIGovernanceTests(ClientDashboardSourcesTests):
         self.assertEqual(row['risk_tier'],'high')
         self.assertTrue({'owner','schedule','risk','screening','oversight','vendor','sensitive'}.issubset({a['key'] for a in row['alerts']}))
         base='/api/ai_systems/'+row['ai_system_id']
-        changed=await self.client.post(base+'/material-change',json={'note':'Customer-facing recommendations introduced'})
+        changed=await self.client.post(base+'/material-change',json={'note':'Customer-facing recommendations introduced','expected_updated_at':row['updated_at']})
         self.assertEqual(changed.status_code,200,changed.text)
         self.assertIn('change',[a['key'] for a in changed.json()['alerts']])
         self.assertEqual(await server.db.findings.count_documents({}),0)
@@ -97,8 +144,9 @@ class AIGovernanceTests(ClientDashboardSourcesTests):
         self.assertEqual(await server.db.reviews.count_documents({}),0)
 
     async def test_retirement_preserves_started_closure_and_ids(self):
+        self.r4_valid_completion_fixture=True
         row=await self.create();base='/api/ai_systems/'+row['ai_system_id']
-        review=(await self.client.post(base+'/reviews',json={'due_date':'2026-09-30','recurrence':'annual'})).json()
+        review=(await self.client.post(base+'/reviews',json={'due_date':'2026-09-30','recurrence':'annual','owner_id':'member','expected_updated_at':row['updated_at']})).json()
         url='/api/reviews/'+review['review_id'];occ={'occurrence_id':review['current_occurrence_id']}
         self.assertEqual((await self.client.post(url+'/start',json=occ)).status_code,200)
         self.assertEqual((await self.client.patch(base,json={'status':'retired'})).status_code,200)
@@ -108,7 +156,7 @@ class AIGovernanceTests(ClientDashboardSourcesTests):
         kept=await server.db.reviews.find_one({'review_id':review['review_id']})
         self.assertEqual(kept['status'],'completed');self.assertEqual(kept['recurrence'],'none')
         self.assertEqual(len(kept['occurrences']),1)
-        self.assertEqual((await self.create())['display_id'],'AI-002')
+        self.assertEqual((await self.create(name='Next AI use case'))['display_id'],'AI-002')
 
     async def test_foreign_ai_evidence_and_links_rejected(self):
         own=await self.create();foreign=await self.create(client_id='b',owner_id=None)
@@ -216,7 +264,7 @@ class AIGovernanceTests(ClientDashboardSourcesTests):
         await server.db.risks.insert_one({'risk_id':'own-risk','client_id':'a','title':'Synthetic risk'})
         for remove in (False,True):
             with self.subTest(parent_deleted=remove):
-                row=await self.create();aid=row['ai_system_id']
+                row=await self.create(name='Synthetic link race '+str(remove));aid=row['ai_system_id']
                 collection_type=type(server.db.ai_systems);update=collection_type.update_one
                 async def change_parent(collection,query,changes):
                     if collection.name=='ai_systems' and '$addToSet' in changes:
@@ -273,3 +321,24 @@ class AIGovernanceTests(ClientDashboardSourcesTests):
         self.assertEqual(current['related_links'],[valid])
         self.assertFalse(current['relationship_integrity_warning'])
         self.assertEqual(await server.db.ai_systems.find_one({'ai_system_id':aid}),before)
+
+    async def test_explicit_no_client_data_round_trips_and_does_not_reclassify_unanswered(self):
+        row = await self.create()
+        self.assertNotIn('no_client_data', row)
+        path = '/api/ai_systems/'+row['ai_system_id']
+        response = await self.client.patch(path, json={
+            'no_client_data': True, 'data_types': [], 'expected_updated_at': row['updated_at']})
+        self.assertEqual(response.status_code, 200, response.text)
+        saved = next(item for item in (await self.client.get('/api/ai_systems?client_id=a')).json()
+                     if item['ai_system_id'] == row['ai_system_id'])
+        self.assertIs(saved['no_client_data'], True)
+        self.assertEqual(saved['data_types'], [])
+        self.assertEqual(saved['screening'], row['screening'])
+        conflicting = await self.client.patch(path, json={
+            'no_client_data': True, 'data_types': ['Public'], 'expected_updated_at': saved['updated_at']})
+        self.assertEqual(conflicting.status_code, 422, conflicting.text)
+        updated = await self.client.patch(path, json={
+            'no_client_data': False, 'data_types': ['Public'], 'expected_updated_at': saved['updated_at']})
+        self.assertEqual(updated.status_code, 200, updated.text)
+        self.assertIs(updated.json()['no_client_data'], False)
+        self.assertEqual(updated.json()['data_types'], ['Public'])

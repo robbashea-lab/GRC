@@ -1,0 +1,38 @@
+/* Four native ISO destinations and applicability measures use the shared program canvas. */
+.iso-cis-program-visual .iso-program-overview {display:grid;gap:20px;min-width:0}
+.iso-cis-program-visual .framework-tabpanel {gap:20px}
+/* CIS's approved sizing layer overrides the shared primitive's smaller heading defaults. */
+.iso-cis-program-visual .page-head h1 {font-size:26px;line-height:1.25}
+.iso-cis-program-visual :is(.iso-program-register,.iso-audit-packages,.iso-audit-register) .card-head h2 {font-size:16px;line-height:1.4}
+.iso-cis-program-visual .pcard :is(.now-head p,.now-head small,.bd-head,.lg-val > span,.card-foot,.summary,.ghead,.gname small,.fig > span,.sg-t small,.ver small) {font-size:12.5px}
+.iso-cis-program-visual .pcard :is(.gname b,.sg-t,.fig b) {font-size:14px}
+.iso-cis-program-visual .framework-tabs {gap:2px;padding:3px;border-radius:8px;background:var(--hover);box-shadow:inset 0 0 0 1px var(--border)}
+.iso-cis-program-visual .framework-tabs .ui-button {min-height:0;padding:4px 11px;border:0;border-radius:6px;background:transparent;color:var(--fg2);font:500 12.5px/1.5 var(--font)}
+.iso-cis-program-visual .framework-tabs .ui-button:hover {color:var(--fg)}
+.iso-cis-program-visual .framework-tabs .ui-button[aria-selected="true"] {background:var(--seg-on);color:var(--fg);font-weight:600;box-shadow:var(--shadow-seg)}
+/* Keep native selected segments readable when the global primary-button interaction rule applies. */
+.iso-cis-program-visual .framework-tabs .ui-button[aria-selected="true"]:not(:disabled):is(:hover,:active) {background:var(--seg-on);color:var(--fg)}
+.iso-cis-program-visual .iso-program-grid {gap:20px}
+.iso-cis-program-visual .iso-program-card {display:block;padding:20px 24px;border:1px solid var(--border);border-radius:10px;background:var(--surface);color:var(--fg);box-shadow:var(--shadow-sm);font:inherit}
+.iso-cis-program-visual .iso-program-card:hover {background:var(--hover);border-color:var(--border)}
+.iso-cis-program-visual .iso-program-title {font:600 15px/1.4 var(--font);color:var(--fg)}
+.iso-cis-program-visual .iso-program-title>span {color:var(--muted);font-size:14px}
+.iso-cis-program-visual .iso-card-snapshot {display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.2fr);gap:24px;align-items:start;margin-top:18px}
+.iso-cis-program-visual .iso-card-current {display:grid;gap:8px;min-width:0}
+/* The overall snapshot owns the hero figure; destination cards use the shared secondary figure scale. */
+.iso-cis-program-visual .iso-card-current .now-value {margin:0;font-size:22px;letter-spacing:-.015em;line-height:1.15}
+.iso-cis-program-visual .iso-program-metric {margin:0;font-size:12.5px;line-height:1.4;color:var(--fg2);overflow-wrap:anywhere}
+.iso-cis-program-visual .iso-program-progress {font-size:12px;color:var(--muted)}
+.iso-cis-program-visual .iso-card-distribution {min-width:0}
+.iso-cis-program-visual .iso-program-breakdown {gap:7px;margin-top:14px;color:var(--muted);font-size:12px}
+.iso-cis-program-visual .iso-soa-legend {grid-template-columns:repeat(3,minmax(0,1fr))}
+.iso-cis-program-visual .st {white-space:normal}
+.iso-cis-program-visual .iso-program-register .sg[role="link"] {cursor:pointer}
+.iso-cis-program-visual .iso-program-register .sg[role="link"]:focus-visible {outline:2px solid var(--focus);outline-offset:2px}
+.iso-cis-program-visual .iso-program-register .sg-management button {font-size:12.5px;line-height:inherit}
+@media(max-width:1200px) {.iso-cis-program-visual .iso-card-snapshot {grid-template-columns:minmax(0,1fr);gap:16px}}
+@media(max-width:760px) {
+  .iso-cis-program-visual .iso-program-grid {grid-template-columns:minmax(0,1fr)}
+  .iso-cis-program-visual .iso-program-card {padding:18px 16px}
+  .iso-cis-program-visual .iso-soa-legend {grid-template-columns:minmax(0,1fr)}
+}

@@ -1,15 +1,22 @@
-import { useSearchParams } from 'react-router-dom';
-import { HeaderActions, PrimaryAction, SecondaryAction, SearchField, ViewTabs, RegisterCount, SortableHeader } from "@/components/Register";
+import V3WorkspaceHeading from '@/components/V3WorkspaceHeading';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import BrawndoAdditionalVendors from '@/components/BrawndoAdditionalVendors';
+import {quarterlyChartScope} from '@/lib/quarterlyProgramTimeline';
+import {occurrenceId} from '@/lib/reviewOccurrences';
+import { useAdditionalSectionsSurface, useAdditionalSectionsPresentation } from '@/lib/brawndoAdditionalScope';
+import { useBrawndoTheme } from '@/lib/brawndoTheme';
+import { HeaderActions, PrimaryAction, SecondaryAction, SearchField, ViewTabs, RegisterCount, SortableHeader, sortState } from "@/components/Register";
 import { DueDate, HistoryDate, OwnerCell } from "@/components/RegisterCells";
 import StatusBadge, { SeverityBadge } from "@/components/StatusBadge";
 import RegisterLoadError from '@/components/RegisterLoadError';
 import AssigneeSelect from '@/components/AssigneeSelect';
 import TableLoadingRow from '@/components/TableLoadingRow';
-import { useTableControls, TableFilterChips, FilterEmpty } from '@/components/TableControls';
+import { useTableControls, TableFilterChips, FilterEmpty, ColumnControl } from '@/components/TableControls';
 import {vendorSignals,VENDOR_DATA_TYPES,ASSURANCE_TYPES} from '@/lib/vendorGovernance';
 import {isReferencePresentation,isReferenceWorkflow} from '@/lib/reference';
-import {vendorViews,vendorMatches,vendorColumns,assuranceSummary,renewalAction} from '@/lib/brawndoVendors';
+import {vendorViews,vendorMatches,vendorMatchesView,vendorColumns,assuranceSummary,renewalAction,VENDOR_CATEGORIES} from '@/lib/brawndoVendors';
 import { tableColumns } from '@/lib/tableColumns';
+import {applyTableFilters,EMPTY} from '@/lib/tableFilters';
 import { useEffect, useMemo, useState, useRef } from "react";
 import api, { formatError } from "@/lib/api";
 import { useOrg } from "@/context/OrgContext";
@@ -23,14 +30,13 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
-import { Download,AlertCircle,CalendarDays,ListChecks,UserRound,ArrowRight } from "lucide-react";
+import { Download,AlertCircle,CalendarDays,ListChecks,UserRound,ArrowRight,Sun } from "lucide-react";
 import { toast } from "sonner";
 import {BrawndoSurface,BrawndoPageHeader,BrawndoTiles,BrawndoChips,shortDate} from '@/components/BrawndoPage';
 import './BrawndoVendors.css';
 
 const CRIT_LABEL = { critical: "Critical", high: "High", medium: "Moderate", moderate: "Moderate", low: "Low" };
-const CATEGORIES = ["SaaS", "Cloud / Hosting", "Managed Service Provider", "Security Provider", "HR / Payroll",
-  "Financial", "Legal", "Marketing", "Communications", "Infrastructure", "Professional Services", "Other"];
+const CATEGORIES = VENDOR_CATEGORIES;
 const DATA_TYPES = VENDOR_DATA_TYPES;
 // Register views. Their counts are the register's summary; Critical-only and High-only stay available
 // through ?view= links and the Criticality column filter.
@@ -44,55 +50,56 @@ const VIEWS = [
   { id: "inactive", label: "Inactive" },
 ];
 const LINKED_VIEWS = { critical: "Critical", high: "High", assurance_attention: "Assurance Needs Attention" };
-function vendorMatchesView(v, view, now = new Date()) {
-  if (view === 'renewal_soon' || view === 'assurance_attention') return vendorMatches(v, view, now);
-  const status = v.status || "active";
-  if (view !== "inactive" && view !== "all" && status === "inactive") return false;
-  if (view === "critical") return v.criticality === "critical";
-  if (view === "high") return v.criticality === "high";
-  if (view === "critical_high") return ["critical", "high"].includes(v.criticality);
-  if (view === "review_due") return !!v._reviewDue;
-  if (view === "review_overdue") return !!v._reviewOverdue;
-  if (view === "contract_soon") return !!v._contractSoon;
-  if (view === "assurance") return !!v._assuranceIssue;
-  if (view === "inactive") return status === "inactive";
-  return true;
-}
 
 
 
 // Brawndo summary tiles. Each tile uses the register's own view rule and drives that view.
-const PILOT_CHIPS=[['all_active','All active'],['review_due','Reviews due'],['review_overdue','Reviews past due'],['critical_high','Critical / High'],['contract_soon','Contracts expiring'],['renewal_soon','Renewals upcoming'],['assurance','Assurance follow-up due'],['inactive','Inactive']];
+const PILOT_CHIPS=[['all_active','All active'],['review_due_30','Reviews due / past due in 30 days'],['review_overdue','Reviews past due'],['critical_high','Critical / High'],['contract_expiring','Contracts expiring in 30 days'],['renewal_soon','Renewals upcoming'],['assurance_followup','Assurance follow-up due'],['inactive','Inactive']];
 const names=list=>list.length?list.slice(0,2).map(v=>v.name).join(', ')+(list.length>2?` +${list.length-2}`:''):'';
 const byDate=key=>(a,b)=>String(key(a)||'').localeCompare(String(key(b)||''));
 export function vendorTiles(rows,now=new Date(),matches=vendorMatches){
   const m=view=>rows.filter(v=>matches(v,view,now));
-  const crit=m('critical_high'),due=m('review_due').sort(byDate(v=>v.next_review)),assur=m('assurance'),exp=m('contract_soon');
+  const crit=m('critical_high'),due=m('review_due_30').sort(byDate(v=>v.next_review)),assur=m('assurance_followup'),exp=m('contract_expiring');
   const today=now.toISOString().slice(0,10);
   const nextRenewal=rows.filter(v=>matches(v,'all_active',now)&&v.contract_renewal&&String(v.contract_renewal).slice(0,10)>=today).sort(byDate(v=>v.contract_renewal))[0];
   return [
     {id:'critical_high',label:'Critical / High',count:crit.length,tone:'critical',context:names(crit)||'No critical or high vendors'},
-    {id:'review_due',label:'Review due in 30 days',count:due.length,tone:'attention',context:due.length?`${due[0].name}, ${shortDate(due[0].next_review)}${due.length>1?` +${due.length-1}`:''}`:'No reviews due'},
-    {id:'assurance',label:'Assurance follow-up due',count:assur.length,tone:'attention',context:names(assur)||'No assurance follow-ups due'},
-    {id:'contract_soon',label:'Contracts expiring',count:exp.length,tone:'attention',context:exp.length?names(exp):nextRenewal?`Next renewal: ${nextRenewal.name}, ${shortDate(nextRenewal.contract_renewal)}`:'No upcoming renewals'},
+    {id:'review_due_30',label:'Review due / past due in 30 days',count:due.length,tone:'attention',context:due.length?`${due[0].name}, ${shortDate(due[0].next_review)}${due.length>1?` +${due.length-1}`:''}`:'No reviews due'},
+    {id:'assurance_followup',label:'Assurance follow-up due',count:assur.length,tone:'attention',context:names(assur)||'No assurance follow-ups due'},
+    {id:'contract_expiring',label:'Contracts expiring',count:exp.length,tone:'attention',context:exp.length?names(exp):nextRenewal?`Next renewal: ${nextRenewal.name}, ${shortDate(nextRenewal.contract_renewal)}`:'No upcoming renewals'},
   ];
 }
 
 export default function VendorRegister() {
-  const { user } = useAuth();
+  const auth = useAuth();
+  const { user } = auth;
   const { currentClient, currentClientId } = useOrg();
+  const navigate = useNavigate();
+  const [theme,setTheme] = useBrawndoTheme();
+  const [loadedClientId,setLoadedClientId] = useState(null);
+  const vendorReadScope = `${user?.user_id}:${user?.role}:${auth.workspaceMode}:${user?.workspace_mode}:${currentClientId}`;
+  const [loadedReadScope,setLoadedReadScope] = useState('');
+  const [acceptedRefresh,setAcceptedRefresh] = useState(null);
+  const presentation = useAdditionalSectionsPresentation('vendors');
+  const additional = useAdditionalSectionsSurface('vendors',loadedReadScope===vendorReadScope?loadedClientId:null);
   const pilot=isReferencePresentation(currentClientId,user);
-  const vendorWorkflow=isReferenceWorkflow(currentClientId,user);
-  const matches=vendorWorkflow?vendorMatches:vendorMatchesView;
-  const contractDate=v=>vendorWorkflow?v.contract_renewal:v.contract_renewal||v.contract_expiration||v.contract_end;
+  const vendorWorkflow=isReferenceWorkflow(currentClientId,user,currentClient);
+  const matches=vendorMatchesView;
+  const contractDate=v=>v.contract_renewal;
   const [rows, setRows] = useState([]);
   const [reviews,setReviews] = useState([]);
+  const [tasks,setTasks] = useState([]);
+  const [acceptedTaskScope,setAcceptedTaskScope] = useState(null);
+  const [taskDrawer,setTaskDrawer] = useState(null);
+  const previousPresentation = useRef(presentation);
+  const vendorWorkScope = quarterlyChartScope(user,auth.workspaceMode,currentClient);
+  const previousWorkScope = useRef(vendorWorkScope);
   const generation=useRef(0);
   const [users, setUsers] = useState([]);
   const [q, setQ] = useState("");
   const [searchParams,setSearchParams] = useSearchParams();
   // ?view= deep links (dashboard signals) open the register already filtered.
-  const linkedView = VIEWS.some(v => v.id === searchParams.get("view")) || LINKED_VIEWS[searchParams.get("view")] || (pilot && vendorViews.some(v => v.id === searchParams.get("view"))) ? searchParams.get("view") : "all_active";
+  const linkedView = vendorViews.some(v => v.id === searchParams.get('view')) ? searchParams.get('view') : 'all_active';
   const [view, setView] = useState(linkedView);
   useEffect(() => setView(linkedView), [linkedView]);
   const [loading, setLoading] = useState(true);
@@ -121,23 +128,38 @@ export default function VendorRegister() {
   async function load() {
     if (!currentClientId) return;
     const token=++generation.current;
-    setLoading(true); setLoadError('');
+    setLoading(true); setLoadError(''); setAcceptedRefresh(null);setAcceptedTaskScope(null);
     try {
-      const [v, u, r] = await Promise.all([
+      const [v, u, r, t] = await Promise.all([
         api.get("/vendors", { params: { client_id: currentClientId } }).then((r) => r.data),
         api.get(`/clients/${currentClientId}/members`).then((r) => r.data),
         api.get("/reviews",{params:{client_id:currentClientId}}).then(r=>r.data),
+        // Native lists fail with 413 above their cap; never publish a partial work total.
+        presentation ? api.get('/tasks',{params:{client_id:currentClientId}}).then(response=>response.data) : Promise.resolve([]),
       ]);
       if(token!==generation.current) return;
-      setRows(v || []); setUsers(u || []); setReviews(r||[]);
-    } catch (e) { if(token===generation.current){setRows([]);setLoadError(formatError(e));} }
+      if ([v,r,t].some(list => !Array.isArray(list) || list.some(row => !row || typeof row !== 'object' || row.client_id !== currentClientId))) {
+        setLoadedClientId(null); setLoadedReadScope('');
+        throw new Error('Vendors and linked Reviews could not be verified for this client.');
+      }
+      setRows(v); setUsers(u || []); setReviews(r);setTasks(t);setLoadedClientId(currentClientId);setLoadedReadScope(vendorReadScope);
+      setAcceptedTaskScope(presentation?`${vendorReadScope}:${vendorWorkScope}`:null);
+      setAcceptedRefresh({scope:vendorReadScope,at:new Date().toISOString()});
+    } catch (e) { if(token===generation.current){setRows([]);setReviews([]);setTasks([]);setAcceptedRefresh(null);setLoadError(formatError(e));} }
     finally { if(token===generation.current)setLoading(false); }
   }
-  useEffect(() => { const activeGeneration=generation; setRows([]);setUsers([]);setReviews([]);setDrawer({open:false,record:null});setAddOpen(false);setQ("");setView(linkedView);load();return()=>{activeGeneration.current++;};
+  useEffect(() => { const activeGeneration=generation; setAcceptedRefresh(null);setRows([]);setUsers([]);setReviews([]);setTasks([]);setTaskDrawer(null);setDrawer({open:false,record:null});setAddOpen(false);setQ("");setView(linkedView);load();return()=>{activeGeneration.current++;};
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentClientId]);
+  }, [currentClientId,vendorReadScope]);
+  useEffect(() => {
+    // Later enrollment can enable CIS without changing the current client or actor.
+    const wasEligible=previousPresentation.current,oldScope=previousWorkScope.current;
+    previousPresentation.current=presentation;previousWorkScope.current=vendorWorkScope;
+    if(presentation&&(!wasEligible||oldScope!==vendorWorkScope))load();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  },[presentation,vendorWorkScope]);
 
-  const enriched = useMemo(() => rows.map(v=>{const value=vendorSignals(v,reviews);return {...value,_attention:vendorWorkflow?['review_overdue','review_due','contract_soon','renewal_soon','assurance'].some(view=>vendorMatches(value,view)):value._reviewDue||value._contractSoon||value._assuranceIssue};}),[rows,reviews,vendorWorkflow]);
+  const enriched = useMemo(() => rows.map(v=>{const value=vendorSignals(v,reviews);return {...value,_attention:['review_overdue','review_due','contract_soon','renewal_soon','assurance'].some(view=>matches(value,view))};}),[rows,reviews,matches]);
 
   const presetRows = useMemo(() => {
     const s = q.trim().toLowerCase();
@@ -150,12 +172,23 @@ export default function VendorRegister() {
 
   const tableSource = enriched.filter(r => r.client_id === currentClientId);
   const baseColumns = tableColumns('vendor-register', { rows: tableSource, users });
-  const columns=vendorWorkflow?vendorColumns(baseColumns):baseColumns;
+  const columns=vendorWorkflow?[...vendorColumns(baseColumns),baseColumns.find(column=>column.key==='status')].filter(Boolean):baseColumns;
   const table = useTableControls({ columns, rows: tableSource, module: 'vendor-register', scope: `${user?.user_id}:${currentClientId}`, onFilterChange: key => { if (key === 'status' || key === 'criticality') setView('all'); } });
   const filtered = table.apply(presetRows.filter(r => r.client_id === currentClientId));
 
-  function selectView(id) { if(pilot){table.replaceState({...table.state,filters:{}});setView(id);return;}const key = ({all_active:'status',inactive:'status',critical:'criticality',high:'criticality',critical_high:'criticality',review_due:'next_review',review_overdue:'next_review',contract_soon:'contract_renewal'})[id]; if (key) table.setFilter(key, []); setView(id); }
-  const counts = Object.fromEntries([...(pilot?vendorViews:VIEWS).map(v => v.id),'critical_high','unassigned','all', ...Object.keys(LINKED_VIEWS)].map(id => [id, tableSource.filter(v => matches(v, id)).length]));
+  function selectView(id) {
+    table.replaceState({...table.state,filters:id==='unassigned'?{business_owner_id:[EMPTY]}:{}});
+    setView(id==='unassigned'?'all_active':id);
+  }
+  // Unassigned is the native empty-owner filter for every client.
+  const unassignedRows=()=>applyTableFilters(tableSource.filter(v=>matches(v,'all_active')),columns,{filters:{business_owner_id:[EMPTY]}});
+  const counts = Object.fromEntries(vendorViews.map(({id}) => [id, id==='unassigned'?unassignedRows().length:tableSource.filter(v => matches(v, id)).length]));
+  useEffect(()=>{
+    if(searchParams.get('view')!=='unassigned')return;
+    table.replaceState({...table.state,filters:{business_owner_id:[EMPTY]}});
+    setView('all_active');
+    const next=new URLSearchParams(searchParams);next.delete('view');setSearchParams(next,{replace:true});
+  },[searchParams,setSearchParams,table]);
   const tabs = pilot?vendorViews:LINKED_VIEWS[view] ? [...VIEWS, { id: view, label: LINKED_VIEWS[view] }] : VIEWS;
 
   function exportCsv() {
@@ -174,10 +207,37 @@ export default function VendorRegister() {
     a.download = `vendor-register-${(currentClient?.name || "client").replace(/\s+/g, "-")}.csv`; a.click();
   }
 
-  if(pilot){
-    const chipDefs=[...PILOT_CHIPS,...(LINKED_VIEWS[view]?[[view,LINKED_VIEWS[view]]]:[])];
+  let surface;
+  if(presentation&&!additional){
+    surface = <section className="brawndo-additional bav-page" data-theme={theme} data-testid="vendors-navigation-loading" aria-busy={!loadError}>
+      <V3WorkspaceHeading clientName={currentClient?.name} title="Vendors" subtitle="Third-party register"/>
+      <RegisterLoadError error={loadError} onRetry={load} name="vendors"/>
+      {!loadError&&<p role="status">Loading vendors…</p>}
+      {recordLinkError&&<p role="alert">{recordLinkError}</p>}
+    </section>;
+  } else if(additional){
+    const selectAdditionalView = id => {
+      const nativeOwnerFilter=id==='unassigned';
+      selectView(nativeOwnerFilter?'all_active':id);
+      if(nativeOwnerFilter)table.replaceState({...table.state,filters:{business_owner_id:[EMPTY]}});
+      const next=new URLSearchParams(searchParams);
+      if(id==='all_active'||nativeOwnerFilter)next.delete('view');else next.set('view',id);
+      setSearchParams(next,{replace:true});
+    };
+    surface = <>
+      <BrawndoAdditionalVendors quarterlyChart scopeKey={vendorWorkScope} workAvailable={acceptedTaskScope===`${vendorReadScope}:${vendorWorkScope}`} recordOpen={drawer.open||addOpen||!!taskDrawer} clientName={currentClient?.name||'Client'} rows={tableSource} filteredRows={filtered} reviews={reviews} tasks={tasks} users={users} loading={loading} error={loadError} onRetry={load} q={q} onSearch={setQ} view={view} onView={selectAdditionalView} table={table} theme={theme} acceptedRefresh={!loading&&!loadError&&acceptedRefresh?.scope===vendorReadScope?acceptedRefresh.at:null}
+        viewCounts={counts} contractDate={contractDate}
+        onOpen={(record,tab,assuranceId)=>setDrawer({open:true,record,tab,assuranceId})}
+        onOpenTask={record=>{if(record.client_id===currentClientId)setTaskDrawer(record);}}
+        onOpenReview={review=>navigate(`/reviews?id=${encodeURIComponent(review.review_id)}&client_id=${encodeURIComponent(currentClientId)}&occurrence=${encodeURIComponent(occurrenceId(review))}`)}
+        actions={<><button type="button" onClick={()=>setTheme(theme==='light'?'dark':'light')}><Sun size={15} aria-hidden="true"/>{theme==='light'?'Dark':'Light'}</button><button type="button" onClick={exportCsv} data-testid="vendors-export"><Download size={15} aria-hidden="true"/>Export CSV</button>{canWrite&&<button type="button" onClick={()=>setAddOpen(true)} data-testid="new-vendor">+ New vendor</button>}</>}/>
+      {recordLinkError&&<p role="alert">{recordLinkError}</p>}
+    </>;
+  } else if(pilot){
+    const selectedExtra=vendorViews.find(item=>item.id===view&&!PILOT_CHIPS.some(([id])=>id===view));
+    const chipDefs=[...PILOT_CHIPS,...(selectedExtra?[[selectedExtra.id,selectedExtra.label]]:[])];
     const pick=id=>selectView(view===id?'all_active':id);
-    return (
+    surface = (
       <BrawndoSurface className="bvendors">
         <BrawndoPageHeader eyebrow={`${currentClient?.name||'Client'} · Third parties`} title="Vendors">
           <button type="button" className="bpage-btn" onClick={exportCsv} data-testid="vendors-export"><Download size={16} aria-hidden="true"/>Export CSV</button>
@@ -186,6 +246,7 @@ export default function VendorRegister() {
         <BrawndoTiles label="Vendor summaries" loading={loading} tiles={vendorTiles(tableSource,new Date(),matches).map(t=>({...t,pressed:view===t.id,onClick:()=>pick(t.id)}))}/>
         <div className="register-toolbar">
           <SearchField label="Search vendors" placeholder="Search vendors…" value={q} onChange={setQ} testid="vendor-search" />
+          {vendorWorkflow&&<ColumnControl table={table} columnKey="status" />}
           <BrawndoChips label="Vendor views" chips={chipDefs.map(([id,label])=>({id,label,count:loading?null:counts[id],pressed:view===id,onClick:()=>selectView(id),testid:`vendor-view-${id}`}))}/>
           {(q||view==='all')&&<button type="button" className="bpage-chip" onClick={()=>{setQ('');selectView('all_active');}}>Clear filters</button>}
         </div>
@@ -195,7 +256,7 @@ export default function VendorRegister() {
           <div className="register-table-frame overflow-x-auto" role="region" aria-label="Vendors register" tabIndex={0}>
             <table className="w-full text-sm">
               <thead><tr>
-                <SortableHeader table={table} columnKey="name" />
+                <th scope="col" className="tbl-head" aria-sort={sortState(table,'name')}><ColumnControl table={table} columnKey="name" />{vendorWorkflow&&<ColumnControl table={table} columnKey="service" />}</th>
                 {!vendorWorkflow&&<SortableHeader table={table} columnKey="service" />}
                 <SortableHeader table={table} columnKey="criticality" />
                 <SortableHeader table={table} columnKey="data_types" />
@@ -222,7 +283,7 @@ export default function VendorRegister() {
                       <td className="tbl-cell">{dt.length?<span className="bvendors-tags">{dt.map(d=><span key={d} className="bvendors-tag">{d}</span>)}</span>:<span className="register-empty">—</span>}</td>
                       <td className="tbl-cell"><OwnerCell people={users} id={v.business_owner_id} status={v.status} /></td>
                       <td className="tbl-cell">{v.next_review ? <DueDate iso={v.next_review} closed={closed} /> : <span className="register-empty">Not scheduled</span>}
-                        {assur&&<button type="button" className="bvendors-note" onClick={e=>{e.stopPropagation();setDrawer({open:true,record:v,tab:'assurance'});}}>Assurance follow-up due</button>}</td>
+                        {assur&&<button type="button" className="bvendors-note" aria-label="View assurance" onClick={e=>{e.stopPropagation();setDrawer({open:true,record:v,tab:'assurance'});}}>View assurance</button>}</td>
                       <td className="tbl-cell">{renewal ? <DueDate iso={renewal} closed={closed} /> : <span className="register-empty">No renewal date</span>}{view==='renewal_soon'&&<span className="bpage-meta">{renewalAction(v).label}: {shortDate(renewalAction(v).date)}</span>}</td>
                       <td className="tbl-cell"><HistoryDate value={v.last_review} empty="Never reviewed" /></td>
                       {!vendorWorkflow&&<td className="tbl-cell"><StatusBadge value={v.status||'active'} /></td>}
@@ -235,12 +296,10 @@ export default function VendorRegister() {
           </div>
         </div>
         {recordLinkError&&<p role="alert">{recordLinkError}</p>}
-      {drawer.open && <RecordDrawer open={drawer.open&&drawer.record?.client_id===currentClientId} onOpenChange={closeLinkedDrawer} initialValues={{vendorTab:drawer.tab}} kind="vendors" record={drawer.record} schema={SCHEMAS.vendors.fields} clientId={currentClientId} users={users} onSaved={load} />}
-        {vendorWorkflow?addOpen&&<RecordDrawer open onOpenChange={setAddOpen} kind="vendors" schema={SCHEMAS.vendors.fields} clientId={currentClientId} users={users} onSaved={()=>{setAddOpen(false);load();}}/>:<NewVendorDialog open={addOpen} onOpenChange={setAddOpen} clientId={currentClientId} users={users} onCreated={()=>{setAddOpen(false);load();}}/>}
       </BrawndoSurface>
     );
-  }
-  return (
+  } else {
+    surface = (
     <div>
       {recordLinkError&&<p role="alert">{recordLinkError}</p>}
       <PageHeader
@@ -283,7 +342,7 @@ export default function VendorRegister() {
               {!loading && !loadError && filtered.length === 0 && <tr><td colSpan={9} className="tbl-cell text-center text-ink-help py-10"><FilterEmpty table={table} name="vendors" onClear={() => { setQ(''); setView('all_active'); }} /></td></tr>}
               {!loading && filtered.map((v, i) => {
                 const dt = v.data_types || [];
-                const renewal = pilot?v.contract_renewal:v.contract_renewal || v.contract_expiration || v.contract_end;
+                const renewal = v.contract_renewal;
                 return (
                   <tr key={v.vendor_id} className="row-hover row-open" onClick={() => setDrawer({ open: true, record: v })} data-testid={`vendor-row-${i}`}>
                     <td className="tbl-cell font-medium text-ink-primary">
@@ -309,10 +368,16 @@ export default function VendorRegister() {
           </table>
         </div>
       </div>
-      {drawer.open && <RecordDrawer open={drawer.open&&drawer.record?.client_id===currentClientId} onOpenChange={closeLinkedDrawer} initialValues={{vendorTab:drawer.tab}} kind="vendors" record={drawer.record} schema={SCHEMAS.vendors.fields} clientId={currentClientId} users={users} onSaved={load} />}
-      {vendorWorkflow?addOpen&&<RecordDrawer open onOpenChange={setAddOpen} kind="vendors" schema={SCHEMAS.vendors.fields} clientId={currentClientId} users={users} onSaved={()=>{setAddOpen(false);load();}}/>:<NewVendorDialog open={addOpen} onOpenChange={setAddOpen} clientId={currentClientId} users={users} onCreated={() => { setAddOpen(false); load(); }} />}
     </div>
-  );
+    );
+  }
+  // Appearance can withdraw during an organization refresh; native drafts keep the same mounted editors.
+  return <>
+    {surface}
+    {drawer.open && <RecordDrawer open={drawer.open&&drawer.record?.client_id===currentClientId} onOpenChange={closeLinkedDrawer} initialValues={{vendorTab:drawer.tab,assuranceId:drawer.assuranceId}} kind="vendors" record={drawer.record} schema={SCHEMAS.vendors.fields} clientId={currentClientId} users={users} onSaved={load} />}
+    {taskDrawer&&taskDrawer.client_id===currentClientId&&<RecordDrawer open onOpenChange={open=>{if(!open)setTaskDrawer(null);}} kind="tasks" record={taskDrawer} schema={SCHEMAS.tasks.fields} clientId={currentClientId} users={users} onSaved={load}/>}
+    {vendorWorkflow?addOpen&&<RecordDrawer open onOpenChange={setAddOpen} kind="vendors" schema={SCHEMAS.vendors.fields} clientId={currentClientId} users={users} onSaved={()=>{setAddOpen(false);load();}}/>:<NewVendorDialog open={addOpen} onOpenChange={setAddOpen} clientId={currentClientId} users={users} onCreated={()=>{setAddOpen(false);load();}}/>}
+  </>;
 }
 
 

@@ -13,15 +13,40 @@ for filename in ('guidedIsoIsms.json', 'guidedIsoOrganizationalPeople.json', 'gu
     if part['version'] != VERSION or part['framework_id'] != 'iso-27001' or CATALOG['definitions'].keys() & part['definitions'].keys():
         raise ValueError('Incompatible or duplicate ISO interview definitions')
     CATALOG['definitions'].update(part['definitions'])
-VERSIONS = {VERSION: CATALOG}
+LEGACY = CATALOG
+V2 = json.loads((ROOT / 'guidedIsoV2.json').read_text(encoding='utf-8'))
+ROLLOUT = json.loads((ROOT / 'guidedIso27001Rollout1.json').read_text(encoding='utf-8'))
+PROSPECTIVE = json.loads((ROOT / 'guidedIso27001Rollout2.json').read_text(encoding='utf-8'))
+# Keep the immutable V2 catalog available to historical readers and scope consumers.
+CATALOG = V2
+VERSION = PROSPECTIVE['version']
+VERSIONS = {V2['version']: V2, LEGACY['version']: LEGACY, ROLLOUT['version']: ROLLOUT, PROSPECTIVE['version']: PROSPECTIVE}
+INTENT_VERSIONS = frozenset((V2['version'], ROLLOUT['version'], PROSPECTIVE['version']))
 CHOICES = ['Yes', 'Partially', 'No', 'Not sure']
 CONTEXT_CHOICES = ['Relevant', 'Not relevant here', 'Not sure']
 EXTRA_KEYS = {'gaps', 'unknowns', 'evidence'}
 TEXT_WHITESPACE = ' \t\n\r\v\f\u00a0\u1680\u2000\u2001\u2002\u2003\u2004\u2005\u2006\u2007\u2008\u2009\u200a\u2028\u2029\u202f\u205f\u3000\ufeff'
 
 
+def uses_intent_gates(version=None):
+    return (version or VERSION) in INTENT_VERSIONS
+
+
+def uses_inline_sentences(version=None):
+    return (version or VERSION) in INTENT_VERSIONS
+
+
+def uses_concern_status(version=None):
+    return (version or VERSION) == PROSPECTIVE['version']
+
+
 def _text(answers, key):
     return answers.get(key, '').strip(TEXT_WHITESPACE)
+
+
+def extra_questions(version=None):
+    return VERSIONS[version or VERSION].get('extra_questions',
+        [{'id': key, 'type': 'text'} for key in ('gaps', 'unknowns', 'evidence')])
 
 
 def _definition(id, version=None):
@@ -88,7 +113,7 @@ async def write_context(s, aid, user):
 
 def validate_answers(id, answers, version=None):
     questions = {question['id']: question for question in _questions(id, version)}
-    questions.update({key: {'type': 'text'} for key in EXTRA_KEYS})
+    questions.update({question['id']: question for question in extra_questions(version)})
     if not isinstance(answers, dict):
         raise HTTPException(422, 'Invalid ISO interview answers')
     for key, value in answers.items():
@@ -102,6 +127,10 @@ def validate_answers(id, answers, version=None):
 
 def validate_completion(id, answers, version=None):
     validate_answers(id, answers, version)
+    for question in extra_questions(version):
+        condition = question.get('condition')
+        if condition and answers.get(condition['id']) == condition['equals'] and not _text(answers, question['id']):
+            raise HTTPException(422, 'Describe the additional reported work before completing the interview')
     for question in _active_questions(id, answers, version):
         if question['type'] == 'text':
             continue
@@ -115,22 +144,27 @@ def validate_completion(id, answers, version=None):
 def result_status(id, answers, version=None):
     validate_answers(id, answers, version)
     meaningful = partial = confirmed_no = False
+    unknown = False
     for question in _active_questions(id, answers, version):
         value = answers.get(question['id'])
         if question['type'] == 'text':
             continue
         if question['type'] == 'context':
             if value != 'Relevant' and not (value == 'Not relevant here' and _text(answers, question['id'] + '_detail')):
-                partial = True
+                unknown = True
             continue
         meaningful |= value in ('Yes', 'Partially')
         confirmed_no |= value == 'No'
-        partial |= value != 'Yes'
+        partial |= value == 'Partially'
+        unknown |= value not in ('Yes', 'Partially', 'No')
+    if uses_concern_status(version):
+        confirmed_no |= answers.get('additional_gap') == 'Yes' and bool(_text(answers, 'gaps'))
+        unknown |= answers.get('additional_confirmation') == 'Yes' and bool(_text(answers, 'unknowns'))
     if confirmed_no:
         return 'needs_attention'
-    if not meaningful:
+    if not meaningful or (version or VERSION) != LEGACY['version'] and unknown and not partial:
         return 'not_assessed'
-    return 'in_progress' if partial else 'addressed'
+    return 'in_progress' if partial or unknown else 'addressed'
 
 
 def current_base(row, client):

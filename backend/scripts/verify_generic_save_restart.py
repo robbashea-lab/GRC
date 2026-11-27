@@ -93,11 +93,21 @@ def main():
             assert calendar['next_review_date'][:10]=='2026-02-28'
             projection=api.get('/calendar',params={'client_id':'synthetic','start':'2026-03-01','end':'2026-03-31','scope':'all'}).json()
             assert projection['reviews']['2026-03-05'][0]['id']=='calendar'
-            completed=api.post('/reviews/calendar/complete',json={'occurrence_id':'calendar-first'})
+            guide_response=api.get('/reviews/calendar/completion-guide')
+            assert guide_response.status_code==200,guide_response.text
+            guide=guide_response.json()
+            assert guide['custom'] and not guide['steps'] and guide['occurrence_id']=='calendar-first'
+            completion={'occurrence_id':guide['occurrence_id'],'expected_updated_at':guide['expected_updated_at'],
+                'outcome':'No exceptions noted','supporting_reference':'Synthetic restart test: saved calendar move and canonical recovery readbacks verified.'}
+            missing_version={k:v for k,v in completion.items() if k!='expected_updated_at'}
+            assert api.post('/reviews/calendar/complete',json=missing_version).status_code==428
+            assert api.post('/reviews/calendar/complete',json={**completion,'expected_updated_at':'stale'}).status_code==409
+            assert not database.reviews.find_one({'review_id':'calendar'}).get('occurrences')
+            completed=api.post('/reviews/calendar/complete',json=completion)
             assert completed.status_code==200,completed.text
             assert completed.json()['occurrence']['recurrence_due_date']=='2026-01-31'
             assert completed.json()['review']['next_review_date'][:10]=='2026-03-31'
-            assert api.post('/reviews/calendar/complete',json={'occurrence_id':'calendar-first'}).json()['occurrence']==completed.json()['occurrence']
+            assert api.post('/reviews/calendar/complete',json=completion).json()['occurrence']==completed.json()['occurrence']
             assert database.reviews.find_one({'review_id':'calendar'})['occurrences'][0]['due_date']=='2026-03-05'
             assert database.audit_logs.count_documents({'entity_type':'review','entity_id':'calendar','action':'update'})==1
             print(json.dumps({'normal_password_login':True,'asset_audit_recovered_after_process_restart':True,'vendor_review_recovered_after_process_restart':True,

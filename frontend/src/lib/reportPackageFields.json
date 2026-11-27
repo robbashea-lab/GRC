@@ -1,0 +1,13 @@
+{
+  "clients": ["client_id", "name", "industry", "environment", "status", "timezone", "time_zone", "assigned_owner_id", "primary_contact_id", "isms_scope", "iso_scope", "profile.scope.statement", "profile.scope.systems", "profile.scope.locations", "profile.scope.data", "profile.scope.exclusions", "profile_scope_confirmation.at", "profile_scope_confirmation.by"],
+  "contacts": ["contact_id", "name", "role", "grc_roles", "title", "status"],
+  "assets": ["asset_id", "name", "asset_type", "criticality", "location", "owner_id", "status"],
+  "ai_systems": ["ai_system_id", "name", "provider", "product_model", "purposes", "owner_id", "data_types", "no_client_data", "approval_status", "status", "restrictions", "risk_tier", "related_links.kind", "related_links.id"],
+  "reviews": ["review_id", "title", "review_type", "recurrence", "owner_id", "reviewer_id", "risk_id", "vendor_id", "policy_id", "ai_system_id", "due_date", "status", "completion_date", "current_occurrence_id", "framework_assessment_id", "framework_key", "framework_drivers.framework_key", "occurrences.occurrence_id", "occurrences.completed_at", "occurrences.completion_date", "occurrences.due_date", "occurrences.outcome", "occurrences.title", "occurrences.owner_id", "activity_setup.recurring_ticket_number", "r4_current_checklist.occurrence_id", "r4_current_checklist.cycle_ticket_number", "occurrences.activity_setup.recurring_ticket_number", "occurrences.activity_setup.cycle_ticket_number"],
+  "tasks": ["task_id", "display_id", "title", "source", "finding_id", "review_id", "framework_assessment_id", "owner_id", "assignee_id", "priority", "due_date", "status", "completed_at", "validated_at"],
+  "findings": ["finding_id", "review_id", "framework_assessment_id", "status", "validated_at", "decision_history.action", "decision_history.at"],
+  "framework_assessments": ["framework_assessment_id", "framework_key", "definition_id", "title", "status", "verification", "implementation", "related_links.kind", "related_links.id", "policy_link_ids"],
+  "risks": ["risk_id", "display_id", "title", "likelihood_score", "impact_score", "treatment", "status", "owner_id", "next_review", "accepted_by", "acceptance_date"],
+  "vendors": ["vendor_id", "name", "criticality", "criticality_provisional", "status", "data_relationship", "data_types", "assurance_status", "next_review", "contract_renewal", "assurance_records.document_name", "assurance_records.type", "assurance_records.required", "assurance_records.received_at", "assurance_records.refresh_due"],
+  "policies": ["policy_id", "title", "status", "version", "owner_id", "approved_at", "last_reviewed_at", "next_review_date"]
+}

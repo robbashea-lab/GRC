@@ -1,0 +1,24 @@
+{
+  "run": 38440568467,
+  "number": 164,
+  "revision": "14fc37114bef6891fde31eb0d5897c3ce01c80c5",
+  "provider_job_url": "https://github.com/robbashea-lab/GRC/actions/runs/38440568467/job/115445756704",
+  "provider_annotation": "The job has exceeded the maximum execution time of 30m0s",
+  "offline": {
+    "result": "success",
+    "duration": "26m15s"
+  },
+  "mongo": {
+    "result": "cancelled",
+    "duration": "3m24s",
+    "last_visible_case": "test_six_year_progression_preserves_supported_work"
+  },
+  "aggregate": "failure",
+  "classification": "Confirmed CI job budget exhaustion. No application assertion failure established.",
+  "staging": "Not deployed; prior69b3832 preserved",
+  "evidence": [
+    "ci164-backend-annotation.txt",
+    "ci164-backend-annotation.png",
+    "ci164-backend-budget-ui.txt"
+  ]
+}

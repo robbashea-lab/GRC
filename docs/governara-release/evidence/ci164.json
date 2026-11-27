@@ -1,0 +1,122 @@
+{
+  "run_id": 38440568467,
+  "url": "https://github.com/robbashea-lab/GRC/actions/runs/38440568467",
+  "revision": "14fc37114bef6891fde31eb0d5897c3ce01c80c5",
+  "branch": "codex/governara-release-20261013",
+  "pull_request": 78,
+  "expected_tree_from_coordinator": "5d1d5194d0568679207f4d1412874ba1826e6813",
+  "source_proof": "Exact SHA from frontend and available earlier backend checkout logs.",
+  "observed_terminal_at_utc": "2026-10-13 18:14:42 UTC",
+  "release_gate_conclusion": "failure",
+  "composite_gate_passed": false,
+  "jobs": {
+    "frontend": {
+      "id": 115445757196,
+      "conclusion": "success",
+      "suites": {
+        "passed": 302,
+        "failed": 0,
+        "total": 302
+      },
+      "tests": {
+        "passed": 9111,
+        "failed": 0,
+        "total": 9111
+      },
+      "snapshots": {
+        "passed": 1,
+        "failed": 0,
+        "total": 1
+      },
+      "seconds": 1866.544,
+      "authenticated_build": {
+        "command": "node scripts/staging.cjs",
+        "conclusion": "success",
+        "javascript": "main.d171f8c7.js",
+        "css": "main.e82e5c68.css"
+      },
+      "demo_build": {
+        "command": "yarn build:preview",
+        "conclusion": "success",
+        "javascript": "main.af09bb52.js",
+        "css": "main.7e6897c1.css"
+      }
+    },
+    "backend": {
+      "id": 115445756704,
+      "conclusion": "cancelled",
+      "offline": "success",
+      "disposable_mongo": "cancelled",
+      "final_counts": null,
+      "cancellation_cause": "Not established by available connector terminal evidence.",
+      "terminal_log_error": "tool call failed for codex_apps/github.fetch_workflow_job_logs: Transport closed"
+    },
+    "release_gate": {
+      "id": 115461054148,
+      "conclusion": "failure",
+      "frontend_result": "success",
+      "backend_result": "cancelled",
+      "exit_code": 1
+    }
+  },
+  "relevant_frontend_log_lines": [
+    "2026-10-13T17:40:41.6278030Z [command]/usr/bin/git -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules --depth=1 origin +14fc37114bef6891fde31eb0d5897c3ce01c80c5:refs/remotes/origin/codex/governara-release-20261013",
+    "2026-10-13T17:40:43.4265706Z  * [new ref]         14fc37114bef6891fde31eb0d5897c3ce01c80c5 -> origin/codex/governara-release-20261013",
+    "2026-10-13T17:40:43.6821476Z [command]/usr/bin/git log -1 --format=%H",
+    "2026-10-13T17:40:43.6850337Z 14fc37114bef6891fde31eb0d5897c3ce01c80c5",
+    "2026-10-13T18:12:32.6302129Z Test Suites: 302 passed, 302 total",
+    "2026-10-13T18:12:32.6302777Z Tests:       9111 passed, 9111 total",
+    "2026-10-13T18:12:32.6303357Z Snapshots:   1 passed, 1 total",
+    "2026-10-13T18:12:32.6303841Z Time:        1866.544 s",
+    "2026-10-13T18:12:32.9331785Z ##[group]Run node scripts/staging.cjs",
+    "2026-10-13T18:13:07.8980060Z Compiled successfully.",
+    "2026-10-13T18:13:08.0740462Z   1.01 MB    dist/static/js/main.d171f8c7.js",
+    "2026-10-13T18:13:08.0769899Z   52.84 kB   dist/static/css/main.e82e5c68.css",
+    "2026-10-13T18:13:08.2178111Z ##[group]Run yarn build:preview",
+    "2026-10-13T18:13:40.7850489Z Compiled successfully.",
+    "2026-10-13T18:13:40.9121756Z   1.01 MB    build/static/js/main.af09bb52.js",
+    "2026-10-13T18:13:40.9123474Z   52.89 kB   build/static/css/main.7e6897c1.css"
+  ],
+  "release_gate_log_lines": [
+    "2026-10-13T18:13:47.8197136Z ##[group]Run test \"$FRONTEND_RESULT\" = success && test \"$BACKEND_RESULT\" = success",
+    "2026-10-13T18:13:47.8198634Z \u001b[36;1mtest \"$FRONTEND_RESULT\" = success && test \"$BACKEND_RESULT\" = success\u001b[0m",
+    "2026-10-13T18:13:48.0338396Z   FRONTEND_RESULT: success",
+    "2026-10-13T18:13:48.0339759Z   BACKEND_RESULT: cancelled",
+    "2026-10-13T18:13:48.0535704Z ##[error]Process completed with exit code 1."
+  ],
+  "buffered_backend_diagnostic": {
+    "retrieval_utc": "2026-10-13 18:07:02 UTC",
+    "available_log_end_utc": "2026-10-13T17:43:10.6669581Z",
+    "chars": 4185956,
+    "last_passing_progress": "90% at 17:42:55 UTC",
+    "excerpt": [
+      "2026-10-13T17:43:10.6504378Z Timeout (0:01:00)!",
+      "2026-10-13T17:43:10.6530635Z   File \"/opt/hostedtoolcache/Python/3.12.15/x64/lib/python3.12/site-packages/mongomock/filtering.py\", line 128 in apply",
+      "2026-10-13T17:43:10.6532340Z   File \"/opt/hostedtoolcache/Python/3.12.15/x64/lib/python3.12/site-packages/mongomock/filtering.py\", line 480 in <genexpr>",
+      "2026-10-13T17:43:10.6534027Z   File \"/opt/hostedtoolcache/Python/3.12.15/x64/lib/python3.12/site-packages/mongomock/filtering.py\", line 480 in <lambda>",
+      "2026-10-13T17:43:10.6535647Z   File \"/opt/hostedtoolcache/Python/3.12.15/x64/lib/python3.12/site-packages/mongomock/filtering.py\", line ??? in apply",
+      "2026-10-13T17:43:10.6537491Z   File \"/opt/hostedtoolcache/Python/3.12.15/x64/lib/python3.12/site-packages/mongomock/filtering.py\", line 52 in filter_applies",
+      "2026-10-13T17:43:10.6546566Z   File \"/opt/hostedtoolcache/Python/3.12.15/x64/lib/python3.12/site-packages/mongomock_motor/__init__.py\", line 130 in to_list",
+      "2026-10-13T17:43:10.6547944Z   File \"/home/runner/work/GRC/GRC/backend/server.py\", line 3952 in complete_review",
+      "2026-10-13T17:43:10.6598233Z   File \"/home/runner/work/GRC/GRC/backend/tests/test_platform_ten_year_lifecycle.py\", line 169 in request",
+      "2026-10-13T17:43:10.6599750Z   File \"/home/runner/work/GRC/GRC/backend/tests/test_platform_ten_year_lifecycle.py\", line 192 in post",
+      "2026-10-13T17:43:10.6601102Z   File \"/home/runner/work/GRC/GRC/backend/tests/test_platform_ten_year_lifecycle.py\", line 607 in complete",
+      "2026-10-13T17:43:10.6602508Z   File \"/home/runner/work/GRC/GRC/backend/tests/test_platform_ten_year_lifecycle.py\", line 748 in run_program",
+      "2026-10-13T17:43:10.6604016Z   File \"/home/runner/work/GRC/GRC/backend/tests/test_platform_ten_year_lifecycle.py\", line 789 in test_cis_ig1_ten_years"
+    ],
+    "interpretation": "Configured 60-second faulthandler diagnostic, not a fatal error or terminal test failure. Buffered log age does not establish a current hang or cancellation cause.",
+    "metadata_freshness": "18:07 offline-running snapshot was superseded by fresh 18:09:29 metadata showing offline success and Mongo running, then 18:11:49 metadata showing backend/Mongo cancelled."
+  },
+  "warnings": [
+    "(node:2326) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.",
+    "Unknown event handler property `onOpenAutoFocus`. It will be ignored.",
+    "Unknown event handler property `onCloseAutoFocus`. It will be ignored.",
+    "Unknown event handler property `onPointerDownOutside`. It will be ignored.",
+    "(node:2894) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.",
+    "##[warning]Node.js 20 is deprecated. The following actions target Node.js 20 but are being forced to run on Node.js 24: actions/checkout@11d5960a326750d5838078e36cf38b85af677262, actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/"
+  ],
+  "warning_attribution": "Observed non-fatal frontend logs; no new/pre-existing attribution made without comparison.",
+  "evidence_kind": "GitHub CI logs and job/step metadata. Not staging hosted QA or acceptance.",
+  "mutations": "Only this external receipt. No source, browser, provider, Git, dispatch, retry, cancel or deployment action.",
+  "prior_individual_ci": "CI158/161/163/156 remain separate and do not establish the composite gate."
+}

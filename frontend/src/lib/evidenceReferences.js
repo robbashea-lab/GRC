@@ -1,4 +1,7 @@
 import sources from './evidenceSources.json';
+export const missingEvidenceFile = 'This evidence record has no downloadable file.';
+export const unavailableEvidenceProps = row => row.file_available === false
+  ? {disabled:true, title:missingEvidenceFile, 'aria-label':missingEvidenceFile} : {};
 import {occurrenceId,reviewSchedule} from './reviewOccurrences';
 import {frameworkDefinition,FRAMEWORKS} from './frameworks';
 

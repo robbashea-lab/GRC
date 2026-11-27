@@ -1,6 +1,7 @@
 """Optional client context; source records and permissions remain in their modules."""
 import json
-from datetime import date
+import re
+from datetime import date, datetime
 from pathlib import Path
 from typing import Literal
 from fastapi import APIRouter, Depends, HTTPException
@@ -29,7 +30,7 @@ MODELS = {key: section_model(key) for key in CATALOG['sections']}
 
 class ProfileUpdate(BaseModel):
     model_config = ConfigDict(extra='forbid')
-    section: Literal['organization','technical','security']
+    section: Literal['organization','technical','security','scope']
     values: dict
     expected_updated_at: str | None = Field(default=None, max_length=100)
 
@@ -71,6 +72,26 @@ async def recorded_baseline(s,client):
     return None
 
 
+def recorded_onboarding_state(client, *, legacy_completed=False):
+    """Read-only status from the same saved/legacy proof used by recorded_baseline."""
+    if not isinstance(client.get('client_id'), str) or not client['client_id'].strip():
+        return 'unknown'
+    initial, saved = client.get('initial_program_baseline'), client.get('onboarding_baseline')
+    has_snapshot = isinstance(initial, dict) and bool(initial)
+    has_saved_completion = isinstance(saved, dict) and saved.get('completed') is True
+    if has_snapshot or has_saved_completion or legacy_completed:
+        return 'complete'
+    updated_at = saved.get('updated_at') if isinstance(saved, dict) else None
+    if (isinstance(saved, dict) and saved.get('completed') is False
+            and isinstance(updated_at, str) and re.match(r'^\d{4}-\d{2}-\d{2}(?:$|T| )', updated_at)):
+        try:
+            datetime.fromisoformat(updated_at.replace('Z', '+00:00'))
+            return 'in_progress'
+        except ValueError:
+            pass
+    return 'unknown'
+
+
 def router_for(s):
     router = APIRouter(prefix='/api')
 
@@ -79,6 +100,8 @@ def router_for(s):
             raise HTTPException(403,'Forbidden for this client')
         client = await s.db.clients.find_one({'client_id':cid},{'_id':0})
         if not client: raise HTTPException(404,'Client not found')
+        import r4_services
+        r4_services.assert_settled(client)
         return client
 
     @router.get('/clients/{cid}/profile')
@@ -88,7 +111,7 @@ def router_for(s):
         # Reuse the audit log; do not create a parallel profile-history collection.
         history = await s.db.audit_logs.find({'client_id':cid,'$or':[{'action':{'$in':['client-profile-updated','program-applicability-updated']}},{'action':'update','entity_type':'client'}]},
             {'_id':0,'action':1,'at':1,'user_name':1,'meta':1}).sort('at',-1).limit(50).to_list(50)
-        return {'client_id':cid,'profile':client.get('profile') or {},'updated_at':client.get('updated_at'),
+        return {'client_id':cid,'profile':client.get('profile') or {},'scope_confirmation':client.get('profile_scope_confirmation'),'updated_at':client.get('updated_at'),
                 'baseline':baseline,'completed':baseline is not None,
                 'history':history}
 
@@ -100,10 +123,14 @@ def router_for(s):
         old = (client.get('profile') or {}).get(body.section) or {}
         merged = {**old,**values}
         changes = {key:{'before':old.get(key),'after':value} for key,value in values.items() if old.get(key)!=value}
-        if not changes: return {'ok':True}
+        confirm_scope = body.section == 'scope' and any(merged.values())
+        if not changes and not confirm_scope: return {'ok':True}
         at = s._next_write_time(client.get('updated_at'))
-        changed = await s.db.clients.update_one({'client_id':cid,'updated_at':client.get('updated_at')},
-            {'$set':{f'profile.{body.section}':merged,'updated_at':at}})
+        fields = {f'profile.{body.section}':merged,'updated_at':at}
+        if body.section == 'scope':
+            fields['profile_scope_confirmation'] = {'at':at,'by':user.get('name') or user.get('user_id')} if confirm_scope else None
+        changed = await s.db.clients.update_one({'client_id':cid,'updated_at':client.get('updated_at'),'_r4_context_pending':None},
+            {'$set':fields})
         if not changed.matched_count: raise HTTPException(409,'Profile changed; reload before saving')
         await s.audit(user,'client-profile-updated','client',cid,cid,meta={'section':body.section,'changes':changes})
         return {'ok':True}

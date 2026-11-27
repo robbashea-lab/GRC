@@ -1,0 +1,4 @@
+// Shared approved artwork only; native framework guide controllers own all behavior.
+export default function OmniGuideCharacter(){
+  return <svg className="omni-character cis-omni-owl" viewBox="0 0 48 48" aria-hidden="true"><path d="M10 14 6 6l10 5a18 18 0 0 1 16 0l10-5-4 8a17 17 0 0 1 3 10c0 11-8 19-17 19S7 35 7 24a17 17 0 0 1 3-10Z" fill="color-mix(in srgb, var(--rail) 18%, var(--surface))" stroke="var(--fg2)" strokeWidth="1.6" strokeLinejoin="round"/><circle cx="17.5" cy="22" r="6" fill="var(--surface)" stroke="var(--fg2)" strokeWidth="1.6"/><circle cx="30.5" cy="22" r="6" fill="var(--surface)" stroke="var(--fg2)" strokeWidth="1.6"/><circle cx="17.5" cy="22" r="2.4" fill="var(--rail)"/><circle cx="30.5" cy="22" r="2.4" fill="var(--rail)"/><path d="m22 29 2 3 2-3Z" fill="var(--c-part)"/><path d="M15 37c3 2 6 3 9 3s6-1 9-3" fill="none" stroke="var(--fg2)" strokeWidth="1.4" strokeLinecap="round" opacity=".6"/></svg>;
+}

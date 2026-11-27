@@ -1,0 +1,10 @@
+{
+  "commit": "ecc28a2f2ca846c55e8e007bf3bc7f751d7cccde",
+  "parent": "a069bb52991729c830b112972f22fa1293e4ccb5",
+  "scope": ["frontend/src/lib/socGuidedAssessment.js", "frontend/src/lib/inlineContextSentences.test.js"],
+  "before": {"tests_selected":1,"failed":1,"seconds":1.406,"log":"work/program-shared-soc-period-before.log","actual":"Partial CC1.1 supporting detail with its own terminal period gained another period during fact/message construction."},
+  "after": {"suites":2,"tests":13,"passed":13,"seconds":1.687,"log":"work/program-shared-soc-period-final.log"},
+  "behavior": ["Current SOC V2 generated factual fragments use the existing terminal-punctuation helper before joining them.","Reported detail remains literal, native outcome stays Partial with one gap and one independent confirmation, and current inline/structured generated text avoids the duplicate period.","Legacy SOC V1 output explicitly retains its prior separator behavior; answers, stored/manual text/history/UI/persistence remain unchanged.","No punctuation keyword parsing, generic cleanup or other source expansion."],
+  "diff_check": "passed",
+  "limits": "Focused writer/semantic regressions only. Root owns combined-source tests and compiled-browser refreshed-proposal evidence. No deployment or provider/shared-session operations."
+}

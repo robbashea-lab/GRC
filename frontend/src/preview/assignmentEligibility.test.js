@@ -1,4 +1,4 @@
-import { assignmentCandidates, assignmentFields, validateAssignment } from './assignmentEligibility';
+import { assignmentCandidates, assignmentFields, clientAccess, validateAssignment } from './assignmentEligibility';
 
 const account = (user_id, role, client_ids, status = 'active') => ({user_id, name:'Same Name', email:user_id+'@example.test', role, client_ids, status});
 const db = () => ({user:account('actor','client_contributor',['a']), users:[
@@ -7,6 +7,39 @@ const db = () => ({user:account('actor','client_contributor',['a']), users:[
   account('foreign','client_contributor',['b']), account('foreign_internal','platform_admin',['b']),
   account('former','client_contributor',['a'],'disabled'), account('invited','client_contributor',['a'],'invited'),
 ], contacts:[{contact_id:'maya',client_id:'a',name:'Maya Chen',status:'active'}]});
+
+test('client membership requires an array containing the exact client ID for every recognized role', () => {
+  for (const role of ['super_admin', 'platform_admin', 'client_grc_manager', 'client_contributor', 'client_readonly', 'client_viewer']) {
+    expect(clientAccess(account('actor', role, ['a']), 'a')).toBe(true);
+    if (role === 'super_admin') continue;
+    for (const client_ids of ['a', 'a_foreign', ['a_foreign'], undefined, null, false, 1, {0: 'a', length: 1}]) {
+      expect(clientAccess(account('actor', role, client_ids), 'a')).toBe(false);
+    }
+  }
+  expect(clientAccess(account('unknown', 'unsupported', ['a']), 'a')).toBe(false);
+});
+
+test('only an explicit boolean all-client entitlement grants platform-wide provider access', () => {
+  for (const all_clients of [undefined, null, false, 'true', 'false', 1, {}, []]) {
+    expect(clientAccess({...account('provider', 'platform_admin', []), all_clients}, 'a')).toBe(false);
+  }
+  expect(clientAccess({...account('provider', 'platform_admin', null), all_clients: true}, 'a')).toBe(true);
+  expect(clientAccess(account('owner', 'super_admin', null), 'a')).toBe(true);
+  expect(clientAccess({...account('client', 'client_contributor', []), all_clients: true}, 'a')).toBe(false);
+});
+
+test('malformed actor and candidate memberships grant neither candidate reads nor new assignments', () => {
+  const d = db();
+  d.users.push(account('malformed', 'client_contributor', 'a_foreign'));
+  const before = JSON.stringify(d);
+  expect(assignmentCandidates(d, 'a').items.some(row => row.user_id === 'malformed')).toBe(false);
+  expect(() => validateAssignment(d, 'reviews', {client_id: 'a', owner_id: 'malformed'})).toThrow('Choose an active platform user');
+  expect(JSON.stringify(d)).toBe(before);
+  d.user.client_ids = 'a_foreign';
+  const denied = JSON.stringify(d);
+  expect(() => assignmentCandidates(d, 'a')).toThrow('Forbidden');
+  expect(JSON.stringify(d)).toBe(denied);
+});
 
 test('authorized candidate contract excludes contacts, foreign and inactive accounts',()=>{
   const result=assignmentCandidates(db(),'a');

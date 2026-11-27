@@ -5,6 +5,8 @@ from routes import portfolio
 
 
 class CoreAuditTests(ClientDashboardSourcesTests):
+    r4_valid_completion_fixture = True
+
     async def test_related_navigation_does_not_grant_write_or_cross_tenant_access(self):
         await server.db.users.insert_one({'user_id':'reader','email':'reader@example.test','role':'client_viewer','client_ids':['a'],'status':'active'})
         await server.db.reviews.insert_many([

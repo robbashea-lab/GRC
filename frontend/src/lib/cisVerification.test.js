@@ -62,3 +62,23 @@ test('coverage and implementation are separate measures',()=>{
   const s=cisSummary([row(),row({status:'in_progress',work:{}}),row({status:'not_assessed',last_assessed:null,work:{}}),row({status:'not_applicable'})],today);
   expect(s).toMatchObject({applicable:3,assessed:2,coverage:67,implemented:33,unremediated:1,unevidenced:0});
 });
+
+test('ISO combined native summary uses ISMS and included Annex A, keeping undetermined scope separate',()=>{
+  const rows=[{specification:'isms_clause',status:'addressed'},
+    {specification:'annex_control',soa_applicability:'included',status:'not_assessed'},
+    {specification:'annex_control',soa_applicability:'excluded',status:'addressed'},
+    {specification:'annex_control',soa_applicability:'undetermined',status:'addressed'}];
+  expect(cisSummary(rows)).toMatchObject({applicable:2,addressed:1,notAssessed:1,implemented:50});
+  expect(rows[3].status).toBe('addressed');
+});
+
+test('whole-program native metrics reuse the canonical position and independent verification remains separate',()=>{
+  const canonical={availability:'available',total:123,denominator:120,implemented:94,assessed:117,excluded:2,
+    scope_undetermined:1,included_counts:[{key:'addressed',count:94},{key:'in_progress',count:19},
+      {key:'needs_attention',count:4},{key:'not_assessed',count:3}]};
+  const summary=cisSummary([row({status:'addressed',work:{evidence_count:0}})],today,canonical);
+  expect(summary).toMatchObject({applicable:120,addressed:94,partial:19,gap:4,notAssessed:3,assessed:117,na:2,scopeUndetermined:1,available:true});
+  expect(summary.implementationPercentage).toBe(94/120*100);
+  expect(summary.unevidenced).toBe(1);
+  expect(cisSummary([],today,{...canonical,availability:'partial'}).implemented).toBeNull();
+});

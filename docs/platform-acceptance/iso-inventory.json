@@ -1,0 +1,3089 @@
+{
+  "schema_version": 1,
+  "record_date": "2026-10-11",
+  "workstream": "ISO functional acceptance",
+  "phase": "initial source inventory complete; seven-method bounded real-Mongo execution passed; independent retest pending",
+  "baseline": {
+    "branch": "codex/acceptance-iso-20261011",
+    "head": "28b806716024ec149af2ec5da621a5a618c669d5",
+    "initial_status": "clean",
+    "staging_deployment": "dep-db5v96navr4c73a6tmv0",
+    "staging_attribution": "coordinator receipt only; no new provider/browser observation"
+  },
+  "ownership": {
+    "owned_paths": [
+      "docs/platform-acceptance/iso-inventory.md",
+      "docs/platform-acceptance/iso-inventory.json",
+      "backend/tests/test_platform_iso_inventory.py"
+    ],
+    "runtime_paths_reserved": [],
+    "cpu_slot": "coordinator-granted slot completed and released",
+    "browser_slot": "not granted",
+    "provider_owner": "Agent 1",
+    "suite_registry_owner": "Agent 1",
+    "ten_year_engine_owner": "shared lifecycle specialist",
+    "commits_allowed_after": "genuine focused execution results",
+    "push": "not authorized in specialist handoff"
+  },
+  "freeze": {
+    "presentation": true,
+    "visible_static_copy": true,
+    "questions": true,
+    "guidance": true,
+    "dependencies": true,
+    "runtime": true,
+    "new_screenshots": "pending coordinator; source inventory is not rendered baseline",
+    "protected_clients": [
+      "all existing demo clients",
+      "intentionally empty Prestige Worldwide"
+    ],
+    "hosted_primary_iso_client_id": null
+  },
+  "source_assurance": {
+    "represented_publicly_supported_units": 12,
+    "full_normative_body_comparisons_unresolved": 111,
+    "classification": "existing per-definition source matrices; no new normative re-review",
+    "source_boundary": "docs/iso-omnibot/isms-content-matrix.md B1/B2",
+    "historical_hosted_coverage": "8 saved /9 placed at3193 only; not current acceptance execution"
+  },
+  "contracts": {
+    "activation": "explicit client program configuration, stable insert-only IDs, noninitializing GET; deselection/reactivation retains history",
+    "soa": "93 Annex comparisons share native IDs; inclusion/exclusion justification and implementation independent; ISMS whole-record N/A rejected",
+    "native_writer": "explicit CAS, preserved exact reviewed text/status, separate owner-only edits; guided field allowlist excludes verification and unrelated records",
+    "interview": "iso27001-omni-1; progress saves are not native implementation application; per-user/client/record lineage and manual draft protection",
+    "verification": "native verification editing currently CIS/SOC capabilities only; ISO audit records separate; missing ISO-native capability is report-only",
+    "lease": {
+      "driver_csot_seconds": 80,
+      "protected_operation_seconds": 90,
+      "lease_seconds": 120,
+      "uncertain_outcome": "retain lease; reload/retry",
+      "not_proven": [
+        "multi-document transaction",
+        "hard post-dispatch fencing",
+        "live Motor cancellation behavior"
+      ]
+    },
+    "audit": "four explicit prospective organization-defined staggered annual packages; closure requires applicable results/evidence/findings/report; completed occurrence snapshots remain immutable",
+    "recurrence": "monthly/quarterly/semiannual/annual calendar-month anchors; month-end preserved; positive custom-day interval; late completion advances scheduled date, not completion date",
+    "non_annex_control": "existing organizational Controls and preserved support evidence supplement Annex-only SoA snapshots; no invented full native custom-SoA subsystem"
+  },
+  "test_map": [
+    {
+      "id": "iso-catalog",
+      "path": "backend/tests/test_iso_staging.py",
+      "scope": "static catalog/proposal checks",
+      "limitation": "not Render staging",
+      "current_execution": "NOT_EXECUTED"
+    },
+    {
+      "id": "iso-engine",
+      "path": "backend/tests/test_iso_guided_assessment.py::IsoGuidedTests",
+      "scope": "Python evaluator and selected JS parity",
+      "limitation": "no normative/hosted proof",
+      "current_execution": "NOT_EXECUTED"
+    },
+    {
+      "id": "iso-routes",
+      "path": "backend/tests/test_iso_guided_routes.py::IsoGuidedRoutes",
+      "scope": "ASGI routes, mocked Mongo, all123 positive writes and selected negative/lease/history contracts",
+      "limitation": "not real Mongo",
+      "current_execution": "NOT_EXECUTED"
+    },
+    {
+      "id": "iso-native",
+      "path": "backend/tests/test_iso_framework.py::IsoTests",
+      "scope": "native/activation/SoA/relationships",
+      "limitation": "mocked Mongo",
+      "current_execution": "NOT_EXECUTED"
+    },
+    {
+      "id": "iso-work",
+      "path": "backend/tests/test_iso_work_packages.py::IsoWorkPackageTests",
+      "scope": "intake/custom-control/management-review history",
+      "limitation": "mocked Mongo",
+      "current_execution": "NOT_EXECUTED"
+    },
+    {
+      "id": "iso-audit",
+      "path": "backend/tests/test_iso_audit_program.py::IsoAuditTests",
+      "scope": "124-item audit activation/closure and five-cycle history",
+      "limitation": "not ten years or hosted",
+      "current_execution": "NOT_EXECUTED"
+    },
+    {
+      "id": "shared-contract",
+      "path": "backend/tests/test_governance_lifecycle_contract.py::GovernanceLifecycleContractTests",
+      "scope": "anchor/replay/failure/relationship contracts",
+      "limitation": "mocked persistence",
+      "current_execution": "NOT_EXECUTED"
+    },
+    {
+      "id": "three-year",
+      "path": "backend/tests/test_framework_three_year.py::FrameworkThreeYearTests",
+      "scope": "separate three-year CIS/SOC/ISO commands",
+      "limitation": "not ten years or hosted",
+      "current_execution": "NOT_EXECUTED"
+    },
+    {
+      "id": "demo-years",
+      "path": "frontend/src/preview/frameworkFiveYear.test.js",
+      "scope": "actual Demo commands three/five years",
+      "limitation": "rejects 10; quota-limited store",
+      "current_execution": "NOT_EXECUTED"
+    },
+    {
+      "id": "demo-guided",
+      "path": "frontend/src/preview/isoGuidedAssessment.test.js",
+      "scope": "all123 Demo adapter save/history vectors",
+      "limitation": "not FastAPI/database or browser",
+      "current_execution": "NOT_EXECUTED"
+    },
+    {
+      "id": "iso-components",
+      "path": "frontend/src/components/IsoGuidedAssessor.test.jsx",
+      "scope": "group/summary/manual/replacement/focus guards",
+      "limitation": "mocked native callback",
+      "current_execution": "NOT_EXECUTED"
+    },
+    {
+      "id": "native-components",
+      "path": "frontend/src/components/IsoAssessment.test.jsx",
+      "scope": "native form and selected checks/draft failures",
+      "limitation": "mocked API",
+      "current_execution": "NOT_EXECUTED"
+    },
+    {
+      "id": "overview",
+      "path": "frontend/src/components/IsoGuidedProgram.test.jsx",
+      "scope": "priorities/callbacks/count separation",
+      "limitation": "not hosted router",
+      "current_execution": "NOT_EXECUTED"
+    },
+    {
+      "id": "new-real-mongo",
+      "path": "backend/tests/test_platform_iso_inventory.py",
+      "scope": "new assigned real Mongo/ASGI all123 acceptance cases",
+      "limitation": "ASGI real Mongo with modelled JWT actors, not hosted login/TLS/persona or normative validation",
+      "current_execution": "PASS 7 methods once, 176.172 seconds; independent/integrated retest pending"
+    }
+  ],
+  "ten_year": {
+    "assigned_interval": {
+      "start_inclusive": "2027-01-01",
+      "end_exclusive": "2037-01-01"
+    },
+    "implementation_owner": "shared lifecycle specialist; do not duplicate engine",
+    "existing_cis_harness": {
+      "path": "backend/tests/test_ten_year_operation.py",
+      "scope": "CIS IG1 only",
+      "seed": 20260928,
+      "start": "2026-09-28",
+      "end_default": "2036-09-29",
+      "boundary": "inclusive loop; weekly stepping",
+      "domain_time": "14:00 UTC",
+      "storage": "Mongo mock",
+      "auth": "modelled JWTs signed against real auth time; no browser login"
+    },
+    "existing_iso_service_seam": "backend/tests/test_framework_three_year.py; hardcoded2027..2029, no ten-year result",
+    "existing_demo_limit": "frontend/src/preview/frameworkFiveYear.test.js accepts only3 or5",
+    "safe_requirements": [
+      "agreed seed and calendar/display time zones",
+      "controlled domain clocks only, not host/auth/TLS clocks",
+      "independent expected date/count oracle, not production schedule as both sides",
+      "actual due-occurrence/native/audit/closure commands, not seeded successful history",
+      "year-boundary expected/actual ledger, duplicate/orphan/drift/history/evidence counts",
+      "separate bounded real-Mongo concurrency/fault/lease tests"
+    ],
+    "no_execution": true
+  },
+  "new_test_target": {
+    "mongo_url": "mongodb://127.0.0.1:58749",
+    "database": "platform_acceptance_20261011_inventory_iso_<uuid>",
+    "classification": "root-owned environment registry; separately gated direct unittest, not fake HTTP environment-url",
+    "opt_in_variable": "PLATFORM_ACCEPTANCE_MONGO_URL",
+    "missing_opt_in": "UNEXECUTED/Skip, not storage pass",
+    "cleanup": "only newly owned UUID database after db-scoped emptiness check and sanitized evidence retention",
+    "execution": "PASS seven methods once; 176.172 seconds; zero failures/errors/skips",
+    "prohibited": [
+      "admin/global/shared database operations",
+      "process control",
+      "shared/default DB or mail access",
+      "hosted users/accounts",
+      "authentication overrides",
+      "UI/content edits"
+    ]
+  },
+  "gaps": [
+    {
+      "id": "ISO-A01",
+      "type": "coverage",
+      "item": "all123 real-Mongo API application-path vectors passed; hosted/independent/integrated acceptance pending",
+      "owner": "ISO specialist after root CPU/registry assignment"
+    },
+    {
+      "id": "ISO-A02",
+      "type": "harness",
+      "item": "ten-year ISO independent driver/oracle missing in existing harnesses",
+      "owner": "shared lifecycle specialist"
+    },
+    {
+      "id": "ISO-A03",
+      "type": "capability",
+      "item": "ISO-native verification field not supported by current gate; report only",
+      "owner": "coordinator/product requirements"
+    },
+    {
+      "id": "ISO-A04",
+      "type": "source",
+      "item": "111 unresolved full normative bodies/qualifiers",
+      "owner": "Robb/authorized content reviewer; no rewrite"
+    },
+    {
+      "id": "ISO-A05",
+      "type": "access",
+      "item": "real restricted-role/wrong-client/fresh-login scenarios need approved identities/human session; blocked auth not rerouted",
+      "owner": "Agent 1/security"
+    },
+    {
+      "id": "ISO-A06",
+      "type": "environment",
+      "item": "eligible-auditor hosted audit and real persistence/fault/restart scenarios pending",
+      "owner": "Agent 1/environment"
+    },
+    {
+      "id": "ISO-A07",
+      "type": "visual-persona",
+      "item": "matching baseline screenshots and unaided persona tasks not captured by this inventory",
+      "owner": "Agent 1/product specialist"
+    },
+    {
+      "id": "ISO-A08",
+      "type": "execution-boundary",
+      "item": "root environment registration/direct unittest boundary executed; independent/integrated checks pending",
+      "owner": "Agent 1"
+    }
+  ],
+  "execution": {
+    "metadata_inspection": "completed",
+    "product_test_runs": 1,
+    "real_mongo_methods_passed": 7,
+    "failed": 0,
+    "errors": 0,
+    "skips": 0,
+    "seconds": 176.172,
+    "qa_checkout_head_at_execution": "179d513aa93ed5119fa3a36d7b3b5090d0ae228f",
+    "frozen_test_sha256": "9cba91f74772d808bd1a59de1cd9cd2351e1a736f83012215691e374daf0c41f",
+    "raw_log_sha256": "5b8bbba01e72928804996d051d6d1ae41acd9b0330e4807e43a613c264f9f8e0",
+    "raw_log_path": "C:/Users/RobbA/Documents/Codex/2026-10-11/platform-acceptance/iso-test-evidence/iso-real-mongo-first-9cba91f7.log",
+    "native_definitions_saved": 123,
+    "explicit_native_status_text_writes": 492,
+    "conditional_gates": 21,
+    "cleanup_verified_owned_databases": 7,
+    "hosted_auth_or_normative_proof": false,
+    "independent_retest": "NOT_EXECUTED by this author; coordinator-owned",
+    "builds": 0,
+    "browser_checks": 0,
+    "database_connections": 0,
+    "accounts_created": 0,
+    "runtime_edits": 0,
+    "commits": 0,
+    "pushes": 0,
+    "deployments": 0
+  },
+  "framework_key": "iso-27001",
+  "framework_version": "2022 + Amd 1:2024",
+  "interview_version": "iso27001-omni-1",
+  "counts": {
+    "native": 123,
+    "isms": 30,
+    "annex": 93,
+    "questions": 611,
+    "audit_item_keys": 124,
+    "audit_native_targets": 123
+  },
+  "catalog_sha256": {
+    "iso27001.json": "70973cdde8d44cc8715404780d708b859ddb7862523b7d92bf0bb5cc1c8eb3a0",
+    "isoAuditProgram.json": "d232ca796c286fe9c7318fc939f5e5651cc7ff0d11a37d9c5f899056a466972b",
+    "guidedIsoIsms.json": "9c538291c5b250f158f9eae42194b17fa2cd3de7954a1e760286f565b19fc59f",
+    "guidedIsoOrganizationalPeople.json": "e5b8558eaf37222e7846b0cd2f406f7013b82a3ea34f9697e79f3c5c1ba9e277",
+    "guidedIsoPhysicalTechnology.json": "89387dec1153ec2fb646c92499df36a9f5703074dd113deb3642ecd3b4dcfa57"
+  },
+  "review_plans": [
+    {
+      "key": "iso-internal-audit",
+      "default_cadence": "annual",
+      "basis": "Omnisciente Recommended"
+    },
+    {
+      "key": "iso-management-review",
+      "default_cadence": "annual",
+      "basis": "Omnisciente Recommended"
+    },
+    {
+      "key": "iso-risk-assessment",
+      "default_cadence": "annual",
+      "basis": "Omnisciente Recommended"
+    },
+    {
+      "key": "iso-objective-review",
+      "default_cadence": "annual",
+      "basis": "Omnisciente Recommended"
+    },
+    {
+      "key": "iso-soa-review",
+      "default_cadence": "annual",
+      "basis": "Omnisciente Recommended"
+    },
+    {
+      "key": "iso-corrective-review",
+      "default_cadence": "annual",
+      "basis": "Omnisciente Recommended"
+    },
+    {
+      "key": "iso-policy-review",
+      "default_cadence": "annual",
+      "basis": "Omnisciente Recommended"
+    },
+    {
+      "key": "iso-user-access",
+      "default_cadence": "quarterly",
+      "basis": "Omnisciente Recommended"
+    },
+    {
+      "key": "iso-vendor",
+      "default_cadence": "annual",
+      "basis": "Omnisciente Recommended"
+    },
+    {
+      "key": "iso-awareness",
+      "default_cadence": "annual",
+      "basis": "Omnisciente Recommended"
+    }
+  ],
+  "audit_packages": [
+    {
+      "key": "governance-risk",
+      "item_count": 28
+    },
+    {
+      "key": "people-access-suppliers",
+      "item_count": 28
+    },
+    {
+      "key": "physical-technology",
+      "item_count": 40
+    },
+    {
+      "key": "operations-improvement",
+      "item_count": 28
+    }
+  ],
+  "native_definitions": [
+    {
+      "id": "4.1",
+      "specification": "isms_clause",
+      "title": "Context and external issues",
+      "interview_version": "iso27001-omni-1",
+      "groups": 3,
+      "questions": 4,
+      "context_gates": 0,
+      "source_assurance": {
+        "support": "S",
+        "concern": "N",
+        "source_matrix": "docs/iso-omnibot/isms-content-matrix.md"
+      },
+      "current_acceptance_execution": "PASS_REAL_MONGO_APPLICATION_PATH_VECTORS",
+      "hosted_current_acceptance": "NOT_EXECUTED",
+      "independent_retest": "PENDING_COORDINATOR",
+      "existing_parameterized_tests": [
+        "backend/tests/test_iso_guided_routes.py::IsoGuidedRoutes::test_all_123_resume_exact_native_save_and_shared_soa_annex_record",
+        "frontend/src/lib/isoGuidedAssessment.test.js",
+        "frontend/src/preview/isoGuidedAssessment.test.js"
+      ]
+    },
+    {
+      "id": "4.2",
+      "specification": "isms_clause",
+      "title": "Stakeholder obligations",
+      "interview_version": "iso27001-omni-1",
+      "groups": 3,
+      "questions": 3,
+      "context_gates": 0,
+      "source_assurance": {
+        "support": "S",
+        "concern": "N",
+        "source_matrix": "docs/iso-omnibot/isms-content-matrix.md"
+      },
+      "current_acceptance_execution": "PASS_REAL_MONGO_APPLICATION_PATH_VECTORS",
+      "hosted_current_acceptance": "NOT_EXECUTED",
+      "independent_retest": "PENDING_COORDINATOR",
+      "existing_parameterized_tests": [
+        "backend/tests/test_iso_guided_routes.py::IsoGuidedRoutes::test_all_123_resume_exact_native_save_and_shared_soa_annex_record",
+        "frontend/src/lib/isoGuidedAssessment.test.js",
+        "frontend/src/preview/isoGuidedAssessment.test.js"
+      ]
+    },
+    {
+      "id": "4.3",
+      "specification": "isms_clause",
+      "title": "ISMS boundaries",
+      "interview_version": "iso27001-omni-1",
+      "groups": 4,
+      "questions": 5,
+      "context_gates": 0,
+      "source_assurance": {
+        "support": "S",
+        "concern": "N",
+        "source_matrix": "docs/iso-omnibot/isms-content-matrix.md"
+      },
+      "current_acceptance_execution": "PASS_REAL_MONGO_APPLICATION_PATH_VECTORS",
+      "hosted_current_acceptance": "NOT_EXECUTED",
+      "independent_retest": "PENDING_COORDINATOR",
+      "existing_parameterized_tests": [
+        "backend/tests/test_iso_guided_routes.py::IsoGuidedRoutes::test_all_123_resume_exact_native_save_and_shared_soa_annex_record",
+        "frontend/src/lib/isoGuidedAssessment.test.js",
+        "frontend/src/preview/isoGuidedAssessment.test.js"
+      ]
+    },
+    {
+      "id": "4.4",
+      "specification": "isms_clause",
+      "title": "ISMS processes",
+      "interview_version": "iso27001-omni-1",
+      "groups": 3,
+      "questions": 5,
+      "context_gates": 0,
+      "source_assurance": {
+        "support": "S",
+        "concern": "N",
+        "source_matrix": "docs/iso-omnibot/isms-content-matrix.md"
+      },
+      "current_acceptance_execution": "PASS_REAL_MONGO_APPLICATION_PATH_VECTORS",
+      "hosted_current_acceptance": "NOT_EXECUTED",
+      "independent_retest": "PENDING_COORDINATOR",
+      "existing_parameterized_tests": [
+        "backend/tests/test_iso_guided_routes.py::IsoGuidedRoutes::test_all_123_resume_exact_native_save_and_shared_soa_annex_record",
+        "frontend/src/lib/isoGuidedAssessment.test.js",
+        "frontend/src/preview/isoGuidedAssessment.test.js"
+      ]
+    },
+    {
+      "id": "5.1",
+      "specification": "isms_clause",
+      "title": "Leadership accountability",
+      "interview_version": "iso27001-omni-1",
+      "groups": 6,
+      "questions": 10,
+      "context_gates": 0,
+      "source_assurance": {
+        "support": "S",
+        "concern": "N",
+        "source_matrix": "docs/iso-omnibot/isms-content-matrix.md"
+      },
+      "current_acceptance_execution": "PASS_REAL_MONGO_APPLICATION_PATH_VECTORS",
+      "hosted_current_acceptance": "NOT_EXECUTED",
+      "independent_retest": "PENDING_COORDINATOR",
+      "existing_parameterized_tests": [
+        "backend/tests/test_iso_guided_routes.py::IsoGuidedRoutes::test_all_123_resume_exact_native_save_and_shared_soa_annex_record",
+        "frontend/src/lib/isoGuidedAssessment.test.js",
+        "frontend/src/preview/isoGuidedAssessment.test.js"
+      ]
+    },
+    {
+      "id": "5.2",
+      "specification": "isms_clause",
+      "title": "Security policy direction",
+      "interview_version": "iso27001-omni-1",
+      "groups": 5,
+      "questions": 7,
+      "context_gates": 0,
+      "source_assurance": {
+        "support": "S",
+        "concern": "N",
+        "source_matrix": "docs/iso-omnibot/isms-content-matrix.md"
+      },
+      "current_acceptance_execution": "PASS_REAL_MONGO_APPLICATION_PATH_VECTORS",
+      "hosted_current_acceptance": "NOT_EXECUTED",
+      "independent_retest": "PENDING_COORDINATOR",
+      "existing_parameterized_tests": [
+        "backend/tests/test_iso_guided_routes.py::IsoGuidedRoutes::test_all_123_resume_exact_native_save_and_shared_soa_annex_record",
+        "frontend/src/lib/isoGuidedAssessment.test.js",
+        "frontend/src/preview/isoGuidedAssessment.test.js"
+      ]
+    },
+    {
+      "id": "5.3",
+      "specification": "isms_clause",
+      "title": "Accountable ISMS roles",
+      "interview_version": "iso27001-omni-1",
+      "groups": 3,
+      "questions": 5,
+      "context_gates": 0,
+      "source_assurance": {
+        "support": "S",
+        "concern": "N",
+        "source_matrix": "docs/iso-omnibot/isms-content-matrix.md"
+      },
+      "current_acceptance_execution": "PASS_REAL_MONGO_APPLICATION_PATH_VECTORS",
+      "hosted_current_acceptance": "NOT_EXECUTED",
+      "independent_retest": "PENDING_COORDINATOR",
+      "existing_parameterized_tests": [
+        "backend/tests/test_iso_guided_routes.py::IsoGuidedRoutes::test_all_123_resume_exact_native_save_and_shared_soa_annex_record",
+        "frontend/src/lib/isoGuidedAssessment.test.js",
+        "frontend/src/preview/isoGuidedAssessment.test.js"
+      ]
+    },
+    {
+      "id": "6.1.1",
+      "specification": "isms_clause",
+      "title": "Planning risks and opportunities",
+      "interview_version": "iso27001-omni-1",
+      "groups": 6,
+      "questions": 11,
+      "context_gates": 0,
+      "source_assurance": {
+        "support": "S",
+        "concern": "N",
+        "source_matrix": "docs/iso-omnibot/isms-content-matrix.md"
+      },
+      "current_acceptance_execution": "PASS_REAL_MONGO_APPLICATION_PATH_VECTORS",
+      "hosted_current_acceptance": "NOT_EXECUTED",
+      "independent_retest": "PENDING_COORDINATOR",
+      "existing_parameterized_tests": [
+        "backend/tests/test_iso_guided_routes.py::IsoGuidedRoutes::test_all_123_resume_exact_native_save_and_shared_soa_annex_record",
+        "frontend/src/lib/isoGuidedAssessment.test.js",
+        "frontend/src/preview/isoGuidedAssessment.test.js"
+      ]
+    },
+    {
+      "id": "6.1.2",
+      "specification": "isms_clause",
+      "title": "Risk assessment method",
+      "interview_version": "iso27001-omni-1",
+      "groups": 6,
+      "questions": 20,
+      "context_gates": 0,
+      "source_assurance": {
+        "support": "S",
+        "concern": "N",
+        "source_matrix": "docs/iso-omnibot/isms-content-matrix.md"
+      },
+      "current_acceptance_execution": "PASS_REAL_MONGO_APPLICATION_PATH_VECTORS",
+      "hosted_current_acceptance": "NOT_EXECUTED",
+      "independent_retest": "PENDING_COORDINATOR",
+      "existing_parameterized_tests": [
+        "backend/tests/test_iso_guided_routes.py::IsoGuidedRoutes::test_all_123_resume_exact_native_save_and_shared_soa_annex_record",
+        "frontend/src/lib/isoGuidedAssessment.test.js",
+        "frontend/src/preview/isoGuidedAssessment.test.js"
+      ]
+    },
+    {
+      "id": "6.1.3",
+      "specification": "isms_clause",
+      "title": "Treatment decisions and SoA",
+      "interview_version": "iso27001-omni-1",
+      "groups": 6,
+      "questions": 14,
+      "context_gates": 0,
+      "source_assurance": {
+        "support": "S",
+        "concern": "N",
+        "source_matrix": "docs/iso-omnibot/isms-content-matrix.md"
+      },
+      "current_acceptance_execution": "PASS_REAL_MONGO_APPLICATION_PATH_VECTORS",
+      "hosted_current_acceptance": "NOT_EXECUTED",
+      "independent_retest": "PENDING_COORDINATOR",
+      "existing_parameterized_tests": [
+        "backend/tests/test_iso_guided_routes.py::IsoGuidedRoutes::test_all_123_resume_exact_native_save_and_shared_soa_annex_record",
+        "frontend/src/lib/isoGuidedAssessment.test.js",
+        "frontend/src/preview/isoGuidedAssessment.test.js"
+      ]
+    },
+    {
+      "id": "6.2",
+      "specification": "isms_clause",
+      "title": "Measurable security objectives",
+      "interview_version": "iso27001-omni-1",
+      "groups": 6,
+      "questions": 16,
+      "context_gates": 0,
+      "source_assurance": {
+        "support": "S",
+        "concern": "N",
+        "source_matrix": "docs/iso-omnibot/isms-content-matrix.md"
+      },
+      "current_acceptance_execution": "PASS_REAL_MONGO_APPLICATION_PATH_VECTORS",
+      "hosted_current_acceptance": "NOT_EXECUTED",
+      "independent_retest": "PENDING_COORDINATOR",
+      "existing_parameterized_tests": [
+        "backend/tests/test_iso_guided_routes.py::IsoGuidedRoutes::test_all_123_resume_exact_native_save_and_shared_soa_annex_record",
+        "frontend/src/lib/isoGuidedAssessment.test.js",
+        "frontend/src/preview/isoGuidedAssessment.test.js"
+      ]
+    },
+    {
+      "id": "6.3",
+      "specification": "isms_clause",
+      "title": "Planned ISMS changes",
+      "interview_version": "iso27001-omni-1",
+      "groups": 2,
+      "questions": 3,
+      "context_gates": 1,
+      "source_assurance": {
+        "support": "S",
+        "concern": "N",
+        "source_matrix": "docs/iso-omnibot/isms-content-matrix.md"
+      },
+      "current_acceptance_execution": "PASS_REAL_MONGO_APPLICATION_PATH_VECTORS",
+      "hosted_current_acceptance": "NOT_EXECUTED",
+      "independent_retest": "PENDING_COORDINATOR",
+      "existing_parameterized_tests": [
+        "backend/tests/test_iso_guided_routes.py::IsoGuidedRoutes::test_all_123_resume_exact_native_save_and_shared_soa_annex_record",
+        "frontend/src/lib/isoGuidedAssessment.test.js",
+        "frontend/src/preview/isoGuidedAssessment.test.js"
+      ]
+    },
+    {
+      "id": "7.1",
+      "specification": "isms_clause",
+      "title": "ISMS resources",
+      "interview_version": "iso27001-omni-1",
+      "groups": 2,
+      "questions": 3,
+      "context_gates": 0,
+      "source_assurance": {
+        "support": "U",
+        "concern": "N",
+        "source_matrix": "docs/iso-omnibot/isms-content-matrix.md"
+      },
+      "current_acceptance_execution": "PASS_REAL_MONGO_APPLICATION_PATH_VECTORS",
+      "hosted_current_acceptance": "NOT_EXECUTED",
+      "independent_retest": "PENDING_COORDINATOR",
+      "existing_parameterized_tests": [
+        "backend/tests/test_iso_guided_routes.py::IsoGuidedRoutes::test_all_123_resume_exact_native_save_and_shared_soa_annex_record",
+        "frontend/src/lib/isoGuidedAssessment.test.js",
+        "frontend/src/preview/isoGuidedAssessment.test.js"
+      ]
+    },
+    {
+      "id": "7.2",
+      "specification": "isms_clause",
+      "title": "Role competence",
+      "interview_version": "iso27001-omni-1",
+      "groups": 4,
+      "questions": 7,
+      "context_gates": 1,
+      "source_assurance": {
+        "support": "U",
+        "concern": "N",
+        "source_matrix": "docs/iso-omnibot/isms-content-matrix.md"
+      },
+      "current_acceptance_execution": "PASS_REAL_MONGO_APPLICATION_PATH_VECTORS",
+      "hosted_current_acceptance": "NOT_EXECUTED",
+      "independent_retest": "PENDING_COORDINATOR",
+      "existing_parameterized_tests": [
+        "backend/tests/test_iso_guided_routes.py::IsoGuidedRoutes::test_all_123_resume_exact_native_save_and_shared_soa_annex_record",
+        "frontend/src/lib/isoGuidedAssessment.test.js",
+        "frontend/src/preview/isoGuidedAssessment.test.js"
+      ]
+    },
+    {
+      "id": "7.3",
+      "specification": "isms_clause",
+      "title": "Workforce awareness",
+      "interview_version": "iso27001-omni-1",
+      "groups": 3,
+      "questions": 4,
+      "context_gates": 0,
+      "source_assurance": {
+        "support": "U",
+        "concern": "N",
+        "source_matrix": "docs/iso-omnibot/isms-content-matrix.md"
+      },
+      "current_acceptance_execution": "PASS_REAL_MONGO_APPLICATION_PATH_VECTORS",
+      "hosted_current_acceptance": "NOT_EXECUTED",
+      "independent_retest": "PENDING_COORDINATOR",
+      "existing_parameterized_tests": [
+        "backend/tests/test_iso_guided_routes.py::IsoGuidedRoutes::test_all_123_resume_exact_native_save_and_shared_soa_annex_record",
+        "frontend/src/lib/isoGuidedAssessment.test.js",
+        "frontend/src/preview/isoGuidedAssessment.test.js"
+      ]
+    },
+    {
+      "id": "7.4",
+      "specification": "isms_clause",
+      "title": "ISMS communications",
+      "interview_version": "iso27001-omni-1",
+      "groups": 4,
+      "questions": 5,
+      "context_gates": 0,
+      "source_assurance": {
+        "support": "U",
+        "concern": "N",
+        "source_matrix": "docs/iso-omnibot/isms-content-matrix.md"
+      },
+      "current_acceptance_execution": "PASS_REAL_MONGO_APPLICATION_PATH_VECTORS",
+      "hosted_current_acceptance": "NOT_EXECUTED",
+      "independent_retest": "PENDING_COORDINATOR",
+      "existing_parameterized_tests": [
+        "backend/tests/test_iso_guided_routes.py::IsoGuidedRoutes::test_all_123_resume_exact_native_save_and_shared_soa_annex_record",
+        "frontend/src/lib/isoGuidedAssessment.test.js",
+        "frontend/src/preview/isoGuidedAssessment.test.js"
+      ]
+    },
+    {
+      "id": "7.5.1",
+      "specification": "isms_clause",
+      "title": "Required records",
+      "interview_version": "iso27001-omni-1",
+      "groups": 2,
+      "questions": 2,
+      "context_gates": 0,
+      "source_assurance": {
+        "support": "U",
+        "concern": "N",
+        "source_matrix": "docs/iso-omnibot/isms-content-matrix.md"
+      },
+      "current_acceptance_execution": "PASS_REAL_MONGO_APPLICATION_PATH_VECTORS",
+      "hosted_current_acceptance": "NOT_EXECUTED",
+      "independent_retest": "PENDING_COORDINATOR",
+      "existing_parameterized_tests": [
+        "backend/tests/test_iso_guided_routes.py::IsoGuidedRoutes::test_all_123_resume_exact_native_save_and_shared_soa_annex_record",
+        "frontend/src/lib/isoGuidedAssessment.test.js",
+        "frontend/src/preview/isoGuidedAssessment.test.js"
+      ]
+    },
+    {
+      "id": "7.5.2",
+      "specification": "isms_clause",
+      "title": "Document creation and revision",
+      "interview_version": "iso27001-omni-1",
+      "groups": 3,
+      "questions": 5,
+      "context_gates": 0,
+      "source_assurance": {
+        "support": "U",
+        "concern": "N",
+        "source_matrix": "docs/iso-omnibot/isms-content-matrix.md"
+      },
+      "current_acceptance_execution": "PASS_REAL_MONGO_APPLICATION_PATH_VECTORS",
+      "hosted_current_acceptance": "NOT_EXECUTED",
+      "independent_retest": "PENDING_COORDINATOR",
+      "existing_parameterized_tests": [
+        "backend/tests/test_iso_guided_routes.py::IsoGuidedRoutes::test_all_123_resume_exact_native_save_and_shared_soa_annex_record",
+        "frontend/src/lib/isoGuidedAssessment.test.js",
+        "frontend/src/preview/isoGuidedAssessment.test.js"
+      ]
+    },
+    {
+      "id": "7.5.3",
+      "specification": "isms_clause",
+      "title": "Document protection and availability",
+      "interview_version": "iso27001-omni-1",
+      "groups": 5,
+      "questions": 16,
+      "context_gates": 1,
+      "source_assurance": {
+        "support": "U",
+        "concern": "N",
+        "source_matrix": "docs/iso-omnibot/isms-content-matrix.md"
+      },
+      "current_acceptance_execution": "PASS_REAL_MONGO_APPLICATION_PATH_VECTORS",
+      "hosted_current_acceptance": "NOT_EXECUTED",
+      "independent_retest": "PENDING_COORDINATOR",
+      "existing_parameterized_tests": [
+        "backend/tests/test_iso_guided_routes.py::IsoGuidedRoutes::test_all_123_resume_exact_native_save_and_shared_soa_annex_record",
+        "frontend/src/lib/isoGuidedAssessment.test.js",
+        "frontend/src/preview/isoGuidedAssessment.test.js"
+      ]
+    },
+    {
+      "id": "8.1",
+      "specification": "isms_clause",
+      "title": "Controlled operational processes",
+      "interview_version": "iso27001-omni-1",
+      "groups": 6,
+      "questions": 12,
+      "context_gates": 3,
+      "source_assurance": {
+        "support": "U",
+        "concern": "N",
+        "source_matrix": "docs/iso-omnibot/isms-content-matrix.md"
+      },
+      "current_acceptance_execution": "PASS_REAL_MONGO_APPLICATION_PATH_VECTORS",
+      "hosted_current_acceptance": "NOT_EXECUTED",
+      "independent_retest": "PENDING_COORDINATOR",
+      "existing_parameterized_tests": [
+        "backend/tests/test_iso_guided_routes.py::IsoGuidedRoutes::test_all_123_resume_exact_native_save_and_shared_soa_annex_record",
+        "frontend/src/lib/isoGuidedAssessment.test.js",
+        "frontend/src/preview/isoGuidedAssessment.test.js"
+      ]
+    },
+    {
+      "id": "8.2",
+      "specification": "isms_clause",
+      "title": "Risk assessment execution",
+      "interview_version": "iso27001-omni-1",
+      "groups": 4,
+      "questions": 6,
+      "context_gates": 1,
+      "source_assurance": {
+        "support": "U",
+        "concern": "N",
+        "source_matrix": "docs/iso-omnibot/isms-content-matrix.md"
+      },
+      "current_acceptance_execution": "PASS_REAL_MONGO_APPLICATION_PATH_VECTORS",
+      "hosted_current_acceptance": "NOT_EXECUTED",
+      "independent_retest": "PENDING_COORDINATOR",
+      "existing_parameterized_tests": [
+        "backend/tests/test_iso_guided_routes.py::IsoGuidedRoutes::test_all_123_resume_exact_native_save_and_shared_soa_annex_record",
+        "frontend/src/lib/isoGuidedAssessment.test.js",
+        "frontend/src/preview/isoGuidedAssessment.test.js"
+      ]
+    },
+    {
+      "id": "8.3",
+      "specification": "isms_clause",
+      "title": "Treatment execution",
+      "interview_version": "iso27001-omni-1",
+      "groups": 2,
+      "questions": 2,
+      "context_gates": 0,
+      "source_assurance": {
+        "support": "U",
+        "concern": "N",
+        "source_matrix": "docs/iso-omnibot/isms-content-matrix.md"
+      },
+      "current_acceptance_execution": "PASS_REAL_MONGO_APPLICATION_PATH_VECTORS",
+      "hosted_current_acceptance": "NOT_EXECUTED",
+      "independent_retest": "PENDING_COORDINATOR",
+      "existing_parameterized_tests": [
+        "backend/tests/test_iso_guided_routes.py::IsoGuidedRoutes::test_all_123_resume_exact_native_save_and_shared_soa_annex_record",
+        "frontend/src/lib/isoGuidedAssessment.test.js",
+        "frontend/src/preview/isoGuidedAssessment.test.js"
+      ]
+    },
+    {
+      "id": "9.1",
+      "specification": "isms_clause",
+      "title": "Performance measurement",
+      "interview_version": "iso27001-omni-1",
+      "groups": 6,
+      "questions": 12,
+      "context_gates": 0,
+      "source_assurance": {
+        "support": "U",
+        "concern": "N",
+        "source_matrix": "docs/iso-omnibot/isms-content-matrix.md"
+      },
+      "current_acceptance_execution": "PASS_REAL_MONGO_APPLICATION_PATH_VECTORS",
+      "hosted_current_acceptance": "NOT_EXECUTED",
+      "independent_retest": "PENDING_COORDINATOR",
+      "existing_parameterized_tests": [
+        "backend/tests/test_iso_guided_routes.py::IsoGuidedRoutes::test_all_123_resume_exact_native_save_and_shared_soa_annex_record",
+        "frontend/src/lib/isoGuidedAssessment.test.js",
+        "frontend/src/preview/isoGuidedAssessment.test.js"
+      ]
+    },
+    {
+      "id": "9.2.1",
+      "specification": "isms_clause",
+      "title": "ISMS audit coverage",
+      "interview_version": "iso27001-omni-1",
+      "groups": 3,
+      "questions": 5,
+      "context_gates": 0,
+      "source_assurance": {
+        "support": "U",
+        "concern": "N",
+        "source_matrix": "docs/iso-omnibot/isms-content-matrix.md"
+      },
+      "current_acceptance_execution": "PASS_REAL_MONGO_APPLICATION_PATH_VECTORS",
+      "hosted_current_acceptance": "NOT_EXECUTED",
+      "independent_retest": "PENDING_COORDINATOR",
+      "existing_parameterized_tests": [
+        "backend/tests/test_iso_guided_routes.py::IsoGuidedRoutes::test_all_123_resume_exact_native_save_and_shared_soa_annex_record",
+        "frontend/src/lib/isoGuidedAssessment.test.js",
+        "frontend/src/preview/isoGuidedAssessment.test.js"
+      ]
+    },
+    {
+      "id": "9.2.2",
+      "specification": "isms_clause",
+      "title": "Internal audit program",
+      "interview_version": "iso27001-omni-1",
+      "groups": 6,
+      "questions": 17,
+      "context_gates": 0,
+      "source_assurance": {
+        "support": "U",
+        "concern": "N",
+        "source_matrix": "docs/iso-omnibot/isms-content-matrix.md"
+      },
+      "current_acceptance_execution": "PASS_REAL_MONGO_APPLICATION_PATH_VECTORS",
+      "hosted_current_acceptance": "NOT_EXECUTED",
+      "independent_retest": "PENDING_COORDINATOR",
+      "existing_parameterized_tests": [
+        "backend/tests/test_iso_guided_routes.py::IsoGuidedRoutes::test_all_123_resume_exact_native_save_and_shared_soa_annex_record",
+        "frontend/src/lib/isoGuidedAssessment.test.js",
+        "frontend/src/preview/isoGuidedAssessment.test.js"
+      ]
+    },
+    {
+      "id": "9.3.1",
+      "specification": "isms_clause",
+      "title": "Management review operation",
+      "interview_version": "iso27001-omni-1",
+      "groups": 2,
+      "questions": 5,
+      "context_gates": 0,
+      "source_assurance": {
+        "support": "U",
+        "concern": "N",
+        "source_matrix": "docs/iso-omnibot/isms-content-matrix.md"
+      },
+      "current_acceptance_execution": "PASS_REAL_MONGO_APPLICATION_PATH_VECTORS",
+      "hosted_current_acceptance": "NOT_EXECUTED",
+      "independent_retest": "PENDING_COORDINATOR",
+      "existing_parameterized_tests": [
+        "backend/tests/test_iso_guided_routes.py::IsoGuidedRoutes::test_all_123_resume_exact_native_save_and_shared_soa_annex_record",
+        "frontend/src/lib/isoGuidedAssessment.test.js",
+        "frontend/src/preview/isoGuidedAssessment.test.js"
+      ]
+    },
+    {
+      "id": "9.3.2",
+      "specification": "isms_clause",
+      "title": "Management review inputs",
+      "interview_version": "iso27001-omni-1",
+      "groups": 6,
+      "questions": 13,
+      "context_gates": 0,
+      "source_assurance": {
+        "support": "U",
+        "concern": "N",
+        "source_matrix": "docs/iso-omnibot/isms-content-matrix.md"
+      },
+      "current_acceptance_execution": "PASS_REAL_MONGO_APPLICATION_PATH_VECTORS",
+      "hosted_current_acceptance": "NOT_EXECUTED",
+      "independent_retest": "PENDING_COORDINATOR",
+      "existing_parameterized_tests": [
+        "backend/tests/test_iso_guided_routes.py::IsoGuidedRoutes::test_all_123_resume_exact_native_save_and_shared_soa_annex_record",
+        "frontend/src/lib/isoGuidedAssessment.test.js",
+        "frontend/src/preview/isoGuidedAssessment.test.js"
+      ]
+    },
+    {
+      "id": "9.3.3",
+      "specification": "isms_clause",
+      "title": "Management review decisions",
+      "interview_version": "iso27001-omni-1",
+      "groups": 3,
+      "questions": 3,
+      "context_gates": 0,
+      "source_assurance": {
+        "support": "U",
+        "concern": "N",
+        "source_matrix": "docs/iso-omnibot/isms-content-matrix.md"
+      },
+      "current_acceptance_execution": "PASS_REAL_MONGO_APPLICATION_PATH_VECTORS",
+      "hosted_current_acceptance": "NOT_EXECUTED",
+      "independent_retest": "PENDING_COORDINATOR",
+      "existing_parameterized_tests": [
+        "backend/tests/test_iso_guided_routes.py::IsoGuidedRoutes::test_all_123_resume_exact_native_save_and_shared_soa_annex_record",
+        "frontend/src/lib/isoGuidedAssessment.test.js",
+        "frontend/src/preview/isoGuidedAssessment.test.js"
+      ]
+    },
+    {
+      "id": "10.1",
+      "specification": "isms_clause",
+      "title": "Ongoing ISMS improvement",
+      "interview_version": "iso27001-omni-1",
+      "groups": 3,
+      "questions": 3,
+      "context_gates": 0,
+      "source_assurance": {
+        "support": "U",
+        "concern": "N",
+        "source_matrix": "docs/iso-omnibot/isms-content-matrix.md"
+      },
+      "current_acceptance_execution": "PASS_REAL_MONGO_APPLICATION_PATH_VECTORS",
+      "hosted_current_acceptance": "NOT_EXECUTED",
+      "independent_retest": "PENDING_COORDINATOR",
+      "existing_parameterized_tests": [
+        "backend/tests/test_iso_guided_routes.py::IsoGuidedRoutes::test_all_123_resume_exact_native_save_and_shared_soa_annex_record",
+        "frontend/src/lib/isoGuidedAssessment.test.js",
+        "frontend/src/preview/isoGuidedAssessment.test.js"
+      ]
+    },
+    {
+      "id": "10.2",
+      "specification": "isms_clause",
+      "title": "Nonconformity correction",
+      "interview_version": "iso27001-omni-1",
+      "groups": 6,
+      "questions": 16,
+      "context_gates": 1,
+      "source_assurance": {
+        "support": "U",
+        "concern": "N",
+        "source_matrix": "docs/iso-omnibot/isms-content-matrix.md"
+      },
+      "current_acceptance_execution": "PASS_REAL_MONGO_APPLICATION_PATH_VECTORS",
+      "hosted_current_acceptance": "NOT_EXECUTED",
+      "independent_retest": "PENDING_COORDINATOR",
+      "existing_parameterized_tests": [
+        "backend/tests/test_iso_guided_routes.py::IsoGuidedRoutes::test_all_123_resume_exact_native_save_and_shared_soa_annex_record",
+        "frontend/src/lib/isoGuidedAssessment.test.js",
+        "frontend/src/preview/isoGuidedAssessment.test.js"
+      ]
+    },
+    {
+      "id": "A.5.1",
+      "specification": "annex_control",
+      "title": "Security policy governance",
+      "interview_version": "iso27001-omni-1",
+      "groups": 4,
+      "questions": 6,
+      "context_gates": 0,
+      "source_assurance": {
+        "support": "U",
+        "concern": "N",
+        "source_matrix": "docs/iso-omnibot/organizational-people-content-matrix.md"
+      },
+      "current_acceptance_execution": "PASS_REAL_MONGO_APPLICATION_PATH_VECTORS",
+      "hosted_current_acceptance": "NOT_EXECUTED",
+      "independent_retest": "PENDING_COORDINATOR",
+      "existing_parameterized_tests": [
+        "backend/tests/test_iso_guided_routes.py::IsoGuidedRoutes::test_all_123_resume_exact_native_save_and_shared_soa_annex_record",
+        "frontend/src/lib/isoGuidedAssessment.test.js",
+        "frontend/src/preview/isoGuidedAssessment.test.js"
+      ]
+    },
+    {
+      "id": "A.5.2",
+      "specification": "annex_control",
+      "title": "Security role allocation",
+      "interview_version": "iso27001-omni-1",
+      "groups": 3,
+      "questions": 4,
+      "context_gates": 0,
+      "source_assurance": {
+        "support": "U",
+        "concern": "N",
+        "source_matrix": "docs/iso-omnibot/organizational-people-content-matrix.md"
+      },
+      "current_acceptance_execution": "PASS_REAL_MONGO_APPLICATION_PATH_VECTORS",
+      "hosted_current_acceptance": "NOT_EXECUTED",
+      "independent_retest": "PENDING_COORDINATOR",
+      "existing_parameterized_tests": [
+        "backend/tests/test_iso_guided_routes.py::IsoGuidedRoutes::test_all_123_resume_exact_native_save_and_shared_soa_annex_record",
+        "frontend/src/lib/isoGuidedAssessment.test.js",
+        "frontend/src/preview/isoGuidedAssessment.test.js"
+      ]
+    },
+    {
+      "id": "A.5.3",
+      "specification": "annex_control",
+      "title": "Separation of conflicting duties",
+      "interview_version": "iso27001-omni-1",
+      "groups": 3,
+      "questions": 3,
+      "context_gates": 0,
+      "source_assurance": {
+        "support": "U",
+        "concern": "N",
+        "source_matrix": "docs/iso-omnibot/organizational-people-content-matrix.md"
+      },
+      "current_acceptance_execution": "PASS_REAL_MONGO_APPLICATION_PATH_VECTORS",
+      "hosted_current_acceptance": "NOT_EXECUTED",
+      "independent_retest": "PENDING_COORDINATOR",
+      "existing_parameterized_tests": [
+        "backend/tests/test_iso_guided_routes.py::IsoGuidedRoutes::test_all_123_resume_exact_native_save_and_shared_soa_annex_record",
+        "frontend/src/lib/isoGuidedAssessment.test.js",
+        "frontend/src/preview/isoGuidedAssessment.test.js"
+      ]
+    },
+    {
+      "id": "A.5.4",
+      "specification": "annex_control",
+      "title": "Management security expectations",
+      "interview_version": "iso27001-omni-1",
+      "groups": 3,
+      "questions": 3,
+      "context_gates": 0,
+      "source_assurance": {
+        "support": "U",
+        "concern": "N",
+        "source_matrix": "docs/iso-omnibot/organizational-people-content-matrix.md"
+      },
+      "current_acceptance_execution": "PASS_REAL_MONGO_APPLICATION_PATH_VECTORS",
+      "hosted_current_acceptance": "NOT_EXECUTED",
+      "independent_retest": "PENDING_COORDINATOR",
+      "existing_parameterized_tests": [
+        "backend/tests/test_iso_guided_routes.py::IsoGuidedRoutes::test_all_123_resume_exact_native_save_and_shared_soa_annex_record",
+        "frontend/src/lib/isoGuidedAssessment.test.js",
+        "frontend/src/preview/isoGuidedAssessment.test.js"
+      ]
+    },
+    {
+      "id": "A.5.5",
+      "specification": "annex_control",
+      "title": "Authority liaison",
+      "interview_version": "iso27001-omni-1",
+      "groups": 4,
+      "questions": 4,
+      "context_gates": 0,
+      "source_assurance": {
+        "support": "U",
+        "concern": "N",
+        "source_matrix": "docs/iso-omnibot/organizational-people-content-matrix.md"
+      },
+      "current_acceptance_execution": "PASS_REAL_MONGO_APPLICATION_PATH_VECTORS",
+      "hosted_current_acceptance": "NOT_EXECUTED",
+      "independent_retest": "PENDING_COORDINATOR",
+      "existing_parameterized_tests": [
+        "backend/tests/test_iso_guided_routes.py::IsoGuidedRoutes::test_all_123_resume_exact_native_save_and_shared_soa_annex_record",
+        "frontend/src/lib/isoGuidedAssessment.test.js",
+        "frontend/src/preview/isoGuidedAssessment.test.js"
+      ]
+    },
+    {
+      "id": "A.5.6",
+      "specification": "annex_control",
+      "title": "Security community liaison",
+      "interview_version": "iso27001-omni-1",
+      "groups": 3,
+      "questions": 3,
+      "context_gates": 0,
+      "source_assurance": {
+        "support": "U",
+        "concern": "N",
+        "source_matrix": "docs/iso-omnibot/organizational-people-content-matrix.md"
+      },
+      "current_acceptance_execution": "PASS_REAL_MONGO_APPLICATION_PATH_VECTORS",
+      "hosted_current_acceptance": "NOT_EXECUTED",
+      "independent_retest": "PENDING_COORDINATOR",
+      "existing_parameterized_tests": [
+        "backend/tests/test_iso_guided_routes.py::IsoGuidedRoutes::test_all_123_resume_exact_native_save_and_shared_soa_annex_record",
+        "frontend/src/lib/isoGuidedAssessment.test.js",
+        "frontend/src/preview/isoGuidedAssessment.test.js"
+      ]
+    },
+    {
+      "id": "A.5.7",
+      "specification": "annex_control",
+      "title": "Threat-informed decisions",
+      "interview_version": "iso27001-omni-1",
+      "groups": 4,
+      "questions": 5,
+      "context_gates": 0,
+      "source_assurance": {
+        "support": "U",
+        "concern": "N",
+        "source_matrix": "docs/iso-omnibot/organizational-people-content-matrix.md"
+      },
+      "current_acceptance_execution": "PASS_REAL_MONGO_APPLICATION_PATH_VECTORS",
+      "hosted_current_acceptance": "NOT_EXECUTED",
+      "independent_retest": "PENDING_COORDINATOR",
+      "existing_parameterized_tests": [
+        "backend/tests/test_iso_guided_routes.py::IsoGuidedRoutes::test_all_123_resume_exact_native_save_and_shared_soa_annex_record",
+        "frontend/src/lib/isoGuidedAssessment.test.js",
+        "frontend/src/preview/isoGuidedAssessment.test.js"
+      ]
+    },
+    {
+      "id": "A.5.8",
+      "specification": "annex_control",
+      "title": "Security in projects",
+      "interview_version": "iso27001-omni-1",
+      "groups": 4,
+      "questions": 4,
+      "context_gates": 0,
+      "source_assurance": {
+        "support": "U",
+        "concern": "N",
+        "source_matrix": "docs/iso-omnibot/organizational-people-content-matrix.md"
+      },
+      "current_acceptance_execution": "PASS_REAL_MONGO_APPLICATION_PATH_VECTORS",
+      "hosted_current_acceptance": "NOT_EXECUTED",
+      "independent_retest": "PENDING_COORDINATOR",
+      "existing_parameterized_tests": [
+        "backend/tests/test_iso_guided_routes.py::IsoGuidedRoutes::test_all_123_resume_exact_native_save_and_shared_soa_annex_record",
+        "frontend/src/lib/isoGuidedAssessment.test.js",
+        "frontend/src/preview/isoGuidedAssessment.test.js"
+      ]
+    },
+    {
+      "id": "A.5.9",
+      "specification": "annex_control",
+      "title": "Asset and information inventory",
+      "interview_version": "iso27001-omni-1",
+      "groups": 3,
+      "questions": 3,
+      "context_gates": 0,
+      "source_assurance": {
+        "support": "U",
+        "concern": "N",
+        "source_matrix": "docs/iso-omnibot/organizational-people-content-matrix.md"
+      },
+      "current_acceptance_execution": "PASS_REAL_MONGO_APPLICATION_PATH_VECTORS",
+      "hosted_current_acceptance": "NOT_EXECUTED",
+      "independent_retest": "PENDING_COORDINATOR",
+      "existing_parameterized_tests": [
+        "backend/tests/test_iso_guided_routes.py::IsoGuidedRoutes::test_all_123_resume_exact_native_save_and_shared_soa_annex_record",
+        "frontend/src/lib/isoGuidedAssessment.test.js",
+        "frontend/src/preview/isoGuidedAssessment.test.js"
+      ]
+    },
+    {
+      "id": "A.5.10",
+      "specification": "annex_control",
+      "title": "Acceptable-use rules",
+      "interview_version": "iso27001-omni-1",
+      "groups": 3,
+      "questions": 3,
+      "context_gates": 0,
+      "source_assurance": {
+        "support": "U",
+        "concern": "N",
+        "source_matrix": "docs/iso-omnibot/organizational-people-content-matrix.md"
+      },
+      "current_acceptance_execution": "PASS_REAL_MONGO_APPLICATION_PATH_VECTORS",
+      "hosted_current_acceptance": "NOT_EXECUTED",
+      "independent_retest": "PENDING_COORDINATOR",
+      "existing_parameterized_tests": [
+        "backend/tests/test_iso_guided_routes.py::IsoGuidedRoutes::test_all_123_resume_exact_native_save_and_shared_soa_annex_record",
+        "frontend/src/lib/isoGuidedAssessment.test.js",
+        "frontend/src/preview/isoGuidedAssessment.test.js"
+      ]
+    },
+    {
+      "id": "A.5.11",
+      "specification": "annex_control",
+      "title": "Asset return",
+      "interview_version": "iso27001-omni-1",
+      "groups": 3,
+      "questions": 3,
+      "context_gates": 0,
+      "source_assurance": {
+        "support": "U",
+        "concern": "N",
+        "source_matrix": "docs/iso-omnibot/organizational-people-content-matrix.md"
+      },
+      "current_acceptance_execution": "PASS_REAL_MONGO_APPLICATION_PATH_VECTORS",
+      "hosted_current_acceptance": "NOT_EXECUTED",
+      "independent_retest": "PENDING_COORDINATOR",
+      "existing_parameterized_tests": [
+        "backend/tests/test_iso_guided_routes.py::IsoGuidedRoutes::test_all_123_resume_exact_native_save_and_shared_soa_annex_record",
+        "frontend/src/lib/isoGuidedAssessment.test.js",
+        "frontend/src/preview/isoGuidedAssessment.test.js"
+      ]
+    },
+    {
+      "id": "A.5.12",
+      "specification": "annex_control",
+      "title": "Information classification",
+      "interview_version": "iso27001-omni-1",
+      "groups": 4,
+      "questions": 4,
+      "context_gates": 0,
+      "source_assurance": {
+        "support": "U",
+        "concern": "N",
+        "source_matrix": "docs/iso-omnibot/organizational-people-content-matrix.md"
+      },
+      "current_acceptance_execution": "PASS_REAL_MONGO_APPLICATION_PATH_VECTORS",
+      "hosted_current_acceptance": "NOT_EXECUTED",
+      "independent_retest": "PENDING_COORDINATOR",
+      "existing_parameterized_tests": [
+        "backend/tests/test_iso_guided_routes.py::IsoGuidedRoutes::test_all_123_resume_exact_native_save_and_shared_soa_annex_record",
+        "frontend/src/lib/isoGuidedAssessment.test.js",
+        "frontend/src/preview/isoGuidedAssessment.test.js"
+      ]
+    },
+    {
+      "id": "A.5.13",
+      "specification": "annex_control",
+      "title": "Classification labels",
+      "interview_version": "iso27001-omni-1",
+      "groups": 3,
+      "questions": 3,
+      "context_gates": 0,
+      "source_assurance": {
+        "support": "U",
+        "concern": "N",
+        "source_matrix": "docs/iso-omnibot/organizational-people-content-matrix.md"
+      },
+      "current_acceptance_execution": "PASS_REAL_MONGO_APPLICATION_PATH_VECTORS",
+      "hosted_current_acceptance": "NOT_EXECUTED",
+      "independent_retest": "PENDING_COORDINATOR",
+      "existing_parameterized_tests": [
+        "backend/tests/test_iso_guided_routes.py::IsoGuidedRoutes::test_all_123_resume_exact_native_save_and_shared_soa_annex_record",
+        "frontend/src/lib/isoGuidedAssessment.test.js",
+        "frontend/src/preview/isoGuidedAssessment.test.js"
+      ]
+    },
+    {
+      "id": "A.5.14",
+      "specification": "annex_control",
+      "title": "Protected information transfers",
+      "interview_version": "iso27001-omni-1",
+      "groups": 3,
+      "questions": 4,
+      "context_gates": 1,
+      "source_assurance": {
+        "support": "U",
+        "concern": "N",
+        "source_matrix": "docs/iso-omnibot/organizational-people-content-matrix.md"
+      },
+      "current_acceptance_execution": "PASS_REAL_MONGO_APPLICATION_PATH_VECTORS",
+      "hosted_current_acceptance": "NOT_EXECUTED",
+      "independent_retest": "PENDING_COORDINATOR",
+      "existing_parameterized_tests": [
+        "backend/tests/test_iso_guided_routes.py::IsoGuidedRoutes::test_all_123_resume_exact_native_save_and_shared_soa_annex_record",
+        "frontend/src/lib/isoGuidedAssessment.test.js",
+        "frontend/src/preview/isoGuidedAssessment.test.js"
+      ]
+    },
+    {
+      "id": "A.5.15",
+      "specification": "annex_control",
+      "title": "Access rules",
+      "interview_version": "iso27001-omni-1",
+      "groups": 3,
+      "questions": 3,
+      "context_gates": 0,
+      "source_assurance": {
+        "support": "U",
+        "concern": "N",
+        "source_matrix": "docs/iso-omnibot/organizational-people-content-matrix.md"
+      },
+      "current_acceptance_execution": "PASS_REAL_MONGO_APPLICATION_PATH_VECTORS",
+      "hosted_current_acceptance": "NOT_EXECUTED",
+      "independent_retest": "PENDING_COORDINATOR",
+      "existing_parameterized_tests": [
+        "backend/tests/test_iso_guided_routes.py::IsoGuidedRoutes::test_all_123_resume_exact_native_save_and_shared_soa_annex_record",
+        "frontend/src/lib/isoGuidedAssessment.test.js",
+        "frontend/src/preview/isoGuidedAssessment.test.js"
+      ]
+    },
+    {
+      "id": "A.5.16",
+      "specification": "annex_control",
+      "title": "Identity lifecycle",
+      "interview_version": "iso27001-omni-1",
+      "groups": 4,
+      "questions": 4,
+      "context_gates": 0,
+      "source_assurance": {
+        "support": "U",
+        "concern": "N",
+        "source_matrix": "docs/iso-omnibot/organizational-people-content-matrix.md"
+      },
+      "current_acceptance_execution": "PASS_REAL_MONGO_APPLICATION_PATH_VECTORS",
+      "hosted_current_acceptance": "NOT_EXECUTED",
+      "independent_retest": "PENDING_COORDINATOR",
+      "existing_parameterized_tests": [
+        "backend/tests/test_iso_guided_routes.py::IsoGuidedRoutes::test_all_123_resume_exact_native_save_and_shared_soa_annex_record",
+        "frontend/src/lib/isoGuidedAssessment.test.js",
+        "frontend/src/preview/isoGuidedAssessment.test.js"
+      ]
+    },
+    {
+      "id": "A.5.17",
+      "specification": "annex_control",
+      "title": "Credential handling",
+      "interview_version": "iso27001-omni-1",
+      "groups": 4,
+      "questions": 5,
+      "context_gates": 0,
+      "source_assurance": {
+        "support": "U",
+        "concern": "N",
+        "source_matrix": "docs/iso-omnibot/organizational-people-content-matrix.md"
+      },
+      "current_acceptance_execution": "PASS_REAL_MONGO_APPLICATION_PATH_VECTORS",
+      "hosted_current_acceptance": "NOT_EXECUTED",
+      "independent_retest": "PENDING_COORDINATOR",
+      "existing_parameterized_tests": [
+        "backend/tests/test_iso_guided_routes.py::IsoGuidedRoutes::test_all_123_resume_exact_native_save_and_shared_soa_annex_record",
+        "frontend/src/lib/isoGuidedAssessment.test.js",
+        "frontend/src/preview/isoGuidedAssessment.test.js"
+      ]
+    },
+    {
+      "id": "A.5.18",
+      "specification": "annex_control",
+      "title": "Access entitlement lifecycle",
+      "interview_version": "iso27001-omni-1",
+      "groups": 4,
+      "questions": 4,
+      "context_gates": 0,
+      "source_assurance": {
+        "support": "U",
+        "concern": "N",
+        "source_matrix": "docs/iso-omnibot/organizational-people-content-matrix.md"
+      },
+      "current_acceptance_execution": "PASS_REAL_MONGO_APPLICATION_PATH_VECTORS",
+      "hosted_current_acceptance": "NOT_EXECUTED",
+      "independent_retest": "PENDING_COORDINATOR",
+      "existing_parameterized_tests": [
+        "backend/tests/test_iso_guided_routes.py::IsoGuidedRoutes::test_all_123_resume_exact_native_save_and_shared_soa_annex_record",
+        "frontend/src/lib/isoGuidedAssessment.test.js",
+        "frontend/src/preview/isoGuidedAssessment.test.js"
+      ]
+    },
+    {
+      "id": "A.5.19",
+      "specification": "annex_control",
+      "title": "Supplier security",
+      "interview_version": "iso27001-omni-1",
+      "groups": 4,
+      "questions": 4,
+      "context_gates": 0,
+      "source_assurance": {
+        "support": "U",
+        "concern": "N",
+        "source_matrix": "docs/iso-omnibot/organizational-people-content-matrix.md"
+      },
+      "current_acceptance_execution": "PASS_REAL_MONGO_APPLICATION_PATH_VECTORS",
+      "hosted_current_acceptance": "NOT_EXECUTED",
+      "independent_retest": "PENDING_COORDINATOR",
+      "existing_parameterized_tests": [
+        "backend/tests/test_iso_guided_routes.py::IsoGuidedRoutes::test_all_123_resume_exact_native_save_and_shared_soa_annex_record",
+        "frontend/src/lib/isoGuidedAssessment.test.js",
+        "frontend/src/preview/isoGuidedAssessment.test.js"
+      ]
+    },
+    {
+      "id": "A.5.20",
+      "specification": "annex_control",
+      "title": "Contractual supplier safeguards",
+      "interview_version": "iso27001-omni-1",
+      "groups": 4,
+      "questions": 5,
+      "context_gates": 0,
+      "source_assurance": {
+        "support": "U",
+        "concern": "N",
+        "source_matrix": "docs/iso-omnibot/organizational-people-content-matrix.md"
+      },
+      "current_acceptance_execution": "PASS_REAL_MONGO_APPLICATION_PATH_VECTORS",
+      "hosted_current_acceptance": "NOT_EXECUTED",
+      "independent_retest": "PENDING_COORDINATOR",
+      "existing_parameterized_tests": [
+        "backend/tests/test_iso_guided_routes.py::IsoGuidedRoutes::test_all_123_resume_exact_native_save_and_shared_soa_annex_record",
+        "frontend/src/lib/isoGuidedAssessment.test.js",
+        "frontend/src/preview/isoGuidedAssessment.test.js"
+      ]
+    },
+    {
+      "id": "A.5.21",
+      "specification": "annex_control",
+      "title": "Technology supply-chain safeguards",
+      "interview_version": "iso27001-omni-1",
+      "groups": 4,
+      "questions": 4,
+      "context_gates": 0,
+      "source_assurance": {
+        "support": "U",
+        "concern": "N",
+        "source_matrix": "docs/iso-omnibot/organizational-people-content-matrix.md"
+      },
+      "current_acceptance_execution": "PASS_REAL_MONGO_APPLICATION_PATH_VECTORS",
+      "hosted_current_acceptance": "NOT_EXECUTED",
+      "independent_retest": "PENDING_COORDINATOR",
+      "existing_parameterized_tests": [
+        "backend/tests/test_iso_guided_routes.py::IsoGuidedRoutes::test_all_123_resume_exact_native_save_and_shared_soa_annex_record",
+        "frontend/src/lib/isoGuidedAssessment.test.js",
+        "frontend/src/preview/isoGuidedAssessment.test.js"
+      ]
+    },
+    {
+      "id": "A.5.22",
+      "specification": "annex_control",
+      "title": "Supplier service oversight",
+      "interview_version": "iso27001-omni-1",
+      "groups": 3,
+      "questions": 3,
+      "context_gates": 0,
+      "source_assurance": {
+        "support": "U",
+        "concern": "N",
+        "source_matrix": "docs/iso-omnibot/organizational-people-content-matrix.md"
+      },
+      "current_acceptance_execution": "PASS_REAL_MONGO_APPLICATION_PATH_VECTORS",
+      "hosted_current_acceptance": "NOT_EXECUTED",
+      "independent_retest": "PENDING_COORDINATOR",
+      "existing_parameterized_tests": [
+        "backend/tests/test_iso_guided_routes.py::IsoGuidedRoutes::test_all_123_resume_exact_native_save_and_shared_soa_annex_record",
+        "frontend/src/lib/isoGuidedAssessment.test.js",
+        "frontend/src/preview/isoGuidedAssessment.test.js"
+      ]
+    },
+    {
+      "id": "A.5.23",
+      "specification": "annex_control",
+      "title": "Cloud service governance",
+      "interview_version": "iso27001-omni-1",
+      "groups": 5,
+      "questions": 6,
+      "context_gates": 1,
+      "source_assurance": {
+        "support": "U",
+        "concern": "N",
+        "source_matrix": "docs/iso-omnibot/organizational-people-content-matrix.md"
+      },
+      "current_acceptance_execution": "PASS_REAL_MONGO_APPLICATION_PATH_VECTORS",
+      "hosted_current_acceptance": "NOT_EXECUTED",
+      "independent_retest": "PENDING_COORDINATOR",
+      "existing_parameterized_tests": [
+        "backend/tests/test_iso_guided_routes.py::IsoGuidedRoutes::test_all_123_resume_exact_native_save_and_shared_soa_annex_record",
+        "frontend/src/lib/isoGuidedAssessment.test.js",
+        "frontend/src/preview/isoGuidedAssessment.test.js"
+      ]
+    },
+    {
+      "id": "A.5.24",
+      "specification": "annex_control",
+      "title": "Incident preparation",
+      "interview_version": "iso27001-omni-1",
+      "groups": 4,
+      "questions": 5,
+      "context_gates": 1,
+      "source_assurance": {
+        "support": "U",
+        "concern": "N",
+        "source_matrix": "docs/iso-omnibot/organizational-people-content-matrix.md"
+      },
+      "current_acceptance_execution": "PASS_REAL_MONGO_APPLICATION_PATH_VECTORS",
+      "hosted_current_acceptance": "NOT_EXECUTED",
+      "independent_retest": "PENDING_COORDINATOR",
+      "existing_parameterized_tests": [
+        "backend/tests/test_iso_guided_routes.py::IsoGuidedRoutes::test_all_123_resume_exact_native_save_and_shared_soa_annex_record",
+        "frontend/src/lib/isoGuidedAssessment.test.js",
+        "frontend/src/preview/isoGuidedAssessment.test.js"
+      ]
+    },
+    {
+      "id": "A.5.25",
+      "specification": "annex_control",
+      "title": "Event triage",
+      "interview_version": "iso27001-omni-1",
+      "groups": 3,
+      "questions": 3,
+      "context_gates": 0,
+      "source_assurance": {
+        "support": "U",
+        "concern": "N",
+        "source_matrix": "docs/iso-omnibot/organizational-people-content-matrix.md"
+      },
+      "current_acceptance_execution": "PASS_REAL_MONGO_APPLICATION_PATH_VECTORS",
+      "hosted_current_acceptance": "NOT_EXECUTED",
+      "independent_retest": "PENDING_COORDINATOR",
+      "existing_parameterized_tests": [
+        "backend/tests/test_iso_guided_routes.py::IsoGuidedRoutes::test_all_123_resume_exact_native_save_and_shared_soa_annex_record",
+        "frontend/src/lib/isoGuidedAssessment.test.js",
+        "frontend/src/preview/isoGuidedAssessment.test.js"
+      ]
+    },
+    {
+      "id": "A.5.26",
+      "specification": "annex_control",
+      "title": "Incident response execution",
+      "interview_version": "iso27001-omni-1",
+      "groups": 3,
+      "questions": 5,
+      "context_gates": 1,
+      "source_assurance": {
+        "support": "U",
+        "concern": "N",
+        "source_matrix": "docs/iso-omnibot/organizational-people-content-matrix.md"
+      },
+      "current_acceptance_execution": "PASS_REAL_MONGO_APPLICATION_PATH_VECTORS",
+      "hosted_current_acceptance": "NOT_EXECUTED",
+      "independent_retest": "PENDING_COORDINATOR",
+      "existing_parameterized_tests": [
+        "backend/tests/test_iso_guided_routes.py::IsoGuidedRoutes::test_all_123_resume_exact_native_save_and_shared_soa_annex_record",
+        "frontend/src/lib/isoGuidedAssessment.test.js",
+        "frontend/src/preview/isoGuidedAssessment.test.js"
+      ]
+    },
+    {
+      "id": "A.5.27",
+      "specification": "annex_control",
+      "title": "Incident lessons",
+      "interview_version": "iso27001-omni-1",
+      "groups": 4,
+      "questions": 4,
+      "context_gates": 1,
+      "source_assurance": {
+        "support": "U",
+        "concern": "N",
+        "source_matrix": "docs/iso-omnibot/organizational-people-content-matrix.md"
+      },
+      "current_acceptance_execution": "PASS_REAL_MONGO_APPLICATION_PATH_VECTORS",
+      "hosted_current_acceptance": "NOT_EXECUTED",
+      "independent_retest": "PENDING_COORDINATOR",
+      "existing_parameterized_tests": [
+        "backend/tests/test_iso_guided_routes.py::IsoGuidedRoutes::test_all_123_resume_exact_native_save_and_shared_soa_annex_record",
+        "frontend/src/lib/isoGuidedAssessment.test.js",
+        "frontend/src/preview/isoGuidedAssessment.test.js"
+      ]
+    },
+    {
+      "id": "A.5.28",
+      "specification": "annex_control",
+      "title": "Incident evidence preservation",
+      "interview_version": "iso27001-omni-1",
+      "groups": 4,
+      "questions": 6,
+      "context_gates": 1,
+      "source_assurance": {
+        "support": "U",
+        "concern": "N",
+        "source_matrix": "docs/iso-omnibot/organizational-people-content-matrix.md"
+      },
+      "current_acceptance_execution": "PASS_REAL_MONGO_APPLICATION_PATH_VECTORS",
+      "hosted_current_acceptance": "NOT_EXECUTED",
+      "independent_retest": "PENDING_COORDINATOR",
+      "existing_parameterized_tests": [
+        "backend/tests/test_iso_guided_routes.py::IsoGuidedRoutes::test_all_123_resume_exact_native_save_and_shared_soa_annex_record",
+        "frontend/src/lib/isoGuidedAssessment.test.js",
+        "frontend/src/preview/isoGuidedAssessment.test.js"
+      ]
+    },
+    {
+      "id": "A.5.29",
+      "specification": "annex_control",
+      "title": "Security during disruptions",
+      "interview_version": "iso27001-omni-1",
+      "groups": 4,
+      "questions": 5,
+      "context_gates": 1,
+      "source_assurance": {
+        "support": "U",
+        "concern": "N",
+        "source_matrix": "docs/iso-omnibot/organizational-people-content-matrix.md"
+      },
+      "current_acceptance_execution": "PASS_REAL_MONGO_APPLICATION_PATH_VECTORS",
+      "hosted_current_acceptance": "NOT_EXECUTED",
+      "independent_retest": "PENDING_COORDINATOR",
+      "existing_parameterized_tests": [
+        "backend/tests/test_iso_guided_routes.py::IsoGuidedRoutes::test_all_123_resume_exact_native_save_and_shared_soa_annex_record",
+        "frontend/src/lib/isoGuidedAssessment.test.js",
+        "frontend/src/preview/isoGuidedAssessment.test.js"
+      ]
+    },
+    {
+      "id": "A.5.30",
+      "specification": "annex_control",
+      "title": "ICT continuity preparedness",
+      "interview_version": "iso27001-omni-1",
+      "groups": 4,
+      "questions": 5,
+      "context_gates": 0,
+      "source_assurance": {
+        "support": "U",
+        "concern": "N",
+        "source_matrix": "docs/iso-omnibot/organizational-people-content-matrix.md"
+      },
+      "current_acceptance_execution": "PASS_REAL_MONGO_APPLICATION_PATH_VECTORS",
+      "hosted_current_acceptance": "NOT_EXECUTED",
+      "independent_retest": "PENDING_COORDINATOR",
+      "existing_parameterized_tests": [
+        "backend/tests/test_iso_guided_routes.py::IsoGuidedRoutes::test_all_123_resume_exact_native_save_and_shared_soa_annex_record",
+        "frontend/src/lib/isoGuidedAssessment.test.js",
+        "frontend/src/preview/isoGuidedAssessment.test.js"
+      ]
+    },
+    {
+      "id": "A.5.31",
+      "specification": "annex_control",
+      "title": "Applicable obligations",
+      "interview_version": "iso27001-omni-1",
+      "groups": 4,
+      "questions": 4,
+      "context_gates": 0,
+      "source_assurance": {
+        "support": "U",
+        "concern": "N",
+        "source_matrix": "docs/iso-omnibot/organizational-people-content-matrix.md"
+      },
+      "current_acceptance_execution": "PASS_REAL_MONGO_APPLICATION_PATH_VECTORS",
+      "hosted_current_acceptance": "NOT_EXECUTED",
+      "independent_retest": "PENDING_COORDINATOR",
+      "existing_parameterized_tests": [
+        "backend/tests/test_iso_guided_routes.py::IsoGuidedRoutes::test_all_123_resume_exact_native_save_and_shared_soa_annex_record",
+        "frontend/src/lib/isoGuidedAssessment.test.js",
+        "frontend/src/preview/isoGuidedAssessment.test.js"
+      ]
+    },
+    {
+      "id": "A.5.32",
+      "specification": "annex_control",
+      "title": "Intellectual-property safeguards",
+      "interview_version": "iso27001-omni-1",
+      "groups": 3,
+      "questions": 3,
+      "context_gates": 0,
+      "source_assurance": {
+        "support": "U",
+        "concern": "N",
+        "source_matrix": "docs/iso-omnibot/organizational-people-content-matrix.md"
+      },
+      "current_acceptance_execution": "PASS_REAL_MONGO_APPLICATION_PATH_VECTORS",
+      "hosted_current_acceptance": "NOT_EXECUTED",
+      "independent_retest": "PENDING_COORDINATOR",
+      "existing_parameterized_tests": [
+        "backend/tests/test_iso_guided_routes.py::IsoGuidedRoutes::test_all_123_resume_exact_native_save_and_shared_soa_annex_record",
+        "frontend/src/lib/isoGuidedAssessment.test.js",
+        "frontend/src/preview/isoGuidedAssessment.test.js"
+      ]
+    },
+    {
+      "id": "A.5.33",
+      "specification": "annex_control",
+      "title": "Business record protection",
+      "interview_version": "iso27001-omni-1",
+      "groups": 4,
+      "questions": 7,
+      "context_gates": 0,
+      "source_assurance": {
+        "support": "U",
+        "concern": "N",
+        "source_matrix": "docs/iso-omnibot/organizational-people-content-matrix.md"
+      },
+      "current_acceptance_execution": "PASS_REAL_MONGO_APPLICATION_PATH_VECTORS",
+      "hosted_current_acceptance": "NOT_EXECUTED",
+      "independent_retest": "PENDING_COORDINATOR",
+      "existing_parameterized_tests": [
+        "backend/tests/test_iso_guided_routes.py::IsoGuidedRoutes::test_all_123_resume_exact_native_save_and_shared_soa_annex_record",
+        "frontend/src/lib/isoGuidedAssessment.test.js",
+        "frontend/src/preview/isoGuidedAssessment.test.js"
+      ]
+    },
+    {
+      "id": "A.5.34",
+      "specification": "annex_control",
+      "title": "Personal-data safeguards",
+      "interview_version": "iso27001-omni-1",
+      "groups": 4,
+      "questions": 4,
+      "context_gates": 0,
+      "source_assurance": {
+        "support": "U",
+        "concern": "N",
+        "source_matrix": "docs/iso-omnibot/organizational-people-content-matrix.md"
+      },
+      "current_acceptance_execution": "PASS_REAL_MONGO_APPLICATION_PATH_VECTORS",
+      "hosted_current_acceptance": "NOT_EXECUTED",
+      "independent_retest": "PENDING_COORDINATOR",
+      "existing_parameterized_tests": [
+        "backend/tests/test_iso_guided_routes.py::IsoGuidedRoutes::test_all_123_resume_exact_native_save_and_shared_soa_annex_record",
+        "frontend/src/lib/isoGuidedAssessment.test.js",
+        "frontend/src/preview/isoGuidedAssessment.test.js"
+      ]
+    },
+    {
+      "id": "A.5.35",
+      "specification": "annex_control",
+      "title": "Independent security evaluation",
+      "interview_version": "iso27001-omni-1",
+      "groups": 4,
+      "questions": 6,
+      "context_gates": 0,
+      "source_assurance": {
+        "support": "U",
+        "concern": "O?",
+        "source_matrix": "docs/iso-omnibot/organizational-people-content-matrix.md"
+      },
+      "current_acceptance_execution": "PASS_REAL_MONGO_APPLICATION_PATH_VECTORS",
+      "hosted_current_acceptance": "NOT_EXECUTED",
+      "independent_retest": "PENDING_COORDINATOR",
+      "existing_parameterized_tests": [
+        "backend/tests/test_iso_guided_routes.py::IsoGuidedRoutes::test_all_123_resume_exact_native_save_and_shared_soa_annex_record",
+        "frontend/src/lib/isoGuidedAssessment.test.js",
+        "frontend/src/preview/isoGuidedAssessment.test.js"
+      ]
+    },
+    {
+      "id": "A.5.36",
+      "specification": "annex_control",
+      "title": "Security-rule adherence",
+      "interview_version": "iso27001-omni-1",
+      "groups": 3,
+      "questions": 3,
+      "context_gates": 0,
+      "source_assurance": {
+        "support": "U",
+        "concern": "N",
+        "source_matrix": "docs/iso-omnibot/organizational-people-content-matrix.md"
+      },
+      "current_acceptance_execution": "PASS_REAL_MONGO_APPLICATION_PATH_VECTORS",
+      "hosted_current_acceptance": "NOT_EXECUTED",
+      "independent_retest": "PENDING_COORDINATOR",
+      "existing_parameterized_tests": [
+        "backend/tests/test_iso_guided_routes.py::IsoGuidedRoutes::test_all_123_resume_exact_native_save_and_shared_soa_annex_record",
+        "frontend/src/lib/isoGuidedAssessment.test.js",
+        "frontend/src/preview/isoGuidedAssessment.test.js"
+      ]
+    },
+    {
+      "id": "A.5.37",
+      "specification": "annex_control",
+      "title": "Operating instructions",
+      "interview_version": "iso27001-omni-1",
+      "groups": 3,
+      "questions": 3,
+      "context_gates": 0,
+      "source_assurance": {
+        "support": "U",
+        "concern": "N",
+        "source_matrix": "docs/iso-omnibot/organizational-people-content-matrix.md"
+      },
+      "current_acceptance_execution": "PASS_REAL_MONGO_APPLICATION_PATH_VECTORS",
+      "hosted_current_acceptance": "NOT_EXECUTED",
+      "independent_retest": "PENDING_COORDINATOR",
+      "existing_parameterized_tests": [
+        "backend/tests/test_iso_guided_routes.py::IsoGuidedRoutes::test_all_123_resume_exact_native_save_and_shared_soa_annex_record",
+        "frontend/src/lib/isoGuidedAssessment.test.js",
+        "frontend/src/preview/isoGuidedAssessment.test.js"
+      ]
+    },
+    {
+      "id": "A.6.1",
+      "specification": "annex_control",
+      "title": "Pre-employment checks",
+      "interview_version": "iso27001-omni-1",
+      "groups": 4,
+      "questions": 6,
+      "context_gates": 1,
+      "source_assurance": {
+        "support": "U",
+        "concern": "N",
+        "source_matrix": "docs/iso-omnibot/organizational-people-content-matrix.md"
+      },
+      "current_acceptance_execution": "PASS_REAL_MONGO_APPLICATION_PATH_VECTORS",
+      "hosted_current_acceptance": "NOT_EXECUTED",
+      "independent_retest": "PENDING_COORDINATOR",
+      "existing_parameterized_tests": [
+        "backend/tests/test_iso_guided_routes.py::IsoGuidedRoutes::test_all_123_resume_exact_native_save_and_shared_soa_annex_record",
+        "frontend/src/lib/isoGuidedAssessment.test.js",
+        "frontend/src/preview/isoGuidedAssessment.test.js"
+      ]
+    },
+    {
+      "id": "A.6.2",
+      "specification": "annex_control",
+      "title": "Employment security commitments",
+      "interview_version": "iso27001-omni-1",
+      "groups": 3,
+      "questions": 3,
+      "context_gates": 0,
+      "source_assurance": {
+        "support": "U",
+        "concern": "N",
+        "source_matrix": "docs/iso-omnibot/organizational-people-content-matrix.md"
+      },
+      "current_acceptance_execution": "PASS_REAL_MONGO_APPLICATION_PATH_VECTORS",
+      "hosted_current_acceptance": "NOT_EXECUTED",
+      "independent_retest": "PENDING_COORDINATOR",
+      "existing_parameterized_tests": [
+        "backend/tests/test_iso_guided_routes.py::IsoGuidedRoutes::test_all_123_resume_exact_native_save_and_shared_soa_annex_record",
+        "frontend/src/lib/isoGuidedAssessment.test.js",
+        "frontend/src/preview/isoGuidedAssessment.test.js"
+      ]
+    },
+    {
+      "id": "A.6.3",
+      "specification": "annex_control",
+      "title": "Workforce security learning",
+      "interview_version": "iso27001-omni-1",
+      "groups": 4,
+      "questions": 4,
+      "context_gates": 0,
+      "source_assurance": {
+        "support": "U",
+        "concern": "N",
+        "source_matrix": "docs/iso-omnibot/organizational-people-content-matrix.md"
+      },
+      "current_acceptance_execution": "PASS_REAL_MONGO_APPLICATION_PATH_VECTORS",
+      "hosted_current_acceptance": "NOT_EXECUTED",
+      "independent_retest": "PENDING_COORDINATOR",
+      "existing_parameterized_tests": [
+        "backend/tests/test_iso_guided_routes.py::IsoGuidedRoutes::test_all_123_resume_exact_native_save_and_shared_soa_annex_record",
+        "frontend/src/lib/isoGuidedAssessment.test.js",
+        "frontend/src/preview/isoGuidedAssessment.test.js"
+      ]
+    },
+    {
+      "id": "A.6.4",
+      "specification": "annex_control",
+      "title": "Disciplinary handling",
+      "interview_version": "iso27001-omni-1",
+      "groups": 3,
+      "questions": 3,
+      "context_gates": 0,
+      "source_assurance": {
+        "support": "U",
+        "concern": "N",
+        "source_matrix": "docs/iso-omnibot/organizational-people-content-matrix.md"
+      },
+      "current_acceptance_execution": "PASS_REAL_MONGO_APPLICATION_PATH_VECTORS",
+      "hosted_current_acceptance": "NOT_EXECUTED",
+      "independent_retest": "PENDING_COORDINATOR",
+      "existing_parameterized_tests": [
+        "backend/tests/test_iso_guided_routes.py::IsoGuidedRoutes::test_all_123_resume_exact_native_save_and_shared_soa_annex_record",
+        "frontend/src/lib/isoGuidedAssessment.test.js",
+        "frontend/src/preview/isoGuidedAssessment.test.js"
+      ]
+    },
+    {
+      "id": "A.6.5",
+      "specification": "annex_control",
+      "title": "Departure and role-change duties",
+      "interview_version": "iso27001-omni-1",
+      "groups": 4,
+      "questions": 4,
+      "context_gates": 0,
+      "source_assurance": {
+        "support": "U",
+        "concern": "N",
+        "source_matrix": "docs/iso-omnibot/organizational-people-content-matrix.md"
+      },
+      "current_acceptance_execution": "PASS_REAL_MONGO_APPLICATION_PATH_VECTORS",
+      "hosted_current_acceptance": "NOT_EXECUTED",
+      "independent_retest": "PENDING_COORDINATOR",
+      "existing_parameterized_tests": [
+        "backend/tests/test_iso_guided_routes.py::IsoGuidedRoutes::test_all_123_resume_exact_native_save_and_shared_soa_annex_record",
+        "frontend/src/lib/isoGuidedAssessment.test.js",
+        "frontend/src/preview/isoGuidedAssessment.test.js"
+      ]
+    },
+    {
+      "id": "A.6.6",
+      "specification": "annex_control",
+      "title": "Confidentiality commitments",
+      "interview_version": "iso27001-omni-1",
+      "groups": 4,
+      "questions": 4,
+      "context_gates": 0,
+      "source_assurance": {
+        "support": "U",
+        "concern": "O?",
+        "source_matrix": "docs/iso-omnibot/organizational-people-content-matrix.md"
+      },
+      "current_acceptance_execution": "PASS_REAL_MONGO_APPLICATION_PATH_VECTORS",
+      "hosted_current_acceptance": "NOT_EXECUTED",
+      "independent_retest": "PENDING_COORDINATOR",
+      "existing_parameterized_tests": [
+        "backend/tests/test_iso_guided_routes.py::IsoGuidedRoutes::test_all_123_resume_exact_native_save_and_shared_soa_annex_record",
+        "frontend/src/lib/isoGuidedAssessment.test.js",
+        "frontend/src/preview/isoGuidedAssessment.test.js"
+      ]
+    },
+    {
+      "id": "A.6.7",
+      "specification": "annex_control",
+      "title": "Remote-work safeguards",
+      "interview_version": "iso27001-omni-1",
+      "groups": 5,
+      "questions": 5,
+      "context_gates": 1,
+      "source_assurance": {
+        "support": "U",
+        "concern": "N",
+        "source_matrix": "docs/iso-omnibot/organizational-people-content-matrix.md"
+      },
+      "current_acceptance_execution": "PASS_REAL_MONGO_APPLICATION_PATH_VECTORS",
+      "hosted_current_acceptance": "NOT_EXECUTED",
+      "independent_retest": "PENDING_COORDINATOR",
+      "existing_parameterized_tests": [
+        "backend/tests/test_iso_guided_routes.py::IsoGuidedRoutes::test_all_123_resume_exact_native_save_and_shared_soa_annex_record",
+        "frontend/src/lib/isoGuidedAssessment.test.js",
+        "frontend/src/preview/isoGuidedAssessment.test.js"
+      ]
+    },
+    {
+      "id": "A.6.8",
+      "specification": "annex_control",
+      "title": "Workforce event reporting",
+      "interview_version": "iso27001-omni-1",
+      "groups": 4,
+      "questions": 4,
+      "context_gates": 0,
+      "source_assurance": {
+        "support": "U",
+        "concern": "N",
+        "source_matrix": "docs/iso-omnibot/organizational-people-content-matrix.md"
+      },
+      "current_acceptance_execution": "PASS_REAL_MONGO_APPLICATION_PATH_VECTORS",
+      "hosted_current_acceptance": "NOT_EXECUTED",
+      "independent_retest": "PENDING_COORDINATOR",
+      "existing_parameterized_tests": [
+        "backend/tests/test_iso_guided_routes.py::IsoGuidedRoutes::test_all_123_resume_exact_native_save_and_shared_soa_annex_record",
+        "frontend/src/lib/isoGuidedAssessment.test.js",
+        "frontend/src/preview/isoGuidedAssessment.test.js"
+      ]
+    },
+    {
+      "id": "A.7.1",
+      "specification": "annex_control",
+      "title": "Protected site boundaries",
+      "interview_version": "iso27001-omni-1",
+      "groups": 3,
+      "questions": 3,
+      "context_gates": 0,
+      "source_assurance": {
+        "support": "U",
+        "concern": "N",
+        "source_matrix": "docs/iso-omnibot/physical-technology-content-matrix.md"
+      },
+      "current_acceptance_execution": "PASS_REAL_MONGO_APPLICATION_PATH_VECTORS",
+      "hosted_current_acceptance": "NOT_EXECUTED",
+      "independent_retest": "PENDING_COORDINATOR",
+      "existing_parameterized_tests": [
+        "backend/tests/test_iso_guided_routes.py::IsoGuidedRoutes::test_all_123_resume_exact_native_save_and_shared_soa_annex_record",
+        "frontend/src/lib/isoGuidedAssessment.test.js",
+        "frontend/src/preview/isoGuidedAssessment.test.js"
+      ]
+    },
+    {
+      "id": "A.7.2",
+      "specification": "annex_control",
+      "title": "Controlled site entry",
+      "interview_version": "iso27001-omni-1",
+      "groups": 4,
+      "questions": 6,
+      "context_gates": 1,
+      "source_assurance": {
+        "support": "U",
+        "concern": "N",
+        "source_matrix": "docs/iso-omnibot/physical-technology-content-matrix.md"
+      },
+      "current_acceptance_execution": "PASS_REAL_MONGO_APPLICATION_PATH_VECTORS",
+      "hosted_current_acceptance": "NOT_EXECUTED",
+      "independent_retest": "PENDING_COORDINATOR",
+      "existing_parameterized_tests": [
+        "backend/tests/test_iso_guided_routes.py::IsoGuidedRoutes::test_all_123_resume_exact_native_save_and_shared_soa_annex_record",
+        "frontend/src/lib/isoGuidedAssessment.test.js",
+        "frontend/src/preview/isoGuidedAssessment.test.js"
+      ]
+    },
+    {
+      "id": "A.7.3",
+      "specification": "annex_control",
+      "title": "Protected facilities",
+      "interview_version": "iso27001-omni-1",
+      "groups": 3,
+      "questions": 4,
+      "context_gates": 0,
+      "source_assurance": {
+        "support": "U",
+        "concern": "N",
+        "source_matrix": "docs/iso-omnibot/physical-technology-content-matrix.md"
+      },
+      "current_acceptance_execution": "PASS_REAL_MONGO_APPLICATION_PATH_VECTORS",
+      "hosted_current_acceptance": "NOT_EXECUTED",
+      "independent_retest": "PENDING_COORDINATOR",
+      "existing_parameterized_tests": [
+        "backend/tests/test_iso_guided_routes.py::IsoGuidedRoutes::test_all_123_resume_exact_native_save_and_shared_soa_annex_record",
+        "frontend/src/lib/isoGuidedAssessment.test.js",
+        "frontend/src/preview/isoGuidedAssessment.test.js"
+      ]
+    },
+    {
+      "id": "A.7.4",
+      "specification": "annex_control",
+      "title": "Physical intrusion monitoring",
+      "interview_version": "iso27001-omni-1",
+      "groups": 3,
+      "questions": 3,
+      "context_gates": 0,
+      "source_assurance": {
+        "support": "U",
+        "concern": "O?",
+        "source_matrix": "docs/iso-omnibot/physical-technology-content-matrix.md"
+      },
+      "current_acceptance_execution": "PASS_REAL_MONGO_APPLICATION_PATH_VECTORS",
+      "hosted_current_acceptance": "NOT_EXECUTED",
+      "independent_retest": "PENDING_COORDINATOR",
+      "existing_parameterized_tests": [
+        "backend/tests/test_iso_guided_routes.py::IsoGuidedRoutes::test_all_123_resume_exact_native_save_and_shared_soa_annex_record",
+        "frontend/src/lib/isoGuidedAssessment.test.js",
+        "frontend/src/preview/isoGuidedAssessment.test.js"
+      ]
+    },
+    {
+      "id": "A.7.5",
+      "specification": "annex_control",
+      "title": "Environmental hazard protection",
+      "interview_version": "iso27001-omni-1",
+      "groups": 3,
+      "questions": 3,
+      "context_gates": 0,
+      "source_assurance": {
+        "support": "U",
+        "concern": "N",
+        "source_matrix": "docs/iso-omnibot/physical-technology-content-matrix.md"
+      },
+      "current_acceptance_execution": "PASS_REAL_MONGO_APPLICATION_PATH_VECTORS",
+      "hosted_current_acceptance": "NOT_EXECUTED",
+      "independent_retest": "PENDING_COORDINATOR",
+      "existing_parameterized_tests": [
+        "backend/tests/test_iso_guided_routes.py::IsoGuidedRoutes::test_all_123_resume_exact_native_save_and_shared_soa_annex_record",
+        "frontend/src/lib/isoGuidedAssessment.test.js",
+        "frontend/src/preview/isoGuidedAssessment.test.js"
+      ]
+    },
+    {
+      "id": "A.7.6",
+      "specification": "annex_control",
+      "title": "Secure-area working practices",
+      "interview_version": "iso27001-omni-1",
+      "groups": 3,
+      "questions": 3,
+      "context_gates": 0,
+      "source_assurance": {
+        "support": "U",
+        "concern": "N",
+        "source_matrix": "docs/iso-omnibot/physical-technology-content-matrix.md"
+      },
+      "current_acceptance_execution": "PASS_REAL_MONGO_APPLICATION_PATH_VECTORS",
+      "hosted_current_acceptance": "NOT_EXECUTED",
+      "independent_retest": "PENDING_COORDINATOR",
+      "existing_parameterized_tests": [
+        "backend/tests/test_iso_guided_routes.py::IsoGuidedRoutes::test_all_123_resume_exact_native_save_and_shared_soa_annex_record",
+        "frontend/src/lib/isoGuidedAssessment.test.js",
+        "frontend/src/preview/isoGuidedAssessment.test.js"
+      ]
+    },
+    {
+      "id": "A.7.7",
+      "specification": "annex_control",
+      "title": "Clear desks and screens",
+      "interview_version": "iso27001-omni-1",
+      "groups": 3,
+      "questions": 3,
+      "context_gates": 0,
+      "source_assurance": {
+        "support": "U",
+        "concern": "N",
+        "source_matrix": "docs/iso-omnibot/physical-technology-content-matrix.md"
+      },
+      "current_acceptance_execution": "PASS_REAL_MONGO_APPLICATION_PATH_VECTORS",
+      "hosted_current_acceptance": "NOT_EXECUTED",
+      "independent_retest": "PENDING_COORDINATOR",
+      "existing_parameterized_tests": [
+        "backend/tests/test_iso_guided_routes.py::IsoGuidedRoutes::test_all_123_resume_exact_native_save_and_shared_soa_annex_record",
+        "frontend/src/lib/isoGuidedAssessment.test.js",
+        "frontend/src/preview/isoGuidedAssessment.test.js"
+      ]
+    },
+    {
+      "id": "A.7.8",
+      "specification": "annex_control",
+      "title": "Protected equipment placement",
+      "interview_version": "iso27001-omni-1",
+      "groups": 3,
+      "questions": 3,
+      "context_gates": 0,
+      "source_assurance": {
+        "support": "U",
+        "concern": "N",
+        "source_matrix": "docs/iso-omnibot/physical-technology-content-matrix.md"
+      },
+      "current_acceptance_execution": "PASS_REAL_MONGO_APPLICATION_PATH_VECTORS",
+      "hosted_current_acceptance": "NOT_EXECUTED",
+      "independent_retest": "PENDING_COORDINATOR",
+      "existing_parameterized_tests": [
+        "backend/tests/test_iso_guided_routes.py::IsoGuidedRoutes::test_all_123_resume_exact_native_save_and_shared_soa_annex_record",
+        "frontend/src/lib/isoGuidedAssessment.test.js",
+        "frontend/src/preview/isoGuidedAssessment.test.js"
+      ]
+    },
+    {
+      "id": "A.7.9",
+      "specification": "annex_control",
+      "title": "Off-site asset safeguards",
+      "interview_version": "iso27001-omni-1",
+      "groups": 3,
+      "questions": 3,
+      "context_gates": 0,
+      "source_assurance": {
+        "support": "U",
+        "concern": "E?",
+        "source_matrix": "docs/iso-omnibot/physical-technology-content-matrix.md"
+      },
+      "current_acceptance_execution": "PASS_REAL_MONGO_APPLICATION_PATH_VECTORS",
+      "hosted_current_acceptance": "NOT_EXECUTED",
+      "independent_retest": "PENDING_COORDINATOR",
+      "existing_parameterized_tests": [
+        "backend/tests/test_iso_guided_routes.py::IsoGuidedRoutes::test_all_123_resume_exact_native_save_and_shared_soa_annex_record",
+        "frontend/src/lib/isoGuidedAssessment.test.js",
+        "frontend/src/preview/isoGuidedAssessment.test.js"
+      ]
+    },
+    {
+      "id": "A.7.10",
+      "specification": "annex_control",
+      "title": "Media lifecycle safeguards",
+      "interview_version": "iso27001-omni-1",
+      "groups": 4,
+      "questions": 4,
+      "context_gates": 0,
+      "source_assurance": {
+        "support": "U",
+        "concern": "N",
+        "source_matrix": "docs/iso-omnibot/physical-technology-content-matrix.md"
+      },
+      "current_acceptance_execution": "PASS_REAL_MONGO_APPLICATION_PATH_VECTORS",
+      "hosted_current_acceptance": "NOT_EXECUTED",
+      "independent_retest": "PENDING_COORDINATOR",
+      "existing_parameterized_tests": [
+        "backend/tests/test_iso_guided_routes.py::IsoGuidedRoutes::test_all_123_resume_exact_native_save_and_shared_soa_annex_record",
+        "frontend/src/lib/isoGuidedAssessment.test.js",
+        "frontend/src/preview/isoGuidedAssessment.test.js"
+      ]
+    },
+    {
+      "id": "A.7.11",
+      "specification": "annex_control",
+      "title": "Utility resilience",
+      "interview_version": "iso27001-omni-1",
+      "groups": 3,
+      "questions": 3,
+      "context_gates": 0,
+      "source_assurance": {
+        "support": "U",
+        "concern": "N",
+        "source_matrix": "docs/iso-omnibot/physical-technology-content-matrix.md"
+      },
+      "current_acceptance_execution": "PASS_REAL_MONGO_APPLICATION_PATH_VECTORS",
+      "hosted_current_acceptance": "NOT_EXECUTED",
+      "independent_retest": "PENDING_COORDINATOR",
+      "existing_parameterized_tests": [
+        "backend/tests/test_iso_guided_routes.py::IsoGuidedRoutes::test_all_123_resume_exact_native_save_and_shared_soa_annex_record",
+        "frontend/src/lib/isoGuidedAssessment.test.js",
+        "frontend/src/preview/isoGuidedAssessment.test.js"
+      ]
+    },
+    {
+      "id": "A.7.12",
+      "specification": "annex_control",
+      "title": "Protected cabling",
+      "interview_version": "iso27001-omni-1",
+      "groups": 3,
+      "questions": 3,
+      "context_gates": 0,
+      "source_assurance": {
+        "support": "U",
+        "concern": "N",
+        "source_matrix": "docs/iso-omnibot/physical-technology-content-matrix.md"
+      },
+      "current_acceptance_execution": "PASS_REAL_MONGO_APPLICATION_PATH_VECTORS",
+      "hosted_current_acceptance": "NOT_EXECUTED",
+      "independent_retest": "PENDING_COORDINATOR",
+      "existing_parameterized_tests": [
+        "backend/tests/test_iso_guided_routes.py::IsoGuidedRoutes::test_all_123_resume_exact_native_save_and_shared_soa_annex_record",
+        "frontend/src/lib/isoGuidedAssessment.test.js",
+        "frontend/src/preview/isoGuidedAssessment.test.js"
+      ]
+    },
+    {
+      "id": "A.7.13",
+      "specification": "annex_control",
+      "title": "Equipment servicing",
+      "interview_version": "iso27001-omni-1",
+      "groups": 4,
+      "questions": 6,
+      "context_gates": 1,
+      "source_assurance": {
+        "support": "U",
+        "concern": "N",
+        "source_matrix": "docs/iso-omnibot/physical-technology-content-matrix.md"
+      },
+      "current_acceptance_execution": "PASS_REAL_MONGO_APPLICATION_PATH_VECTORS",
+      "hosted_current_acceptance": "NOT_EXECUTED",
+      "independent_retest": "PENDING_COORDINATOR",
+      "existing_parameterized_tests": [
+        "backend/tests/test_iso_guided_routes.py::IsoGuidedRoutes::test_all_123_resume_exact_native_save_and_shared_soa_annex_record",
+        "frontend/src/lib/isoGuidedAssessment.test.js",
+        "frontend/src/preview/isoGuidedAssessment.test.js"
+      ]
+    },
+    {
+      "id": "A.7.14",
+      "specification": "annex_control",
+      "title": "Equipment retirement and reuse",
+      "interview_version": "iso27001-omni-1",
+      "groups": 3,
+      "questions": 4,
+      "context_gates": 0,
+      "source_assurance": {
+        "support": "U",
+        "concern": "N",
+        "source_matrix": "docs/iso-omnibot/physical-technology-content-matrix.md"
+      },
+      "current_acceptance_execution": "PASS_REAL_MONGO_APPLICATION_PATH_VECTORS",
+      "hosted_current_acceptance": "NOT_EXECUTED",
+      "independent_retest": "PENDING_COORDINATOR",
+      "existing_parameterized_tests": [
+        "backend/tests/test_iso_guided_routes.py::IsoGuidedRoutes::test_all_123_resume_exact_native_save_and_shared_soa_annex_record",
+        "frontend/src/lib/isoGuidedAssessment.test.js",
+        "frontend/src/preview/isoGuidedAssessment.test.js"
+      ]
+    },
+    {
+      "id": "A.8.1",
+      "specification": "annex_control",
+      "title": "Endpoint safeguards",
+      "interview_version": "iso27001-omni-1",
+      "groups": 3,
+      "questions": 3,
+      "context_gates": 0,
+      "source_assurance": {
+        "support": "U",
+        "concern": "N",
+        "source_matrix": "docs/iso-omnibot/physical-technology-content-matrix.md"
+      },
+      "current_acceptance_execution": "PASS_REAL_MONGO_APPLICATION_PATH_VECTORS",
+      "hosted_current_acceptance": "NOT_EXECUTED",
+      "independent_retest": "PENDING_COORDINATOR",
+      "existing_parameterized_tests": [
+        "backend/tests/test_iso_guided_routes.py::IsoGuidedRoutes::test_all_123_resume_exact_native_save_and_shared_soa_annex_record",
+        "frontend/src/lib/isoGuidedAssessment.test.js",
+        "frontend/src/preview/isoGuidedAssessment.test.js"
+      ]
+    },
+    {
+      "id": "A.8.2",
+      "specification": "annex_control",
+      "title": "Privileged permissions",
+      "interview_version": "iso27001-omni-1",
+      "groups": 3,
+      "questions": 4,
+      "context_gates": 0,
+      "source_assurance": {
+        "support": "U",
+        "concern": "N",
+        "source_matrix": "docs/iso-omnibot/physical-technology-content-matrix.md"
+      },
+      "current_acceptance_execution": "PASS_REAL_MONGO_APPLICATION_PATH_VECTORS",
+      "hosted_current_acceptance": "NOT_EXECUTED",
+      "independent_retest": "PENDING_COORDINATOR",
+      "existing_parameterized_tests": [
+        "backend/tests/test_iso_guided_routes.py::IsoGuidedRoutes::test_all_123_resume_exact_native_save_and_shared_soa_annex_record",
+        "frontend/src/lib/isoGuidedAssessment.test.js",
+        "frontend/src/preview/isoGuidedAssessment.test.js"
+      ]
+    },
+    {
+      "id": "A.8.3",
+      "specification": "annex_control",
+      "title": "Restricted information access",
+      "interview_version": "iso27001-omni-1",
+      "groups": 3,
+      "questions": 4,
+      "context_gates": 0,
+      "source_assurance": {
+        "support": "U",
+        "concern": "N",
+        "source_matrix": "docs/iso-omnibot/physical-technology-content-matrix.md"
+      },
+      "current_acceptance_execution": "PASS_REAL_MONGO_APPLICATION_PATH_VECTORS",
+      "hosted_current_acceptance": "NOT_EXECUTED",
+      "independent_retest": "PENDING_COORDINATOR",
+      "existing_parameterized_tests": [
+        "backend/tests/test_iso_guided_routes.py::IsoGuidedRoutes::test_all_123_resume_exact_native_save_and_shared_soa_annex_record",
+        "frontend/src/lib/isoGuidedAssessment.test.js",
+        "frontend/src/preview/isoGuidedAssessment.test.js"
+      ]
+    },
+    {
+      "id": "A.8.4",
+      "specification": "annex_control",
+      "title": "Source-code access",
+      "interview_version": "iso27001-omni-1",
+      "groups": 4,
+      "questions": 4,
+      "context_gates": 0,
+      "source_assurance": {
+        "support": "U",
+        "concern": "N",
+        "source_matrix": "docs/iso-omnibot/physical-technology-content-matrix.md"
+      },
+      "current_acceptance_execution": "PASS_REAL_MONGO_APPLICATION_PATH_VECTORS",
+      "hosted_current_acceptance": "NOT_EXECUTED",
+      "independent_retest": "PENDING_COORDINATOR",
+      "existing_parameterized_tests": [
+        "backend/tests/test_iso_guided_routes.py::IsoGuidedRoutes::test_all_123_resume_exact_native_save_and_shared_soa_annex_record",
+        "frontend/src/lib/isoGuidedAssessment.test.js",
+        "frontend/src/preview/isoGuidedAssessment.test.js"
+      ]
+    },
+    {
+      "id": "A.8.5",
+      "specification": "annex_control",
+      "title": "Authentication safeguards",
+      "interview_version": "iso27001-omni-1",
+      "groups": 3,
+      "questions": 4,
+      "context_gates": 0,
+      "source_assurance": {
+        "support": "U",
+        "concern": "N",
+        "source_matrix": "docs/iso-omnibot/physical-technology-content-matrix.md"
+      },
+      "current_acceptance_execution": "PASS_REAL_MONGO_APPLICATION_PATH_VECTORS",
+      "hosted_current_acceptance": "NOT_EXECUTED",
+      "independent_retest": "PENDING_COORDINATOR",
+      "existing_parameterized_tests": [
+        "backend/tests/test_iso_guided_routes.py::IsoGuidedRoutes::test_all_123_resume_exact_native_save_and_shared_soa_annex_record",
+        "frontend/src/lib/isoGuidedAssessment.test.js",
+        "frontend/src/preview/isoGuidedAssessment.test.js"
+      ]
+    },
+    {
+      "id": "A.8.6",
+      "specification": "annex_control",
+      "title": "Capacity planning",
+      "interview_version": "iso27001-omni-1",
+      "groups": 3,
+      "questions": 3,
+      "context_gates": 0,
+      "source_assurance": {
+        "support": "U",
+        "concern": "N",
+        "source_matrix": "docs/iso-omnibot/physical-technology-content-matrix.md"
+      },
+      "current_acceptance_execution": "PASS_REAL_MONGO_APPLICATION_PATH_VECTORS",
+      "hosted_current_acceptance": "NOT_EXECUTED",
+      "independent_retest": "PENDING_COORDINATOR",
+      "existing_parameterized_tests": [
+        "backend/tests/test_iso_guided_routes.py::IsoGuidedRoutes::test_all_123_resume_exact_native_save_and_shared_soa_annex_record",
+        "frontend/src/lib/isoGuidedAssessment.test.js",
+        "frontend/src/preview/isoGuidedAssessment.test.js"
+      ]
+    },
+    {
+      "id": "A.8.7",
+      "specification": "annex_control",
+      "title": "Malware defences",
+      "interview_version": "iso27001-omni-1",
+      "groups": 4,
+      "questions": 4,
+      "context_gates": 0,
+      "source_assurance": {
+        "support": "U",
+        "concern": "N",
+        "source_matrix": "docs/iso-omnibot/physical-technology-content-matrix.md"
+      },
+      "current_acceptance_execution": "PASS_REAL_MONGO_APPLICATION_PATH_VECTORS",
+      "hosted_current_acceptance": "NOT_EXECUTED",
+      "independent_retest": "PENDING_COORDINATOR",
+      "existing_parameterized_tests": [
+        "backend/tests/test_iso_guided_routes.py::IsoGuidedRoutes::test_all_123_resume_exact_native_save_and_shared_soa_annex_record",
+        "frontend/src/lib/isoGuidedAssessment.test.js",
+        "frontend/src/preview/isoGuidedAssessment.test.js"
+      ]
+    },
+    {
+      "id": "A.8.8",
+      "specification": "annex_control",
+      "title": "Vulnerability handling",
+      "interview_version": "iso27001-omni-1",
+      "groups": 4,
+      "questions": 4,
+      "context_gates": 0,
+      "source_assurance": {
+        "support": "U",
+        "concern": "N",
+        "source_matrix": "docs/iso-omnibot/physical-technology-content-matrix.md"
+      },
+      "current_acceptance_execution": "PASS_REAL_MONGO_APPLICATION_PATH_VECTORS",
+      "hosted_current_acceptance": "NOT_EXECUTED",
+      "independent_retest": "PENDING_COORDINATOR",
+      "existing_parameterized_tests": [
+        "backend/tests/test_iso_guided_routes.py::IsoGuidedRoutes::test_all_123_resume_exact_native_save_and_shared_soa_annex_record",
+        "frontend/src/lib/isoGuidedAssessment.test.js",
+        "frontend/src/preview/isoGuidedAssessment.test.js"
+      ]
+    },
+    {
+      "id": "A.8.9",
+      "specification": "annex_control",
+      "title": "Secure configuration",
+      "interview_version": "iso27001-omni-1",
+      "groups": 3,
+      "questions": 4,
+      "context_gates": 0,
+      "source_assurance": {
+        "support": "U",
+        "concern": "N",
+        "source_matrix": "docs/iso-omnibot/physical-technology-content-matrix.md"
+      },
+      "current_acceptance_execution": "PASS_REAL_MONGO_APPLICATION_PATH_VECTORS",
+      "hosted_current_acceptance": "NOT_EXECUTED",
+      "independent_retest": "PENDING_COORDINATOR",
+      "existing_parameterized_tests": [
+        "backend/tests/test_iso_guided_routes.py::IsoGuidedRoutes::test_all_123_resume_exact_native_save_and_shared_soa_annex_record",
+        "frontend/src/lib/isoGuidedAssessment.test.js",
+        "frontend/src/preview/isoGuidedAssessment.test.js"
+      ]
+    },
+    {
+      "id": "A.8.10",
+      "specification": "annex_control",
+      "title": "Information deletion",
+      "interview_version": "iso27001-omni-1",
+      "groups": 3,
+      "questions": 4,
+      "context_gates": 0,
+      "source_assurance": {
+        "support": "U",
+        "concern": "N",
+        "source_matrix": "docs/iso-omnibot/physical-technology-content-matrix.md"
+      },
+      "current_acceptance_execution": "PASS_REAL_MONGO_APPLICATION_PATH_VECTORS",
+      "hosted_current_acceptance": "NOT_EXECUTED",
+      "independent_retest": "PENDING_COORDINATOR",
+      "existing_parameterized_tests": [
+        "backend/tests/test_iso_guided_routes.py::IsoGuidedRoutes::test_all_123_resume_exact_native_save_and_shared_soa_annex_record",
+        "frontend/src/lib/isoGuidedAssessment.test.js",
+        "frontend/src/preview/isoGuidedAssessment.test.js"
+      ]
+    },
+    {
+      "id": "A.8.11",
+      "specification": "annex_control",
+      "title": "Data masking",
+      "interview_version": "iso27001-omni-1",
+      "groups": 3,
+      "questions": 4,
+      "context_gates": 0,
+      "source_assurance": {
+        "support": "U",
+        "concern": "N",
+        "source_matrix": "docs/iso-omnibot/physical-technology-content-matrix.md"
+      },
+      "current_acceptance_execution": "PASS_REAL_MONGO_APPLICATION_PATH_VECTORS",
+      "hosted_current_acceptance": "NOT_EXECUTED",
+      "independent_retest": "PENDING_COORDINATOR",
+      "existing_parameterized_tests": [
+        "backend/tests/test_iso_guided_routes.py::IsoGuidedRoutes::test_all_123_resume_exact_native_save_and_shared_soa_annex_record",
+        "frontend/src/lib/isoGuidedAssessment.test.js",
+        "frontend/src/preview/isoGuidedAssessment.test.js"
+      ]
+    },
+    {
+      "id": "A.8.12",
+      "specification": "annex_control",
+      "title": "Data-loss prevention",
+      "interview_version": "iso27001-omni-1",
+      "groups": 3,
+      "questions": 4,
+      "context_gates": 0,
+      "source_assurance": {
+        "support": "U",
+        "concern": "N",
+        "source_matrix": "docs/iso-omnibot/physical-technology-content-matrix.md"
+      },
+      "current_acceptance_execution": "PASS_REAL_MONGO_APPLICATION_PATH_VECTORS",
+      "hosted_current_acceptance": "NOT_EXECUTED",
+      "independent_retest": "PENDING_COORDINATOR",
+      "existing_parameterized_tests": [
+        "backend/tests/test_iso_guided_routes.py::IsoGuidedRoutes::test_all_123_resume_exact_native_save_and_shared_soa_annex_record",
+        "frontend/src/lib/isoGuidedAssessment.test.js",
+        "frontend/src/preview/isoGuidedAssessment.test.js"
+      ]
+    },
+    {
+      "id": "A.8.13",
+      "specification": "annex_control",
+      "title": "Recoverable backups",
+      "interview_version": "iso27001-omni-1",
+      "groups": 4,
+      "questions": 4,
+      "context_gates": 0,
+      "source_assurance": {
+        "support": "U",
+        "concern": "N",
+        "source_matrix": "docs/iso-omnibot/physical-technology-content-matrix.md"
+      },
+      "current_acceptance_execution": "PASS_REAL_MONGO_APPLICATION_PATH_VECTORS",
+      "hosted_current_acceptance": "NOT_EXECUTED",
+      "independent_retest": "PENDING_COORDINATOR",
+      "existing_parameterized_tests": [
+        "backend/tests/test_iso_guided_routes.py::IsoGuidedRoutes::test_all_123_resume_exact_native_save_and_shared_soa_annex_record",
+        "frontend/src/lib/isoGuidedAssessment.test.js",
+        "frontend/src/preview/isoGuidedAssessment.test.js"
+      ]
+    },
+    {
+      "id": "A.8.14",
+      "specification": "annex_control",
+      "title": "Processing redundancy",
+      "interview_version": "iso27001-omni-1",
+      "groups": 3,
+      "questions": 3,
+      "context_gates": 0,
+      "source_assurance": {
+        "support": "U",
+        "concern": "N",
+        "source_matrix": "docs/iso-omnibot/physical-technology-content-matrix.md"
+      },
+      "current_acceptance_execution": "PASS_REAL_MONGO_APPLICATION_PATH_VECTORS",
+      "hosted_current_acceptance": "NOT_EXECUTED",
+      "independent_retest": "PENDING_COORDINATOR",
+      "existing_parameterized_tests": [
+        "backend/tests/test_iso_guided_routes.py::IsoGuidedRoutes::test_all_123_resume_exact_native_save_and_shared_soa_annex_record",
+        "frontend/src/lib/isoGuidedAssessment.test.js",
+        "frontend/src/preview/isoGuidedAssessment.test.js"
+      ]
+    },
+    {
+      "id": "A.8.15",
+      "specification": "annex_control",
+      "title": "Security event logs",
+      "interview_version": "iso27001-omni-1",
+      "groups": 3,
+      "questions": 5,
+      "context_gates": 0,
+      "source_assurance": {
+        "support": "U",
+        "concern": "N",
+        "source_matrix": "docs/iso-omnibot/physical-technology-content-matrix.md"
+      },
+      "current_acceptance_execution": "PASS_REAL_MONGO_APPLICATION_PATH_VECTORS",
+      "hosted_current_acceptance": "NOT_EXECUTED",
+      "independent_retest": "PENDING_COORDINATOR",
+      "existing_parameterized_tests": [
+        "backend/tests/test_iso_guided_routes.py::IsoGuidedRoutes::test_all_123_resume_exact_native_save_and_shared_soa_annex_record",
+        "frontend/src/lib/isoGuidedAssessment.test.js",
+        "frontend/src/preview/isoGuidedAssessment.test.js"
+      ]
+    },
+    {
+      "id": "A.8.16",
+      "specification": "annex_control",
+      "title": "Activity monitoring",
+      "interview_version": "iso27001-omni-1",
+      "groups": 4,
+      "questions": 4,
+      "context_gates": 0,
+      "source_assurance": {
+        "support": "U",
+        "concern": "N",
+        "source_matrix": "docs/iso-omnibot/physical-technology-content-matrix.md"
+      },
+      "current_acceptance_execution": "PASS_REAL_MONGO_APPLICATION_PATH_VECTORS",
+      "hosted_current_acceptance": "NOT_EXECUTED",
+      "independent_retest": "PENDING_COORDINATOR",
+      "existing_parameterized_tests": [
+        "backend/tests/test_iso_guided_routes.py::IsoGuidedRoutes::test_all_123_resume_exact_native_save_and_shared_soa_annex_record",
+        "frontend/src/lib/isoGuidedAssessment.test.js",
+        "frontend/src/preview/isoGuidedAssessment.test.js"
+      ]
+    },
+    {
+      "id": "A.8.17",
+      "specification": "annex_control",
+      "title": "Aligned system clocks",
+      "interview_version": "iso27001-omni-1",
+      "groups": 3,
+      "questions": 3,
+      "context_gates": 0,
+      "source_assurance": {
+        "support": "U",
+        "concern": "N",
+        "source_matrix": "docs/iso-omnibot/physical-technology-content-matrix.md"
+      },
+      "current_acceptance_execution": "PASS_REAL_MONGO_APPLICATION_PATH_VECTORS",
+      "hosted_current_acceptance": "NOT_EXECUTED",
+      "independent_retest": "PENDING_COORDINATOR",
+      "existing_parameterized_tests": [
+        "backend/tests/test_iso_guided_routes.py::IsoGuidedRoutes::test_all_123_resume_exact_native_save_and_shared_soa_annex_record",
+        "frontend/src/lib/isoGuidedAssessment.test.js",
+        "frontend/src/preview/isoGuidedAssessment.test.js"
+      ]
+    },
+    {
+      "id": "A.8.18",
+      "specification": "annex_control",
+      "title": "Privileged utility use",
+      "interview_version": "iso27001-omni-1",
+      "groups": 3,
+      "questions": 4,
+      "context_gates": 0,
+      "source_assurance": {
+        "support": "U",
+        "concern": "E?",
+        "source_matrix": "docs/iso-omnibot/physical-technology-content-matrix.md"
+      },
+      "current_acceptance_execution": "PASS_REAL_MONGO_APPLICATION_PATH_VECTORS",
+      "hosted_current_acceptance": "NOT_EXECUTED",
+      "independent_retest": "PENDING_COORDINATOR",
+      "existing_parameterized_tests": [
+        "backend/tests/test_iso_guided_routes.py::IsoGuidedRoutes::test_all_123_resume_exact_native_save_and_shared_soa_annex_record",
+        "frontend/src/lib/isoGuidedAssessment.test.js",
+        "frontend/src/preview/isoGuidedAssessment.test.js"
+      ]
+    },
+    {
+      "id": "A.8.19",
+      "specification": "annex_control",
+      "title": "Software installation controls",
+      "interview_version": "iso27001-omni-1",
+      "groups": 3,
+      "questions": 4,
+      "context_gates": 0,
+      "source_assurance": {
+        "support": "U",
+        "concern": "E?",
+        "source_matrix": "docs/iso-omnibot/physical-technology-content-matrix.md"
+      },
+      "current_acceptance_execution": "PASS_REAL_MONGO_APPLICATION_PATH_VECTORS",
+      "hosted_current_acceptance": "NOT_EXECUTED",
+      "independent_retest": "PENDING_COORDINATOR",
+      "existing_parameterized_tests": [
+        "backend/tests/test_iso_guided_routes.py::IsoGuidedRoutes::test_all_123_resume_exact_native_save_and_shared_soa_annex_record",
+        "frontend/src/lib/isoGuidedAssessment.test.js",
+        "frontend/src/preview/isoGuidedAssessment.test.js"
+      ]
+    },
+    {
+      "id": "A.8.20",
+      "specification": "annex_control",
+      "title": "Network protection",
+      "interview_version": "iso27001-omni-1",
+      "groups": 4,
+      "questions": 4,
+      "context_gates": 0,
+      "source_assurance": {
+        "support": "U",
+        "concern": "N",
+        "source_matrix": "docs/iso-omnibot/physical-technology-content-matrix.md"
+      },
+      "current_acceptance_execution": "PASS_REAL_MONGO_APPLICATION_PATH_VECTORS",
+      "hosted_current_acceptance": "NOT_EXECUTED",
+      "independent_retest": "PENDING_COORDINATOR",
+      "existing_parameterized_tests": [
+        "backend/tests/test_iso_guided_routes.py::IsoGuidedRoutes::test_all_123_resume_exact_native_save_and_shared_soa_annex_record",
+        "frontend/src/lib/isoGuidedAssessment.test.js",
+        "frontend/src/preview/isoGuidedAssessment.test.js"
+      ]
+    },
+    {
+      "id": "A.8.21",
+      "specification": "annex_control",
+      "title": "Network-service safeguards",
+      "interview_version": "iso27001-omni-1",
+      "groups": 3,
+      "questions": 4,
+      "context_gates": 0,
+      "source_assurance": {
+        "support": "U",
+        "concern": "N",
+        "source_matrix": "docs/iso-omnibot/physical-technology-content-matrix.md"
+      },
+      "current_acceptance_execution": "PASS_REAL_MONGO_APPLICATION_PATH_VECTORS",
+      "hosted_current_acceptance": "NOT_EXECUTED",
+      "independent_retest": "PENDING_COORDINATOR",
+      "existing_parameterized_tests": [
+        "backend/tests/test_iso_guided_routes.py::IsoGuidedRoutes::test_all_123_resume_exact_native_save_and_shared_soa_annex_record",
+        "frontend/src/lib/isoGuidedAssessment.test.js",
+        "frontend/src/preview/isoGuidedAssessment.test.js"
+      ]
+    },
+    {
+      "id": "A.8.22",
+      "specification": "annex_control",
+      "title": "Network segmentation",
+      "interview_version": "iso27001-omni-1",
+      "groups": 3,
+      "questions": 3,
+      "context_gates": 0,
+      "source_assurance": {
+        "support": "U",
+        "concern": "N",
+        "source_matrix": "docs/iso-omnibot/physical-technology-content-matrix.md"
+      },
+      "current_acceptance_execution": "PASS_REAL_MONGO_APPLICATION_PATH_VECTORS",
+      "hosted_current_acceptance": "NOT_EXECUTED",
+      "independent_retest": "PENDING_COORDINATOR",
+      "existing_parameterized_tests": [
+        "backend/tests/test_iso_guided_routes.py::IsoGuidedRoutes::test_all_123_resume_exact_native_save_and_shared_soa_annex_record",
+        "frontend/src/lib/isoGuidedAssessment.test.js",
+        "frontend/src/preview/isoGuidedAssessment.test.js"
+      ]
+    },
+    {
+      "id": "A.8.23",
+      "specification": "annex_control",
+      "title": "Web-content controls",
+      "interview_version": "iso27001-omni-1",
+      "groups": 3,
+      "questions": 4,
+      "context_gates": 0,
+      "source_assurance": {
+        "support": "U",
+        "concern": "N",
+        "source_matrix": "docs/iso-omnibot/physical-technology-content-matrix.md"
+      },
+      "current_acceptance_execution": "PASS_REAL_MONGO_APPLICATION_PATH_VECTORS",
+      "hosted_current_acceptance": "NOT_EXECUTED",
+      "independent_retest": "PENDING_COORDINATOR",
+      "existing_parameterized_tests": [
+        "backend/tests/test_iso_guided_routes.py::IsoGuidedRoutes::test_all_123_resume_exact_native_save_and_shared_soa_annex_record",
+        "frontend/src/lib/isoGuidedAssessment.test.js",
+        "frontend/src/preview/isoGuidedAssessment.test.js"
+      ]
+    },
+    {
+      "id": "A.8.24",
+      "specification": "annex_control",
+      "title": "Cryptographic safeguards",
+      "interview_version": "iso27001-omni-1",
+      "groups": 4,
+      "questions": 5,
+      "context_gates": 0,
+      "source_assurance": {
+        "support": "U",
+        "concern": "N",
+        "source_matrix": "docs/iso-omnibot/physical-technology-content-matrix.md"
+      },
+      "current_acceptance_execution": "PASS_REAL_MONGO_APPLICATION_PATH_VECTORS",
+      "hosted_current_acceptance": "NOT_EXECUTED",
+      "independent_retest": "PENDING_COORDINATOR",
+      "existing_parameterized_tests": [
+        "backend/tests/test_iso_guided_routes.py::IsoGuidedRoutes::test_all_123_resume_exact_native_save_and_shared_soa_annex_record",
+        "frontend/src/lib/isoGuidedAssessment.test.js",
+        "frontend/src/preview/isoGuidedAssessment.test.js"
+      ]
+    },
+    {
+      "id": "A.8.25",
+      "specification": "annex_control",
+      "title": "Secure development lifecycle",
+      "interview_version": "iso27001-omni-1",
+      "groups": 3,
+      "questions": 3,
+      "context_gates": 0,
+      "source_assurance": {
+        "support": "U",
+        "concern": "N",
+        "source_matrix": "docs/iso-omnibot/physical-technology-content-matrix.md"
+      },
+      "current_acceptance_execution": "PASS_REAL_MONGO_APPLICATION_PATH_VECTORS",
+      "hosted_current_acceptance": "NOT_EXECUTED",
+      "independent_retest": "PENDING_COORDINATOR",
+      "existing_parameterized_tests": [
+        "backend/tests/test_iso_guided_routes.py::IsoGuidedRoutes::test_all_123_resume_exact_native_save_and_shared_soa_annex_record",
+        "frontend/src/lib/isoGuidedAssessment.test.js",
+        "frontend/src/preview/isoGuidedAssessment.test.js"
+      ]
+    },
+    {
+      "id": "A.8.26",
+      "specification": "annex_control",
+      "title": "Application security needs",
+      "interview_version": "iso27001-omni-1",
+      "groups": 3,
+      "questions": 4,
+      "context_gates": 0,
+      "source_assurance": {
+        "support": "U",
+        "concern": "O?",
+        "source_matrix": "docs/iso-omnibot/physical-technology-content-matrix.md"
+      },
+      "current_acceptance_execution": "PASS_REAL_MONGO_APPLICATION_PATH_VECTORS",
+      "hosted_current_acceptance": "NOT_EXECUTED",
+      "independent_retest": "PENDING_COORDINATOR",
+      "existing_parameterized_tests": [
+        "backend/tests/test_iso_guided_routes.py::IsoGuidedRoutes::test_all_123_resume_exact_native_save_and_shared_soa_annex_record",
+        "frontend/src/lib/isoGuidedAssessment.test.js",
+        "frontend/src/preview/isoGuidedAssessment.test.js"
+      ]
+    },
+    {
+      "id": "A.8.27",
+      "specification": "annex_control",
+      "title": "Secure architecture principles",
+      "interview_version": "iso27001-omni-1",
+      "groups": 3,
+      "questions": 3,
+      "context_gates": 0,
+      "source_assurance": {
+        "support": "U",
+        "concern": "O?",
+        "source_matrix": "docs/iso-omnibot/physical-technology-content-matrix.md"
+      },
+      "current_acceptance_execution": "PASS_REAL_MONGO_APPLICATION_PATH_VECTORS",
+      "hosted_current_acceptance": "NOT_EXECUTED",
+      "independent_retest": "PENDING_COORDINATOR",
+      "existing_parameterized_tests": [
+        "backend/tests/test_iso_guided_routes.py::IsoGuidedRoutes::test_all_123_resume_exact_native_save_and_shared_soa_annex_record",
+        "frontend/src/lib/isoGuidedAssessment.test.js",
+        "frontend/src/preview/isoGuidedAssessment.test.js"
+      ]
+    },
+    {
+      "id": "A.8.28",
+      "specification": "annex_control",
+      "title": "Secure coding practices",
+      "interview_version": "iso27001-omni-1",
+      "groups": 3,
+      "questions": 4,
+      "context_gates": 0,
+      "source_assurance": {
+        "support": "U",
+        "concern": "N",
+        "source_matrix": "docs/iso-omnibot/physical-technology-content-matrix.md"
+      },
+      "current_acceptance_execution": "PASS_REAL_MONGO_APPLICATION_PATH_VECTORS",
+      "hosted_current_acceptance": "NOT_EXECUTED",
+      "independent_retest": "PENDING_COORDINATOR",
+      "existing_parameterized_tests": [
+        "backend/tests/test_iso_guided_routes.py::IsoGuidedRoutes::test_all_123_resume_exact_native_save_and_shared_soa_annex_record",
+        "frontend/src/lib/isoGuidedAssessment.test.js",
+        "frontend/src/preview/isoGuidedAssessment.test.js"
+      ]
+    },
+    {
+      "id": "A.8.29",
+      "specification": "annex_control",
+      "title": "Security testing before acceptance",
+      "interview_version": "iso27001-omni-1",
+      "groups": 4,
+      "questions": 4,
+      "context_gates": 0,
+      "source_assurance": {
+        "support": "U",
+        "concern": "N",
+        "source_matrix": "docs/iso-omnibot/physical-technology-content-matrix.md"
+      },
+      "current_acceptance_execution": "PASS_REAL_MONGO_APPLICATION_PATH_VECTORS",
+      "hosted_current_acceptance": "NOT_EXECUTED",
+      "independent_retest": "PENDING_COORDINATOR",
+      "existing_parameterized_tests": [
+        "backend/tests/test_iso_guided_routes.py::IsoGuidedRoutes::test_all_123_resume_exact_native_save_and_shared_soa_annex_record",
+        "frontend/src/lib/isoGuidedAssessment.test.js",
+        "frontend/src/preview/isoGuidedAssessment.test.js"
+      ]
+    },
+    {
+      "id": "A.8.30",
+      "specification": "annex_control",
+      "title": "Outsourced development oversight",
+      "interview_version": "iso27001-omni-1",
+      "groups": 4,
+      "questions": 4,
+      "context_gates": 0,
+      "source_assurance": {
+        "support": "U",
+        "concern": "N",
+        "source_matrix": "docs/iso-omnibot/physical-technology-content-matrix.md"
+      },
+      "current_acceptance_execution": "PASS_REAL_MONGO_APPLICATION_PATH_VECTORS",
+      "hosted_current_acceptance": "NOT_EXECUTED",
+      "independent_retest": "PENDING_COORDINATOR",
+      "existing_parameterized_tests": [
+        "backend/tests/test_iso_guided_routes.py::IsoGuidedRoutes::test_all_123_resume_exact_native_save_and_shared_soa_annex_record",
+        "frontend/src/lib/isoGuidedAssessment.test.js",
+        "frontend/src/preview/isoGuidedAssessment.test.js"
+      ]
+    },
+    {
+      "id": "A.8.31",
+      "specification": "annex_control",
+      "title": "Separated development and production",
+      "interview_version": "iso27001-omni-1",
+      "groups": 4,
+      "questions": 4,
+      "context_gates": 0,
+      "source_assurance": {
+        "support": "U",
+        "concern": "N",
+        "source_matrix": "docs/iso-omnibot/physical-technology-content-matrix.md"
+      },
+      "current_acceptance_execution": "PASS_REAL_MONGO_APPLICATION_PATH_VECTORS",
+      "hosted_current_acceptance": "NOT_EXECUTED",
+      "independent_retest": "PENDING_COORDINATOR",
+      "existing_parameterized_tests": [
+        "backend/tests/test_iso_guided_routes.py::IsoGuidedRoutes::test_all_123_resume_exact_native_save_and_shared_soa_annex_record",
+        "frontend/src/lib/isoGuidedAssessment.test.js",
+        "frontend/src/preview/isoGuidedAssessment.test.js"
+      ]
+    },
+    {
+      "id": "A.8.32",
+      "specification": "annex_control",
+      "title": "Controlled changes",
+      "interview_version": "iso27001-omni-1",
+      "groups": 4,
+      "questions": 6,
+      "context_gates": 1,
+      "source_assurance": {
+        "support": "U",
+        "concern": "N",
+        "source_matrix": "docs/iso-omnibot/physical-technology-content-matrix.md"
+      },
+      "current_acceptance_execution": "PASS_REAL_MONGO_APPLICATION_PATH_VECTORS",
+      "hosted_current_acceptance": "NOT_EXECUTED",
+      "independent_retest": "PENDING_COORDINATOR",
+      "existing_parameterized_tests": [
+        "backend/tests/test_iso_guided_routes.py::IsoGuidedRoutes::test_all_123_resume_exact_native_save_and_shared_soa_annex_record",
+        "frontend/src/lib/isoGuidedAssessment.test.js",
+        "frontend/src/preview/isoGuidedAssessment.test.js"
+      ]
+    },
+    {
+      "id": "A.8.33",
+      "specification": "annex_control",
+      "title": "Protected test information",
+      "interview_version": "iso27001-omni-1",
+      "groups": 4,
+      "questions": 5,
+      "context_gates": 1,
+      "source_assurance": {
+        "support": "U",
+        "concern": "N",
+        "source_matrix": "docs/iso-omnibot/physical-technology-content-matrix.md"
+      },
+      "current_acceptance_execution": "PASS_REAL_MONGO_APPLICATION_PATH_VECTORS",
+      "hosted_current_acceptance": "NOT_EXECUTED",
+      "independent_retest": "PENDING_COORDINATOR",
+      "existing_parameterized_tests": [
+        "backend/tests/test_iso_guided_routes.py::IsoGuidedRoutes::test_all_123_resume_exact_native_save_and_shared_soa_annex_record",
+        "frontend/src/lib/isoGuidedAssessment.test.js",
+        "frontend/src/preview/isoGuidedAssessment.test.js"
+      ]
+    },
+    {
+      "id": "A.8.34",
+      "specification": "annex_control",
+      "title": "Safe audit testing",
+      "interview_version": "iso27001-omni-1",
+      "groups": 4,
+      "questions": 5,
+      "context_gates": 0,
+      "source_assurance": {
+        "support": "U",
+        "concern": "E?",
+        "source_matrix": "docs/iso-omnibot/physical-technology-content-matrix.md"
+      },
+      "current_acceptance_execution": "PASS_REAL_MONGO_APPLICATION_PATH_VECTORS",
+      "hosted_current_acceptance": "NOT_EXECUTED",
+      "independent_retest": "PENDING_COORDINATOR",
+      "existing_parameterized_tests": [
+        "backend/tests/test_iso_guided_routes.py::IsoGuidedRoutes::test_all_123_resume_exact_native_save_and_shared_soa_annex_record",
+        "frontend/src/lib/isoGuidedAssessment.test.js",
+        "frontend/src/preview/isoGuidedAssessment.test.js"
+      ]
+    }
+  ]
+}

@@ -39,6 +39,25 @@ export function evidence(db, client, key, title, kind, id, at, owner, extra = {}
   return item;
 }
 
+function completeHistoricalTask(db, write, task, workerId, completedAt) {
+  // These are explicit fresh fictional-history inputs, not an inference about
+  // a visitor's retained work. Capture the already specified worker before
+  // independent validation; changing completed_by afterwards loses provenance.
+  const worker = db.users.find(user => user.user_id === workerId);
+  if (!worker || worker.status !== 'active') throw new Error('The historical fixture worker is unavailable');
+  const actor = db.user, previous = [...(task.submission_history || [])];
+  try {
+    db.user = worker;
+    write(db, 'tasks', {status: 'done'}, task.task_id);
+  } finally {
+    db.user = actor;
+  }
+  const added = (task.submission_history || []).slice(previous.length);
+  if (added.length !== 1 || added[0].by !== workerId) throw new Error('The historical fixture submission was not captured');
+  task.submission_history = [...previous, {...added[0], at: completedAt}];
+  Object.assign(task, {completed_at: completedAt, completed_by: workerId, updated_at: completedAt});
+}
+
 // Historical fixtures are explicit snapshots. Live workflows below still enforce
 // remediation creation/validation; generated identifiers are canonicalized locally.
 export function finishDemoStore(db, clock, {
@@ -60,6 +79,9 @@ export function finishDemoStore(db, clock, {
     const reviews = db.reviews.filter(r => r.client_id === cid),
       policies = db.policies.filter(p => p.client_id === cid),
       risks = db.risks.filter(r => r.client_id === cid);
+    // Fresh CIS-only presets use canonical mapped work, not optional generic rows.
+    const reviewFor=key=>reviews.find(r=>r.baseline_key===key)||
+      (cid==='demo_brawndo'?reviews.find(r=>r.framework_plan_key===({restore:'data-recovery',vendor:'provider-inventory'})[key]):null);
     for (const [i, r] of reviews.entries()) {
       r.owner_id ||= users[i % 3].user_id;
       r.reviewer_id = users[(i + 1) % 3].user_id;
@@ -121,7 +143,7 @@ export function finishDemoStore(db, clock, {
         version: 1
       });
     }
-    for (const [i, r] of ['restore', 'vendor'].map(key => reviews.find(r => r.baseline_key === key)).entries()) {
+    for (const [i, r] of ['restore', 'vendor'].map(reviewFor).entries()) {
       const o = r.occurrences.at(-1);
       if (!o) continue;
       const e = evidence(db, client, 'operation-' + i, r.title + ' - ' + o.period, 'review', r.review_id, o.completed_at, o.completed_by, {
@@ -188,8 +210,8 @@ export function finishDemoStore(db, clock, {
     const findingTitles = program?.review_findings.map(f => f.title) || ['Access termination evidence was incomplete', 'Backup restoration test omitted a critical application dependency', 'Supplier review documentation lacked approval', 'Asset inventory contained stale ownership records'];
     const actionTitles = program?.review_findings.map(f => f.action) || ['Complete access termination evidence', 'Validate backup restoration dependencies', 'Record supplier review approval', 'Update asset ownership records'];
     for (let i = 0; i < 4; i++) {
-      const r = reviews.find(r => r.baseline_key === ['user-access', 'restore', 'vendor', 'inventory'][i]),
-        o = r.occurrences.at(i >= 2 ? -2 : -1),
+      const r = reviewFor(['user-access', 'restore', 'vendor', 'inventory'][i]),
+        o = r.occurrences.at(i >= 2 ? -2 : -1)||r.occurrences.at(-1),
         fid = cid + '_finding_' + i;
       const f = {
         finding_id: fid,
@@ -220,9 +242,8 @@ export function finishDemoStore(db, clock, {
         if (l.entity_id === old) l.entity_id = t.task_id;
         if (l.meta?.task_id === old) l.meta.task_id = t.task_id;
       }
-      write(db, 'tasks', {
-        status: i === 0 ? 'in_progress' : 'done'
-      }, t.task_id);
+      if (i === 0) write(db, 'tasks', {status: 'in_progress'}, t.task_id);
+      else completeHistoricalTask(db, write, t, users[2].user_id, date(i === 1 ? -3 : -36));
       if (i >= 2) action(db, 'findings', fid, 'validate', {
         rationale: 'Synthetic validation: corrective evidence inspected and the observed deficiency resolved.'
       });
@@ -292,9 +313,18 @@ export function finishDemoStore(db, clock, {
       due_date: date(-20)
     });
     followup.task_id = cid + '_assessment_action';
+    const previousFollowupSubmissions = [...(followup.submission_history || [])];
     write(db, 'tasks', {
       status: 'done'
     }, followup.task_id);
+    const followupSubmission = (followup.submission_history || []).slice(previousFollowupSubmissions.length);
+    if (followupSubmission.length !== 1) throw new Error('The historical assessment submission was not captured');
+    // This fresh fixture explicitly records work completed before the employee
+    // left. Preserve that supplied history without enabling the disabled user
+    // or exercising a current command under their identity.
+    followup.submission_history = [...previousFollowupSubmissions, {
+      ...followupSubmission[0], by: former, at: date(-22)
+    }];
     followup.created_at = date(-45);
     followup.updated_at = date(-22);
     followup.completed_at = date(-22);
@@ -435,7 +465,7 @@ export function finishDemoStore(db, clock, {
         kind: 'evidence',
         id: e.evidence_id
       });
-      const restore = reviews.find(r => r.baseline_key === 'restore');
+      const restore = reviewFor('restore');
       if (restore && linked.includes(restore.review_id)) a.related_links.push({
         kind: 'risks',
         id: risks[0].risk_id
@@ -470,8 +500,7 @@ export function finishDemoStore(db, clock, {
       });
         if (closed != null) {
           // Completing the corrective action through the workflow moves the Finding to pending validation.
-          write(db, 'tasks', {status: 'done'}, t.task_id);
-          Object.assign(t, {completed_at: date(-closed - 5), completed_by: users[who].user_id, updated_at: date(-closed - 5)});
+          completeHistoricalTask(db, write, t, users[who].user_id, date(-closed - 5));
         }
       }
       // A remediated gap is validated by the provider lead through the live workflow, then dated.

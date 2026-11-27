@@ -22,7 +22,7 @@ class HipaaTests(unittest.IsolatedAsyncioTestCase):
 
     def test_catalog_reference_and_addressability_integrity(self):
         definitions={d['id']:d for d in HIPAA['requirements']}
-        self.assertEqual(len(definitions),76)
+        self.assertEqual(len(definitions),81)
         expected={
             *('164.308(a)(3)(ii)('+n+')' for n in 'ABC'),
             *('164.308(a)(4)(ii)('+n+')' for n in 'BC'),
@@ -52,12 +52,12 @@ class HipaaTests(unittest.IsolatedAsyncioTestCase):
         for _ in range(2):
             r=await self.client.patch('/api/onboarding/programs/hipaa',json={'client_id':'a','applicability':'applies'})
             self.assertEqual(r.status_code,200,r.text)
-        self.assertEqual(await server.db.framework_assessments.count_documents({'client_id':'a','framework_key':'hipaa'}),76)
+        self.assertEqual(await server.db.framework_assessments.count_documents({'client_id':'a','framework_key':'hipaa'}),81)
         self.assertEqual(await server.db.reviews.count_documents({'client_id':'a'}),8)
         self.assertEqual((await server.db.clients.find_one({'client_id':'a'}))['onboarding_baseline'],before['onboarding_baseline'])
         for state in ['does_not_apply','unsure','applies']:
             await self.client.patch('/api/onboarding/programs/hipaa',json={'client_id':'a','applicability':state})
-        self.assertEqual(await server.db.framework_assessments.count_documents({'client_id':'a'}),76)
+        self.assertEqual(await server.db.framework_assessments.count_documents({'client_id':'a'}),81)
         self.assertEqual(await server.db.reviews.count_documents({'client_id':'a'}),8)
 
     async def test_group_plan_related_mapping_preserves_existing_assessment_and_review(self):
@@ -122,7 +122,7 @@ class HipaaTests(unittest.IsolatedAsyncioTestCase):
     async def test_concurrent_activation_uses_one_shared_obligation(self):
         self.sign_in('admin')
         await asyncio.gather(*(reconcile(server,'a',{'requirements':{key:'applies'}},{'user_id':'admin'}) for key in ['hipaa','cis-ig1','hipaa']))
-        self.assertEqual(await server.db.framework_assessments.count_documents({'client_id':'a'}),132)
+        self.assertEqual(await server.db.framework_assessments.count_documents({'client_id':'a'}),137)
         self.assertEqual(await server.db.reviews.count_documents({'client_id':'a'}),len({p['baseline_key'] or p['key'] for key in ['cis-ig1','hipaa'] for p in active_plans(key)}))
 
     async def test_evidence_unlink_preserves_shared_artifact_and_provenance(self):
@@ -188,7 +188,15 @@ class HipaaTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual((await self.client.get(base)).json()['status'],'in_progress')
         summary=(await self.client.get('/api/frameworks/summary',params={'client_id':'a'})).json()['items'][0]
         self.assertEqual(summary['open_findings'],1);self.assertEqual(summary['open_actions'],0)
-        self.assertEqual(summary['total'],76)
-        self.assertEqual((await self.client.post('/api/findings/'+first.json()['finding_id']+'/validate',json={'rationale':'Scoped evidence and remediation verified'})).status_code,200)
+        self.assertEqual(summary['total'],81)
+        finding_path='/api/findings/'+first.json()['finding_id']+'/validate'
+        pending_finding=await server.db.findings.find_one({'finding_id':first.json()['finding_id']})
+        decision={'rationale':'Scoped evidence and remediation verified','expected_updated_at':pending_finding['updated_at'],'request_id':'independent-hipaa-validation'}
+        self.assertEqual((await self.client.post(finding_path,json=decision)).status_code,403)
+        await server.db.users.insert_one({'user_id':'validator','email':'validator@example.test','role':'platform_admin','client_ids':['a'],'status':'active'})
+        self.sign_in('validator')
+        validated=await self.client.post(finding_path,json=decision)
+        self.assertEqual(validated.status_code,200,validated.text)
+        self.assertEqual(validated.json()['validated_by'],'validator')
         self.assertEqual((await self.client.get(base)).json()['status'],'in_progress')
         self.assertEqual((await self.client.get('/api/frameworks/summary',params={'client_id':'a'})).json()['items'][0]['open_findings'],0)

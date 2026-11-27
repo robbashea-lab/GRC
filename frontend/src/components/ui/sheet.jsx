@@ -4,7 +4,8 @@ import { cva } from "class-variance-authority";
 import { X } from "lucide-react"
 
 import { cn } from "@/lib/utils"
-import { useSurfaceRef } from "@/lib/useSurfaceRef"
+import { useSurfaceRef, useSurfaceAvailabilityEvents } from "@/lib/useSurfaceRef"
+import { useAssessmentSurfaceSuspension } from "@/lib/assessmentSurfaceAvailability"
 
 const Sheet = SheetPrimitive.Root
 
@@ -46,11 +47,13 @@ const sheetVariants = cva(
 
 const SheetContent = React.forwardRef(({ side = "right", className, children, description, onOpenAutoFocus, onCloseAutoFocus, ...props }, ref) => {
   const opener = React.useRef(null);
+  const suspension=useAssessmentSurfaceSuspension(useSurfaceRef(ref));
+  const availabilityEvents=useSurfaceAvailabilityEvents({...props,onOpenAutoFocus:event=>suspension.onOpenAutoFocus(event,onOpenAutoFocus)});
   return (
   <SheetPortal>
     <SheetOverlay />
-    <SheetPrimitive.Content ref={useSurfaceRef(ref)} className={cn(sheetVariants({ side }), className)} {...props}
-      onOpenAutoFocus={event => { opener.current = document.activeElement; onOpenAutoFocus?.(event); }}
+    <SheetPrimitive.Content ref={suspension.ref} className={cn(sheetVariants({ side }), className)} {...props} {...availabilityEvents} {...suspension.contentProps}
+      onOpenAutoFocus={event => { opener.current = document.activeElement; availabilityEvents.onOpenAutoFocus(event); }}
       onCloseAutoFocus={event => {
         onCloseAutoFocus?.(event);
         // Programmatically opened record drawers have no Radix Trigger to restore.
@@ -59,12 +62,13 @@ const SheetContent = React.forwardRef(({ side = "right", className, children, de
         }
       }}>
       {description && <SheetPrimitive.Description className="sr-only">{description}</SheetPrimitive.Description>}
-      <SheetPrimitive.Close
+      <SheetPrimitive.Close data-assessment-suspension-close=""
         className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-secondary">
         <X className="h-4 w-4" />
         <span className="sr-only">Close</span>
       </SheetPrimitive.Close>
       {children}
+      <p {...suspension.statusProps}>Assessment unavailable. Your unsaved work is preserved.</p>
     </SheetPrimitive.Content>
   </SheetPortal>
   );

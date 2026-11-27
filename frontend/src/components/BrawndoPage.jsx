@@ -1,3 +1,4 @@
+import V3WorkspaceHeading from './V3WorkspaceHeading';
 import {Moon,Sun} from 'lucide-react';
 import {useBrawndoTheme,useBrawndoPortalTheme} from '@/lib/brawndoTheme';
 import './BrawndoPage.css';
@@ -7,22 +8,25 @@ export function BrawndoSurface({className='',children,...rest}){
   const [theme]=useBrawndoTheme();useBrawndoPortalTheme(true,theme);
   return <div className={`bpage ${className}`} data-theme={theme} {...rest}>{children}</div>;
 }
-export function BrawndoPageHeader({eyebrow,title,subtitle,children}){
+export function BrawndoPageHeader({eyebrow,title,subtitle,children,renderThemeAction,clientName}){
   const [theme,setTheme]=useBrawndoTheme();
+  const onTheme=()=>setTheme(theme==='dark'?'light':'dark');
+  const modeControl = renderThemeAction?renderThemeAction({theme,onTheme}):<button type="button" className="bpage-btn" onClick={onTheme} aria-pressed={theme==='dark'} aria-label={theme==='dark'?'Switch to light mode':'Switch to dark mode'}>{theme==='dark'?<Sun size={16} aria-hidden="true"/>:<Moon size={16} aria-hidden="true"/>}<span>{theme==='dark'?'Light':'Dark'}</span></button>;
+  if (clientName) return <V3WorkspaceHeading clientName={clientName} title={title} subtitle={subtitle} actionsClass="bpage-actions">{children}{modeControl}</V3WorkspaceHeading>;
   return <header className="bpage-head">
     <div><p className="bpage-eyebrow">{eyebrow}</p><h1>{title}</h1>{subtitle&&<p className="bpage-subtitle">{subtitle}</p>}</div>
     <div className="bpage-actions">
-      <button type="button" className="bpage-btn" onClick={()=>setTheme(theme==='dark'?'light':'dark')} aria-pressed={theme==='dark'} aria-label={theme==='dark'?'Switch to light mode':'Switch to dark mode'}>{theme==='dark'?<Sun size={16} aria-hidden="true"/>:<Moon size={16} aria-hidden="true"/>}<span>{theme==='dark'?'Light':'Dark'}</span></button>
+      {modeControl}
       {children}
     </div>
   </header>;
 }
 // tiles: [{id,label,count,tone:'critical'|'attention'|'good'|'neutral',context,onClick?,pressed?}]
 export function BrawndoTiles({tiles,label='Summary',loading}){
-  return <div className="bpage-tiles" role="group" aria-label={label}>{tiles.map(t=>{
-    const cls=`bpage-tile is-${t.count||t.tone==='neutral'?t.tone:'clear'}`,body=<><span className="bpage-tile-label">{t.label}</span><strong className="bpage-tile-value">{loading?'—':t.count}</strong><span className="bpage-tile-context">{loading?'Loading…':t.context}</span></>;
+  return <div className="reg-kstrip native-summary" data-native-summary><div className="kstrip" role="group" aria-label={label}>{tiles.map(t=>{
+    const cls=`kchip is-${t.count||t.tone==='neutral'?t.tone:'clear'}`,body=<><b className="num" style={{color:t.count?({critical:'var(--alert)',attention:'var(--warn)',good:'var(--ok)'})[t.tone]:undefined}}>{loading?'—':t.count}</b><span className="kl">{t.label}</span><span className="kc">{loading?'Loading…':t.context}</span></>;
     return t.onClick?<button key={t.id} type="button" className={cls} aria-pressed={!!t.pressed} disabled={loading} onClick={t.onClick} data-testid={`tile-${t.id}`}>{body}</button>:<div key={t.id} className={cls} data-testid={`tile-${t.id}`}>{body}</div>;
-  })}</div>;
+  })}</div></div>;
 }
 // chips: [{id,label,count?,pressed,onClick}]
 export function BrawndoChips({chips,label}){

@@ -2,19 +2,24 @@ import React,{act} from 'react';
 import {createRoot} from 'react-dom/client';
 import IsoGuidedAssessor from './IsoGuidedAssessor';
 import AssessmentShell from './AssessmentShell';
-import {isoGuidedCatalog,isoGroups,isoGuidedResult} from '@/lib/isoGuidedAssessment';
+import {isoGuidedCatalog,isoGroups,isoQuestions,isoGuidedResult,isoInlineNarrative} from '@/lib/isoGuidedAssessment';
 import api from '@/lib/api';
+import axios from 'axios';
+import {previewAdapter} from '@/preview/commandTestAdapter';
+import {ids,saveStore,readStore} from '@/preview/store';
 
 jest.mock('@/lib/api',()=>({__esModule:true,default:{get:jest.fn(),put:jest.fn()},formatError:e=>e.message}));
 jest.mock('@/context/AuthContext',()=>({useAuth:()=>({user:{user_id:'iso-actor',role:'super_admin'}})}));
 jest.mock('@/context/OrgContext',()=>({useOrg:()=>mockOrg}));
 const copy=value=>JSON.parse(JSON.stringify(value)),fingerprint='a'.repeat(64);
 let root,container,stored,props,failWrite,mockOrg,nestedShell,nativeClose;
+function itemProposal(text){return expect.objectContaining({client_id:props.clientId,
+  assessment_id:props.record.framework_assessment_id,actor_id:'iso-actor',completed:true,narrative:text,
+  version:stored.version,revision:stored.revision,generated_at:stored.generated_at,answers:stored.answers});}
 const button=name=>[...document.querySelectorAll('button')].find(item=>item.textContent.trim()===name);
 async function click(name){const target=button(name);expect(target).toBeTruthy();expect(target.disabled).toBe(false);await act(async()=>target.click());}
 async function render(extra={}){props={...props,...extra};await act(async()=>root.render(nestedShell?
-  <AssessmentShell title="Native ISO assessment" description="Review the current implementation." close={nativeClose}
-    onEscapeKeyDown={e=>{if(document.activeElement?.closest('[data-testid="iso-guided-assessment"] .omni-workspace-window'))e.preventDefault();}}>
+  <AssessmentShell title="Native ISO assessment" description="Review the current implementation." close={nativeClose}>
     <label>Native implementation<textarea aria-label="Nested native implementation" defaultValue="Retained native draft"/></label><IsoGuidedAssessor {...props}/>
   </AssessmentShell>:<IsoGuidedAssessor {...props}/>));}
 function setup(id){
@@ -293,7 +298,8 @@ test('unconfirmed native save retains exact wording and does not claim rejection
 });
 test.each(['native','interview'])('new %s failure clears the prior success notice without closing or retrying',async stage=>{
   await render();await open();await complete();await click('Save assessment');
-  expect(document.body.textContent).toContain('Assessment saved.');
+  expect(document.querySelector('.omni-workspace-window')).toBeNull();
+  await open();expect(document.body.textContent).toContain('Assessment saved.');
   const wording=document.querySelector('[aria-label="Omnibot implementation summary"]').value;
   if(stage==='native')props.onSaveAssessment.mockResolvedValueOnce(false);else failWrite=true;
   await click('Save & close');
@@ -407,4 +413,486 @@ test.each(['compare','restart'])('%s requires explicit discard of unsaved answer
   expect(api.put.mock.calls.at(-1)[1]).toMatchObject(action==='compare'?{rebase:true,answers:savedInterview.answers,narrative:savedInterview.narrative}:{restart:true,answers:{},narrative:'',summary_review:null});
   expect(api.put.mock.calls.at(-1)[1].expected_revision).toBe(savedInterview.revision);
   expect(props.current).toEqual(nativeBefore);expect(props.onSaveAssessment).not.toHaveBeenCalled();expect(document.querySelector('.omni-refined-close')).toBeNull();
+});
+
+test.each(['4.1','A.5.1','A.8.13'])('%s inline interview preserves progress without floating Omni and applies only after reviewed native save',async id=>{
+  setup(id);const onInlineClose=jest.fn();await render({inline:true,inlineOpen:false,onInlineClose});
+  const panel=document.querySelector('.assessment-inline-interview');expect(panel.hidden).toBe(true);
+  expect(document.querySelector('[aria-label="Open Omnibot guide"]')).toBeNull();expect(document.querySelector('.omni-workspace-window')).toBeNull();
+  await render({inlineOpen:true});await complete();
+  const summary=document.querySelector('[aria-label="Omnibot implementation summary"]');
+  expect(summary.value).toContain('\n\nControls in place\n• ');expect(summary.value).not.toContain('IMPLEMENTATION BREAKDOWN');expect(summary.value).not.toContain('\n\nITEMS TO ADDRESS');
+  expect(stored.result).toEqual({...isoGuidedResult(id,stored.answers,stored.version,'Agent 2 ISO fixture'),narrative:summary.value});expect(props.onSaveAssessment).not.toHaveBeenCalled();
+  const reviewed=summary.value+'\nExact operator wording.\n';await changeInput(summary,reviewed);
+  await render({inlineOpen:false});await render({inlineOpen:true});expect(document.querySelector('.assessment-inline-interview')).toBe(panel);expect(summary.value).toBe(reviewed);
+  await click('Save assessment');expect(props.onSaveAssessment).toHaveBeenCalledTimes(1);expect(props.onSaveAssessment.mock.calls[0][0]).toMatchObject({implementation:reviewed,status:'addressed'});expect(onInlineClose).toHaveBeenCalledTimes(1);
+  expect(props.current.verification).toBe('not_verified');expect(stored.narrative).toBe(reviewed);
+});
+
+test.each(['4.1','A.5.1','A.8.13'])('%s inline component binds reviewed text through the actual preview completion and native-save routes',async id=>{
+  setup(id);sessionStorage.clear();const previewApi=axios.create({adapter:previewAdapter});
+  const db=Object.fromEntries(Object.keys(ids).map(kind=>[kind,[]])),row={...props.current,technology:'',notes:'',na_rationale:'',owner_id:null,process_owner_id:null,iso_assessment_checks:[],assessment_history:[]};
+  db.user={user_id:'iso-actor',name:'SYNTHETIC ISO reviewer',role:'super_admin',status:'active',client_ids:['iso-fixture']};db.logs=[];
+  db.users.push(db.user);db.clients.push({client_id:'iso-fixture',name:'SYNTHETIC ISO contract',status:'active'});
+  db.framework_assessments.push(row);db.requirements.push({client_id:'iso-fixture',baseline_key:'iso-27001',baseline_response:'applies'});
+  saveStore(db);await previewApi.post('/demo/enter');props={...props,current:row,record:row,form:copy(row)};
+  const path='/framework_assessments/'+row.framework_assessment_id;
+  const requests=new Set(),track=request=>{requests.add(request);request.then(()=>requests.delete(request),()=>requests.delete(request));return request;};
+  const settle=()=>act(async()=>{while(requests.size)await Promise.all([...requests]);});
+  api.get.mockImplementation(url=>track(previewApi.get(url)));
+  api.put.mockImplementation((url,body)=>track(previewApi.put(url,body).then(response=>{stored=copy(response.data);return response;})));
+  props.onSaveAssessment.mockImplementation(async(values,expected)=>{
+    expect(expected).toBe(JSON.stringify(props.form));
+    const saved=(await track(previewApi.patch(path,{...values,expected_last_assessed:props.current.last_saved??props.current.last_assessed??null}))).data;
+    props={...props,current:saved,form:copy(saved)};return true;
+  });
+  const onInlineClose=jest.fn();await render({inline:true,inlineOpen:true,onInlineClose});await settle();await click('Start');
+  for(let guard=0;guard<12&&!document.body.textContent.includes('Review your assessment summary');guard++){
+    await act(async()=>document.querySelectorAll('.omni-answer-choices').forEach(group=>[...group.querySelectorAll('button')].find(item=>['Yes','Relevant'].includes(item.textContent))?.click()));
+    await click('Save & next');await settle();
+  }
+  expect(document.body.textContent).toContain('Review your assessment summary');
+  const summary=document.querySelector('[aria-label="Omnibot implementation summary"]'),reported=summary.value;
+  expect(reported).toContain('\n\nControls in place\n• ');
+  expect(stored.result.narrative).toBe(stored.narrative);expect(stored.narrative).toBe(reported);
+  expect(row.items_to_address??[]).toEqual([]);expect(row).not.toHaveProperty('item_controls');
+  expect(readStore().framework_assessments.find(item=>item.framework_assessment_id===row.framework_assessment_id)).toEqual(row);
+  expect((await previewApi.get(path)).data).toEqual({...row,item_controls:{}});expect(props.onSaveAssessment).not.toHaveBeenCalled();
+  const reviewed=reported+'\nExact separately reviewed wording.\n';await changeInput(summary,reviewed);await click('Save assessment');await settle();
+  expect(props.onSaveAssessment).toHaveBeenCalledTimes(1);expect(onInlineClose).toHaveBeenCalledTimes(1);
+  const saved=(await previewApi.get(path)).data,interview=(await previewApi.get(path+'/guided-assessment')).data;
+  expect(interview.narrative).toBe(reviewed);expect(interview.result.narrative).toBe(reviewed);
+  expect(saved.implementation).toBe(reviewed);expect(saved.status).toBe('addressed');expect(saved.assessment_history.at(-1).implementation).toBe(reviewed);
+  for(const key of ['verification','soa_applicability','soa_justification','owner_id','process_owner_id','iso_assessment_checks','technology','notes'])expect(saved[key]).toEqual(row[key]);
+});
+
+test('inline saved early progress survives remount and uses the persisted group',async()=>{
+  const onInlineClose=jest.fn();await render({inline:true,inlineOpen:true,onInlineClose});await click('Start');
+  await act(async()=>document.querySelectorAll('.omni-answer-choices').forEach(group=>[...group.querySelectorAll('button')].find(item=>item.textContent==='Yes')?.click()));
+  await click('Save & next');const step=stored.step,answers=copy(stored.answers);expect(step).toBe(1);await click('Save & close');
+  expect(onInlineClose).toHaveBeenCalledTimes(1);expect(props.onSaveAssessment).not.toHaveBeenCalled();
+  await act(async()=>root.unmount());root=createRoot(container);await render({inlineOpen:true});await click('Resume your review');
+  expect(document.querySelector('.omni-group-progress').getAttribute('aria-label')).toContain('Question group '+(step+1));expect(stored.answers).toEqual(answers);
+});
+
+test('inline summary conflict and concurrent native draft preserve wording without stale native write',async()=>{
+  await render({inline:true,inlineOpen:true,onInlineClose:jest.fn()});await complete();const summary=document.querySelector('[aria-label="Omnibot implementation summary"]'),text=summary.value;
+  failWrite=true;await click('Save assessment');expect(summary.value).toBe(text);expect(props.onSaveAssessment).not.toHaveBeenCalled();expect(props.onInlineClose).not.toHaveBeenCalled();
+  failWrite=false;const original=api.put.getMockImplementation();let finish;api.put.mockImplementationOnce((path,body)=>new Promise(resolve=>{finish=async()=>resolve(await original(path,body));}));
+  await click('Save assessment');await render({assessmentDirty:true,form:{...props.form,implementation:'Concurrent native draft'}});await act(async()=>finish());
+  expect(props.onSaveAssessment).not.toHaveBeenCalled();expect(props.onInlineClose).not.toHaveBeenCalled();expect(summary.value).toBe(text);
+});
+
+test('inline restored legacy manual summary remains exact until explicit refresh from revised answers',async()=>{
+  const answers=Object.fromEntries(isoGuidedCatalog.definitions['4.1'].groups.flatMap(group=>group.questions).map(q=>[q.id,q.type==='text'?'':q.type==='context'?'Relevant':'Yes']));
+  stored={...stored,answers,completed:true,revision:2,narrative:'Legacy manual wording\n\nIMPLEMENTATION BREAKDOWN\nRetain this exact text.\n',summary_review:{version:stored.version,answers},result:isoGuidedResult('4.1',answers)};
+  await render({inline:true,inlineOpen:true});await click('Resume your review');expect(document.querySelector('[aria-label="Omnibot implementation summary"]').value).toBe(stored.narrative);
+  await click('Back to questions');await act(async()=>[...document.querySelector('.omni-answer-choices').querySelectorAll('button')].find(item=>item.textContent==='No').click());await click('Save & next');
+  expect(button('Refresh from answers')).toBeTruthy();await click('Refresh from answers');expect(document.querySelector('[aria-label="Omnibot implementation summary"]').value).toBe(isoInlineNarrative('4.1',stored.answers,stored.version,'Agent 2 ISO fixture'));
+  expect(props.onSaveAssessment).not.toHaveBeenCalled();
+});
+
+test('inline excluded control and read-only session retain mandatory SoA and permission guards',async()=>{
+  setup('A.5.1');props.current={...props.current,soa_applicability:'excluded',soa_justification:'Outside reviewed scope'};props.form=copy(props.current);
+  await render({inline:true,inlineOpen:true});await complete();expect(button('Save assessment').disabled).toBe(true);
+  await render({disabled:true});expect(button('Save assessment').disabled).toBe(true);await click('Back to questions');expect(button('Save & next').disabled).toBe(true);
+  expect(props.onSaveAssessment).not.toHaveBeenCalled();
+});
+
+
+test('program guide adopts the shared circular presentation locally and retains audit opening without native writes',async()=>{
+  localStorage.setItem('omnisciente:brawndo-dashboard-theme','dark');
+  const onOpen=jest.fn();
+  await render({record:null,current:null,programLabel:'Internal Audit',programContent:({close})=><button onClick={()=>{close();onOpen();}}>Open retained audit Review</button>});
+  const guide=document.querySelector('[data-testid="iso-guided-assessment"]');
+  expect(guide.classList.contains('shared-program-omni')).toBe(true);
+  expect(guide.dataset.theme).toBe('dark');
+  expect(guide.querySelector('.omni-launch-button .cis-omni-owl')).toBeTruthy();
+  expect(document.documentElement.hasAttribute('data-brawndo-cis-visual')).toBe(false);
+  await open();
+  const panel=guide.querySelector('.omni-workspace-window');
+  expect(panel.classList.contains('cis-omni-program-window')).toBe(true);
+  expect(parseFloat(panel.style.width)).toBe(380);
+  expect(document.body.textContent).toContain('Internal Audit');
+  await act(async()=>guide.querySelector('[aria-label="Minimize Omnibot Guide"]').click());
+  expect(guide.querySelector('.omni-workspace-window')).toBeNull();
+  expect(guide.querySelector('.omni-launch-button').classList.contains('is-minimized')).toBe(true);
+  await open();await click('Open retained audit Review');
+  expect(onOpen).toHaveBeenCalledTimes(1);
+  expect(guide.querySelector('.omni-workspace-window')).toBeNull();
+  expect(api.get).not.toHaveBeenCalled();expect(api.put).not.toHaveBeenCalled();
+});
+
+test('native inline ISO editor remains outside the floating guide presentation',async()=>{
+  await render({inline:true,inlineOpen:true});
+  const guide=document.querySelector('[data-testid="iso-guided-assessment"]');
+  expect(guide.classList.contains('shared-program-omni')).toBe(false);
+  expect(guide.hasAttribute('data-theme')).toBe(false);
+  expect(guide.querySelector('.cis-omni-owl')).toBeNull();
+  expect(guide.querySelector('section[aria-label="ISO requirement interview"]')).toBeTruthy();
+});
+
+async function openSequential({startAnnex = true, settle} = {}) {
+  await render({inline: true, inlineOpen: true, sequential: true});
+  await settle?.();
+  await click(button('Resume guided assessment') ? 'Resume guided assessment' : 'Begin guided assessment');
+  if (startAnnex && props.record.definition_id.startsWith('A.') && !props.disabled) await click(stored.revision ? 'Resume your review' : 'Start');
+}
+async function answerSequential(value) {
+  const fieldset = document.querySelector('.iso-sequential-interview fieldset');
+  const select = fieldset?.querySelector('select');
+  if (!select || !value && select.value) return;
+  const key = fieldset.dataset.questionId;
+  const choice = value || (key === 'additional_gap' || key === 'additional_confirmation' ? 'No' : [...select.options].find(option => ['Yes', 'Relevant'].includes(option.value))?.value);
+  if (choice) await changeInput(select, choice);
+}
+async function completeSequential(settle) {
+  for (let guard = 0; guard < 80 && !document.body.textContent.includes('Review your assessment summary'); guard++) {
+    await answerSequential();
+    await click(button('Review summary') ? 'Review summary' : button('Review answers') ? 'Review answers' : 'Continue');
+    await settle?.();
+  }
+  expect(document.body.textContent).toContain('Review your assessment summary');
+}
+
+test.each(['4.1', 'A.5.1', 'A.6.1', 'A.7.1', 'A.8.13'])('%s sequential questions keep group checkpoints separate from exact reviewed native saving', async id => {
+  setup(id); await openSequential(); await completeSequential();
+  const groups = isoGroups(id, stored.answers, stored.version);
+  expect(api.put.mock.calls.map(([, body]) => body.step)).toEqual([...groups.slice(1).map((_, index) => index + 1), groups.length - 1]);
+  expect(stored.completed).toBe(true); expect(props.onSaveAssessment).not.toHaveBeenCalled();
+  expect(props.current.implementation).toBe(''); expect(props.current.status).toBe('not_assessed'); expect(props.current.verification).toBe('not_verified');
+  const text = document.querySelector('[aria-label="Omnibot implementation summary"]').value;
+  expect(text).toContain('\n\nControls in place\n'); expect(text).toBe(isoInlineNarrative(id, stored.answers, stored.version, 'Agent 2 ISO fixture'));
+  await click('Save assessment');
+  expect(props.onSaveAssessment).toHaveBeenCalledWith({implementation: text, status: 'addressed', guided_assessment_source: {version: stored.version, revision: stored.revision, generated_at: stored.generated_at}}, expect.any(String));
+  expect(document.querySelector('.assessment-inline-interview').hidden).toBe(true);
+  expect(document.activeElement).toBe(button('Resume guided assessment'));
+  await act(async () => root.unmount()); root = createRoot(container); await openSequential();
+  expect(document.querySelector('[aria-label="Omnibot implementation summary"]').value).toBe(text);
+});
+
+test.each(['', 'included', 'excluded'])('sequential Annex entry keeps its %s applicability decision and Current position accessible before questions', async decision => {
+  setup('A.5.1');
+  props.current = {...props.current, soa_applicability: decision, soa_justification: decision ? 'Retained scoped justification.' : '', implementation: 'Existing native implementation.', status: 'in_progress'};
+  props.form = copy(props.current); const native = copy(props.current);
+  await openSequential({startAnnex: false});
+  expect(document.body.textContent).toContain('Current saved position');
+  expect(document.querySelector('[aria-label="Statement of Applicability decision"]')).toBeTruthy();
+  expect(document.body.textContent).toContain('Saved decision: ' + (decision === 'included' ? 'Included' : decision === 'excluded' ? 'Excluded' : 'Undetermined'));
+  expect(document.querySelector('.iso-sequential-interview')).toBeNull(); expect(button('Start')).toBeTruthy();
+  expect(api.put).not.toHaveBeenCalled(); expect(props.onSaveAssessment).not.toHaveBeenCalled(); expect(props.current).toEqual(native);
+  await click('Start'); expect(document.querySelector('.iso-sequential-interview')).toBeTruthy();
+  await click('Current position'); expect(document.querySelector('[aria-label="Statement of Applicability decision"]')).toBeTruthy();
+  expect(props.current).toEqual(native);
+});
+
+test('sequential Pause retains unsaved answers, cursor and dirty protection without writes', async () => {
+  setup('A.6.1'); await openSequential(); await answerSequential(); await click('Continue'); await answerSequential('Partially');
+  const question = document.querySelector('.iso-sequential-interview fieldset').dataset.questionId;
+  const reads = api.get.mock.calls.length;
+  await click('Pause & return'); expect(document.querySelector('.assessment-inline-interview').hidden).toBe(true);
+  expect(api.put).not.toHaveBeenCalled(); expect(props.onSaveAssessment).not.toHaveBeenCalled(); expect(props.onDraftChange).toHaveBeenLastCalledWith(true);
+  expect(document.activeElement).toBe(button('Resume guided assessment')); await click('Resume guided assessment');
+  expect(document.querySelector('.iso-sequential-interview fieldset').dataset.questionId).toBe(question);
+  expect(document.querySelector('.iso-sequential-interview select').value).toBe('Partially');
+  expect(document.activeElement).toBe(document.querySelector('.iso-sequential-interview h3'));
+  expect(api.get.mock.calls.length).toBe(reads); expect(stored.answers).toEqual({});
+  await click('Save & close'); expect(stored.completed).toBe(false); expect(stored.step).toBe(0); expect(stored.answers[question]).toBe('Partially');
+  expect(props.onSaveAssessment).not.toHaveBeenCalled();
+});
+
+test('sequential Pause also retains an unsaved applicability decision without checkpointing or saving it', async () => {
+  setup('A.5.1'); props.current = {...props.current, soa_applicability: '', soa_justification: ''}; props.form = copy(props.current);
+  await openSequential({startAnnex: false});
+  await changeInput('[aria-label="Omnibot SoA applicability"]', 'included');
+  await changeInput('[aria-label="Omnibot SoA justification"]', 'Unsaved deliberate risk-treatment justification.');
+  const reads = api.get.mock.calls.length;
+  await click('Pause & return'); expect(document.activeElement).toBe(button('Resume guided assessment'));
+  await click('Resume guided assessment');
+  expect(document.querySelector('[aria-label="Omnibot SoA applicability"]').value).toBe('included');
+  expect(document.querySelector('[aria-label="Omnibot SoA justification"]').value).toBe('Unsaved deliberate risk-treatment justification.');
+  expect(button('Start').disabled).toBe(true); expect(props.onDraftChange).toHaveBeenLastCalledWith(true);
+  expect(api.get.mock.calls.length).toBe(reads); expect(api.put).not.toHaveBeenCalled(); expect(props.onSaveAssessment).not.toHaveBeenCalled();
+  expect(props.current.soa_applicability).toBe(''); expect(props.current.status).toBe('not_assessed');
+});
+
+test('sequential scope explanation and failed completion preserve answers without implying applicability or native saving', async () => {
+  setup('6.3'); await openSequential(); await answerSequential(); await click('Continue');
+  await answerSequential('Not relevant here'); await click('Continue'); await answerSequential(); await click('Continue'); await answerSequential(); await click('Review answers'); await click('Review summary');
+  expect(document.body.textContent).toContain('Explain why this context is not relevant here.'); expect(api.put).toHaveBeenCalledTimes(1);
+  await click('Edit answer 2'); await changeInput(document.getElementById('iso-detail-ISO-6.3-change-context'), 'No ISMS changes were identified for this specific period.');
+  await click('Continue'); await click('Continue'); await click('Review answers'); failWrite = true; await click('Review summary');
+  expect(document.body.textContent).toContain('Synthetic save unavailable');
+  expect(stored.step).toBe(1); expect(stored.completed).toBe(false); expect(props.onSaveAssessment).not.toHaveBeenCalled();
+  failWrite = false; await click('Review summary'); expect(document.body.textContent).toContain('Review your assessment summary');
+  expect(stored.answers['ISO-6.3-change-context_detail']).toBe('No ISMS changes were identified for this specific period.');
+  expect(stored.result.status).not.toBe('not_applicable'); expect(props.onSaveAssessment).not.toHaveBeenCalled();
+});
+
+test('sequential manual wording survives revised answers, replacement cancellation and an unconfirmed native save', async () => {
+  props.current = {...props.current, implementation: 'Existing saved native wording.', status: 'addressed'}; props.form = copy(props.current);
+  await openSequential(); await completeSequential(); const text = 'Exact reviewed wording.\n\nRetained second paragraph.';
+  await changeInput('[aria-label="Omnibot implementation summary"]', text); await click('Back to questions'); await answerSequential('Partially'); await completeSequential();
+  expect(document.querySelector('[aria-label="Omnibot implementation summary"]').value).toBe(text); expect(button('Update assessment').disabled).toBe(true);
+  await click('Keep my wording after review'); await click('Update assessment'); await click('Cancel');
+  expect(props.onSaveAssessment).not.toHaveBeenCalled(); expect(props.current.implementation).toBe('Existing saved native wording.');
+  props.onSaveAssessment.mockResolvedValueOnce(false); await click('Update assessment'); await click('Yes, update assessment');
+  expect(document.body.textContent).toContain('The assessment save could not be confirmed'); expect(document.querySelector('.assessment-inline-interview').hidden).toBe(false);
+  expect(document.querySelector('[aria-label="Omnibot implementation summary"]').value).toBe(text); expect(stored.narrative).toBe(text);
+  expect(props.current.implementation).toBe('Existing saved native wording.'); expect(props.current.verification).toBe('not_verified');
+});
+
+test('sequential applicability saving retains its two-field contract and still requires comparison of a changed interview base', async () => {
+  setup('A.5.1'); await openSequential(); await completeSequential(); const before = copy(stored);
+  props.current = {...props.current, implementation: stored.narrative, status: stored.result.status, guided_assessment_source: {version: stored.version, revision: stored.revision, by: 'iso-actor'}}; props.form = copy(props.current);
+  nativeDecisionWriter(); await render(); await click('Current position'); await click('Reassess applicability');
+  await changeInput('[aria-label="Omnibot SoA justification"]', 'Changed obligations require a fresh comparison.'); await click('Save applicability decision');
+  expect(props.onSaveAssessment.mock.calls[0][0]).toEqual({soa_applicability: 'included', soa_justification: 'Changed obligations require a fresh comparison.'});
+  expect(stored.answers).toEqual(before.answers); expect(stored.narrative).toBe(before.narrative); expect(stored.revision).toBe(before.revision);
+  expect(document.body.textContent).toContain('saved assessment or scope changed'); expect(button('Compare & continue')).toBeTruthy();
+  await click('Resume your review'); expect(button('Update assessment').disabled).toBe(true);
+  await click('Compare & continue'); await act(async () => document.querySelector('input[type="checkbox"]').click()); await click('Retain answers & continue');
+  expect(api.put.mock.calls.at(-1)[1]).toMatchObject({rebase: true, answers: before.answers, narrative: before.narrative, completed: false, result: null, expected_revision: before.revision, base_assessment_token: props.current.last_saved});
+  expect(props.current.implementation).toBe(before.narrative); expect(props.onSaveAssessment).toHaveBeenCalledTimes(1);
+});
+
+test('sequential read-only, related drafts and native drafts retain their separate write boundaries', async () => {
+  await render({disabled: true}); await openSequential(); expect(button('Start').disabled).toBe(true); expect(api.put).not.toHaveBeenCalled();
+  await render({disabled: false, relatedDraft: true}); await click('Start'); await completeSequential();
+  expect(stored.completed).toBe(true); expect(button('Save assessment').disabled).toBe(true); expect(props.onSaveAssessment).not.toHaveBeenCalled();
+  await render({relatedDraft: false, assessmentDirty: true}); expect(button('Save assessment').disabled).toBe(true); expect(props.onSaveAssessment).not.toHaveBeenCalled();
+});
+
+test('sequential entry cannot start or replace an unsupported retained question version', async () => {
+  stored = {...stored, revision: 3, version: 'iso27001-future', answers: {'future-question': 'Retained answer'}, narrative: 'Retained exact reviewer wording.'};
+  await openSequential();
+  expect(document.body.textContent).toContain('Saved answers and wording are retained');
+  expect(button('Resume your review').disabled).toBe(true); expect(document.querySelector('.iso-sequential-interview')).toBeNull();
+  expect(stored.answers).toEqual({'future-question': 'Retained answer'}); expect(stored.narrative).toBe('Retained exact reviewer wording.');
+  expect(api.put).not.toHaveBeenCalled(); expect(props.onSaveAssessment).not.toHaveBeenCalled();
+});
+
+test('sequential ISO questions use the actual preview checkpoint and exact reviewed native-save routes', async () => {
+  setup('A.5.1'); sessionStorage.clear(); const previewApi = axios.create({adapter: previewAdapter});
+  const db = Object.fromEntries(Object.keys(ids).map(kind => [kind, []]));
+  const row = {...props.current, technology: '', notes: 'Retained native note', na_rationale: '', owner_id: null, process_owner_id: null, iso_assessment_checks: [], assessment_history: []};
+  db.user = {user_id: 'iso-actor', name: 'SYNTHETIC ISO reviewer', role: 'super_admin', status: 'active', client_ids: ['iso-fixture']}; db.logs = [];
+  db.users.push(db.user); db.clients.push({client_id: 'iso-fixture', name: 'SYNTHETIC sequential ISO contract', status: 'active'});
+  db.framework_assessments.push(row); db.requirements.push({client_id: 'iso-fixture', baseline_key: 'iso-27001', baseline_response: 'applies'});
+  saveStore(db); await previewApi.post('/demo/enter'); props = {...props, current: row, record: row, form: copy(row), onInlineClose: jest.fn()};
+  const path = '/framework_assessments/' + row.framework_assessment_id, requests = new Set();
+  const track = request => { requests.add(request); request.then(() => requests.delete(request), () => requests.delete(request)); return request; };
+  const settle = () => act(async () => { while (requests.size) await Promise.all([...requests]); });
+  api.get.mockImplementation(url => track(previewApi.get(url)));
+  api.put.mockImplementation((url, body) => track(previewApi.put(url, body).then(response => { stored = copy(response.data); return response; })));
+  props.onSaveAssessment.mockImplementation(async (values, expected) => {
+    expect(expected).toBe(JSON.stringify(props.form));
+    const saved = (await track(previewApi.patch(path, {...values, expected_last_assessed: props.current.last_saved ?? props.current.last_assessed ?? null}))).data;
+    props = {...props, current: saved, form: copy(saved)}; return true;
+  });
+  await openSequential({settle}); await completeSequential(settle);
+  expect(row.items_to_address??[]).toEqual([]);expect(row).not.toHaveProperty('item_controls');
+  expect(readStore().framework_assessments.find(item=>item.framework_assessment_id===row.framework_assessment_id)).toEqual(row);
+  expect((await previewApi.get(path)).data).toEqual({...row,item_controls:{}}); expect(props.onSaveAssessment).not.toHaveBeenCalled();
+  const reviewed = document.querySelector('[aria-label="Omnibot implementation summary"]').value + '\nExact separately reviewed sequential wording.\n';
+  await changeInput('[aria-label="Omnibot implementation summary"]', reviewed); await click('Save assessment'); await settle();
+  const saved = (await previewApi.get(path)).data, interview = (await previewApi.get(path + '/guided-assessment')).data;
+  expect(saved.implementation).toBe(reviewed); expect(saved.status).toBe('addressed'); expect(saved.assessment_history.at(-1).implementation).toBe(reviewed);
+  expect(interview.narrative).toBe(reviewed); expect(interview.result.narrative).toBe(reviewed); expect(props.onInlineClose).toHaveBeenCalledTimes(1);
+  for (const key of ['verification', 'soa_applicability', 'soa_justification', 'owner_id', 'process_owner_id', 'iso_assessment_checks', 'technology', 'notes']) expect(saved[key]).toEqual(row[key]);
+});
+
+async function openRollout({startAnnex=true,...extra}={}){
+  await render({inline:true,inlineOpen:true,sequential:true,assessmentRollout:true,...extra});
+  await click(button('Resume guided assessment')?'Resume guided assessment':'Begin guided assessment');
+  if(startAnnex&&props.record.definition_id.startsWith('A.')&&!props.disabled)await click(stored.revision?'Resume your review':'Start');
+}
+async function completeRollout(){
+  for(let guard=0;guard<80&&!document.querySelector('[aria-label="Implementation draft"]');guard++){
+    await answerSequential();
+    await click(button('Review implementation')?'Review implementation':button('Review responses')?'Review responses':'Continue');
+  }
+  expect(document.querySelector('[aria-label="Implementation draft"]')).toBeTruthy();
+}
+function retainedRolloutSummary(id='4.1',extraAnswers={}){
+  setup(id);const answers={};
+  for(let pass=0;pass<30;pass++){
+    const missing=isoQuestions(id,answers).filter(question=>!(question.id in answers));if(!missing.length)break;
+    for(const question of missing)answers[question.id]=question.type==='text'?'':question.type==='context'?'Relevant':question.optional?'No':'Yes';
+  }
+  Object.assign(answers,extraAnswers);
+  stored={...stored,answers,step:isoGroups(id,answers).length-1,completed:true,revision:3,generated_at:'2026-10-10T12:00:00Z',narrative:'Exact retained reviewer wording.\nSecond retained paragraph.',summary_review:{version:stored.version,answers:copy(answers)},result:isoGuidedResult(id,answers)};
+}
+
+test('rollout completes native groups, retains evidence context and stages reviewed wording without a native save or status update',async()=>{
+  const native=copy(props.current),stage=jest.fn((text,expected)=>{
+    expect(expected).toBe(props.form.implementation||'');props={...props,form:{...props.form,implementation:text},assessmentDirty:true};root.render(<IsoGuidedAssessor {...props}/>);return true;
+  });
+  await openRollout({onUpdateImplementation:stage});
+  for(let guard=0;guard<40&&document.querySelector('.iso-sequential-interview fieldset')?.dataset.questionId!=='evidence';guard++){
+    await answerSequential();await click('Continue');
+  }
+  expect(document.querySelector('.iso-sequential-interview fieldset').dataset.questionId).toBe('evidence');
+  await changeInput('[aria-label="Reported supporting records"]','Exact reported supporting-record location.');
+  await click('Review responses');await click('Review implementation');
+  const groups=isoGroups('4.1',stored.answers,stored.version);
+  expect(api.put.mock.calls.map(([,body])=>body.step)).toEqual([...groups.slice(1).map((_,index)=>index+1),groups.length-1]);
+  expect(stored.answers.evidence).toBe('Exact reported supporting-record location.');expect(stored.completed).toBe(true);
+  const wording='Reviewed narrative only.\n\nPreserve this exact second paragraph.';await changeInput('[aria-label="Implementation draft"]',wording);
+  const writes=api.put.mock.calls.length;await click('Apply draft');
+  expect(stage).toHaveBeenCalledWith(wording,'',itemProposal(wording));expect(api.put).toHaveBeenCalledTimes(writes+1);
+  expect(stored.narrative).toBe(wording);expect(props.onSaveAssessment).not.toHaveBeenCalled();
+  expect(props.current).toEqual(native);expect(props.form.implementation).toBe(wording);expect(props.form.status).toBe(native.status);expect(props.form.verification).toBe(native.verification);
+  expect(document.querySelector('.assessment-inline-interview').hidden).toBe(true);expect(document.activeElement).toBe(button('Resume guided assessment'));expect(props.onDraftChange).toHaveBeenLastCalledWith(false);
+});
+
+test('rollout requires explicit replacement and preserves reviewed wording when native staging rejects a changed source',async()=>{
+  retainedRolloutSummary();props.current={...props.current,implementation:'Existing native wording.',status:'in_progress'};props.form=copy(props.current);
+  const stage=jest.fn(()=>false),native=copy(props.current);await openRollout({onUpdateImplementation:stage});
+  expect(document.querySelector('[aria-label="Implementation draft"]').value).toBe(stored.narrative);expect(button('Apply draft').disabled).toBe(true);
+  await act(async()=>document.querySelector('.guided-replacement input').click());await click('Apply draft');
+  expect(stage).toHaveBeenCalledWith(stored.narrative,'Existing native wording.',itemProposal(stored.narrative));expect(document.body.textContent).toContain('no text was overwritten');
+  expect(document.querySelector('[aria-label="Implementation draft"]').value).toBe(stored.narrative);expect(props.current).toEqual(native);
+  expect(api.put).not.toHaveBeenCalled();expect(props.onSaveAssessment).not.toHaveBeenCalled();
+});
+
+test('rollout rejects a clean native implementation refresh until the operator reviews that new source',async()=>{
+  retainedRolloutSummary();props.current={...props.current,implementation:'Original native source.',status:'in_progress'};props.form=copy(props.current);
+  const stage=jest.fn(()=>true),wording=stored.narrative;await openRollout({onUpdateImplementation:stage});
+  await act(async()=>document.querySelector('.guided-replacement input').click());
+  const refreshed={...props.current,implementation:'New clean native source.'};await render({current:refreshed,form:copy(refreshed),assessmentDirty:false});
+  await click('Apply draft');expect(document.body.textContent).toContain('The native implementation changed.');
+  expect(stage).not.toHaveBeenCalled();expect(props.onSaveAssessment).not.toHaveBeenCalled();expect(api.put).not.toHaveBeenCalled();
+  expect(document.querySelector('[aria-label="Implementation draft"]').value).toBe(wording);expect(props.form.implementation).toBe('New clean native source.');
+  await click('Edit responses');await click('Current position');expect(document.body.textContent).toContain('New clean native source.');await click('Resume your review');
+  expect(button('Apply draft').disabled).toBe(true);await act(async()=>document.querySelector('.guided-replacement input').click());await click('Apply draft');
+  expect(stage).toHaveBeenCalledWith(wording,'New clean native source.',itemProposal(wording));expect(props.onSaveAssessment).not.toHaveBeenCalled();expect(api.put).not.toHaveBeenCalled();
+});
+
+test('rollout captures the native source before a pending personal completion and never refreshes it from that response',async()=>{
+  retainedRolloutSummary();stored={...stored,completed:false};props.current={...props.current,implementation:'Native source before checkpoint.',status:'in_progress'};props.form=copy(props.current);
+  const stage=jest.fn(()=>true);await openRollout({onUpdateImplementation:stage});
+  for(let guard=0;guard<20&&!button('Review implementation');guard++)await click(button('Review responses')?'Review responses':'Continue');
+  expect(button('Review implementation')).toBeTruthy();const original=api.put.getMockImplementation();let finish;
+  api.put.mockImplementationOnce((path,body)=>new Promise(resolve=>{finish=async()=>resolve(await original(path,body));}));
+  await click('Review implementation');expect(finish).toBeTruthy();
+  const refreshed={...props.current,implementation:'Clean native source during checkpoint.'};await render({current:refreshed,form:copy(refreshed),assessmentDirty:false});
+  await act(async()=>finish());expect(document.querySelector('[aria-label="Implementation draft"]')).toBeTruthy();
+  await act(async()=>document.querySelector('.guided-replacement input').click());await click('Apply draft');
+  expect(document.body.textContent).toContain('The native implementation changed.');expect(stage).not.toHaveBeenCalled();expect(props.onSaveAssessment).not.toHaveBeenCalled();
+  expect(api.put).toHaveBeenCalledTimes(1);expect(stored.completed).toBe(true);expect(props.current.implementation).toBe('Clean native source during checkpoint.');
+});
+
+test('rollout typing in stale manual wording does not approve revised answers without the explicit review action',async()=>{
+  retainedRolloutSummary();const stage=jest.fn(()=>true);await openRollout({onUpdateImplementation:stage});
+  await changeInput('[aria-label="Implementation draft"]','Manual wording before the answer changed.');await click('Edit responses');
+  await answerSequential('Partially');await completeRollout();
+  expect(button('Apply draft').disabled).toBe(true);expect(document.body.textContent).toContain('Your answers changed after you edited this draft.');
+  const reviewed='Manual wording with another edit after the answer changed.';await changeInput('[aria-label="Implementation draft"]',reviewed);
+  expect(button('Apply draft').disabled).toBe(true);expect(stage).not.toHaveBeenCalled();expect(props.onSaveAssessment).not.toHaveBeenCalled();
+  await click('Keep my wording after review');await click('Apply draft');expect(stage).toHaveBeenCalledWith(reviewed,'',itemProposal(reviewed));
+  expect(props.onSaveAssessment).not.toHaveBeenCalled();expect(props.current.status).toBe('not_assessed');expect(props.current.verification).toBe('not_verified');
+});
+
+test.each(['disabled','assessmentDirty','relatedDraft','stale'])('rollout %s guard blocks narrative staging without changing saved answers or the native assessment',async guard=>{
+  retainedRolloutSummary();const saved=copy(stored),stage=jest.fn(()=>true),native=copy(props.current);
+  if(guard==='stale')stored={...stored,lineage_stale:true,current_scope_fingerprint:'b'.repeat(64)};
+  await openRollout({onUpdateImplementation:stage});
+  if(guard!=='stale')await render({[guard]:true});
+  expect(button('Apply draft').disabled).toBe(true);expect(stage).not.toHaveBeenCalled();expect(props.onSaveAssessment).not.toHaveBeenCalled();expect(api.put).not.toHaveBeenCalled();
+  expect(stored.answers).toEqual(saved.answers);expect(stored.narrative).toBe(saved.narrative);expect(props.current).toEqual(native);
+});
+
+test('rollout Annex retains its independent two-field SoA save and preserves implementation and status',async()=>{
+  setup('A.5.1');props.current={...props.current,soa_applicability:'',soa_justification:'',implementation:'Retained implementation.',status:'in_progress'};props.form=copy(props.current);nativeDecisionWriter();
+  const stage=jest.fn(()=>true);await openRollout({startAnnex:false,onUpdateImplementation:stage});
+  expect(document.body.textContent).toContain('Current saved position');expect(document.querySelector('[aria-label="Omnibot SoA applicability"]')).toBeTruthy();
+  await changeInput('[aria-label="Omnibot SoA applicability"]','included');await changeInput('[aria-label="Omnibot SoA justification"]','Exact deliberate treatment rationale.');await click('Save applicability decision');
+  expect(props.onSaveAssessment.mock.calls[0][0]).toEqual({soa_applicability:'included',soa_justification:'Exact deliberate treatment rationale.'});
+  expect(stage).not.toHaveBeenCalled();expect(api.put).not.toHaveBeenCalled();expect(props.current.implementation).toBe('Retained implementation.');expect(props.current.status).toBe('in_progress');
+});
+
+test('SoA Current position guidance accompanies its same two native inputs and independent decision save only in the SoA view',async()=>{
+  setup('A.5.1');props.current={...props.current,implementation:'Retained native implementation.',status:'in_progress'};props.form=copy(props.current);nativeDecisionWriter();
+  const stage=jest.fn(()=>true);await openRollout({startAnnex:false,assessmentModule:'statement_of_applicability',onUpdateImplementation:stage});await click('Reassess applicability');
+  const decision=document.querySelector('[aria-label="Statement of Applicability decision"]');
+  expect([...decision.querySelectorAll('[data-soa-guidance]')].map(node=>node.dataset.soaGuidance)).toEqual(['necessary','rationale']);
+  expect(decision.querySelector('[data-soa-guidance="necessary"]').textContent).toContain('Is this control necessary for the organization’s selected treatments or applicable obligations?');
+  expect(decision.querySelector('[data-soa-guidance="rationale"]').textContent).toContain('What is the organization-specific reason for including this control or excluding it from the Annex A reference set?');
+  for(const guidance of decision.querySelectorAll('[data-soa-guidance]')){expect(guidance.textContent).toContain('ISO/IEC 27001:2022 · 6.1.3(d)');expect(guidance.querySelectorAll('input,select,textarea,button')).toHaveLength(0);}
+  expect(decision.querySelectorAll('[aria-label="Omnibot SoA applicability"]')).toHaveLength(1);expect(decision.querySelectorAll('[aria-label="Omnibot SoA justification"]')).toHaveLength(1);expect(decision.querySelector('[aria-label="Omnibot SoA justification"]').maxLength).toBe(4000);
+  await changeInput('[aria-label="Omnibot SoA justification"]','Explicit native SoA rationale with the same decision controller.');await click('Save applicability decision');
+  expect(props.onSaveAssessment).toHaveBeenCalledWith({soa_applicability:'included',soa_justification:'Explicit native SoA rationale with the same decision controller.'},expect.any(String));expect(props.current.implementation).toBe('Retained native implementation.');expect(props.current.status).toBe('in_progress');expect(stage).not.toHaveBeenCalled();expect(api.put).not.toHaveBeenCalled();
+  await click('Reassess applicability');await render({assessmentModule:'annex_a'});expect(document.querySelector('[aria-label="Statement of Applicability decision"]').querySelectorAll('[data-soa-guidance]')).toHaveLength(0);expect(document.querySelector('[aria-label="Omnibot SoA justification"]').value).toBe('Explicit native SoA rationale with the same decision controller.');
+});
+
+test('rollout Pause and reopening retain the visible question, unsaved answer and exact focus without a write',async()=>{
+  setup('A.6.1');await openRollout({onUpdateImplementation:jest.fn(()=>true)});await answerSequential();await click('Continue');await answerSequential('Partially');
+  const key=document.querySelector('.iso-sequential-interview fieldset').dataset.questionId,reads=api.get.mock.calls.length;
+  for(let cycle=0;cycle<2;cycle++){
+    await click('Pause & return');expect(document.activeElement).toBe(button('Resume guided assessment'));await click('Resume guided assessment');
+    expect(document.querySelector('.iso-sequential-interview fieldset').dataset.questionId).toBe(key);expect(document.querySelector('.iso-sequential-interview select').value).toBe('Partially');expect(document.activeElement).toBe(document.querySelector('.iso-sequential-interview legend'));
+  }
+  expect(api.get).toHaveBeenCalledTimes(reads);expect(api.put).not.toHaveBeenCalled();expect(props.onSaveAssessment).not.toHaveBeenCalled();expect(props.onDraftChange).toHaveBeenLastCalledWith(true);
+});
+
+test.each([['NATIVE01','additional_gap','gaps','gap','needs_attention','Not Implemented / Needs Validation'],['NATIVE02','additional_confirmation','unknowns','verification','not_assessed','Not Assessed']])('%s prospective rollout constrains the proposal while reviewer Apply changes only a narrative draft',async(_scenario,parent,detail,kind,status,label)=>{
+  retainedRolloutSummary('A.8.13',{[parent]:'Yes',[detail]:'Reported unresolved work for reviewer consideration.'});
+  const stage=jest.fn(()=>true),native=copy(props.current);await openRollout({onUpdateImplementation:stage});
+  expect(stored.result.status).toBe(status);expect(stored.result.signals).toEqual([{questionId:detail,kind,text:stored.answers[detail]}]);
+  expect(document.body.textContent).toContain('Proposed implementation status: '+label);
+  expect(document.querySelector('[aria-label="Implementation draft"]').value).toBe(stored.narrative);
+  for(const section of ['OVERVIEW','IMPLEMENTATION BREAKDOWN','ITEMS TO ADDRESS'])expect(stored.result.narrative).toContain(section);
+  expect(stored.result.narrative).toContain(stored.answers[detail]);
+  await click('Apply draft');expect(stage).toHaveBeenCalledWith(stored.narrative,'',itemProposal(stored.narrative));expect(props.current).toEqual(native);expect(props.onSaveAssessment).not.toHaveBeenCalled();expect(api.put).not.toHaveBeenCalled();
+});
+
+test('prospective grouped concern guidance leaves the native assessment and interview untouched',async()=>{
+  stored={...stored,step:isoGroups('4.1').length-1};const before=copy(stored),native=copy(props.current);
+  await render();await open();await click('Start');
+  expect(document.body.textContent).toContain('Affirmed, described gaps or uncertainty constrain the proposed implementation status. The saved assessment status remains your decision.');
+  expect(document.body.textContent).not.toContain('These optional notes add context; they do not decide readiness.');
+  expect(document.querySelector('[aria-label="Is there an additional confirmed gap relevant to this requirement?"]')).toBeTruthy();
+  expect(stored).toEqual(before);expect(props.current).toEqual(native);expect(api.put).not.toHaveBeenCalled();expect(props.onSaveAssessment).not.toHaveBeenCalled();
+});
+
+function retainedHistoricalIsoVersion(version){
+  setup('4.1');const first=isoGroups('4.1',{},version)[0].questions.find(question=>question.type!=='text');
+  const answers={[first.id]:first.choices.includes('Yes')?'Yes':'Relevant',[first.id+'_detail']:'Exact retained answer detail.'};
+  props.current={...props.current,implementation:'Exact native implementation remains.\nRetain its second line.',status:'in_progress',last_saved:'native-saved-position'};props.form=copy(props.current);
+  stored={...stored,version,answers,step:0,revision:7,completed:false,narrative:'Exact retained '+version+' reviewer wording.\nRetain its second paragraph.',summary_review:{version,answers:copy(answers)},base_assessment_token:'native-saved-position',current_assessment_token:'native-saved-position'};
+  return {interview:copy(stored),native:copy(props.current)};
+}
+
+test.each(['iso27001-omni-1','iso27001-omni-2','iso27001-assessment-rollout-1'])('active rollout reads retained %s answers and wording without enabling historical edits or writes',async version=>{
+  const before=retainedHistoricalIsoVersion(version),stage=jest.fn(()=>true);
+  expect(isoGuidedCatalog.version).toBe('iso27001-assessment-rollout-2');
+  api.get.mockImplementation(async path=>({data:path.endsWith('/history')?{items:[copy(before.interview)],has_more:false}:copy(stored)}));
+  await openRollout({onUpdateImplementation:stage});
+  expect(document.body.textContent).toContain('This interview uses retained historical guidance. Begin a new current-version review before updating the assessment.');
+  expect(document.body.textContent).toContain(before.native.implementation);expect(button('Resume your review').disabled).toBe(true);expect(button('Begin a new review').disabled).toBe(false);
+  expect(document.querySelector('.iso-sequential-interview')).toBeNull();expect(document.querySelector('[aria-label="Implementation draft"]')).toBeNull();
+  await render({interviewHistoryOpen:true,onInterviewHistoryOpenChange:jest.fn()});
+  const history=document.querySelector('.brawndo-pilot-history');expect(history).not.toBeNull();expect(history.textContent).toContain(version);expect(history.textContent).toContain(before.interview.narrative);expect(history.querySelector('pre').textContent).toBe(JSON.stringify(before.interview.answers,null,2));
+  expect(history.querySelectorAll('input,textarea,select')).toHaveLength(0);expect(api.put).not.toHaveBeenCalled();expect(stage).not.toHaveBeenCalled();expect(props.onSaveAssessment).not.toHaveBeenCalled();expect(stored).toEqual(before.interview);expect(props.current).toEqual(before.native);
+});
+
+test.each(['iso27001-omni-1','iso27001-omni-2','iso27001-assessment-rollout-1'])('cancelling an explicit new review retains the exact active %s interview and native assessment',async version=>{
+  const before=retainedHistoricalIsoVersion(version),stage=jest.fn(()=>true);await openRollout({onUpdateImplementation:stage});
+  const reads=api.get.mock.calls.length;await click('Begin a new review');
+  const confirmation=[...document.querySelectorAll('[role="dialog"]')].find(node=>node.querySelector('h2')?.textContent==='Begin a new review?');expect(confirmation).toBeTruthy();
+  await act(async()=>[...confirmation.querySelectorAll('button')].find(node=>node.textContent==='Cancel').click());
+  expect(document.querySelectorAll('[role="dialog"]')).toHaveLength(0);expect(button('Resume your review').disabled).toBe(true);expect(stored).toEqual(before.interview);expect(props.current).toEqual(before.native);expect(props.form).toEqual(before.native);expect(api.get).toHaveBeenCalledTimes(reads);expect(api.put).not.toHaveBeenCalled();expect(stage).not.toHaveBeenCalled();expect(props.onSaveAssessment).not.toHaveBeenCalled();
+});
+
+test.each(['iso27001-omni-1','iso27001-omni-2','iso27001-assessment-rollout-1'])('explicitly restarting active %s uses the real rollout version, empty answers and exact native CAS',async version=>{
+  const before=retainedHistoricalIsoVersion(version),stage=jest.fn(()=>true);await openRollout({onUpdateImplementation:stage});await click('Begin a new review');
+  const confirmation=[...document.querySelectorAll('[role="dialog"]')].find(node=>node.querySelector('h2')?.textContent==='Begin a new review?');expect(confirmation).toBeTruthy();
+  await act(async()=>[...confirmation.querySelectorAll('button')].find(node=>node.textContent==='Begin a new review').click());
+  expect(api.put).toHaveBeenCalledTimes(1);expect(api.put).toHaveBeenCalledWith('/framework_assessments/iso-4.1/guided-assessment',{
+    version:'iso27001-assessment-rollout-2',answers:{},step:0,completed:false,narrative:'',summary_review:null,result:null,restart:true,expected_revision:7,base_assessment_token:'native-saved-position',base_scope_fingerprint:fingerprint,
+  });
+  expect(api.get).toHaveBeenCalledTimes(2);expect(stored.version).toBe(isoGuidedCatalog.version);expect(stored.answers).toEqual({});expect(stored.narrative).toBe('');expect(stored.summary_review).toBeNull();expect(stored.revision).toBe(8);expect(stored.completed).toBe(false);
+  const first=document.querySelector('.iso-sequential-interview fieldset');expect(first).not.toBeNull();expect(first.dataset.questionId).toBe(isoGroups('4.1',{},isoGuidedCatalog.version)[0].questions[0].id);expect([...first.querySelectorAll('select')].every(select=>select.value==='')).toBe(true);
+  expect(props.current).toEqual(before.native);expect(props.form).toEqual(before.native);expect(stage).not.toHaveBeenCalled();expect(props.onSaveAssessment).not.toHaveBeenCalled();
 });

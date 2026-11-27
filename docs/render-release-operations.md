@@ -1,18 +1,26 @@
-# Main-to-Render delivery
+# GoverNara v3 staging delivery
 
 Render staging is the primary hosted target: `omnisciente-staging`, service
-`srv-db1s0cugekts73f72reg`, Free Docker instance, branch `main`.
+`srv-db1s0cugekts73f72reg`, Free Docker instance, branch
+`codex/staging-signed-in-v3-20261124`.
 Atlas remains Free. `DEMO_MODE=false` and legacy migrations remain disabled.
 Do not change credentials, seed accounts, reseed data or create another service.
 
+
+Historical manual staging checkpoint (2026-10-13): [PR78](https://github.com/robbashea-lab/GRC/pull/78) records the exact tested and deployed commit bf59aa8. See the [coordinated handoff](governara-release/handoff.md).
+
 ## Release gate
 
-`.github/workflows/release-verification.yml` runs on every PR targeting main and
-every main push, including documentation changes. It runs all classified offline
+`.github/workflows/release-verification.yml` runs on PRs targeting v3 staging and
+every push to v3 staging, including documentation changes. Main retains its own PR
+and push verification. Expanded framework results on v3 staging PRs are advisory
+for review. The full push gate is required before automatic deployment.
+It runs all classified offline
 backend suites, disposable loopback Mongo persistence/recovery/authorization
 checks, all frontend suites and both authenticated staging and isolated Demo
 builds. No staging database credentials are available to these jobs.
-The aggregate `Release gate` fails unless both jobs finish successfully, including
+The aggregate `Release gate` fails unless the frontend, offline backend,
+Mongo backend and staging image audit jobs finish successfully, including
 when a prerequisite fails, is cancelled or skipped. Require this check in main's
 branch protection and follow the normal reviewed PR workflow.
 
@@ -26,18 +34,18 @@ The service must also use the connected **Git Provider** repository. A public Gi
 URL or a saved CI policy alone does not establish automatic delivery. Verify that
 `robbashea-lab/GRC` appears in the repository picker and in the existing Render
 GitHub app's selected repository access. Preserve its scope; do not grant access
-to unrelated repositories. When updating Source, retain Docker, branch main,
+to unrelated repositories. When updating Source, use the v3 staging branch and retain Docker,
 `deploy/RenderStaging.Dockerfile`, context `.`, the Free plan, health path `/api/`
 and existing environment values. The source editor initially proposes Node;
 select Docker before saving. See [Render Git-provider setup](https://render.com/docs/git-provider).
 
 A source-configuration save is not proof of merge-triggered deployment. Verify a
-subsequent reviewed merge, its completed main-push gate and a Render automatic
+subsequent reviewed merge, its completed staging push gate and a Render automatic
 deployment of that same SHA. Do not substitute a manual deploy for that proof.
 
-Before release, fetch main, reconcile intervening changes, rerun affected checks,
+Before release, fetch the v3 staging branch, reconcile intervening changes, rerun affected checks,
 and obtain independent review. After merge, inspect the **push** run for the exact
-main SHA; a PR run checks a different revision. Confirm Render's successful deploy
+staging SHA. A PR run checks a different revision. Confirm Render's successful deploy
 commit and compare served JS/CSS assets with the tested normal build. Health/build
 success does not replace authenticated browser acceptance.
 
@@ -57,7 +65,7 @@ requires a separate plan and authorization.
 
 Render's Dashboard rollback disables auto-deploy; inspect Settings afterwards and
 restore **After CI Checks Pass** once the underlying issue is fixed. After any
-manual deployment, also verify branch main, auto-deploy policy and live commit.
+manual deployment, also verify the configured branch, auto-deploy policy and live commit.
 See [Render rollbacks](https://render.com/docs/rollbacks).
 
 ## Private preview and acceptance limits

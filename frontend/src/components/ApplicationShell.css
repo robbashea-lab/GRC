@@ -1,0 +1,133 @@
+/* Reuse the approved bundled Dashboard face even before that route is loaded. */
+@font-face {
+  font-family:'GoverNara CIS Concept Inter';
+  src:url('../assets/fonts/inter-dashboard-latin.woff2') format('woff2');
+  font-style:normal;
+  font-weight:100 900;
+  font-display:swap;
+}
+/* Current Brawndo chrome, independent of page/framework eligibility. The marker
+   belongs only to the signed-in application wrapper, never public pages/portals.
+   Explicit chrome scope leaves content themes, editors and native controls alone. */
+.brawndo-workspace-pilot[data-application-shell=true][data-theme][data-navigation] {
+  --bwp-top:60px;
+  --bwp-sidebar:240px;
+}
+.brawndo-workspace-pilot[data-application-shell=true][data-theme][data-navigation] > .bwp-topbar {
+  height:60px;
+  flex-shrink:0;
+  padding:0 max(16px,env(safe-area-inset-right,0px)) 0 max(16px,env(safe-area-inset-left,0px));
+  gap:24px;
+  background:#081426;
+  color:#edf3ff;
+  border-bottom:1px solid #263c58;
+  box-shadow:none;
+  font-family:'GoverNara CIS Concept Inter',Inter,Arial,sans-serif;
+}
+.brawndo-workspace-pilot[data-application-shell=true][data-theme][data-navigation] .application-brand {
+  color:#edf3ff;
+  gap:8px;
+  padding:0;
+  font:650 20px/1.1 'GoverNara CIS Concept Inter',Inter,Arial,sans-serif;
+  letter-spacing:0;
+  cursor:default;
+}
+.brawndo-workspace-pilot[data-application-shell=true][data-theme][data-navigation] .bwp-brand {
+  width:155px;
+  min-width:155px;
+  flex:none;
+}
+.brawndo-workspace-pilot[data-application-shell=true][data-theme][data-navigation] .application-brand .governara-feather {width:32px;height:32px;}
+.brawndo-workspace-pilot[data-application-shell=true][data-theme][data-navigation] .application-brand > span {display:block;}
+.brawndo-workspace-pilot[data-application-shell=true][data-theme][data-navigation] .application-brand .application-brand-tagline {
+  margin:3px 0 0;
+  color:#a8bad5;
+  font:500 8.5px/1.4 'GoverNara CIS Concept Inter',Inter,Arial,sans-serif;
+  letter-spacing:0;
+  text-transform:none;
+  white-space:nowrap;
+}
+.brawndo-workspace-pilot[data-application-shell=true][data-theme][data-navigation] .bwp-search {flex:1 1 360px;max-width:400px;}
+.brawndo-workspace-pilot[data-application-shell=true][data-theme][data-navigation] .bwp-search input {
+  height:32px;
+  padding:0 62px 0 33px;
+  border:1px solid #2c405d;
+  border-radius:6px;
+  background:#15253d;
+  color:#edf3ff;
+  font:12px/1.45 'GoverNara CIS Concept Inter',Inter,Arial,sans-serif;
+}
+.brawndo-workspace-pilot[data-application-shell=true][data-theme][data-navigation] .bwp-search > svg {left:10px;top:9px;width:14px;height:14px;color:#a8bad5;}
+.brawndo-workspace-pilot[data-application-shell=true][data-theme][data-navigation] .bwp-search input::placeholder {color:#a8bad5;}
+.brawndo-workspace-pilot[data-application-shell=true][data-theme][data-navigation] .bwp-search kbd {
+  top:7px;right:8px;padding:0 6px;border:1px solid #263c58;border-radius:5px;
+  background:#13223a;color:#edf3ff;font:500 9px/18px 'GoverNara CIS Concept Inter',Inter,Arial,sans-serif;
+}
+.brawndo-workspace-pilot[data-application-shell=true][data-theme][data-navigation] .bwp-top-actions {margin-left:auto;display:flex;align-items:center;gap:4px;}
+.brawndo-workspace-pilot[data-application-shell=true][data-theme][data-navigation] .bwp-client {
+  margin-left:0;height:36px;gap:10px;padding:0 12px;border:1px solid #2c405d;border-radius:6px;
+  background:#15253d;color:#edf3ff;font:500 11px/1.5 'GoverNara CIS Concept Inter',Inter,Arial,sans-serif;
+}
+.brawndo-workspace-pilot[data-application-shell=true][data-theme][data-navigation] .bwp-theme,
+.brawndo-workspace-pilot[data-application-shell=true][data-theme][data-navigation] .bwp-topbar [data-testid=notification-bell] {
+  display:grid;place-items:center;width:36px;height:36px;margin-left:0;padding:0;color:#a8bad5;border-radius:8px;
+}
+.brawndo-workspace-pilot[data-application-shell=true][data-theme][data-navigation] .bwp-theme svg {width:16px;height:16px;}
+.brawndo-workspace-pilot[data-application-shell=true][data-theme][data-navigation] .bwp-profile .bsb-profile {width:34px;height:34px;margin-left:8px;}
+.brawndo-workspace-pilot[data-application-shell=true][data-theme][data-navigation] .bwp-profile .bsb-avatar {width:34px;height:34px;background:#215bc1;border:0;}
+.brawndo-workspace-pilot[data-application-shell=true][data-theme][data-navigation] .bwp-body .app-sidebar {
+  top:60px;height:calc(100dvh - 60px);flex-shrink:0;background:#071321;border:0;
+}
+.brawndo-workspace-pilot[data-application-shell=true][data-theme][data-navigation] .app-sidebar.bsb {
+  --sb-bg:#071321;--sb-head:#edf3ff;--sb-text:#c9d6eb;--sb-muted:#a8bad5;--sb-hover:#13223a;
+  --sb-active-bg:#25416a;--sb-active-text:#fff;--sb-border:#263c58;--sb-chip:#13223a;--sb-accent:#fff;
+}
+.brawndo-workspace-pilot[data-application-shell=true][data-theme][data-navigation] .app-sidebar :is(.bsb-link,.bsb-group-label,.bsb-back,.bsb-client-name,.bsb-client-industry) {font-family:var(--font-body);}
+.brawndo-workspace-pilot[data-application-shell=true][data-theme][data-navigation] .app-sidebar .bsb-head {padding:16px 11px 0;gap:12px;}
+.brawndo-workspace-pilot[data-application-shell=true][data-theme][data-navigation] .app-sidebar .bsb-link {
+  min-height:33.5px;margin:0;padding:7px 10px;border:0;border-radius:7px;font-size:13px;line-height:1.5;color:#c9d6eb;
+}
+.brawndo-workspace-pilot[data-application-shell=true][data-theme][data-navigation] .app-sidebar .bsb-link svg,
+.brawndo-workspace-pilot[data-application-shell=true][data-theme][data-navigation] .app-sidebar .bsb-group-label {color:#a8bad5;}
+.brawndo-workspace-pilot[data-application-shell=true][data-theme][data-navigation] .app-sidebar .bsb-link.is-active {background:#25416a;color:#fff;box-shadow:none;font-weight:600;}
+.brawndo-workspace-pilot[data-application-shell=true][data-theme][data-navigation] .app-sidebar .bsb-link:hover:not(.is-active) {background:#13223a;color:#edf3ff;}
+.brawndo-workspace-pilot[data-application-shell=true][data-theme][data-navigation] .app-sidebar .bsb-link.is-active svg {color:#fff;}
+.brawndo-workspace-pilot[data-application-shell=true][data-theme][data-navigation] .app-sidebar .bsb-nav {padding:0 12px 16px;gap:2px;}
+.brawndo-workspace-pilot[data-application-shell=true][data-theme][data-navigation] .app-sidebar .bsb-group {gap:2px;}
+.brawndo-workspace-pilot[data-application-shell=true][data-theme][data-navigation] .app-sidebar .bsb-group > .bsb-group-label {font-size:11px;line-height:1.5;margin:16px 10px 6px;padding:0;}
+.brawndo-workspace-pilot[data-application-shell=true][data-theme][data-navigation] .app-sidebar .bsb-client {min-width:0;max-width:100%;background:#13223a;border-color:#263c58;}
+.brawndo-workspace-pilot[data-application-shell=true][data-theme][data-navigation] .app-sidebar .bsb-client > span:last-child {min-width:0;flex:1;}
+.brawndo-workspace-pilot[data-application-shell=true][data-theme][data-navigation] .app-sidebar .bsb-dot {background:#13223a;color:#c9d6eb;box-shadow:inset 0 0 0 1px #263c58;}
+/* Keep Portfolio's existing nav contents/top clearance; only its chrome changes. */
+.brawndo-workspace-pilot[data-application-shell=true][data-visual-surface=portfolio][data-theme][data-navigation] .app-sidebar .bsb-nav {padding-top:16px;}
+@media(min-width:861px) {
+  .brawndo-workspace-pilot[data-application-shell=true][data-theme][data-navigation] .bwp-body .app-sidebar {display:flex;position:sticky;width:240px;min-width:240px;max-width:240px;left:auto;}
+  .brawndo-workspace-pilot[data-application-shell=true][data-theme][data-navigation] .app-sidebar .bsb-client {display:flex;}
+  .brawndo-workspace-pilot[data-application-shell=true][data-theme][data-navigation] .app-sidebar .bsb-group > .bsb-group-label {display:block;}
+  .brawndo-workspace-pilot[data-application-shell=true][data-theme][data-navigation] .app-sidebar .bsb-link > span {display:initial;}
+  .brawndo-workspace-pilot[data-application-shell=true][data-theme][data-navigation] .app-sidebar .bsb-link {justify-content:initial;}
+  .brawndo-workspace-pilot[data-application-shell=true][data-theme][data-navigation] .app-sidebar .bsb-back {justify-content:initial;font-size:13px;}
+  .brawndo-workspace-pilot[data-application-shell=true][data-theme][data-navigation] > .bwp-topbar .bwp-mobile-nav,
+  .brawndo-workspace-pilot[data-application-shell=true][data-theme][data-navigation] > .bwp-nav-backdrop {display:none;}
+}
+/* Reuse the approved shared 860px menu state; no new responsive arrangement. */
+@media(max-width:860px) {
+  .brawndo-workspace-pilot[data-application-shell=true][data-theme][data-navigation] > .bwp-topbar {gap:16px;}
+  .brawndo-workspace-pilot[data-application-shell=true][data-theme][data-navigation] > .bwp-topbar .bwp-mobile-nav {display:grid;}
+  .brawndo-workspace-pilot[data-application-shell=true][data-theme][data-navigation] > .bwp-topbar .bwp-brand {width:auto;min-width:0;}
+  .brawndo-workspace-pilot[data-application-shell=true][data-theme][data-navigation] > .bwp-topbar .bwp-brand > span {display:block;}
+  .brawndo-workspace-pilot[data-application-shell=true][data-theme][data-navigation] > .bwp-topbar .application-brand-tagline,
+  .brawndo-workspace-pilot[data-application-shell=true][data-theme][data-navigation] > .bwp-topbar .bwp-search,
+  .brawndo-workspace-pilot[data-application-shell=true][data-theme][data-navigation] > .bwp-topbar .bwp-client {display:none;}
+  .brawndo-workspace-pilot[data-application-shell=true][data-theme][data-navigation=closed] .bwp-body .app-sidebar {display:none;}
+  .brawndo-workspace-pilot[data-application-shell=true][data-theme][data-navigation=open] .bwp-body .app-sidebar {display:flex;position:fixed;width:260px;min-width:260px;max-width:260px;left:0;z-index:45;}
+  .brawndo-workspace-pilot[data-application-shell=true][data-theme][data-navigation] .app-sidebar .bsb-client {display:flex;}
+  .brawndo-workspace-pilot[data-application-shell=true][data-theme][data-navigation] .app-sidebar .bsb-group > .bsb-group-label {display:block;}
+  .brawndo-workspace-pilot[data-application-shell=true][data-theme][data-navigation] .app-sidebar .bsb-link > span {display:initial;}
+  .brawndo-workspace-pilot[data-application-shell=true][data-theme][data-navigation] .app-sidebar .bsb-link {justify-content:initial;}
+  .brawndo-workspace-pilot[data-application-shell=true][data-theme][data-navigation] .app-sidebar .bsb-back {justify-content:initial;font-size:13px;}
+  html .brawndo-workspace-pilot[data-application-shell=true][data-theme][data-navigation=open] > button.bwp-nav-backdrop {display:block;position:fixed;inset:60px 0 0;z-index:40;}
+}
+@media(max-width:520px) {
+  .brawndo-workspace-pilot[data-application-shell=true][data-theme][data-navigation] .bwp-topbar [data-testid=notification-bell] {display:none;}
+}

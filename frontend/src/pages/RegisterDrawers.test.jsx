@@ -9,7 +9,7 @@ import {ClientPresentationContext} from '@/components/ClientSurface';
 jest.mock('@/context/OrgContext', () => ({useOrg:() => ({currentClientId:'a',currentClient:{name:'Client A'}})}));
 jest.mock('@/context/AuthContext', () => ({useAuth:() => ({user:{user_id:'owner',name:'Owner',role:'super_admin'}})}));
 jest.mock('@/lib/api', () => ({__esModule:true, default:{get:jest.fn(),patch:jest.fn(),post:jest.fn()},formatError:e=>e.message,API:'/api'}));
-jest.mock('react-router-dom', () => ({useSearchParams:()=>[new URLSearchParams(),jest.fn()],Link:({children,to}) => <a href={to}>{children}</a>}), {virtual:true});
+jest.mock('react-router-dom', () => ({useLocation:()=>({pathname:'/risks',search:''}),useNavigate:()=>jest.fn(),useSearchParams:()=>[new URLSearchParams(),jest.fn()],Link:({children,to}) => <a href={to}>{children}</a>}), {virtual:true});
 let root, container;
 const requestOptions = expect.objectContaining({headers:{'Idempotency-Key':expect.stringMatching(/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/)},pendingCommandGeneration:expect.any(Number)});
 beforeEach(() => {
@@ -83,4 +83,26 @@ test.each([[RiskRegister,'risk-row-0',['title','category','status','owner_id','d
   for(const field of fields) expect(document.querySelector(Component===RiskRegister&&field==='category'?'[aria-label="Risk category"]':`[data-testid="field-${field}"]`)).not.toBeNull();
   await act(async()=>document.querySelector('[data-testid="drawer-save"]').click());
   expect(api.patch).toHaveBeenCalledWith(Component===RiskRegister?'/risks/r':'/vendors/v',expect.not.objectContaining({client_id:undefined}),requestOptions);
+});
+
+test('a native nonpilot Related register link stays with its record and leaves the row modal unchanged',async()=>{
+ const record={asset_id:'synthetic-system-a',client_id:'a',name:'SYNTHETIC system',status:'active'};
+ const policy={policy_id:'synthetic-policy-a',client_id:'a',title:'SYNTHETIC linked policy',status:'draft',presence:'reported_missing'};
+ const before=JSON.stringify({record,policy}),onSaved=jest.fn(),onOpenChange=jest.fn();
+ const original=api.get.getMockImplementation();
+ api.get.mockImplementation(async(path,options)=>path==='/related'&&options?.params?.entity_type==='assets'
+  ?{data:{policies:[policy]}}:original(path,options));
+ await act(async()=>root.render(<RecordDrawer open kind="assets" record={record} clientId="a" schema={SCHEMAS.assets.fields} users={[]} onSaved={onSaved} onOpenChange={onOpenChange}/>));
+ const parent=document.querySelector('[data-testid="assets-drawer"]');
+ expect(parent).not.toBeNull();
+ await act(async()=>parent.querySelector('[data-testid="tab-related"]').click());
+ expect(parent.querySelector('a[href="/policies?client_id=a"]')).not.toBeNull();
+ const row=parent.querySelector('[data-testid="related-policies-item"] button');
+ expect(row.textContent).toBe(policy.title);await act(async()=>row.click());
+ const nested=document.querySelector('[data-testid="policies-drawer"]');
+ expect(nested).not.toBeNull();expect(nested.textContent).toContain(policy.title);
+ expect(parent.isConnected).toBe(true);
+ expect(JSON.stringify({record,policy})).toBe(before);
+ expect(onSaved).not.toHaveBeenCalled();expect(onOpenChange).not.toHaveBeenCalled();
+ expect(api.post).not.toHaveBeenCalled();expect(api.patch).not.toHaveBeenCalled();
 });

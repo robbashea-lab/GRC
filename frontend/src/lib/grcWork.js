@@ -1,7 +1,8 @@
 import rules from './grcRules.json';
 export const closed = rules.closed;
 export const isOpen = (kind, row) => !(closed[kind] || []).includes(row.status);
-export const riskLevel = score => rules.riskBands.find(([min]) => score >= min)?.[1] || null;
+export const riskLevel = score => Number.isInteger(score) && score >= 1 && score <= 25
+  ? rules.riskBands.find(([min]) => score >= min)?.[1] || null : null;
 export function assessedRisk(row) {
   const valid = [row.likelihood_score, row.impact_score].every(v => Number.isInteger(v) && v >= 1 && v <= 5);
   const risk_score = valid ? row.likelihood_score * row.impact_score : null;

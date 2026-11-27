@@ -1,22 +1,37 @@
-import {useEffect,useRef,useState} from 'react';
+import {useCallback,useEffect,useLayoutEffect,useRef,useState} from 'react';
 import {Link,useNavigate,useLocation} from 'react-router-dom';
 import {Menu,Moon,Sun,Search,ChevronDown} from 'lucide-react';
-import api,{formatError} from '@/lib/api';
+import api,{formatError,PREVIEW_MODE} from '@/lib/api';
 import {useOrg} from '@/context/OrgContext';
 import {useAuth} from '@/context/AuthContext';
+import {canExportReports,isInternal} from '@/lib/permissions';
 import {useCompliance} from '@/context/ComplianceContext';
 import {useBrawndoTheme} from '@/lib/brawndoTheme';
 import {dashboardRecordHref} from '@/lib/dashboardItemSummary';
 import {ProfileMenu} from './BrawndoSidebar';
 import NotificationBell from './NotificationBell';
+import {ApplicationBrand} from './Brand';
+import {BRAWNDO_DEMO_DASHBOARD_ENABLED} from '@/lib/brawndoDemoDashboard';
 import './BrawndoWorkspace.css';
+import {visualCorrectionSurface} from '@/lib/visualCorrectionScope';
+import {selectedClient} from '@/lib/clientSelection';
+import {cisActorMode,cisNativeClientRoute,cisPresentationEligible} from '@/lib/cisExperience';
+import {sharedAppearanceClientRoute,sharedNativeClientRoute,sharedPresentationEligible} from '@/lib/sharedExperience';
+import './SixSurfaceAppearance.css';
+import {additionalAppearanceSurface, additionalSectionChrome, useAdditionalSectionsAppearance} from '@/lib/brawndoAdditionalScope';
+import './AdditionalSectionsAppearance.css';
+import {CisVisualPublisher} from './BrawndoCisVisualAppearance';
+import './CisWorkspaceSizing.css';
+import './CisRegisterSizing.css';
+import './ApplicationShell.css';
 
-const PAGES=[['Dashboard','/dashboard'],['Calendar','/calendar'],['Reviews','/reviews'],['Action Items','/action-items'],['Risks','/risks'],['Policies','/policies'],['Vendors','/vendors'],['Evidence Library','/evidence'],['Contacts','/contacts'],['Systems & Scope','/systems'],['AI Governance','/ai-governance'],['Client Profile','/client-profile']];
+const PAGES=[['Dashboard','/dashboard'],['Calendar','/calendar'],['Reviews','/reviews'],['Action Items','/action-items'],['Risks','/risks'],['Policies','/policies'],['Vendors','/vendors'],['Reports','/reports'],['Evidence Library','/evidence'],['Contacts','/contacts'],['Systems & Scope','/systems'],['AI Governance','/ai-governance'],['Client Profile','/client-profile']];
 
 function WorkspaceSearch({clientId}){
   const [query,setQuery]=useState(''),[result,setResult]=useState(null),[open,setOpen]=useState(false);
+  const {user}=useAuth();
   const input=useRef(null),{items:frameworks}=useCompliance();
-  const pages=(clientId?[...PAGES,...frameworks.map(f=>[f.label,f.to])]:[['Portfolio','/clients'],['My Account','/account']]).filter(([label])=>label.toLowerCase().includes(query.trim().toLowerCase()));
+  const pages=(clientId?[...PAGES.filter(([,to])=>to!=='/reports'||canExportReports(user)),...frameworks.map(f=>[f.label,f.to])]:[['Portfolio','/clients'],['My Account','/account']]).filter(([label])=>label.toLowerCase().includes(query.trim().toLowerCase()));
   useEffect(()=>{
     const shortcut=e=>{if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='k'&&!document.querySelector('[role="dialog"][data-state="open"]')){e.preventDefault();input.current?.focus();}};
     window.addEventListener('keydown',shortcut);return()=>window.removeEventListener('keydown',shortcut);
@@ -44,8 +59,31 @@ function WorkspaceSearch({clientId}){
 }
 
 export default function BrawndoWorkspace({children}){
-  const {currentClientId,currentClient}=useOrg(),[theme,setTheme]=useBrawndoTheme(),[navigation,setNavigation]=useState(false),navigate=useNavigate();
-  const {user}=useAuth(),{pathname}=useLocation();
+  const org=useOrg(),auth=useAuth();
+  const {currentClientId,currentClient}=org,[theme,setTheme]=useBrawndoTheme(),[navigation,setNavigation]=useState(false),navigate=useNavigate();
+  const {user}=auth,{pathname,search}=useLocation();
+  const cisScopeKey=JSON.stringify([user?.user_id,user?.role,user?.workspace_mode,auth.workspaceMode,PREVIEW_MODE,currentClientId,pathname,search]);
+  const [cisPublication,setCisPublication]=useState(null);
+  const publishCis=useCallback(enabled=>setCisPublication(old=>enabled?cisScopeKey:old===cisScopeKey?null:old),[cisScopeKey]);
+  const cisVisual=cisPublication===cisScopeKey;
+  const chromeContext={...org,...auth,pathname,selectedClientId:selectedClient(),routeClientId:new URLSearchParams(search).get('client_id'),authLoading:auth.loading,authError:auth.error,orgLoading:org.loading,orgError:org.error};
+  const verifiedChrome=sharedPresentationEligible(chromeContext);
+  const cisVerifiedChrome=cisPresentationEligible(chromeContext);
+  const sizingChrome=(cisVerifiedChrome&&cisNativeClientRoute(pathname))||(verifiedChrome&&sharedAppearanceClientRoute(pathname));
+  const sharedShell=verifiedChrome&&sharedNativeClientRoute(pathname)&&(!cisVerifiedChrome||!cisNativeClientRoute(pathname));
+  // Native destinations keep the same navigation chrome without enabling page or portal presentation.
+  const nativeNavigationShell=verifiedChrome&&['/reports','/systems','/account'].includes(pathname);
+  // Platform Administration does not depend on a selected client or framework enrollment.
+  const administrationShell=['/admin/clients','/admin/users','/admin/roles','/admin/security','/admin/audit'].includes(pathname)
+    && !auth.loading && !auth.error && !user?.password_change_required && isInternal(user) && cisActorMode(user,auth.workspaceMode)
+    && (auth.workspaceMode==='demo'?PREVIEW_MODE===true:PREVIEW_MODE===false);
+  const visualSurface=visualCorrectionSurface(chromeContext);
+  const visualChrome=visualCorrectionSurface({...chromeContext,orgLoading:verifiedChrome?false:org.loading});
+  const cisChrome=cisVisual||cisVerifiedChrome&&pathname==='/compliance/cis-ig1'
+    &&(auth.workspaceMode==='demo'?PREVIEW_MODE===true:PREVIEW_MODE===false);
+  const additionalChrome=additionalSectionChrome({...org,...auth,pathname,selectedClientId:selectedClient(),routeClientId:new URLSearchParams(search).get('client_id'),authLoading:auth.loading,authError:auth.error,orgLoading:org.loading,orgError:org.error});
+  const additionalAppearance=useAdditionalSectionsAppearance();
+  const additionalSurface=additionalAppearanceSurface({...org,...auth,pathname,selectedClientId:selectedClient(),routeClientId:new URLSearchParams(search).get('client_id'),authLoading:auth.loading,authError:auth.error,orgLoading:org.loading,orgError:org.error},additionalAppearance);
   const platform=['/clients','/admin','/platform','/account'].some(path=>pathname.startsWith(path));
   const canOpenDirectory=['super_admin','platform_admin'].includes(user?.role);
   const searchClient=platform?null:currentClientId;
@@ -53,16 +91,28 @@ export default function BrawndoWorkspace({children}){
     const root=document.documentElement;root.dataset.brawndoWorkspace=theme;
     return()=>{delete root.dataset.brawndoWorkspace;};
   },[theme]);
-  return <div className="brawndo-workspace-pilot" data-theme={theme} data-navigation={navigation?'open':'closed'}>
+  useLayoutEffect(()=>{
+    const root=document.documentElement;
+    if(visualSurface){root.dataset.visualSurface=visualSurface;root.dataset.visualTheme=theme;}
+    return()=>{delete root.dataset.visualSurface;delete root.dataset.visualTheme;};
+  },[visualSurface,theme]);
+  useLayoutEffect(()=>{
+    const root=document.documentElement;
+    if(additionalSurface){root.dataset.additionalSurface=additionalSurface;root.dataset.additionalTheme=theme;}
+    return()=>{delete root.dataset.additionalSurface;delete root.dataset.additionalTheme;};
+  },[additionalSurface,theme]);
+  return <CisVisualPublisher.Provider value={publishCis}><div className="brawndo-workspace-pilot" data-application-shell="true" data-cis-sizing={sizingChrome?'true':undefined} data-shared-shell={sharedShell||nativeNavigationShell||administrationShell?'true':undefined} data-cis-dashboard-concept={BRAWNDO_DEMO_DASHBOARD_ENABLED&&pathname==='/dashboard'&&verifiedChrome?'true':undefined} data-additional-surface={additionalChrome||undefined} data-visual-surface={visualChrome||undefined} data-cis-visual={cisChrome||undefined} data-theme={theme} data-navigation={navigation?'open':'closed'}>
     <header className="bwp-topbar">
       <button type="button" className="bwp-mobile-nav" aria-label="Toggle client navigation" aria-expanded={navigation} onClick={()=>setNavigation(!navigation)}><Menu size={22}/></button>
-      <Link to={currentClientId?'/dashboard':'/clients'} className="bwp-brand"><span className="bwp-mark" aria-hidden="true"/><span>Omnisciente<small>CLARITY FOR A STRONGER TOMORROW</small></span></Link>
+      <ApplicationBrand className="bwp-brand" markClassName="bwp-mark"/>
       <WorkspaceSearch key={searchClient} clientId={searchClient}/>
-      {canOpenDirectory?<button type="button" className="bwp-client" onClick={()=>navigate('/clients')}>{platform?'Portfolio':currentClient?.name||'Portfolio'}<ChevronDown size={15} aria-hidden="true"/><span className="sr-only">Open authorized client directory</span></button>:<span className="bwp-client">{currentClient?.name||'Client workspace'}</span>}
-      <button type="button" className="bwp-theme" onClick={()=>setTheme(theme==='dark'?'light':'dark')} aria-label={theme==='dark'?'Use light workspace theme':'Use dark workspace theme'}>{theme==='dark'?<Sun size={20}/>:<Moon size={20}/>}</button>
-      <NotificationBell/><ProfileMenu compact/>
+      <div className="bwp-top-actions">
+      {canOpenDirectory?<button type="button" className="bwp-client" onClick={()=>navigate('/clients')}><span className="bwp-client-name">{platform?'Portfolio':currentClient?.name||'Portfolio'}</span><ChevronDown size={15} aria-hidden="true"/><span className="sr-only">Open authorized client directory</span></button>:<span className="bwp-client">{currentClient?.name||'Client workspace'}</span>}
+      <button type="button" className="bwp-theme" onClick={()=>setTheme(theme==='dark'?'light':'dark')} aria-label={theme==='dark'?'Use light workspace theme':'Use dark workspace theme'}>{cisChrome?<svg viewBox="0 0 16 16" aria-hidden="true"><circle className="ic" cx="8" cy="8" r="3"/><path className="ic" d="M8 1v1.5M8 13.5V15M1 8h1.5M13.5 8H15M3 3l1 1M12 12l1 1M3 13l1-1M12 4l1-1"/></svg>:(visualChrome||additionalChrome||sharedShell)?<Sun size={16}/>:theme==='dark'?<Sun size={20}/>:<Moon size={20}/>}</button>
+      <NotificationBell/><ProfileMenu compact storageTools={!!(visualChrome||additionalChrome||cisChrome)}/>
+      </div>
     </header>
     {navigation&&<button type="button" className="bwp-nav-backdrop" aria-label="Close client navigation" onClick={()=>setNavigation(false)}/>}
     <div className="bwp-body" onClick={e=>{if(e.target.closest('.bsb-nav a'))setNavigation(false);}}>{children}</div>
-  </div>;
+  </div></CisVisualPublisher.Provider>;
 }

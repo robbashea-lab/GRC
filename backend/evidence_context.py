@@ -68,6 +68,10 @@ def reference(kind, row, ident=None, occurrence=None):
 
 async def enrich(db, rows, cid, can_access):
     """At most three lookup rounds per collection/batch, never a request per file."""
+    from r4_services import assert_settled
+
+    client = await db.clients.find_one({'client_id': cid}, {'_id': 0, '_r4_context_pending': 1})
+    assert_settled(client)
     catalog = {kind: {} for kind in SOURCES}
     queried = {kind: set() for kind in SOURCES}
     needed = {kind: set() for kind in SOURCES}
@@ -78,7 +82,10 @@ async def enrich(db, rows, cid, can_access):
     external = {eid: [] for eid in eids}
     async for review in db.reviews.find({'client_id':cid,'iso_audit.package_key':{'$exists':True}}, {'_id':0,'_execution_lock':0}):
         for occurrence in [review, *review.get('occurrences', [])]:
-            for eid in audit_evidence_ids(occurrence.get('iso_audit')).intersection(external):
+            linked_eids = audit_evidence_ids(occurrence.get('iso_audit')).intersection(external)
+            if linked_eids:
+                assert_settled(review)
+            for eid in linked_eids:
                 external[eid].append({'kind':'reviews','id':review['review_id'],'origin':'module',
                     'occurrence_id':occurrence.get('occurrence_id') or review_occurrences.occurrence_id(review)})
                 catalog['reviews'][review['review_id']] = review
@@ -90,6 +97,8 @@ async def enrich(db, rows, cid, can_access):
     }
     for kind, query in queries.items():
         async for doc in db[kind].find({'client_id':cid, **query}, {'_id':0}):
+            if kind in ('vendors', 'framework_assessments'):
+                assert_settled(doc)
             ident = doc[SOURCES[kind]['key']]
             catalog[kind][ident] = doc
             if kind == 'vendors': ids = set(doc.get('contract_evidence_ids', [])) | {x for a in doc.get('assurance_records', []) for x in a.get('evidence_ids', [])}
@@ -105,6 +114,9 @@ async def enrich(db, rows, cid, can_access):
             if missing:
                 queried[kind].update(missing)
                 docs = await db[kind].find({'client_id': cid, SOURCES[kind]['key']: {'$in': list(missing)}}, {'_id': 0}).to_list(len(missing))
+                if kind in ('reviews', 'vendors', 'framework_assessments'):
+                    for doc in docs:
+                        assert_settled(doc)
                 catalog[kind].update({doc[SOURCES[kind]['key']]: doc for doc in docs})
         for kind in ('tasks', 'findings'):
             for row in catalog[kind].values():
@@ -220,6 +232,11 @@ def matches(row, state, query, today):
 
 
 async def catalog_page(db, cid, can_access, *, root_kind=None, root=None, oid=None, page=1, page_size=25, state=None, query='', today=None):
+    from r4_services import assert_settled
+
+    # An unfinished client transition must not appear as a settled empty catalog.
+    client = await db.clients.find_one({'client_id': cid}, {'_id': 0, '_r4_context_pending': 1})
+    assert_settled(client)
     state, today = state or {}, today or date.today()
     sort = state.get('sort') or {}
     key = sort.get('key') if sort.get('key') in SORTS else 'created_at'

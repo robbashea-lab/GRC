@@ -1,32 +1,21 @@
-@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500&family=IBM+Plex+Sans:wght@400;500;600&family=Space+Grotesk:wght@500;600&display=swap');
 
-/* Brawndo CIS IG1 (light and dark). Remaps shared tokens inside .bcis only; the drawer renders outside it. */
+/* Local aliases inherit the shared GoverNara palette; native layout and controls stay unchanged. */
 .bcis {
-  --cs-bg: #f4f5f2; --cs-card: #ffffff; --cs-border: #e6e2dc; --cs-text: #1d232b; --cs-muted: #5d6670; --cs-subtle: #f7f6f3;
-  --cs-good: #15803d; --cs-attention: #a15c07; --cs-critical: #b91c1c; --cs-neutral-fill: #d4d0c8; --cs-link: #2446b8; --cs-accent: #4a6e0a; --cs-focus: #4172f4;
-  --color-bg-surface: var(--cs-card); --color-bg-subtle: var(--cs-subtle); --color-bg-tablehead: var(--cs-subtle); --color-border: var(--cs-border);
-  --color-text-primary: var(--cs-text); --color-text-secondary: var(--cs-muted); --color-text-muted: var(--cs-muted); --color-link: var(--cs-link);
+  --cs-bg: var(--color-bg-app); --cs-card: var(--color-bg-surface); --cs-border: var(--color-border); --cs-text: var(--color-text-primary); --cs-muted: var(--color-text-secondary); --cs-subtle: var(--color-bg-subtle);
+  --cs-good: var(--color-success); --cs-attention: var(--color-moderate-text); --cs-critical: var(--color-critical); --cs-neutral-fill: var(--color-status-neutral-fill); --cs-link: var(--color-link); --cs-accent: var(--color-brand-accent); --cs-focus: var(--color-focus-ring);
   display: flex; flex-direction: column; gap: 18px; margin: -24px calc(-1 * var(--space-page, 20px)) -32px; padding: 24px var(--space-page, 20px) 32px; min-height: calc(100vh - 44px);
-  background: var(--cs-bg); color: var(--cs-text); font-family: 'IBM Plex Sans', var(--font-body);
+  background: var(--cs-bg); color: var(--cs-text); font-family: var(--font-body);
   transition: background-color var(--duration-drawer, 240ms) var(--ease-out, ease), color var(--duration-drawer, 240ms);
 }
-.bcis[data-theme="dark"] {
-  --cs-bg: #12161c; --cs-card: #1a2028; --cs-border: #2a323d; --cs-text: #e6e9ee; --cs-muted: #9aa4b0; --cs-subtle: #151a21;
-  --cs-good: #4ade80; --cs-attention: #fbbf24; --cs-critical: #f87171; --cs-neutral-fill: #3a4450; --cs-link: #8fb0ff; --cs-accent: #a3db33; --cs-focus: #8fb0ff;
-  --color-neutral-bg: #232a33; --color-neutral: #c3cad3; --color-neutral-border: #3a4450; --color-info: #8fb0ff; --color-info-bg: #1c2640; --color-info-border: #2f3f66;
-  --color-success: #4ade80; --color-success-bg: #15301f; --color-success-border: #1f5130; --color-moderate-text: #fbbf24; --color-moderate-bg: #3a2a12; --color-moderate-border: #5c4318;
-  --color-critical-bg: #3b1d1d; --color-critical-border: #5c2626; --color-text-help: #7f8a96; --color-input-border: #7f8a96;
-  color-scheme: dark;
-}
 .bcis-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
-.bcis-head h1 { margin: 2px 0 0; font: 600 var(--page-title-size)/28px 'Space Grotesk', var(--font-heading); letter-spacing: -.01em; color: var(--cs-text); }
+.bcis-head h1 { margin: 2px 0 0; font: 600 var(--page-title-size)/28px var(--font-heading); letter-spacing: -.01em; color: var(--cs-text); }
 .bcis-eyebrow { margin: 0; font-size: 12px; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; color: var(--cs-accent); }
 .bcis-actions { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
-.bcis-theme, .bcis-btn { display: inline-flex; align-items: center; gap: 6px; height: 36px; padding: 0 14px; border-radius: 8px; border: 1px solid var(--cs-border); background: var(--cs-card); color: var(--cs-text); font: 500 13px 'IBM Plex Sans', var(--font-body); white-space: nowrap; text-decoration: none; }
+.bcis-theme, .bcis-btn { display: inline-flex; align-items: center; gap: 6px; height: 36px; padding: 0 14px; border-radius: 8px; border: 1px solid var(--cs-border); background: var(--cs-card); color: var(--cs-text); font: 500 13px var(--font-body); white-space: nowrap; text-decoration: none; }
 .bcis-theme:hover, .bcis-btn:hover { border-color: var(--cs-muted); text-decoration: none; }
 .bcis-btn[aria-pressed="true"] { background: var(--cs-text); color: var(--cs-bg); border-color: var(--cs-text); }
-:root .bcis .ui-button.bcis-primary { height: 36px; border-radius: 8px; background: #a3db33; color: #10140c; font-weight: 600; border: 0; }
-:root .bcis .ui-button.bcis-primary:hover { background: #b4e650; }
+:root .bcis .ui-button.bcis-primary { height: 36px; border-radius: 8px; background: var(--color-brand-accent); color: var(--color-brand-on-accent); font-weight: 600; border: 0; }
+:root .bcis .ui-button.bcis-primary:hover { background: var(--color-brand-accent-hover); }
 .bcis-card { background: var(--cs-card); border: 1px solid var(--cs-border); border-radius: 12px; }
 .bcis-summary { padding: 20px 24px; }
 .bcis-assessment-next { margin: 10px 0 0; font-size: 12px; color: var(--cs-muted); }
@@ -55,7 +44,7 @@
 .bcis-legend-na { padding: 4px 8px; color: var(--cs-muted); }
 .bcis-note { margin: 12px 0 0; font-size: 12px; color: var(--cs-muted); }
 .bcis-steps { padding: 22px 28px; }
-.bcis-steps h2 { margin: 0 0 6px; font: 600 18px 'Space Grotesk', var(--font-heading); color: var(--cs-text); }
+.bcis-steps h2 { margin: 0 0 6px; font: 600 18px var(--font-heading); color: var(--cs-text); }
 .bcis-step { display: flex; align-items: center; gap: 16px; padding: 14px 0; border-top: 1px solid var(--cs-border); }
 .bcis-step-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
 .bcis-step.is-critical .bcis-step-dot { background: var(--cs-attention); }
@@ -70,13 +59,13 @@
 /* Controls table */
 .bcis-controls { overflow: hidden; min-width: 0; }
 .bcis-controls-bar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 16px; border-bottom: 1px solid var(--cs-border); }
-.bcis-controls-bar h2 { margin: 0; font: 600 18px 'Space Grotesk', var(--font-heading); color: var(--cs-text); }
+.bcis-controls-bar h2 { margin: 0; font: 600 18px var(--font-heading); color: var(--cs-text); }
 .bcis-table { width: 100%; border-collapse: collapse; }
 .bcis-table th { text-align: left; padding: 10px 16px; font-size: 11px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--cs-muted); background: var(--cs-subtle); border-bottom: 1px solid var(--cs-border); }
 .bcis-table td { padding: 12px 16px; border-bottom: 1px solid var(--cs-border); font-size: 14px; color: var(--cs-text); }
 .bcis-table tr:last-child td { border-bottom: 0; }
 .bcis-table tbody tr:hover { background: var(--cs-subtle); }
-.bcis-num { width: 48px; font-family: 'Space Grotesk', var(--font-heading); font-weight: 600; color: var(--cs-muted) !important; }
+.bcis-num { width: 48px; font-family: var(--font-heading); font-weight: 600; color: var(--cs-muted) !important; }
 .bcis-name { font-weight: 600; }
 .bcis-att.is-critical { color: var(--cs-attention); font-weight: 600; }
 .bcis-att.is-attention { color: var(--cs-attention); font-weight: 600; }
@@ -100,10 +89,10 @@
   .bcis-name { overflow-wrap: anywhere; }
 }
 @media (prefers-reduced-motion: reduce) { .bcis { transition: none; } }
-.bcis-controls-title { margin: 0 8px 0 0; font: 600 18px 'Space Grotesk', var(--font-heading); color: var(--cs-text); }
+.bcis-controls-title { margin: 0 8px 0 0; font: 600 18px var(--font-heading); color: var(--cs-text); }
 /* Controls card: breadcrumb, tools, whole-row navigation */
 .bcis-controls-tools { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
-.bcis-crumbs ol { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin: 0; padding: 0; list-style: none; font: 600 16px 'Space Grotesk', var(--font-heading); }
+.bcis-crumbs ol { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin: 0; padding: 0; list-style: none; font: 600 16px var(--font-heading); }
 .bcis-crumbs li + li::before { content: "›"; margin-right: 6px; color: var(--cs-muted); font-weight: 500; }
 .bcis-crumbs button { color: var(--cs-link); font: inherit; }
 .bcis-crumbs button:hover { text-decoration: underline; }
@@ -114,7 +103,7 @@
 .bcis-row { cursor: pointer; }
 .bcis-row:focus-visible { outline: 2px solid var(--cs-focus); outline-offset: -2px; }
 .bcis-sg { display: flex; gap: 12px; align-items: baseline; }
-.bcis-sg-id { font-family: 'Space Grotesk', var(--font-heading); font-weight: 600; color: var(--cs-muted); min-width: 34px; }
+.bcis-sg-id { font-family: var(--font-heading); font-weight: 600; color: var(--cs-muted); min-width: 34px; }
 .bcis-muted { color: var(--cs-muted) !important; white-space: nowrap; }
 @media (max-width: 760px) { .bcis-safeguards th:nth-child(4), .bcis-safeguards td:nth-child(4), .bcis-safeguards th:nth-child(5), .bcis-safeguards td:nth-child(5) { display: none; } }
 @media (max-width: 700px) {
@@ -126,3 +115,6 @@
   .bcis-safeguards th:first-child { width: auto; }
   .bcis-safeguards th:nth-child(2) { width: 116px; }
 }
+/* Only the opted-in pilot adds a full-width row below the unchanged snapshot. */
+.brawndo-workspace-pilot .bcis-summary.bcis-summary-domains { flex-wrap: wrap; }
+.bcis-summary-domains > .bcis-domains { flex-basis: 100%; }

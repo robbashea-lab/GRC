@@ -1,19 +1,25 @@
+import {useBrawndoFullRecord} from '@/lib/brawndoFullRecord';
+import './BrawndoFullRecord.css';
 import {useEffect,useRef,useState} from 'react';
 import { isInternal } from '@/lib/permissions';
-import api,{formatError} from '@/lib/api';
+import {formatError} from '@/lib/api';
+import {useAssessmentApi} from '@/lib/assessmentCommandScope';
 import {useAuth} from '@/context/AuthContext';
 import {Sheet,SheetContent,SheetHeader,SheetTitle,SheetDescription} from './ui/sheet';
 import {Button} from './ui/button';
-import {EvidenceSource,downloadEvidence,uploaderLabel} from '@/lib/evidenceContext';
+import {EvidenceSource,useEvidenceDownload,uploaderLabel} from '@/lib/evidenceContext';
 import {MetadataFields,SourcePicker,useLibraryRequest,selectClass} from './EvidenceLibraryControls';
-import {evidenceSources} from '@/lib/evidenceReferences';
+import {evidenceSources,unavailableEvidenceProps} from '@/lib/evidenceReferences';
 import {toast} from 'sonner';
 import {displayRecordedAt} from '@/lib/managementDates';
 import './EvidenceRepository.css';
 
 export default function EvidenceItemDrawer({id,onClose,onOpen:onSourceOpen,onChanged}){
+  const api=useAssessmentApi();
   const {user}=useAuth(),[refresh,setRefresh]=useState(0),[tab,setTab]=useState('Overview'),[draft,setDraft]=useState(null),[draftVersion,setDraftVersion]=useState(null),[kind,setKind]=useState('findings'),[busy,setBusy]=useState(false),[activityPage,setActivityPage]=useState(1);
   const {data:item,error,loading}=useLibraryRequest(`/evidence-library/items/${encodeURIComponent(id)}`,{},refresh);
+  const downloadEvidence=useEvidenceDownload(item?.client_id,id);
+  const fullRecord=useBrawndoFullRecord(item,item?.client_id)&&item?.evidence_id===id;
   const activity=useLibraryRequest(tab==='Activity'?`/evidence-library/items/${encodeURIComponent(id)}/activity`:null,{page:activityPage},refresh);
   const canWrite=!item?.archived_at&&isInternal(user),canDelete=!item?.archived_at&&['super_admin','platform_admin'].includes(user?.role);
   const changed=()=>{setRefresh(v=>v+1);onChanged();};
@@ -24,11 +30,11 @@ export default function EvidenceItemDrawer({id,onClose,onOpen:onSourceOpen,onCha
   async function mutate(fn){setBusy(true);try{await fn();changed();return true;}catch(e){toast.error(formatError(e));return false;}finally{setBusy(false);}}
   async function link(ref,remove=false){await mutate(()=>ref.kind==='framework_assessments'?(remove?api.delete(`/framework_assessments/${ref.id}/links`,{data:{kind:'evidence',id}}):api.post(`/framework_assessments/${ref.id}/links`,{kind:'evidence',id})):api.post(`/evidence-library/items/${id}/relationships`,{linked_type:ref.kind,linked_id:ref.id,occurrence_id:ref.occurrence_id||null,remove,expected_updated_at:item.updated_at||null}));}
   async function remove(){if(!window.confirm(`Delete "${item.filename}" from the library? It has ${item.references.length} source/supporting references. Retained history and bytes are not erased; retention rules may prevent deletion.`))return;if(await mutate(()=>api.delete(`/evidence/${id}`)))onClose();}
-  return <Sheet open onOpenChange={v=>{if(!v)close();}}><SheetContent className="evidence-workspace" onPointerDownOutside={e=>e.preventDefault()} onOpenAutoFocus={()=>{opener.current=document.activeElement;}} onCloseAutoFocus={e=>{e.preventDefault();(opener.current?.isConnected?opener.current:document.querySelector('[data-testid="evidence-search"]'))?.focus();}}><SheetHeader><SheetTitle>{item?.display_name||item?.filename||'Evidence Item'}</SheetTitle><SheetDescription>One authoritative file · source and supporting relationships</SheetDescription></SheetHeader>
+  return <Sheet open onOpenChange={v=>{if(!v)close();}}><SheetContent data-record-surface data-testid="evidence-drawer" className={'evidence-workspace'+(fullRecord?' brawndo-full-record':'')} onPointerDownOutside={e=>e.preventDefault()} onOpenAutoFocus={()=>{opener.current=document.activeElement;}} onCloseAutoFocus={e=>{e.preventDefault();(opener.current?.isConnected?opener.current:document.querySelector('[data-testid="evidence-search"]'))?.focus();}}><SheetHeader className="evidence-record-header"><SheetTitle>{item?.display_name||item?.filename||'Evidence Item'}</SheetTitle><SheetDescription>One authoritative file · source and supporting relationships</SheetDescription></SheetHeader>
     {loading&&<p role="status">Loading Evidence…</p>}{error&&<p role="alert">{error}</p>}
     {item&&!loading&&<div className="space-y-4 pt-4"><div role="group" aria-label="Evidence detail" className="flex border-b border-line">{['Overview','Related','Activity'].map(t=><button key={t} aria-pressed={tab===t} className={`px-3 py-2 text-sm ${tab===t?'font-semibold border-b-2 border-brand-charcoal':'text-ink-secondary hover:bg-surface-subtle'}`} onClick={()=>setTab(t)}>{t}</button>)}</div>
       {tab==='Overview'&&<section aria-label="Evidence overview" className="space-y-4"><dl className="grid grid-cols-2 gap-3 text-sm">{[['Filename',item.filename],['Program Area',item.program_areas?.join(', ')],['Evidence Type',item.evidence_type||'Other'],['Uploaded by',uploaderLabel(item)],['Uploaded',displayRecordedAt(item.created_at)||'Not recorded'],['File type',item.mime_type],['Size',item.size!=null?`${item.size.toLocaleString()} bytes`:'Not recorded'],['Artifact version',item.version],['Evidence date',item.evidence_date],['Effective date',item.effective_date],['Expiration date',item.expiration_date],['Refresh date',item.refresh_date]].filter(([,v])=>v!=null).map(([k,v])=><div key={k}><dt className="text-xs text-ink-secondary">{k}</dt><dd className="break-words">{v}</dd></div>)}</dl><p className="text-xs break-all text-ink-secondary">SHA-256: {item.sha256||'Not recorded'}</p>{item.notes&&<p className="text-sm whitespace-pre-wrap">{item.notes}</p>}
-        <Button variant="outline" onClick={()=>downloadEvidence(item).catch(e=>toast.error(formatError(e)))}>Download file</Button>
+        <Button variant="outline" {...unavailableEvidenceProps(item)} onClick={()=>downloadEvidence(item).catch(e=>toast.error(formatError(e)))}>{item.file_available===false ? 'Reference only · No file attached' : 'Download file'}</Button>
         <p className="text-xs text-ink-secondary">File bytes are immutable. Upload replacements from the source module; Policy approval/version history stays in Policies.</p>
         {canWrite&&!draft&&<Button variant="outline" onClick={()=>{setDraftVersion(item.updated_at||null);setDraft(Object.fromEntries(['display_name','evidence_type','evidence_date','effective_date','expiration_date','refresh_date','notes'].map(k=>[k,item[k]||null])));}}>Edit classification</Button>}
         {draft&&<form className="space-y-3" onSubmit={async e=>{e.preventDefault();if(await mutate(()=>api.patch(`/evidence-library/items/${id}`,{...draft,evidence_type:draft.evidence_type||'Other',expected_updated_at:draftVersion})))setDraft(null);}}><MetadataFields value={draft} onChange={setDraft}/><div className="flex gap-2"><Button disabled={busy}>Save classification</Button><Button type="button" variant="outline" onClick={()=>setDraft(null)}>Cancel</Button></div></form>}
