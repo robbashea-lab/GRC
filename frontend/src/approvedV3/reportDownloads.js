@@ -8,6 +8,7 @@ import {formatError} from '../lib/api';
 const sheetType='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
 const requiredOptions=['open','drafts','history','copies'];
 const cmmcDocuments={'System-Security-Plan_working-draft.docx':'ssp','SPRS-score.xlsx':'sprs','Plan-of-action-and-milestones.xlsx':'poam'};
+const evidenceIndexPath='08_Evidence/Evidence-index.xlsx';
 
 function workbench(clientId,frameworkKey,tab,reason,period) {
   const query=new URLSearchParams({reports_tab:tab});
@@ -22,6 +23,16 @@ export function approvedReportEvidence(records,clientId,program) {
     row.client_id===clientId&&!row.archived_at&&row.frameworks?.includes(frameworkKey)):[];
 }
 
+function applyEvidenceCopyChoices(request,config,materials) {
+  for(const item of request.decisions || []) {
+    if(item.group!=='ev-copies'||!item.key?.startsWith('ev-copies|'))continue;
+    const evidenceId=item.key.slice('ev-copies|'.length);
+    if(!materials.evidence.some(row=>row.evidence_id===evidenceId))
+      throw Error('The framework evidence selection changed. Reopen the package before downloading.');
+    if(['Reference only','Attached'].includes(item.status))(config.referenceOnlyEvidenceIds||=[]).push(evidenceId);
+  }
+}
+
 function packageSelections(request,config,materials) {
   const choices=Object.create(null), attachments=new Map(), used=new Set();
   for(const row of request.attachments || []) {
@@ -32,15 +43,7 @@ function packageSelections(request,config,materials) {
   }
   for(const item of request.decisions || []) {
     if(!item.label||!item.key)throw Error('Reopen Reports to check the package decisions.');
-    if(item.group==='ev-copies'&&item.key.startsWith('ev-copies|')) {
-      const evidenceId=item.key.slice('ev-copies|'.length);
-      if(!materials.evidence.some(row=>row.evidence_id===evidenceId))
-        throw Error('The framework evidence selection changed. Reopen the package before downloading.');
-      if(item.status==='Reference only'||item.status==='Attached'){
-        (config.referenceOnlyEvidenceIds||=[]).push(evidenceId);
-        if(item.status==='Reference only')continue;
-      }
-    }
+    if(item.group==='ev-copies'&&item.key.startsWith('ev-copies|')&&item.status==='Reference only')continue;
     if(['Comment added','Ticket linked'].includes(item.status))continue; // Preparation-only notes are excluded from the auditor package.
     if(Object.hasOwn(choices,item.label)&&!(choices[item.label]==='Provided separately'&&item.status==='Provided separately'))return null;
     // Where a policy-level choice cannot be represented, do not broaden the disclosure.
@@ -91,6 +94,8 @@ export function createApprovedReportDownloader({api,getScope,status}) {
       const header=materials.reports.assessment.header;
       if(header.client.id!==clientId||header.program.key!==frameworkKey||header.prepared_by?.id!==actorId)
         throw Error('The saved report does not match this client, program and account.');
+      if(request.kind==='zip'||request.kind==='single'&&request.path===evidenceIndexPath)
+        applyEvidenceCopyChoices(request,config,materials);
       const delivery={clientId,frameworkKey,from:config.start,to:config.end,signal,isCurrent,pending};
       let name;
       if(request.kind==='exec') {

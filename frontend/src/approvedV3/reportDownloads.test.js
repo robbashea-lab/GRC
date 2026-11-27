@@ -41,6 +41,17 @@ test('single register download produces real native XLSX and attaches correct ty
   expect(saved.name).toBe('Risk-register.xlsx');expect(delivery).toMatchObject({kind:'register-workbook',frameworkKey:'cis-ig1',workbook:saved.name});
   expect(Object.values(unzipSync(delivery.content)).map(bytes=>strFromU8(bytes)).join('\n')).toContain('Native-only risk');
 });
+test('the single Evidence index applies the same copy decision as the ZIP',async()=>{
+  const {run,request,materials}=setup();
+  materials.evidence=[{evidence_id:'reference-file',client_id:'c17',filename:'Selected evidence.txt',
+    frameworks:['cis-ig1'],file_available:true}];
+  materials.evidenceCount=1;
+  await run({...request,kind:'single',path:'08_Evidence/Evidence-index.xlsx',
+    decisions:[{key:'ev-copies|reference-file',group:'ev-copies',label:'Selected evidence.txt',status:'Reference only'}]},()=>true);
+  const xml=strFromU8(unzipSync(auditedDownload.mock.calls[0][0].content)['xl/worksheets/sheet1.xml']);
+  expect(xml).toContain('>Reference only<');
+  expect(xml).not.toContain('>Stored copy included<');
+});
 test('executive PDF uses actual native author, selected recipient and relative reporting period, and records its digest via the native delivery function',async()=>{
   const {run,request,api}=setup();await run({...request,kind:'exec'},()=>true);
   expect(api.get).toHaveBeenCalledTimes(2);
