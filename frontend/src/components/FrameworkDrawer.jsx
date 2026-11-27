@@ -281,7 +281,15 @@ function FrameworkDrawerContent({open,onOpenChange,record,requestedRecord=record
     catch(e){if(live())setError(formatError(e));return false;}
     finally{if(live()){if(activeContextOperation.current===(ordinary?operation:epoch))activeContextOperation.current=null;setBusy(false);}}
   }
-  const put=(key,value)=>{if(activeContextOwner.current!==contextOwner||authority.current?.commandOwner!==commandOwner)return;setFeedback('');setForm(p=>({...p,[key]:value,...(p.guided_assessment_source&&['status','implementation'].includes(key)?{guided_assessment_source:undefined}:{}),...(brawndoCis&&p.cis_operation&&['owner_id','process_owner_id','implementation'].includes(key)?{cis_operation:{...p.cis_operation,confirmed:false}}:{})}));};
+  const put=(key,value)=>{
+    if(activeContextOwner.current!==contextOwner||authority.current?.commandOwner!==commandOwner)return;
+    setFeedback('');
+    const changesReviewedSource=key==='implementation'||key==='status'&&!(brawndoCis&&activeGuidedItemsDraft);
+    setForm(previous=>({...previous,[key]:value,
+      ...(previous.guided_assessment_source&&changesReviewedSource?{guided_assessment_source:undefined}:{}),
+      ...(brawndoCis&&previous.cis_operation&&['owner_id','process_owner_id','implementation'].includes(key)
+        ?{cis_operation:{...previous.cis_operation,confirmed:false}}:{})}));
+  };
   const applyGuided=values=>{if(activeContextOwner.current!==contextOwner||authority.current?.commandOwner!==commandOwner||!authority.current?.available)return false;setForm(p=>({...p,...values,...(p.cis_operation?{cis_operation:{...p.cis_operation,confirmed:false}}:{})}));setGuidedDraft(false);setFeedback('Guided pilot applied to draft. Review and Save assessment; verification is unchanged.');return true;};
   const stageGuidedImplementation=(text,expected,proposal=null)=>{
     const latest=nativeSnapshot.current;
@@ -311,7 +319,7 @@ function FrameworkDrawerContent({open,onOpenChange,record,requestedRecord=record
       const snapshot=JSON.stringify(next);
       setForm(next);setStagedImplementationForm(snapshot);setGuidedDraft(false);
       setGuidedItemsDraft({scope:guidedScope,commandOwner,source,items,answers:proposal.answers,operations:[],
-        expected_items_revision:latest.savedForm.items_revision||0,form:snapshot,baseline:JSON.stringify(latest.savedForm)});
+        expected_items_revision:latest.savedForm.items_revision||0,status:next.status,form:snapshot,baseline:JSON.stringify(latest.savedForm)});
       setFeedback('Current implementation and proposed Items remain unsaved. Save assessment commits them; status and verification are unchanged.');
       return true;
     }
@@ -436,13 +444,17 @@ function FrameworkDrawerContent({open,onOpenChange,record,requestedRecord=record
     const saved=await run(async()=>{
       let body;
       if(guidedItemsDraft){
+        // A deliberate CIS judgment can use the same atomic save. Additional Item edits still require a narrative-only save.
+        const statusChanged=brawndoCis&&assessment.status!==guidedItemsDraft.status;
+        const reviewedForm=statusChanged?{...assessment,status:guidedItemsDraft.status}:assessment;
         if(guidedItemsDraft.scope!==guidedScope||guidedItemsDraft.commandOwner!==commandOwner||guidedOwner.current!==guidedScope||!nativeSnapshot.current.guidedContextAvailable||recordAssessment
-          ||nativeSnapshot.current.relatedDraft||JSON.stringify(assessment)!==guidedItemsDraft.form
+          ||nativeSnapshot.current.relatedDraft||statusChanged&&guidedItemsDraft.operations.length||JSON.stringify(reviewedForm)!==guidedItemsDraft.form
           ||JSON.stringify(savedForm)!==guidedItemsDraft.baseline){
           throw new Error('Save this guided draft separately. Restore other assessment edits or cancel and reopen; no fields were omitted and your edits remain here.');
         }
         body={implementation:assessment.implementation,guided_assessment_source:guidedItemsDraft.source,
           expected_last_assessed:savedForm.last_saved??savedForm.last_assessed??null,
+          ...(statusChanged?{status:assessment.status}:{}),
           ...(guidedItemsDraft.operations.length?{item_draft:{expected_revision:guidedItemsDraft.expected_items_revision,operations:guidedItemsDraft.operations}}:{})};
       }else{
         const fields=['status','implementation','technology','notes','na_rationale','owner_id','process_owner_id','addressable_decision','addressable_rationale',...(definition.specification==='annex_control'?['soa_applicability','soa_justification']:[]),...(isCsf?['csf_profile']:[]),...(record.framework_key==='iso-27001'?['iso_assessment_checks']:[]),...(brawndoCis?['verification','cis_assessment_criteria']:prestigeSoc?['verification','soc_assessment_checks']:[])];

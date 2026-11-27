@@ -2,8 +2,10 @@ import React,{act} from 'react';
 import {createRoot} from 'react-dom/client';
 import FrameworkDrawer from './FrameworkDrawer';
 import api from '@/lib/api';
+import {FRAMEWORKS} from '@/lib/frameworks';
 import {catalogForVersion,visibleQuestions} from '@/lib/guidedAssessment';
 import {omniCisSummary} from '@/lib/omniCisSummary';
+import onboardingCatalog from '@catalogs/onboardingCatalog.json';
 import {buildLegacyDemoStore,saveStore,STORE_KEY} from '../preview/store';
 
 let mockAuth,mockOrg,mockState,mockActions,mockItemCountView;
@@ -129,6 +131,58 @@ test.each([true,false])('guided adoption mirrors native operating confirmation w
   expect(saved.status).toBe(baseline.status);expect(saved.verification).toBe(baseline.verification);
   expect(saved.assessment_history.slice(0,baseline.assessment_history.length)).toEqual(baseline.assessment_history);
   expect(postSpy).not.toHaveBeenCalled();expect(deleteSpy).not.toHaveBeenCalled();
+});
+
+test.each([false,true])('first reviewed CIS draft saves after a manual status selection, with status restored: %s',async restoreStatus=>{
+  const clientId=(await api.post('/clients',{name:'SYNTHETIC first CIS guided save QA'})).data.client_id;
+  const {data:intake}=await api.get('/onboarding/baseline',{params:{client_id:clientId}});
+  await api.post('/onboarding/baseline',{client_id:clientId,finalize:true,expected_updated_at:intake.state.updated_at??null,
+    expected_records:intake.record_versions,state:{version:3,step:3,
+    requirements:Object.fromEntries(FRAMEWORKS.map(({key})=>[key,key==='cis-ig1'?'applies':'does_not_apply'])),
+    policies:Object.fromEntries(onboardingCatalog.policies.map(({key})=>[key,'unsure'])),
+    reviews:[],framework_reviews:{},framework_settings:{'cis-ig1':{implementation_group:2}},
+  }},{headers:{'Idempotency-Key':'synthetic-first-cis-guided-onboarding'}});
+  const client=(await api.get('/clients')).data.find(row=>row.client_id===clientId);
+  expect(client.framework_settings['cis-ig1'].implementation_group).toBe(2);
+  sessionStorage.setItem('grc_client_id',clientId);
+  window.history.replaceState({},'','/compliance/cis-ig1?client_id='+clientId);
+  mockOrg={...mockOrg,currentClientId:clientId,currentClient:client};
+  record=(await api.get('/frameworks/cis-ig1',{params:{client_id:clientId}})).data.assessments.find(row=>row.definition_id==='1.1');
+  base='/framework_assessments/'+record.framework_assessment_id;await refreshBaseline();
+  expect(baseline).toMatchObject({status:'not_assessed',assessment_history:[]});
+  const initial=(await api.get(base+'/guided-assessment')).data,version=initial.version;
+  const answers=Object.fromEntries(visibleQuestions('1.1',{inventory:'No'},version).map(question=>[
+    question.id,question.type==='text'?'SYNTHETIC QA: no complete enterprise inventory.':'No',
+  ]));
+  const result=omniCisSummary('1.1',answers,version,client.name,new Date()).result;
+  const narrative='SYNTHETIC QA first native guided save. The client has no complete enterprise inventory.';
+  const reviewed=(await api.put(base+'/guided-assessment',{version,answers,step:0,completed:true,
+    result:{...result,narrative},narrative,expected_revision:initial.revision,
+    base_assessment_token:initial.current_assessment_token,base_scope_fingerprint:initial.current_scope_fingerprint})).data;
+  const source={version:reviewed.version,revision:reviewed.revision,generated_at:reviewed.generated_at};
+  await act(async()=>root.render(<FrameworkDrawer open record={record} clientId={clientId} onOpenChange={()=>{}} onSaved={onSaved}/>));
+  await settleCountReads();
+  expect(mockState.ctx?.current?.client_id).toBe(clientId);
+  await stage({...reviewed,client_id:clientId,assessment_id:record.framework_assessment_id,actor_id:mockAuth.user.user_id});
+  await act(async()=>mockActions.put('status','needs_attention'));
+  if(restoreStatus)await act(async()=>mockActions.put('status',baseline.status));
+  expect((await api.get(base)).data).toEqual(baseline);
+  const expectedStatus=restoreStatus?baseline.status:'needs_attention';
+  await act(async()=>{expect(await mockActions.save()).toBe(true);});
+  expect(patchSpy).toHaveBeenCalledTimes(1);
+  expect(patchSpy.mock.calls[0][1]).toEqual({implementation:narrative,guided_assessment_source:source,
+    expected_last_assessed:baseline.last_saved??baseline.last_assessed??null,...(restoreStatus?{}:{status:expectedStatus})});
+  const saved=(await api.get(base)).data;
+  expect(saved).toMatchObject({implementation:narrative,status:expectedStatus,
+    assessment_history:[expect.objectContaining({implementation:narrative,status:expectedStatus})]});
+  expect(saved.verification).toBe(baseline.verification);
+  expect(saved.guided_assessment_source).toMatchObject(source);
+  const reopened=(await api.get('/frameworks/cis-ig1',{params:{client_id:clientId}})).data;
+  expect(reopened.assessments).toHaveLength(130);
+  expect(reopened.assessments.find(row=>row.framework_assessment_id===saved.framework_assessment_id)).toMatchObject({
+    status:expectedStatus,implementation:narrative,assessment_history:saved.assessment_history,
+  });
+  expect(reopened.assessments.filter(row=>row.status!=='not_assessed')).toHaveLength(restoreStatus?0:1);
 });
 
 test.each(['ordinary assessment','proposed Items'])('dirty %s blocks formal work; pending Item edits wait for manual assessment Save',async draftKind=>{
