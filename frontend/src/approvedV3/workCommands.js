@@ -76,7 +76,7 @@ function readFile(file) {
 /** Run one client-scoped visual change through native application commands. Callers retain
  * pendingRequests across an uncertain response and discard it when the interaction settles. */
 export async function applyWorkChanges({before,after,records,clientId,sourceId,api,identityMaps={},userIds={},commands=[],
-  files=new Map(),pendingRequests=new Map(),handled:priorHandled={}}) {
+  files=new Map(),pendingRequests=new Map(),handled:priorHandled={},reviewSetupVersions=new Map()}) {
   const previous=before.work?.[sourceId] || {},current=after.work?.[sourceId] || {};
   const handled=Object.fromEntries(['reviews','findings','tasks','evidence'].map(k=>[k,[...(priorHandled[k] || [])]]));
   const scoped=Object.fromEntries(Object.keys(fields).map(kind=>[kind,list(records[kind]).filter(r=>r.client_id===clientId).map(row=>({...row}))]));
@@ -419,26 +419,37 @@ export async function applyWorkChanges({before,after,records,clientId,sourceId,a
     const draft=after.checklists?.[key];
     if(!draft?.nativeContractToken) continue;
     const prior=before.checklists?.[key];
-    const answers=c=>[c?.st || {},c?.note || {},c?.supportingReference || ''];
+    const answers=c=>[c?.st || {},c?.note || {},c?.supportingReference || '',text(c?.occ)];
     if(same(answers(prior),answers(draft))) continue;
     const row=must('reviews',item), occurrence=currentOccurrence(row,item,item.occurrenceId);
     const stored=row.r4_current_checklist;
     const results=(draft.steps || []).flatMap((step,i)=>draft.st?.[i]
       ? [{step_id:step.step_id,result:draft.st[i],reason:draft.note?.[i] || ''}] : []);
     const reference=draft.supportingReference || '';
+    const cycleTicket=text(draft.occ);
     const retained=stored?.occurrence_id===occurrence ? stored : {};
     const byId=arr=>[...arr].sort((a,b)=>a.step_id.localeCompare(b.step_id));
-    if(same(byId(retained.results || []),byId(results)) && (retained.supporting_reference || '')===reference) continue;
+    const ticketChanged=text(retained.cycle_ticket_number)!==cycleTicket;
+    if(same(byId(retained.results || []),byId(results)) && (retained.supporting_reference || '')===reference && !ticketChanged) continue;
     if(draft.nativeReadOnly) throw Error('This review checklist is read-only for this account.');
     const path=entityPath('reviews',row.review_id)+'/completion-guide';
-    const intent=['checkpoint',item.id,occurrence,draft.nativeContractToken,draft.nativeGuideRevision,results,reference];
+    const openedRevision=draft.nativeGuideRevision ?? null;
+    const revision=reviewSetupVersions.has(row.review_id)?reviewSetupVersions.get(row.review_id):openedRevision;
+    const intent=['checkpoint',item.id,occurrence,draft.nativeContractToken,revision,results,reference,cycleTicket];
     const saved=await request('put',path,intent,async()=>{
       const {data:guide}=await api.get(path);
       if(guide.contract_token!==draft.nativeContractToken || guide.occurrence_id!==occurrence ||
-        (guide.expected_updated_at ?? null)!==(draft.nativeGuideRevision ?? null)) throw Error('The saved checklist changed. Reload before recording these answers.');
+        (guide.expected_updated_at ?? null)!==revision || revision!==openedRevision && (
+          !same(byId(guide.results || []),byId(retained.results || [])) ||
+          (guide.supporting_reference || '')!==(retained.supporting_reference || '') ||
+          text(guide.cycle_ticket_number)!==text(retained.cycle_ticket_number)
+        )) throw Error('The saved checklist changed. Reload before recording these answers.');
       return {occurrence_id:occurrence,expected_updated_at:guide.expected_updated_at ?? null,
-        checklist:{contract_token:guide.contract_token,results},supporting_reference:reference};
+        checklist:{contract_token:guide.contract_token,results},supporting_reference:reference,
+        ...(ticketChanged?{cycle_ticket_number:cycleTicket}:{})};
     });
+    if(saved.occurrence_id!==occurrence || ticketChanged&&text(saved.cycle_ticket_number)!==cycleTicket)
+      throw Error('The saved checklist or cycle ticket did not match this occurrence. Reload before continuing.');
     draft.nativeGuideRevision=saved.expected_updated_at;
     remember('reviews',item.id,{...row,updated_at:saved.expected_updated_at});
   }

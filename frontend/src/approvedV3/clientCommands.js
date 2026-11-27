@@ -247,9 +247,11 @@ async function saveSetup(ctx) {
       }else await api.post(route,draft);
       applied.push('setup:'+matches[0].activity_id);
       const {data:updated}=await api.get(route),saved=updated.activities.find(a=>a.activity_id===draft.activity_id);
-      if(updated.client_id!==cid||!saved?.review_id||
+      if(updated.client_id!==cid||!saved?.review_id||native&&saved.review_id!==native.review_id||
           (noTicketOnly?!!saved.setup?.no_ticket!==!!r.noTicket:String(saved.setup?.recurring_ticket_number||'')!==String(draft.recurring_ticket_number)))
         conflict('The saved ticket did not match the current review. Reopen iVenture Setup.');
+      // A cycle ticket checkpoint in this save must use the refreshed Review revision.
+      if(native&&Object.hasOwn(saved,'expected_updated_at'))ctx.reviewSetupVersions.set(native.review_id,saved.expected_updated_at);
       remember(ctx.maps,cid,'reviews',r.id,saved.review_id);ctx.handled.reviews.push(r.id);
       ctx.version=updated.expected_client_updated_at??null;
     } else {
@@ -573,10 +575,10 @@ async function saveAssessments(ctx,prior,next) {
   }
 }
 
-export async function applyClientChanges({before,after,records,clientId,sourceId,api,identityMaps,userIds={},commands=[]}) {
+export async function applyClientChanges({before,after,records,clientId,sourceId,api,identityMaps,userIds={},commands=[],reviewSetupVersions=new Map()}) {
   const maps=identityMaps||approvedV3IdentityMaps(records),applied=[],handled={policies:[],reviews:[]};
   maps.clientIds||=Object.create(null);maps.recordIds||=Object.create(null);
-  const ctx={before,after,records,sourceId,api,maps,applied,handled,commands,userIds,cid:clientId,version:null,proposals:new Map()};
+  const ctx={before,after,records,sourceId,api,maps,applied,handled,commands,userIds,cid:clientId,version:null,proposals:new Map(),reviewSetupVersions};
   try {
     const afterClient=after.clients.find(c=>c.id===sourceId),beforeClient=before.clients.find(c=>c.id===sourceId);
     if(!afterClient)conflict('Archive this client through the native client management workflow.');

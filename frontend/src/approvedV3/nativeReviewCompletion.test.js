@@ -46,7 +46,7 @@ test.each(cases)('SPM chosen $label retains native answers and the six-program R
   try{
     const sourceId=native.client.id,cid=native.records.clients[0].client_id,rid=native.completion.review.review_id;
     let serverRecords=clone(native.records),setup=clone(exerciseSetup?native.before_setup.setup:native.setup),
-      guide=clone(exerciseSetup?native.before_setup.guide:native.guide),completed=false;
+      guide=clone(exerciseSetup?native.before_setup.guide:native.guide),completed=false,cycleTicket='';
     if(exerciseSetup){
       serverRecords.clients[0]=clone(native.before_setup.client);
       serverRecords.reviews=serverRecords.reviews.map(row=>row.review_id===rid?clone(native.before_setup.review):row);
@@ -75,15 +75,37 @@ test.each(cases)('SPM chosen $label retains native answers and the six-program R
       }
       if(endpoint==='/reviews/'+rid+'/complete'){
         expect(body.checklist).toEqual(native.accepted_request.checklist);
-        expect(body.expected_updated_at).toBe(native.accepted_request.expected_updated_at);
+        expect(body.expected_updated_at).toBe(guide.expected_updated_at);
         expect(body.occurrence_id).toBe(native.accepted_request.occurrence_id);
-        serverRecords=clone(native.after_records);setup=clone(native.after_setup);completed=true;return {data:clone(native.completion)};
+        const result=clone(native.completion);
+        serverRecords=clone(native.after_records);setup=clone(native.after_setup);completed=true;
+        if(cycleTicket) {
+          result.occurrence.activity_setup.cycle_ticket_number=cycleTicket;
+          const completedReview=serverRecords.reviews.find(row=>row.review_id===rid);
+          const occurrence=completedReview.occurrences.find(row=>row.occurrence_id===guide.occurrence_id);
+          occurrence.activity_setup.cycle_ticket_number=cycleTicket;
+          guide={...clone(native.control.guide),expected_updated_at:completedReview.updated_at,
+            results:[],supporting_reference:'',cycle_ticket_number:''};
+        }
+        return {data:result};
       }
       throw Error('Unexpected write '+endpoint);
     }),patch:jest.fn(async endpoint=>{throw Error('Unexpected patch '+endpoint);}),
     put:jest.fn(async(endpoint,body)=>{
       writes.push({endpoint,body:clone(body)});
       if(endpoint.endsWith('/view-draft'))return {data:{client_id:cid,revision:body.expected_revision+1,view:body.view}};
+      if(endpoint==='/reviews/'+rid+'/completion-guide') {
+        expect(body.occurrence_id).toBe(guide.occurrence_id);
+        expect(body.expected_updated_at).toBe(guide.expected_updated_at);
+        expect(body.checklist.results).toEqual(guide.results);
+        cycleTicket=body.cycle_ticket_number;
+        guide={...guide,cycle_ticket_number:cycleTicket,expected_updated_at:'2026-11-26T16:56:01.000000+00:00'};
+        const review=serverRecords.reviews.find(row=>row.review_id===rid);
+        review.updated_at=guide.expected_updated_at;
+        review.r4_current_checklist.cycle_ticket_number=cycleTicket;
+        setup.activities.find(activity=>activity.review_id===rid).expected_updated_at=guide.expected_updated_at;
+        return {data:clone(guide)};
+      }
       throw Error('Unexpected write '+endpoint);
     })};
     const page={...nativePage,snapshot:()=>wire(nativePage.snapshot()),apply:(state,reconcile)=>nativePage.apply(wire(state),reconcile),
@@ -110,6 +132,26 @@ test.each(cases)('SPM chosen $label retains native answers and the six-program R
     }
     expect(document.querySelector('[data-rck-noticket="'+rid+'"]').checked).toBe(true);
     expect(Object.values(page.snapshot().checklists).find(check=>check.nativeContractToken===native.guide.contract_token).st).toEqual(Object.fromEntries(native.guide.steps.map((_,i)=>[i,'N/A'])));
+    if(exerciseSetup) {
+      document.querySelector('#drawer [data-action="drawer-close"]').click();await drain();
+      document.querySelector('[data-action="open-rev"][data-id="'+rid+'"]').click();
+      await until(()=>!document.getElementById('drawer').hidden);await drain();
+      const input=document.getElementById('rck-occ');
+      input.value='836502';
+      input.dispatchEvent(new dom.window.Event('input',{bubbles:true}));
+      input.dispatchEvent(new dom.window.Event('change',{bubbles:true}));
+      await drain();
+      expect(writes.filter(write=>write.endpoint.endsWith('/completion-guide'))).toHaveLength(1);
+      expect(cycleTicket).toBe('836502');
+      document.querySelector('#drawer [data-action="drawer-close"]').click();await drain();
+      // Discard the browser view's checklist cache and let the drawer reload the saved guide.
+      const rehydrate=page.snapshot();
+      rehydrate.checklists={};
+      page.apply(rehydrate);
+      document.querySelector('[data-action="open-rev"][data-id="'+rid+'"]').click();
+      await until(()=>!document.getElementById('drawer').hidden);await drain();
+      expect(document.getElementById('rck-occ').value).toBe('836502');
+    }
     const beforeConfirm=writes.length;
     document.querySelector('#drawer [data-action="rev-complete-dlg"]').click();
     await until(()=>!document.getElementById('dlg-scrim').hidden);await drain();
@@ -127,7 +169,13 @@ test.each(cases)('SPM chosen $label retains native answers and the six-program R
     const nextPreview=new Date(savedReview.next_review_date.slice(0,10)+'T00:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
     if(exerciseSetup)expect(nextPreview).toBe('Dec 1, 2027');
     expect(activeRow.textContent).toContain('Next cycle '+nextPreview);
-    expect(page.snapshot().work[sourceId].hist.some(row=>row.nativeOccurrenceId===native.guide.occurrence_id)).toBe(true);
+    const history=page.snapshot().work[sourceId].hist.find(row=>row.nativeOccurrenceId===native.guide.occurrence_id);
+    expect(history).toBeDefined();
+    if(exerciseSetup) {
+      expect(history.checklist.cycleTicket).toBe('836502');
+      activeRow.click();await until(()=>!document.getElementById('drawer').hidden);await drain();
+      expect(document.getElementById('rck-occ').value).toBe('');
+    }
   }finally{
     dom.window.close();
     for(const [key,descriptor] of savedGlobals)if(descriptor)Object.defineProperty(global,key,descriptor);else delete global[key];

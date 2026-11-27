@@ -42,6 +42,7 @@ class GuideCheckpointIn(BaseModel):
     expected_updated_at: str | None = Field(max_length=100)
     checklist: ChecklistIn
     supporting_reference: str = Field(default='', max_length=4000)
+    cycle_ticket_number: str | None = Field(default=None, max_length=2048)
 
 
 def template_id(review):
@@ -201,6 +202,7 @@ async def get_contract(s, review, user):
     return {**contract, **accepted, 'occurrence_id': review_occurrences.occurrence_id(review), 'expected_updated_at': review.get('updated_at'),
             'results': copy.deepcopy(checkpoint.get('results', [])) if same else [],
             'supporting_reference': checkpoint.get('supporting_reference', '') if same else '',
+            'cycle_ticket_number': checkpoint.get('cycle_ticket_number', '') if same else '',
             'read_only': client.get('status') == 'archived' or review.get('status') in ('completed', 'cancelled') or not authorization.writable(user)
                 or user.get('role') == 'client_contributor' and user.get('user_id') not in (review.get('owner_id'), review.get('reviewer_id'))}
 
@@ -282,7 +284,11 @@ async def validate_completion(s, review, body, evidence, user):
     reference = data.get('supporting_reference', '').strip()
     if len(reference) > 4000:
         raise HTTPException(422, 'Keep the supporting result reference within 4,000 characters')
-    setup = review.get('activity_setup') or {}
+    setup = copy.deepcopy(review.get('activity_setup') or {})
+    # Only the current occurrence's checkpoint supplies its ticket to history.
+    setup.pop('cycle_ticket_number', None)
+    if contract['cycle_ticket_number']:
+        setup['cycle_ticket_number'] = contract['cycle_ticket_number']
     planned = {str(setup.get(k) or '').strip() for k in ('recurring_ticket_number', 'recurring_ticket_url')}
     for item in evidence:
         ident = item.get('evidence_id')
@@ -299,7 +305,7 @@ async def validate_completion(s, review, body, evidence, user):
             'review_template_id': contract['template_id'], 'review_template_version': contract['template_version'],
             'checklist': {k: copy.deepcopy(contract[k]) for k in ('template_id', 'template_version', 'contract_token', 'required_support', 'service_context')},
             'checklist_results': [{**step, 'result': results[step['step_id']]['result'], 'reason': results[step['step_id']].get('reason', '')} for step in contract['steps']],
-            'supporting_reference': reference, 'activity_setup': copy.deepcopy(setup)}
+            'supporting_reference': reference, 'activity_setup': setup}
 
 
 def router_for(s):
@@ -313,17 +319,20 @@ def router_for(s):
     @s.review_mutation
     async def save(review_id: str, body: GuideCheckpointIn, user=Depends(s.get_current_user), key: str | None = Header(default=None, alias='Idempotency-Key')):
         selected = await s._authorized_parent('reviews', review_id, user, write=True)
+        payload = body.model_dump(exclude={'cycle_ticket_number'} if body.cycle_ticket_number is None else None)
         async def execute(identity):
             review = await s._authorized_parent('reviews', review_id, user, write=True)
             checkpoint = review.get('r4_current_checklist') or {}
             if checkpoint.get('request_id') != identity:
                 await s._review_selection(review, body.occurrence_id, write=True)
-                s._require_snapshot(body.model_dump(), review)
+                s._require_snapshot(payload, review)
                 contract = await get_contract(s, review, user)
                 validate_results(contract, body.checklist, complete=False)
                 frozen = {k: copy.deepcopy(contract[k]) for k in ('template_id', 'template_version', 'contract_token', 'steps', 'required_support', 'service_context', 'custom', 'native_gate')}
+                cycle_ticket = contract['cycle_ticket_number'] if body.cycle_ticket_number is None else body.cycle_ticket_number.strip()
                 checkpoint = {'occurrence_id': body.occurrence_id, 'contract': frozen, 'results': [r.model_dump() for r in body.checklist.results],
-                              'supporting_reference': body.supporting_reference, 'saved_by': user['user_id'], 'request_id': identity}
+                              'supporting_reference': body.supporting_reference, 'cycle_ticket_number': cycle_ticket,
+                              'saved_by': user['user_id'], 'request_id': identity}
                 at = s._next_write_time(review.get('updated_at'))
                 changed = await s.db.reviews.update_one({'review_id': review_id, 'client_id': review['client_id'], 'updated_at': review.get('updated_at'),
                     'current_occurrence_id': review.get('current_occurrence_id')}, {'$set': {'r4_current_checklist': checkpoint, 'updated_at': at}})
@@ -333,7 +342,7 @@ def router_for(s):
                 await s.db.create_requests.update_one({'_id': identity}, {'$set': {'primary_started': True}})
             await s.audit(user, 'Review checklist saved', 'review', review_id, review['client_id'], meta={'occurrence_id': body.occurrence_id})
             return await get_contract(s, review, user)
-        return await create_requests.run(s.db, key or create_requests.digest(body.model_dump()), user['user_id'], selected['client_id'],
-                                         'reviews/' + review_id + '/completion-guide', body.model_dump(), execute)
+        return await create_requests.run(s.db, key or create_requests.digest(payload), user['user_id'], selected['client_id'],
+                                         'reviews/' + review_id + '/completion-guide', payload, execute)
 
     return router

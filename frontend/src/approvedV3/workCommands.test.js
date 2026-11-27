@@ -136,6 +136,27 @@ test('checklist progress is written against the native guide revision and can be
   expect(args.after.checklists[key].nativeGuideRevision).toBe('v2');
 });
 
+test('a cycle ticket saves against the same occurrence and keeps its checklist after a recurring ticket save',async()=>{
+  const args=input(),key='s|r1|raw-1';
+  const results=[{step_id:'inventory',result:'N/A',reason:'Test record has no devices.'}];
+  args.before.checklists={[key]:{st:{0:'N/A'},note:{0:results[0].reason},steps:[{step_id:'inventory'}],
+    nativeContractToken:guide.contract_token,nativeGuideRevision:'v1'}};
+  args.after.checklists={[key]:{...args.before.checklists[key],occ:'836502'}};
+  args.handled={reviews:['r1']};
+  args.reviewSetupVersions=new Map([['native-r','v2']]);
+  Object.assign(args.records.reviews[0],{activity_setup:{recurring_ticket_number:'836501'},
+    r4_current_checklist:{occurrence_id:'occ-1',results,supporting_reference:''}});
+  const current={...guide,expected_updated_at:'v2',results,cycle_ticket_number:''};
+  args.api.get.mockResolvedValueOnce({data:{...current,cycle_ticket_number:'other saved ticket'}}).mockResolvedValue({data:current});
+  args.api.put=jest.fn().mockResolvedValue({data:{...current,expected_updated_at:'v3',cycle_ticket_number:'836502'}});
+  await expect(applyWorkChanges(args)).rejects.toThrow('The saved checklist changed');
+  expect(args.api.put).not.toHaveBeenCalled();
+  await applyWorkChanges(args);
+  expect(args.api.put).toHaveBeenCalledWith('/reviews/native-r/completion-guide',{occurrence_id:'occ-1',expected_updated_at:'v2',
+    checklist:{contract_token:guide.contract_token,results},supporting_reference:'',cycle_ticket_number:'836502'},expect.any(Object));
+  expect(args.after.checklists[key].nativeGuideRevision).toBe('v3');
+});
+
 test('a schedule form persists its other changed fields with the new date',async()=>{
   const args=input();
   args.commands=[{name:'rescheduleReview',args:['s','r1','2026-12-08',{expectedRevision:2}]}];

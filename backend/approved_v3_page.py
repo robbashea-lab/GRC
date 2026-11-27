@@ -601,10 +601,13 @@ window.GoverNaraNativePage=(function(){
     if(!r||guide.occurrenceId!==(r.nativeOccurrenceId||r.occurrenceId))
       throw Error('The review occurrence changed. Reopen the current review.');
     var key=cid+'|'+id+'|'+r.occurrenceId, previous=REVCHK[key]||{};
-    REVCHK[key]=Object.assign({},previous,{steps:guide.steps,st:guide.st,note:guide.note,
+    REVCHK[key]=Object.assign({},previous,{steps:guide.steps,st:guide.st,note:guide.note,occ:guide.cycleTicket,
       nativeContractToken:guide.token,nativeGuideRevision:guide.revision,nativeSpecialist:guide.specialist,
       nativeReadOnly:guide.readOnly,serviceContext:guide.serviceContext,supportingReference:guide.supportingReference});
   }
+  document.addEventListener('change',function(event){
+    if(callbacks&&event.target.id==='rck-occ')connectedPersist();
+  });
   var sourceEvidenceFields=evFields;
   evFields=function(){return [{id:'nativeEvidenceFile',label:'Select file',type:'file',req:true}].concat(sourceEvidenceFields());};
   document.addEventListener('change',function(event){

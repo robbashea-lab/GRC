@@ -1,5 +1,7 @@
 """Real prospective completion routes with explicit synthetic operator results."""
 import copy
+import csv
+import io
 import unittest
 
 import test_client_dashboard_sources as fixture
@@ -95,6 +97,48 @@ class R4ReviewRouteTests(unittest.IsolatedAsyncioTestCase):
         denied = await self.client.put(path + '/completion-guide', json={**checkpoint,
             'expected_updated_at': saved.json()['expected_updated_at']})
         self.assertEqual(denied.status_code, 403, denied.text)
+
+    async def test_cycle_ticket_stays_on_its_completed_occurrence_and_export(self):
+        _, review, path, completion = await self.prepare()
+        await server.db.reviews.update_one({'review_id': review['review_id']}, {
+            '$set': {'activity_setup.recurring_ticket_number': '836501'}})
+        checkpoint = {key: value for key, value in completion.items() if key != 'outcome'}
+        checkpoint['checklist'] = {**completion['checklist'], 'results': completion['checklist']['results'][:1]}
+        checkpoint['cycle_ticket_number'] = ' 836502 '
+        saved = await self.client.put(path + '/completion-guide', json=checkpoint)
+        self.assertEqual(saved.status_code, 200, saved.text)
+        stale = await self.client.put(path + '/completion-guide', json={**checkpoint, 'cycle_ticket_number': '836503'})
+        self.assertEqual(stale.status_code, 409, stale.text)
+
+        reopened = (await self.client.get(path + '/completion-guide')).json()
+        self.assertEqual(reopened['cycle_ticket_number'], '836502')
+        self.assertEqual(reopened['occurrence_id'], completion['occurrence_id'])
+        self.assertEqual(reopened['results'], checkpoint['checklist']['results'])
+        self.assertEqual(reopened['supporting_reference'], completion['supporting_reference'])
+
+        # A checklist client that does not edit the ticket preserves it.
+        checklist_only = {key: value for key, value in checkpoint.items() if key != 'cycle_ticket_number'}
+        checklist_only['expected_updated_at'] = reopened['expected_updated_at']
+        checklist_only['checklist'] = completion['checklist']
+        updated = await self.client.put(path + '/completion-guide', json=checklist_only)
+        self.assertEqual(updated.status_code, 200, updated.text)
+        self.assertEqual(updated.json()['cycle_ticket_number'], '836502')
+        completion['expected_updated_at'] = updated.json()['expected_updated_at']
+        completed = await self.client.post(path + '/complete', json=completion)
+        self.assertEqual(completed.status_code, 200, completed.text)
+        immutable = completed.json()['occurrence']
+        self.assertEqual(immutable['activity_setup']['cycle_ticket_number'], '836502')
+        self.assertEqual(immutable['activity_setup']['recurring_ticket_number'], '836501')
+        successor = (await self.client.get(path + '/completion-guide')).json()
+        self.assertEqual(successor['cycle_ticket_number'], '')
+        self.assertNotEqual(successor['occurrence_id'], immutable['occurrence_id'])
+
+        export = await self.client.get('/api/reviews/completions/export', params={
+            'client_id': 'a', 'from_date': immutable['completed_at'][:10], 'to_date': immutable['completed_at'][:10]})
+        self.assertEqual(export.status_code, 200, export.text)
+        rows = list(csv.reader(io.StringIO(export.text)))
+        self.assertEqual(len(rows), 2)
+        self.assertEqual(rows[1][8:10], ['836501', '836502'])
 
     async def test_exception_cannot_change_rating_or_complete_without_its_recorded_finding(self):
         _, _, path, body = await self.prepare()

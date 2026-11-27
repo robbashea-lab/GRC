@@ -407,7 +407,9 @@ function overlayClientWork(view, records, ctx) {
           occurrenceId:snap.source_occurrence_id || saved.occurrenceId || snap.occurrence_id,nativeOccurrenceId:snap.occurrence_id,
           notes:snap.notes || snap.completion_notes || saved.notes,
           checklist:Array.isArray(snap.checklist_results)
-            ? {...snap.checklist,steps:snap.checklist_results.map(step=>({...step,t:step.text,note:step.reason || ''}))}
+            ? {...snap.checklist,ticket:snap.activity_setup?.recurring_ticket_number || '',
+              cycleTicket:snap.activity_setup?.cycle_ticket_number || '',
+              steps:snap.checklist_results.map(step=>({...step,t:step.text,note:step.reason || ''}))}
             : snap.source_checklist || saved.checklist,
           supportingReference:snap.supporting_reference ?? saved.supportingReference,
           evidence:snap.source_evidence || saved.evidence || (snap.evidence || []).map(e=>({name:e.filename,nativeId:e.evidence_id})),

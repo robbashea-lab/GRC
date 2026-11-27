@@ -71,7 +71,7 @@ export function sourceReviewGuide(guide, review) {
     if(answer) { st[i]=answer.result; if(answer.reason) note[i]=answer.reason; }
   });
   return {occurrenceId,token:guide.contract_token,revision:guide.expected_updated_at ?? null,steps,st,note,
-    supportingReference:guide.supporting_reference || '',readOnly:!!guide.read_only,
+    supportingReference:guide.supporting_reference || '',cycleTicket:guide.cycle_ticket_number || '',readOnly:!!guide.read_only,
     specialist:!!(guide.native_gate || review.iso_audit),serviceContext:(guide.service_context || []).map(area=>({
       name:area.name,resp:area.responsibility,responsibility:area.responsibility_label,tools:(area.tools || []).map(tool=>tool.name),
     }))};

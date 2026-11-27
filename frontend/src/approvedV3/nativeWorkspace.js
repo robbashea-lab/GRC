@@ -291,7 +291,7 @@ export async function startNativeWorkspace(page, transport=api) {
         const handled = {};
         const context = {before,after:edit.state,records,clientId,sourceId,api:requests,
           identityMaps,userIds,commands:scopedCommands,pendingRequests,
-          files:new Map((files.get(sourceId)||[]).map(file=>[file.name,file])),handled};
+          files:new Map((files.get(sourceId)||[]).map(file=>[file.name,file])),handled,reviewSetupVersions:new Map()};
         const clientResult = await applyClientChanges(context);
         clientId = clientResult.clientId || clientId;
         identityMaps = clientResult.identityMaps || identityMaps;
