@@ -133,6 +133,31 @@ window.GoverNaraNativePage=(function(){
   };
   var originalToast=toast,installed=false,sourceRoute=route;
   route=function(){if(installed)return sourceRoute();};
+  var nativeClientIds=new Map(),sourcePalette=renderPalette;
+  renderPalette=function(){
+    sourcePalette();
+    var query=$('pal-q').value.trim().toLowerCase(),list=$('pal-list');
+    if(!query)return;
+    var results=[];
+    CLIENTS.filter(active).forEach(function(client){
+      var clientId=nativeClientIds.get(client.id);
+      if(!clientId)return;
+      (WORK[client.id]?.acts||[]).forEach(function(action){
+        if(action.nativeId&&String(action.title||'').toLowerCase().includes(query))
+          results.push({action:action,client:client,clientId:clientId});
+      });
+    });
+    if(!results.length)return;
+    list.querySelector('.pop-empty')?.remove();
+    var start=list.querySelectorAll('[role="option"]').length,heading=document.createElement('div');
+    heading.className='pop-head';heading.textContent='ACTIVE ACTION ITEMS';list.appendChild(heading);
+    results.slice(0,20).forEach(function(result,index){
+      var option=document.createElement('a'),params=new URLSearchParams({id:result.action.nativeId,client_id:result.clientId});
+      option.className='pop-item';option.setAttribute('role','option');option.setAttribute('aria-selected',String(start+index===S.palIndex));
+      option.dataset.action='pal-go';option.dataset.idx=String(start+index);option.href='/action-items?'+params;
+      option.textContent=result.action.title+' · '+result.client.name;list.appendChild(option);
+    });
+  };
   var sourceClientSide=renderClientSide;
   renderClientSide=function(client){
     sourceClientSide.apply(this,arguments);
@@ -436,6 +461,7 @@ window.GoverNaraNativePage=(function(){
   function prepareClient(state,sourceId,records){
     var client=state.clients.find(c=>c.id===sourceId),saved=records.clients.find(row=>row.source_client_id===sourceId);
     if(!client||!saved)throw Error('The selected native client is unavailable.');
+    nativeClientIds.set(sourceId,saved.client_id);
     reportZones.set(sourceId,saved.timezone||saved.time_zone||'UTC');
     if(!/^[A-Za-z0-9_-]+$/.test(sourceId)||Object.hasOwn(Object.prototype,sourceId))throw Error('Invalid client identity.');
     var roles=['super_admin','platform_admin','client_grc_manager','client_contributor'];
@@ -671,13 +697,15 @@ window.GoverNaraNativePage=(function(){
       event.preventDefault();event.stopImmediatePropagation();originalToast('This person is a reference record. Open a platform account in Users & Access.');return;
     }
     var previous=JSON.stringify([ACCT,USERS]);editing=true;
-    queueMicrotask(function(){
+    // A trusted click can checkpoint microtasks between capture and the
+    // source's delegated handler. Wait until the complete click has run.
+    window.setTimeout(function(){
       editing=false;
       if(previous!==JSON.stringify([ACCT,USERS])){
         callbacks.command('adminAction',[action,identity||'']);
         callbacks.persist(connectedClone(connectedState()),null);
       }else if(pendingMessage){originalToast(pendingMessage);pendingMessage='';}
-    });
+    },0);
   },true);
   function bindCommands(){
     ["setReviewDescription","rescheduleReview","completeReview","saveRecordSchedule",
