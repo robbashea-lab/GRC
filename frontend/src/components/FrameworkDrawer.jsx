@@ -444,8 +444,10 @@ function FrameworkDrawerContent({open,onOpenChange,record,requestedRecord=record
     const saved=await run(async()=>{
       let body;
       if(guidedItemsDraft){
-        // A deliberate CIS judgment can use the same atomic save. Additional Item edits still require a narrative-only save.
-        const statusChanged=brawndoCis&&assessment.status!==guidedItemsDraft.status;
+        // Keep existing judgments separate from guided wording updates. An untouched CIS record may save its first explicit judgment with the reviewed text.
+        const firstCisAssessment=brawndoCis&&savedForm.status==='not_assessed'
+          &&!savedForm.last_assessed&&!savedForm.assessment_history?.length;
+        const statusChanged=firstCisAssessment&&assessment.status!==guidedItemsDraft.status;
         const reviewedForm=statusChanged?{...assessment,status:guidedItemsDraft.status}:assessment;
         if(guidedItemsDraft.scope!==guidedScope||guidedItemsDraft.commandOwner!==commandOwner||guidedOwner.current!==guidedScope||!nativeSnapshot.current.guidedContextAvailable||recordAssessment
           ||nativeSnapshot.current.relatedDraft||statusChanged&&guidedItemsDraft.operations.length||JSON.stringify(reviewedForm)!==guidedItemsDraft.form
