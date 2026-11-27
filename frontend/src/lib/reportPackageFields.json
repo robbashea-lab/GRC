@@ -5,7 +5,7 @@
   "ai_systems": ["ai_system_id", "name", "provider", "product_model", "purposes", "owner_id", "data_types", "approval_status", "status", "restrictions", "risk_tier", "related_links.kind", "related_links.id"],
   "reviews": ["review_id", "title", "review_type", "recurrence", "owner_id", "reviewer_id", "risk_id", "vendor_id", "policy_id", "ai_system_id", "due_date", "status", "completion_date", "current_occurrence_id", "framework_assessment_id", "framework_key", "framework_drivers.framework_key", "occurrences.occurrence_id", "occurrences.completed_at", "occurrences.completion_date", "occurrences.due_date", "occurrences.outcome", "occurrences.title", "occurrences.owner_id"],
   "tasks": ["task_id", "display_id", "title", "source", "finding_id", "review_id", "framework_assessment_id", "owner_id", "assignee_id", "priority", "due_date", "status", "completed_at", "validated_at"],
-  "findings": ["finding_id", "review_id", "framework_assessment_id"],
+  "findings": ["finding_id", "review_id", "framework_assessment_id", "status", "validated_at"],
   "framework_assessments": ["framework_assessment_id", "framework_key", "definition_id", "title", "status", "verification", "implementation", "related_links.kind", "related_links.id", "policy_link_ids"],
   "risks": ["risk_id", "display_id", "title", "likelihood_score", "impact_score", "treatment", "status", "owner_id", "next_review", "accepted_by", "acceptance_date"],
   "vendors": ["vendor_id", "name", "criticality", "criticality_provisional", "status", "data_relationship", "data_types", "assurance_status", "next_review", "contract_renewal", "assurance_records.document_name", "assurance_records.type", "assurance_records.required", "assurance_records.received_at", "assurance_records.refresh_due"],

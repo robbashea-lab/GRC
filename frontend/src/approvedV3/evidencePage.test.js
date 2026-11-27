@@ -13,7 +13,7 @@ function openEvidencePage(){
   const marker='p16Initialize();\nif (!location.hash)';
   const expose=`window.inspectEvidence={render:function(cid,program){
     S.clientId=cid;if(program)byId(cid).activeProg=program;renderEvidence();
-  },dialog:function(title){openDlg(title,'Another saved record','<p>Keep this dialog</p>','');}};`;
+  },reports:function(cid,program){S.clientId=cid;S.route='client';S.sub='reports';byId(cid).activeProg=program;return JSON.parse(JSON.stringify(approvedReportsContext(byId(cid)).client.checks.find(check=>check.key==='ev-copies')));},dialog:function(title){openDlg(title,'Another saved record','<p>Keep this dialog</p>','');}};`;
   return new JSDOM(html.replace(marker,'p16Initialize();\n'+hook+'\n'+expose+'\nif (!location.hash)'),{
     url:'https://governara.example.test/#portfolio',runScripts:'dangerously',virtualConsole:new VirtualConsole()});
 }
@@ -139,4 +139,19 @@ test('native multi-folder membership governs the actual folder drawer and its ZI
   document.querySelector('#drawer [data-action="ev-zip"]').click();
   document.querySelector('#dlg [data-action="ev-zip-go"]').click();await settle();
   expect(callback.mock.calls).toEqual([['prestige','Risks']]);
+});
+
+test('the approved Reports preparation uses native scoped evidence identities once',()=>{
+  const reportEvidence=jest.fn().mockReturnValue([
+    {evidence_id:'c17-inventory-file',filename:'CIS Inventory.txt',file_available:true,frameworks:['cis-ig1']},
+    {evidence_id:'c17-review-file',filename:'CIS Review.txt',file_available:false,frameworks:['cis-ig1']},
+    {evidence_id:'c17-inventory-file',filename:'CIS Inventory.txt',file_available:true,frameworks:['cis-ig1']}
+  ]);
+  page.configure({busy:()=>false,persist:()=>true,reportEvidence});
+  const check=inspect.reports('brawndo','cis');
+  expect(reportEvidence).toHaveBeenCalledWith('brawndo','cis');
+  expect(check.items.map(item=>[item.id,item.label])).toEqual([
+    ['c17-inventory-file','CIS Inventory.txt'],['c17-review-file','CIS Review.txt']
+  ]);
+  expect(check.summary).toMatch(/^2 evidence references/);
 });

@@ -11,7 +11,7 @@ import {prepareReviewGuide, downloadApprovedEvidence,loadApprovedEvidenceCatalog
 import {applyCmmcChanges, overlayCmmcWorkbook, downloadApprovedCmmc} from './cmmcCommands';
 import {overlayNativeAudit} from './auditProjection';
 import {loadGlobalRecords,overlayGlobalRecords,applyGlobalChanges} from './adminCommands';
-import {createApprovedReportDownloader} from './reportDownloads';
+import {approvedReportEvidence,createApprovedReportDownloader} from './reportDownloads';
 import {loadApprovedSetupCatalog,approvedSetupActivities} from './setupActivities';
 
 const endpoint = '/v3/approved-portfolio';
@@ -394,6 +394,10 @@ export async function startNativeWorkspace(page, transport=api) {
       const clientId=identityMaps.clientIds[sourceId];
       return downloadApprovedEvidenceArchive({api:transport,records:nativeRecords[clientId],clientId,sourceId,folder,
         isCurrent:()=>page.context().sourceId===sourceId && ready && !saving && !pending});
+    },
+    reportEvidence:(sourceId,program)=>{
+      const clientId=identityMaps?.clientIds?.[sourceId];
+      return approvedReportEvidence(nativeRecords?.[clientId],clientId,program);
     },
     downloadReport,
   });

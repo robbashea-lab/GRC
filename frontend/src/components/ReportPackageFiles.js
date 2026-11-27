@@ -5,7 +5,7 @@ import {recordUuid} from '@/lib/recordUuid';
 import {collectEvidencePages} from '@/lib/brawndoAdditionalEvidence';
 import packageFields from '@/lib/reportPackageFields.json';
 import {verifiedPreview} from './NativeReportCatalog';
-import {registerWorkbooks} from './ReportPackageRegisters';
+import {packageEvidenceCopies,registerWorkbooks} from './ReportPackageRegisters';
 
 const types = ['assessment','scope','executive','risks','vendors','policies'];
 const slug = value => String(value).replace(/[^a-z0-9-]+/gi,'-').replace(/^-+|-+$/g,'').slice(0,100) || 'Report';
@@ -89,9 +89,10 @@ export async function downloadAuditPackage({clientId,frameworkKey,materials,conf
     const {buildCmmcPackageFiles}=await import('./ReportPackageCmmc');
     Object.assign(entries,await buildCmmcPackageFiles(materials.cmmc,{signal,isCurrent}));
   }
-  if(config.copies && materials.evidenceCount) {
-    const archive=await buildEvidenceArchive({clientId,params:evidenceParams(frameworkKey),storedOnly:true,signal,isCurrent});
-    if(archive.fileCount!==materials.evidenceCount) throw new Error('The evidence selection changed. Refresh the package.');
+  const selectedFiles=packageEvidenceCopies(materials.evidence,config);
+  if(selectedFiles.length) {
+    const archive=await buildEvidenceArchive({clientId,params:evidenceParams(frameworkKey),storedOnly:true,selectedFiles,signal,isCurrent});
+    if(archive.fileCount!==selectedFiles.length) throw new Error('The evidence selection changed. Refresh the package.');
     entries['08_Evidence/Stored-files.zip']=archive.bytes;
   }
   for(const [key,value] of Object.entries(decisions)) {

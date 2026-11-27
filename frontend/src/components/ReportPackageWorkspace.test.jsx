@@ -114,3 +114,60 @@ test('a mismatched native program fails visibly and cannot be downloaded',async(
   expect([...host.querySelectorAll('button')].find(item=>item.textContent.includes('Download package')).disabled).toBe(true);
   expect(files).toHaveLength(0);
 });
+
+test('the ZIP preserves outstanding independent validation and exact scoped risk completion history',async()=>{
+  const signal=new AbortController().signal;
+  const materials=await loadReportMaterials('client-a','framework-a',asOf,signal);
+  materials.registers={...materials.registers,
+    findings:[{finding_id:'qa-finding',status:'remediated'},
+      {finding_id:'closed-finding',status:'closed',validated_at:asOf+'T10:00:00Z'}],
+    tasks:[...materials.registers.tasks,{task_id:'qa-action',finding_id:'qa-finding',title:'Synthetic High correction',priority:'high',status:'done',completed_at:asOf},
+      {task_id:'prior-work',finding_id:'closed-finding',title:'Validated today',status:'done',completed_at:'2000-01-01'}],
+    reviews:[...materials.registers.reviews,{review_id:'risk-review',risk_id:'rr',title:'Asset Inventory Risk Review',
+      occurrences:[{occurrence_id:'qa-risk-occurrence',outcome:'Confirmed',completed_at:asOf},
+        {occurrence_id:'old-risk-occurrence',outcome:'Prior',completed_at:'2000-01-01'}]}]
+  };
+  materials.registerHistory=[...materials.registerHistory,{register:'Risks',record:'=formula',event:'Closed',at:asOf}];
+  const config={start:asOf,end:asOf,auditor:'Acme',open:true,drafts:false,copies:false,history:true};
+  await downloadAuditPackage({clientId:'client-a',frameworkKey:'framework-a',materials,config,decisions:{},files:packageFiles(materials,config),signal,isCurrent:()=>true,pending:{current:null}});
+  const archive=unzipSync(await readBlob(files[0]));
+  const xml=(path,sheet)=>strFromU8(unzipSync(archive[path])['xl/worksheets/sheet'+sheet+'.xml']);
+  const risk=xml('03_Risk-management/Risk-register.xlsx',2),work=xml('09_Open-items/Open-items.xlsx',1);
+  expect(work).toMatch(/Synthetic High correction[\s\S]*Pending validation/);
+  expect(work).toMatch(/Validated today[\s\S]*T10:00:00Z/);
+  expect(JSON.stringify(packageFiles(materials,{...config,open:false}).find(file=>file.path.startsWith('09_')).sheets))
+    .not.toContain('Synthetic High correction');
+  expect(risk.match(/qa-risk-occurrence/g)).toHaveLength(1);
+  expect(risk).toContain('Asset Inventory Risk Review');
+  expect(risk).toContain('Closed');
+  expect(risk).not.toContain('old-risk-occurrence');
+});
+
+test('Reference only keeps the exact evidence ID in the package index without including its stored bytes',async()=>{
+  const get=api.get.getMockImplementation();
+  const data=Uint8Array.from([7,37,211]);
+  const sha256=require('crypto').createHash('sha256').update(data).digest('hex');
+  const evidence=['keep','reference'].map(evidence_id=>({evidence_id,client_id:'client-a',filename:evidence_id+'.bin',
+    version:1,sha256,size:data.length,frameworks:['framework-a'],file_available:true,program_areas:['Frameworks','Reviews']}));
+  api.get.mockImplementation(async(path,options)=>{
+    if(path==='/evidence/catalog')return {data:{total:2,page_size:100,items:evidence}};
+    if(path==='/evidence-library/items/keep')return {data:evidence[0]};
+    if(path==='/evidence/keep/download')return {data:{filename:'keep.bin',content_base64:Buffer.from(data).toString('base64')}};
+    return get(path,options);
+  });
+  const signal=new AbortController().signal;
+  const materials=await loadReportMaterials('client-a','framework-a',asOf,signal);
+  const config={start:asOf,end:asOf,auditor:'Acme',open:true,drafts:false,copies:true,history:true,referenceOnlyEvidenceIds:['reference']};
+  await downloadAuditPackage({clientId:'client-a',frameworkKey:'framework-a',materials,config,
+    decisions:{'Assessment records':'Provided separately'},files:packageFiles(materials,config),signal,isCurrent:()=>true,pending:{current:null}});
+  const archive=unzipSync(await readBlob(files[0]));
+  const stored=unzipSync(archive['08_Evidence/Stored-files.zip']);
+  const kept=Object.keys(stored).filter(path=>path!=='index.csv');
+  expect(kept).toEqual([expect.stringContaining('keep--keep')]);
+  expect([...stored[kept[0]]]).toEqual([...data]);
+  expect(strFromU8(stored['index.csv'])).not.toContain('reference');
+  const evidenceIndex=strFromU8(unzipSync(archive['08_Evidence/Evidence-index.xlsx'])['xl/worksheets/sheet1.xml']);
+  expect(evidenceIndex).toMatch(/reference.bin[\s\S]*Reference only/);
+  expect(evidenceIndex).toMatch(/keep.bin[\s\S]*Stored copy included/);
+  expect(api.post.mock.calls[0][1]).toMatchObject({period_start:asOf,period_end:asOf,client_id:'client-a',framework_key:'framework-a'});
+});

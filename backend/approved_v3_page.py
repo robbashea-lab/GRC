@@ -350,6 +350,30 @@ window.GoverNaraNativePage=(function(){
     APPROVED_REPORTS_DATA.asOf=auditShowDate(cutoff);
     return {...result,periodStart:isoDate(year),periodEnd:end,periodText:auditPeriod({start:isoDate(year),end:end})};
   };
+  var sourceReportsChecks=approvedReportsLiveChecks;
+  approvedReportsLiveChecks=function(client,descriptor,config,state){
+    var checks=sourceReportsChecks(client,descriptor,config,state);
+    if(!callbacks?.reportEvidence)return checks;
+    var evidence=checks.find(check=>check.key==='ev-copies');
+    if(!evidence)return checks;
+    var records=new Map();
+    for(var row of callbacks.reportEvidence(client.id,descriptor?.key)){
+      if(!records.has(row.evidence_id))records.set(row.evidence_id,row);
+    }
+    evidence.items=Array.from(records.values(),row=>({id:row.evidence_id,label:row.filename,
+      detail:row.file_available===false?'Reference without a stored copy':row.evidence_type||'Stored evidence',
+      actions:['Attach copy','Reference only']}));
+    evidence.status=evidence.items.length?'attention':'ready';
+    evidence.summary=evidence.items.length+' evidence references are recorded for this framework. Select shareable copies or mark a file Reference only.';
+    state.readinessItems.set(evidence.key,evidence.items);
+    var separate=checks.find(check=>check.key==='sep');
+    if(separate){
+      var requests=reportSeparateRequests({...config,checks},state);
+      separate.items=requests.map((request,index)=>({id:String(index+1),label:request.item,detail:request.why}));
+      separate.summary=requests.length+' selected items are listed for separate delivery in Start here.';
+    }
+    return checks;
+  };
   // Use the controls and selected scope from the approved Reports page. The
   // signed-in download adapter resolves their contents against saved records.
   approvedReportsOpenDetails=function(client){
