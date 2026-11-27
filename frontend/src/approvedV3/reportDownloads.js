@@ -8,11 +8,29 @@ import {formatError} from '../lib/api';
 const sheetType='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
 const requiredOptions=['open','drafts','history','copies'];
 const cmmcDocuments={'System-Security-Plan_working-draft.docx':'ssp','SPRS-score.xlsx':'sprs','Plan-of-action-and-milestones.xlsx':'poam'};
+const evidenceIndexPath='08_Evidence/Evidence-index.xlsx';
 
-function workbench(clientId,frameworkKey,tab,reason) {
+function workbench(clientId,frameworkKey,tab,reason,period) {
   const query=new URLSearchParams({reports_tab:tab});
   if(frameworkKey)query.set('framework_key',frameworkKey);
+  if(period){query.set('period_start',period.start);query.set('period_end',period.end);}
   return {workbench:{reason,url:clientDestination(clientId,'/reports?'+query)}};
+}
+
+export function approvedReportEvidence(records,clientId,program) {
+  const frameworkKey=Object.hasOwn(frameworkKeys,program)?frameworkKeys[program]:null;
+  return frameworkKey&&clientId?(records?.evidenceCatalog||[]).filter(row=>
+    row.client_id===clientId&&!row.archived_at&&row.frameworks?.includes(frameworkKey)):[];
+}
+
+function applyEvidenceCopyChoices(request,config,materials) {
+  for(const item of request.decisions || []) {
+    if(item.group!=='ev-copies'||!item.key?.startsWith('ev-copies|'))continue;
+    const evidenceId=item.key.slice('ev-copies|'.length);
+    if(!materials.evidence.some(row=>row.evidence_id===evidenceId))
+      throw Error('The framework evidence selection changed. Reopen the package before downloading.');
+    if(['Reference only','Attached'].includes(item.status))(config.referenceOnlyEvidenceIds||=[]).push(evidenceId);
+  }
 }
 
 function packageSelections(request,config,materials) {
@@ -25,9 +43,10 @@ function packageSelections(request,config,materials) {
   }
   for(const item of request.decisions || []) {
     if(!item.label||!item.key)throw Error('Reopen Reports to check the package decisions.');
+    if(item.group==='ev-copies'&&item.key.startsWith('ev-copies|')&&item.status==='Reference only')continue;
+    if(['Comment added','Ticket linked'].includes(item.status))continue; // Preparation-only notes are excluded from the auditor package.
     if(Object.hasOwn(choices,item.label)&&!(choices[item.label]==='Provided separately'&&item.status==='Provided separately'))return null;
-    // A native archive contains every stored file in its chosen framework.
-    // An item-specific omission cannot be translated into a broader disclosure.
+    // Where a policy-level choice cannot be represented, do not broaden the disclosure.
     if(item.status==='Provided separately' && !(config.copies&&materials.evidenceCount&&['ev-copies','pol-docs'].includes(item.group))) {
       choices[item.label]='Provided separately';
     }else if(item.status==='Attached'&&attachments.has(item.key)) {
@@ -58,7 +77,7 @@ export function createApprovedReportDownloader({api,getScope,status}) {
     if(active)throw Error('Wait for the current report to finish.');
     const frameworkKey=Object.hasOwn(frameworkKeys,request.program)?frameworkKeys[request.program]:null;
     const tab=request.kind==='exec'?'internal':'audit';
-    const fallback=reason=>workbench(clientId,frameworkKey,tab,reason);
+    const fallback=(reason,period)=>workbench(clientId,frameworkKey,tab,reason,period);
     if(request.kind==='details')return workbench(clientId,frameworkKey,'details','Open the detailed report catalog for this saved client and framework.');
     if(!frameworkKey)return fallback('Choose an enabled framework in this client’s saved Reports workspace.');
     if(!['exec','zip','single','prep'].includes(request.kind))return fallback('Choose the report in this client’s saved Reports workspace.');
@@ -75,6 +94,8 @@ export function createApprovedReportDownloader({api,getScope,status}) {
       const header=materials.reports.assessment.header;
       if(header.client.id!==clientId||header.program.key!==frameworkKey||header.prepared_by?.id!==actorId)
         throw Error('The saved report does not match this client, program and account.');
+      if(request.kind==='zip'||request.kind==='single'&&request.path===evidenceIndexPath)
+        applyEvidenceCopyChoices(request,config,materials);
       const delivery={clientId,frameworkKey,from:config.start,to:config.end,signal,isCurrent,pending};
       let name;
       if(request.kind==='exec') {
@@ -106,26 +127,25 @@ export function createApprovedReportDownloader({api,getScope,status}) {
         name='Preparation-checklist.csv';
         await auditedDownload({...delivery,kind:'prep-checklist',name,type:'text/csv;charset=utf-8',content});
       } else {
-        const files=packageFiles(materials,config);
         if(request.kind==='single'){
-          const selected=files.find(file=>file.path===request.path);
+          const selected=packageFiles(materials,config).find(file=>file.path===request.path);
           const filename=selected?.path.split('/').pop();
           if(filename==='Policy-register.xlsx'&&config.drafts&&request.decisions?.some(d=>d.group==='pol-draft'&&['Not included','Left out'].includes(d.status)))
-            return fallback('Confirm the individual draft policy exclusions in saved Reports before downloading this register.');
+            return fallback('Confirm the individual draft policy exclusions in saved Reports before downloading this register.',config);
           if(selected?.cmmc&&frameworkKey==='cmmc'&&materials.cmmc?.level===2&&Object.hasOwn(cmmcDocuments,filename)){
             const {downloadApprovedCmmc}=await import('./cmmcCommands');
             await downloadApprovedCmmc({clientId,level:2,kind:cmmcDocuments[filename],api,isCurrent});
             verifyScope();status('Download started.');return {name:filename};
           }
-          if(!selected?.sheets||!selected.path.endsWith('.xlsx'))return fallback('Open this client’s saved Reports workspace to select the available report or CMMC document.');
+          if(!selected?.sheets||!selected.path.endsWith('.xlsx'))return fallback('Open this client’s saved Reports workspace to select the available report or CMMC document.',config);
           const {reportWorkbook}=await import('../components/ReportPackageXlsx');
           verifyScope();
           name=selected.path.split('/').pop();
           await auditedDownload({...delivery,kind:'register-workbook',name,workbook:name,type:sheetType,content:reportWorkbook(selected.sheets)});
         }else {
           const decisions=packageSelections(request,config,materials);
-          if(!decisions)return fallback('These item-level selections require a review in the saved Reports workspace. Confirm the package contents there before downloading.');
-          await downloadAuditPackage({...delivery,materials,config,decisions,files});
+          if(!decisions)return fallback('Confirm item-level selections in saved Reports before downloading this package.',config);
+          await downloadAuditPackage({...delivery,materials,config,decisions,files:packageFiles(materials,config)});
         }
       }
       verifyScope();

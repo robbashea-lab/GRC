@@ -1,4 +1,5 @@
 import {assessedRisk,isOpen} from '../lib/grcWork';
+import {actionPendingValidation,actionReturnedForRework} from '../lib/actionItems';
 import rules from '../lib/grcRules.json';
 
 const sheet = (name,columns,rows,guide='Saved client records in the selected package scope.') =>
@@ -49,6 +50,12 @@ export function programWork(registers,key) {
   return {reviews,tasks,findings:registers.findings.filter(row=>findingIds.has(row.finding_id))};
 }
 
+export function packageEvidenceCopies(evidence,config) {
+  if(!config.copies)return [];
+  const referenceOnly=new Set(config.referenceOnlyEvidenceIds||[]);
+  return evidence.filter(row=>row.file_available!==false&&!referenceOnly.has(row.evidence_id));
+}
+
 export function registerWorkbooks(materials,config) {
   const {registers:r,reports,evidence}=materials;
   const header=reports.assessment.header, key=header.program.key;
@@ -79,11 +86,13 @@ export function registerWorkbooks(materials,config) {
   files.push(workbook('02_Policies/Policy-register.xlsx',sheet('Policies',['ID','Policy','Owner','Version','Status','Approved','Last review','Next review','Framework alignment'],
     policyRows.map(p=>[p.policy_id,p.title,person(p.owner_id),p.version,p.status,p.approved_at,p.last_reviewed_at,p.next_review_date,policyAlignments.get(p.title)])),
     ...history('Approval and review history','Policies',row=>includedPolicies.has(row.record))));
-  files.push(workbook('03_Risk-management/Risk-register.xlsx',sheet('Risk register',['ID','Risk','Owner','Likelihood','Impact','Score','Rating','Treatment','Status','Accepted by','Accepted on','Next review'],
-    r.risks.map(assessedRisk).map(s=>[s.display_id||s.risk_id,s.title,person(s.owner_id),s.likelihood_score,s.impact_score,s.risk_score,s.risk_level,s.treatment,s.status,person(s.accepted_by),s.acceptance_date,s.next_review])),
-    ...history('Risk review history','Risks'),sheet('Rating method',['Minimum score','Rating'],rules.riskBands,'Likelihood × impact. Both inputs must be recorded on the native 1–5 scale.')));
+  const riskNames=new Map(r.risks.map(row=>[row.risk_id,row.title]));
+  const riskHistory=materials.registerHistory.filter(row=>row.register==='Risks'&&within(row.at))
+    .map(row=>[row.at,row.record,row.event,row.version,'','','']);
   const occurrences=[];
   const exceptions=[];
+  const currentTickets=review=>[review.activity_setup?.recurring_ticket_number,
+    review.r4_current_checklist?.occurrence_id===review.current_occurrence_id?review.r4_current_checklist?.cycle_ticket_number:null];
   for(const review of reviews) {
     const saved=(review.occurrences||[]).filter(o=>o.completed_at||o.completion_date);
     if(!saved.length&&review.status==='completed'&&review.completion_date)saved.push({...review,completed_at:review.completion_date});
@@ -91,28 +100,38 @@ export function registerWorkbooks(materials,config) {
       const completed=o.completed_at||o.completion_date, due=day(o.due_date);
       if(!within(completed))continue;
       const status=due&&day(completed)>due?'Completed late':'Completed';
-      const row=[o.occurrence_id||'',o.title||review.title,person(o.owner_id||review.owner_id),o.due_date,completed,status,o.outcome];
+      const row=[o.occurrence_id||'',o.title||review.title,person(o.owner_id||review.owner_id),o.due_date,completed,status,o.outcome,
+        o.activity_setup?.recurring_ticket_number,o.activity_setup?.cycle_ticket_number];
       occurrences.push(row);if(status==='Completed late')exceptions.push(row);
+      if(config.history&&riskNames.has(review.risk_id))riskHistory.push([
+        completed,riskNames.get(review.risk_id),'Review completed','',o.occurrence_id||'',o.title||review.title,o.outcome]);
     }
     if(config.open&&isOpen('reviews',review)&&day(review.due_date)&&day(review.due_date)<config.end) {
-      const row=[review.current_occurrence_id,review.title,person(review.owner_id),review.due_date,'','Overdue',''];
+      const row=[review.current_occurrence_id,review.title,person(review.owner_id),review.due_date,'','Overdue','',...currentTickets(review)];
       occurrences.push(row);exceptions.push(row);
     }
   }
-  const occurrenceColumns=['Occurrence ID','Review','Owner','Due date','Completed','Status','Outcome'];
+  files.push(workbook('03_Risk-management/Risk-register.xlsx',sheet('Risk register',['ID','Risk','Owner','Likelihood','Impact','Score','Rating','Treatment','Status','Accepted by','Accepted on','Next review'],
+    r.risks.map(assessedRisk).map(s=>[s.display_id||s.risk_id,s.title,person(s.owner_id),s.likelihood_score,s.impact_score,s.risk_score,s.risk_level,s.treatment,s.status,person(s.accepted_by),s.acceptance_date,s.next_review])),
+    ...(config.history?[sheet('Risk review history',['Date','Record','Event','Version','Occurrence ID','Review','Outcome'],
+      riskHistory.sort(([left],[right])=>String(left).localeCompare(String(right))))]:[]),
+    sheet('Rating method',['Minimum score','Rating'],rules.riskBands,'Likelihood × impact. Both inputs must be recorded on the native 1–5 scale.')));
+  const ticketColumns=['Recurring ticket','Cycle ticket'];
+  const occurrenceColumns=['Occurrence ID','Review','Owner','Due date','Completed','Status','Outcome',...ticketColumns];
   const horizon=new Date(header.as_of+'T12:00:00Z');horizon.setUTCDate(horizon.getUTCDate()+90);
-  const schedule=reviews.map(v=>[v.review_id,v.title,v.review_type,v.recurrence,person(v.owner_id),v.due_date,v.status]);
+  const scheduleColumns=['ID','Review','Type','Frequency','Owner','Due date','Status',...ticketColumns];
+  const schedule=reviews.map(v=>[v.review_id,v.title,v.review_type,v.recurrence,person(v.owner_id),v.due_date,v.status,...currentTickets(v)]);
   files.push(workbook('04_Recurring-reviews/Review-schedule-and-log.xlsx',
     sheet('Occurrences in period',occurrenceColumns,occurrences),
-    sheet('Review schedule',['ID','Review','Type','Frequency','Owner','Due date','Status'],schedule),
-    sheet('Next 90 days',['ID','Review','Type','Frequency','Owner','Due date','Status'],schedule.filter(row=>day(row[5])>=header.as_of&&day(row[5])<=horizon.toISOString().slice(0,10)&&isOpen('reviews',{status:row[6]})))));
+    sheet('Review schedule',scheduleColumns,schedule),
+    sheet('Next 90 days',scheduleColumns,schedule.filter(row=>day(row[5])>=header.as_of&&day(row[5])<=horizon.toISOString().slice(0,10)&&isOpen('reviews',{status:row[6]})))));
   files.push(workbook('05_Vendor-management/Vendor-register.xlsx',sheet('Vendor register',['Vendor','Status','Criticality','Data access','Assurance','Next review','Renewal'],
     r.vendors.map(v=>[v.name,v.status,v.criticality_provisional?[v.criticality,'provisional'].filter(Boolean).join(' · '):v.criticality,list(v.data_relationship)||list(v.data_types),v.assurance_status,v.next_review,v.contract_renewal])),
     sheet('Assurance records',['Vendor','Document','Required','Received','Refresh due'],r.vendors.flatMap(v=>(v.assurance_records||[]).map(a=>[v.name,a.document_name||a.type,a.required,a.received_at,a.refresh_due]))),
     ...history('Vendor review history','Vendors')));
   const aiNames=new Map(r.ai_systems.map(s=>[s.ai_system_id,s.name]));
   files.push(workbook('06_AI-governance/AI-register.xlsx',sheet('AI systems',['AI system','Provider','Use case','Owner','Screening tier','Status','Approval','Data types','Restrictions','Linked risks'],
-    r.ai_systems.map(s=>[s.name,s.provider,list(s.purposes),person(s.owner_id),s.risk_tier,s.status,s.approval_status,list(s.data_types),s.restrictions,mappedIds(s)])),
+    r.ai_systems.map(s=>[s.name,s.provider,list(s.purposes),person(s.owner_id),s.risk_tier,s.status,s.approval_status,s.no_client_data===true?'No client data':list(s.data_types),s.restrictions,mappedIds(s)])),
     ...(config.history?[sheet('Review history',['Date','AI system','Review','Outcome'],reviews.filter(row=>aiNames.has(row.ai_system_id)).flatMap(row=>(row.occurrences||[])
       .filter(o=>within(o.completed_at||o.completion_date)).map(o=>[o.completed_at||o.completion_date,aiNames.get(row.ai_system_id),row.title,o.outcome])))]:[])));
   const ig=/IG[123]/i.exec(header.program.name)?.[0].toUpperCase();
@@ -123,18 +142,29 @@ export function registerWorkbooks(materials,config) {
   files.push(workbook(frameworkPath,sheet('Assessment register',['Reference','Title','Status','Verification','Implementation','Applicability','Justification','Supporting policies'],
     r.framework_units.map(unit=>{const a=saved.get(unit.id);return [unit.id,unit.title,unit.status_label,unit.verification_state,a?.implementation,unit.soa_applicability,unit.soa_justification,list(a?.policy_link_ids)];})),
     ...reports.scope.sections.map((section,index)=>sheet(index?'Scope '+(index+1):'Program scope',section.columns,section.rows))));
-  const evidenceSheet=sheet('Evidence references',['ID','Filename','Version','Checksum','Frameworks','Created'],evidence.map(row=>[row.evidence_id,row.filename,row.version,row.sha256,list(row.frameworks),row.created_at]));
+  const includedEvidence=new Set(packageEvidenceCopies(evidence,config).map(row=>row.evidence_id));
+  const evidenceSheet=sheet('Evidence references',['ID','Filename','Version','Checksum','Frameworks','Created','Delivery'],
+    evidence.map(row=>[row.evidence_id,row.filename,row.version,row.sha256,list(row.frameworks),row.created_at,
+      includedEvidence.has(row.evidence_id)?'Stored copy included':'Reference only']));
   files.push(workbook('08_Evidence/Evidence-index.xlsx',evidenceSheet));
   const actionsPath=key==='iso-27001'?'09_Nonconformities-and-corrective-actions/Corrective-actions.xlsx':
     key==='soc-2'?'09_Exceptions-and-remediation/Exceptions-and-remediation.xlsx':'09_Open-items/Open-items.xlsx';
-  const actionRows=tasks.filter(t=>isOpen('tasks',t)?config.open:t.status==='done'&&within(t.completed_at||t.validated_at));
-  files.push(workbook(actionsPath,sheet('Action items',['Action ID','Action','Source','Owner','Priority','Due','Status','Completed'],
-    actionRows.map(t=>[t.display_id||t.task_id,t.title,t.finding_id||t.source,person(t.assignee_id||t.owner_id),t.priority,t.due_date,t.status,t.completed_at||t.validated_at])),
+  const findings=new Map(r.findings.map(finding=>[finding.finding_id,finding]));
+  const pendingValidation=task=>actionPendingValidation(task,findings.get(task.finding_id));
+  const validatedAt=task=>{
+    const finding=findings.get(task.finding_id);
+    return finding?(finding.status==='closed'&&!actionReturnedForRework(task,finding)?finding.validated_at:null):task.validated_at;
+  };
+  const actionRows=tasks.filter(task=>isOpen('tasks',task)||pendingValidation(task)?config.open:
+    task.status==='done'&&(within(task.completed_at)||within(validatedAt(task))));
+  files.push(workbook(actionsPath,sheet('Action items',['Action ID','Action','Source','Owner','Priority','Due','Status','Work submitted/completed','Validated'],
+    actionRows.map(task=>[task.display_id||task.task_id,task.title,task.finding_id||task.source,person(task.assignee_id||task.owner_id),
+      task.priority,task.due_date,pendingValidation(task)?'Pending validation':task.status,task.completed_at,validatedAt(task)])),
     sheet('Review exceptions',occurrenceColumns,exceptions)));
   const supplemental=materials.cmmc?.files||[];
   files.push(...supplemental.map(file=>({path:file.path,cmmc:true})));
   const indexPath='00_Package-index.xlsx';
-  files.unshift(workbook(indexPath,sheet('Package contents',['File'],['00_Start-here.pdf',indexPath,...files.map(f=>f.path),...(config.copies&&materials.evidenceCount?['08_Evidence/Stored-files.zip']:[])].map(path=>[path])),
+  files.unshift(workbook(indexPath,sheet('Package contents',['File'],['00_Start-here.pdf',indexPath,...files.map(f=>f.path),...(includedEvidence.size?['08_Evidence/Stored-files.zip']:[])].map(path=>[path])),
     ...(config.history?[sheet('Report export history',['Report','Format','As of','Generated','Prepared by'],materials.history.filter(row=>within(row.created_at)).map(h=>[h.title,h.format,h.as_of,h.created_at,h.prepared_by?.name]))]:[])));
   return files;
 }

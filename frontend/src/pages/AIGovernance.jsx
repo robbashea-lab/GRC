@@ -51,6 +51,17 @@ function AIWorkspace({identity}){
   useEffect(()=>{const c=new AbortController();setSelected(null);setError('');if(!currentClientId)return;Promise.all([api.get('/ai_systems',{params:{client_id:currentClientId},signal:c.signal}),api.get(`/clients/${currentClientId}/members`,{signal:c.signal}),api.get('/ai-intake',{params:{client_id:currentClientId},signal:c.signal})]).then(([rows,members,intake])=>{if(!c.signal.aborted){if(rows.data.some(r=>r.client_id!==currentClientId))throw new Error('Client data mismatch');if(intake.data?.client_id!==currentClientId)throw new Error('AI intake could not be verified for this client.');setSnapshot({key,identity,clientId:currentClientId,rows:rows.data,members:members.data,intake:intake.data});}}).catch(e=>{if(!c.signal.aborted)setError(formatError(e));});return()=>c.abort();},[currentClientId,key,identity]);
   useEffect(()=>{setQuick('active');setSearch('');setShowInactive(false);},[currentClientId]);
   const data=snapshot?.identity===identity&&(reference?snapshot.clientId===currentClientId:snapshot.key===key)?snapshot:null,rows=data?.rows||[],members=data?.members||[];
+  const route=new URLSearchParams(window.location.search);
+  const requestedAi=route.get('client_id')===currentClientId?route.get('ai_system_id'):null;
+  const openedRequest=useRef(null);
+  useEffect(()=>{
+    if(!requestedAi){openedRequest.current=null;return;}
+    if(!data||openedRequest.current===requestedAi)return;
+    openedRequest.current=requestedAi;
+    const matches=data.rows.filter(row=>row.client_id===currentClientId&&row.ai_system_id===requestedAi);
+    if(matches.length!==1){setError('This AI system is unavailable for the selected client.');return;}
+    setGuided(false);setNativeEdit(true);setSelected(matches[0]);
+  },[currentClientId,data,requestedAi]);
   const additional=useAdditionalSectionsSurface('ai-governance',data&&!error&&data.identity===identity&&data.intake?.client_id===currentClientId?data.clientId:null);
   const nativeAIExperience=additional&&aiClientAvailable(currentClient);
   const additionalPresentation=useAdditionalSectionsPresentation('ai-governance');

@@ -110,3 +110,18 @@ test.each(['user','mode','client'])('the shared UI hook aborts a pending archive
     expect(URL.createObjectURL).not.toHaveBeenCalled();expect(archive.busy).toBe(false);
   }finally{await act(async()=>root.unmount());node.remove();}
 });
+
+test('a selected package omits reference-only stored copies and verifies selected file material',async()=>{
+  rows[0]={...rows[0],program_areas:['Reviews','Frameworks'],folder_paths:['["Reviews"]','["Frameworks"]']};
+  rows.push(file('reference-only'));contents['reference-only']=contents['actual-1'];
+  const selectedFiles=[rows[0]];
+  const result=await buildEvidenceArchive({...request,storedOnly:true,selectedFiles});
+  const zip=unzipSync(result.bytes);
+  expect(result.fileCount).toBe(1);
+  expect(Object.keys(zip).filter(path=>path!=='index.csv')).toEqual([expect.stringContaining('actual-1')]);
+  expect(Object.keys(zip).some(path=>path.includes('reference-only'))).toBe(false);
+  expect(strFromU8(zip['index.csv'])).not.toContain('reference-only');
+  expect(api.get.mock.calls.some(([route])=>route.includes('reference-only'))).toBe(false);
+  rows[0]={...rows[0],version:2};
+  await expect(buildEvidenceArchive({...request,storedOnly:true,selectedFiles})).rejects.toThrow('selection changed');
+});

@@ -57,9 +57,13 @@ function ExecutiveReport({materials,client,clientId,framework,actor,scopeKey,act
     </div><Panel title="Preview" description={model.clientName+' · '+model.framework+' · '+model.period}><p>{model.headline}</p>{note&&<p>{note}</p>}<div className="rp-kpis">{model.kpis.map(([value,label])=><div className="rp-kpi" key={label}><b>{value}</b>{label}</div>)}</div>{enabled.readiness&&<><h3>Readiness by area</h3>{model.readiness.map(([name,[done,total]])=><p key={name}>{name} · {done} of {total}</p>)}</>}</Panel></div>;
 }
 
-export default function ReportPackageWorkspace({clientId,framework,scopeKey,activeScope,clientTimeZone,tab}) {
+export default function ReportPackageWorkspace({clientId,framework,scopeKey,activeScope,clientTimeZone,tab,initialPeriod}) {
   const {user}=useAuth(),{currentClient}=useOrg(),today=reportToday(clientTimeZone);
-  const [config,setConfig]=useState(()=>({start:startFor(today),end:today,auditor:'',open:true,drafts:false,history:true,copies:false}));
+  const [config,setConfig]=useState(()=>{
+    const start=initialPeriod?.start,end=initialPeriod?.end;
+    const period=validDay(start)&&validDay(end)&&start<=end&&end<=today?{start,end}:{start:startFor(today),end:today};
+    return {...period,auditor:'',open:true,drafts:false,history:true,copies:false};
+  });
   const [materials,setMaterials]=useState(null),[error,setError]=useState(''),[revision,setRevision]=useState(0);
   const [decisions,setDecisions]=useState({}),[opened,setOpened]=useState({}),[busy,setBusy]=useState(false),[message,setMessage]=useState('');
   const [summaryHistory,setSummaryHistory]=useState([]);

@@ -50,7 +50,7 @@ test('a freshly loaded native client gets empty approved registers, exact select
   }finally{dom.window.close();}
 });
 
-test('the approved user dialog captures an explicit role change for the actual account and blocks reference-person edits',async()=>{
+test('the approved user dialog captures an explicit role change for the actual account and blocks reference-person edits',()=>{
   const dom=openApprovedPage();
   try{
     const {document,GoverNaraNativePage:page}=dom.window,state=page.snapshot();
@@ -67,12 +67,58 @@ test('the approved user dialog captures an explicit role change for the actual a
     const field=document.getElementById('ur-role');
     expect(field).toBeTruthy();field.value='cmgr';
     document.querySelector('[data-action="save-role"]').click();
-    await Promise.resolve();
     expect(command).toHaveBeenCalledWith('adminAction',['save-role','actual-writer']);
     expect(persist.mock.calls.at(-1)[0].users.find(u=>u.nativeUserId==='actual-writer').role).toBe('cmgr');
     const calls=command.mock.calls.length;
-    click('save-role',0);await Promise.resolve();
+    click('save-role',0);
     expect(command).toHaveBeenCalledTimes(calls);
     expect(page.snapshot().users[0].role).toBe('owner');
   }finally{dom.window.close();}
+});
+
+test('an invitation retains its explicit account action when a browser checks microtasks during dispatch',()=>{
+  const dom=openApprovedPage();
+  try {
+    const {document,GoverNaraNativePage:page}=dom.window;
+    const command=jest.fn(),persist=jest.fn(()=>true);
+    page.configure({busy:()=>false,command,persist});page.apply(page.snapshot());
+    page.actor({user_id:'actual-admin',name:'QA Owner',email:'owner@example.test',role:'super_admin'},['brawndo']);
+    // Browsers can run queued microtasks after a trusted capture listener,
+    // before the source's delegated click handler performs the edit.
+    dom.window.queueMicrotask=callback=>callback();
+    const add=document.createElement('button');add.dataset.action='add-user';document.body.append(add);add.click();
+    document.getElementById('nu-name').value='Synthetic QA invite';
+    document.getElementById('nu-email').value='synthetic-qa@example.test';
+    document.querySelector('[data-action="save-user"]').click();
+    expect(command).toHaveBeenCalledTimes(1);
+    expect(command).toHaveBeenCalledWith('adminAction',['save-user','synthetic-qa@example.test']);
+    expect(persist.mock.calls.at(-1)[0].users.find(user=>user.email==='synthetic-qa@example.test')).toMatchObject({
+      status:'Invited',role:'cread',clients:[]
+    });
+  } finally {dom.window.close();}
+});
+
+test('Portfolio search opens only the native active action for its exact client',()=>{
+  const dom=openApprovedPage();
+  try {
+    const {document,Event,GoverNaraNativePage:page}=dom.window,state=page.snapshot();
+    const id='brawndo',cid='native-brawndo';
+    const records={clients:[{client_id:cid,source_client_id:id}],users:[],requirements:[]};
+    state.clients=state.clients.filter(client=>client.id===id);
+    page.prepareClient(state,id,records);
+    state.work[id].acts=[
+      {id:'current',nativeId:'native-finding-action',title:'Confirm asset inventory',st:'Pending validation'},
+      {id:'sample',title:'Confirm asset inventory from mock data',st:'Open'}
+    ];
+    state.work[id].done=[{id:'closed',nativeId:'native-closed-action',title:'Confirm asset inventory',st:'Done'}];
+    page.configure({busy:()=>false,command:()=>{},persist:()=>true});
+    page.apply(state);
+    document.querySelector('[data-action="palette"]').click();
+    const input=document.getElementById('pal-q');input.value='Confirm asset inventory';
+    input.dispatchEvent(new Event('input',{bubbles:true}));
+    const matches=[...document.querySelectorAll('#pal-list [role="option"]')];
+    expect(matches).toHaveLength(1);
+    expect(matches[0].textContent).toContain('Confirm asset inventory');
+    expect(matches[0].getAttribute('href')).toBe('/action-items?id=native-finding-action&client_id=native-brawndo');
+  } finally {dom.window.close();}
 });

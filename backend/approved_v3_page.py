@@ -4,8 +4,65 @@ import hashlib
 from approved_v3 import SOURCE_SHA256
 
 
+NATIVE_ROUTING = (
+    (b'var h = (location.hash||"").replace("#","");',
+     b'var h = resolveSavedFrameworkRoute();'),
+    (b'var currentHash = "#client-" + context.client.id + "-item-" + context.item.id;',
+     b'var currentHash = savedFrameworkHash(context.client, "item-" + context.item.id);'),
+    (b'window.addEventListener("hashchange", route);',
+     b'window.addEventListener("hashchange", function(){route();});'),
+    (b"""'<a class="why-req" href="#client-'+c.id+'-item-'+esc(id)+'">""",
+     b"""'<a class="why-req" href="'+esc(savedFrameworkHash(c,'item-'+id))+'">"""),
+    (b'location.hash = "portfolio";',
+     b'history.replaceState(history.state, "", "#portfolio");'),
+)
+NATIVE_LOADING_STYLE = (
+    b'<style id="native-workspace-loading">body{visibility:hidden}'
+    b'#native-workspace-status{visibility:visible;position:fixed;inset:0;z-index:99999;'
+    b'padding:48px;background:var(--bg,#eef5f2)}</style>'
+)
+NATIVE_LOADING_PANEL = (
+    '<section class="panel" id="native-workspace-status"><h1>GoverNara</h1>'
+    '<p role="status">Loading saved workspace…</p>'
+    '<a href="/existing">Open Existing records</a></section>'
+).encode()
+
+
 PAGE_HOOK = r"""
 /* Native integration preserves the approved rendering functions and layout. */
+function savedFrameworkHash(client, sub, key){
+  var framework=key||client.activeProg;
+  return '#client-'+client.id+'-'+sub+(framework?'?framework='+encodeURIComponent(framework):'');
+}
+function resolveSavedFrameworkRoute(){
+  var hash=location.hash.slice(1),separator=hash.indexOf('?');
+  var target=separator<0?hash:hash.slice(0,separator);
+  var client=CLIENTS.filter(function(row){return target.indexOf('client-'+row.id+'-')===0;})
+    .sort(function(a,b){return b.id.length-a.id.length;})[0];
+  if(!client||!active(client)||!DASH[client.id])return target;
+  var sub=target.slice(('client-'+client.id+'-').length);
+  if(sub!=='program'&&sub.indexOf('item-')!==0)return target;
+  var params=new URLSearchParams(separator<0?'':hash.slice(separator+1));
+  var scoped=params.has('framework'),requested=scoped?params.get('framework'):client.activeProg;
+  var programs=progsLive(client).filter(function(program){return !program.ws&&program.reg;});
+  var program=programs.find(function(row){return row.k===requested;});
+  var item=sub==='program'?null:sub.slice(5);
+  if(item&&!scoped){
+    var eligible=programs.filter(function(row){return row.reg.items.some(function(candidate){return candidate.id===item;});});
+    if(!eligible.includes(program)&&eligible.length===1)program=eligible[0];
+  }
+  if(!program){
+    if(!scoped)return target;
+    target='client-'+client.id;
+    history.replaceState(history.state,'','#'+target);
+    return target;
+  }
+  if(program.k!==client.activeProg)activateProg(client,program.k);
+  if(item&&!program.reg.items.some(function(row){return row.id===item;}))sub='program';
+  var canonical=savedFrameworkHash(client,sub);
+  if(canonical!==location.hash)history.replaceState(history.state,'',canonical);
+  return 'client-'+client.id+'-'+sub;
+}
 window.GoverNaraNativePage=(function(){
   var callbacks=null, importing=false, editing=false;
   var nativeViewRevision=0,sourceOpenDialog=openDlg;
@@ -78,6 +135,48 @@ window.GoverNaraNativePage=(function(){
   };
   var originalToast=toast,installed=false,sourceRoute=route;
   route=function(){if(installed)return sourceRoute();};
+  var nativeClientIds=new Map(),sourcePalette=renderPalette;
+  renderPalette=function(){
+    sourcePalette();
+    var query=$('pal-q').value.trim().toLowerCase(),list=$('pal-list');
+    if(!query)return;
+    var results=[];
+    CLIENTS.filter(active).forEach(function(client){
+      var clientId=nativeClientIds.get(client.id);
+      if(!clientId)return;
+      (WORK[client.id]?.acts||[]).forEach(function(action){
+        if(action.nativeId&&String(action.title||'').toLowerCase().includes(query))
+          results.push({action:action,client:client,clientId:clientId});
+      });
+    });
+    if(!results.length)return;
+    list.querySelector('.pop-empty')?.remove();
+    var start=list.querySelectorAll('[role="option"]').length,heading=document.createElement('div');
+    heading.className='pop-head';heading.textContent='ACTIVE ACTION ITEMS';list.appendChild(heading);
+    results.slice(0,20).forEach(function(result,index){
+      var option=document.createElement('a'),params=new URLSearchParams({id:result.action.nativeId,client_id:result.clientId});
+      option.className='pop-item';option.setAttribute('role','option');option.setAttribute('aria-selected',String(start+index===S.palIndex));
+      option.dataset.action='pal-go';option.dataset.idx=String(start+index);option.href='/action-items?'+params;
+      option.textContent=result.action.title+' · '+result.client.name;list.appendChild(option);
+    });
+  };
+  function qualifyProgramLinks(client,selector){
+    var bare='#client-'+client.id+'-program';
+    document.querySelectorAll(selector).forEach(function(link){
+      if(link.getAttribute('href')===bare)
+        link.setAttribute('href',savedFrameworkHash(client,'program',link.dataset.val));
+    });
+  }
+  var sourceClientSide=renderClientSide,sourceProfile=renderProfile;
+  renderClientSide=function(client){
+    sourceClientSide.apply(this,arguments);
+    qualifyProgramLinks(client,'#side-client a');
+  };
+  renderProfile=function(){
+    sourceProfile.apply(this,arguments);
+    var client=byId(S.clientId);
+    if(client)qualifyProgramLinks(client,'#v-client a[data-action="prog-switch"]');
+  };
   function refreshClock(){var now=new Date();NOW=now;TODAY=new Date(now.getFullYear(),now.getMonth(),now.getDate());}
   function currentCaption(html){return html.replace(/As of (?:Nov 17|Sep 24|Nov 7), 2026/g,'As of '+TODAY.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}));}
   refreshClock();
@@ -259,6 +358,24 @@ window.GoverNaraNativePage=(function(){
     if(x&&x.nativeActivity&&!x.r){context.frequency=coordFrequency(nativeSetupCadence(x.nativeActivity))||'';context.next=x.nativeActivity.first_next_due||'';}
     return context;
   };
+  var sourceGuideNarrative=guideNarrative;
+  guideNarrative=function(c,it,answers,outcome){
+    var current=connectedClone(answers),context=coordContext(c,it,current);
+    if(!context.record?.nativeId)return sourceGuideNarrative(c,it,answers,outcome);
+    var next=context.entry?.nativeActivity?.first_next_due||context.next;
+    if(next){
+      current.nextReview=next;
+      var cadenceKey=regFor(c).kind==='cis'&&it.id==='1.1'?'freq':'reviewCadence';
+      if(context.frequency)current[cadenceKey]=context.frequency;
+    }
+    var completion=CONNECTED.reviewHistory(c.id,context.record.id).find(function(row){
+      return row.nativeOccurrenceId&&connectedDate(row.done);
+    });
+    var text=sourceGuideNarrative(c,it,current,outcome);
+    if(completion)text=text.replace('No completed review is reported yet; the ticket records planned work only.',
+      'The linked Review records completion on '+fD(completion.done)+'. The interview answer has not confirmed that result.');
+    return text;
+  };
   makeProg=function(){
     var program=sourceMakeProgram.apply(this,arguments);
     if(program.k==='hipaa'&&callbacks&&callbacks.hipaaSupplement)
@@ -285,6 +402,30 @@ window.GoverNaraNativePage=(function(){
     var year=fromIso(end);year.setFullYear(year.getFullYear()-1);
     APPROVED_REPORTS_DATA.asOf=auditShowDate(cutoff);
     return {...result,periodStart:isoDate(year),periodEnd:end,periodText:auditPeriod({start:isoDate(year),end:end})};
+  };
+  var sourceReportsChecks=approvedReportsLiveChecks;
+  approvedReportsLiveChecks=function(client,descriptor,config,state){
+    var checks=sourceReportsChecks(client,descriptor,config,state);
+    if(!callbacks?.reportEvidence)return checks;
+    var evidence=checks.find(check=>check.key==='ev-copies');
+    if(!evidence)return checks;
+    var records=new Map();
+    for(var row of callbacks.reportEvidence(client.id,descriptor?.key)){
+      if(!records.has(row.evidence_id))records.set(row.evidence_id,row);
+    }
+    evidence.items=Array.from(records.values(),row=>({id:row.evidence_id,label:row.filename,
+      detail:row.file_available===false?'Reference without a stored copy':row.evidence_type||'Stored evidence',
+      actions:['Attach copy','Reference only']}));
+    evidence.status=evidence.items.length?'attention':'ready';
+    evidence.summary=evidence.items.length+' evidence references are recorded for this framework. Select shareable copies or mark a file Reference only.';
+    state.readinessItems.set(evidence.key,evidence.items);
+    var separate=checks.find(check=>check.key==='sep');
+    if(separate){
+      var requests=reportSeparateRequests({...config,checks},state);
+      separate.items=requests.map((request,index)=>({id:String(index+1),label:request.item,detail:request.why}));
+      separate.summary=requests.length+' selected items are listed for separate delivery in Start here.';
+    }
+    return checks;
   };
   // Use the controls and selected scope from the approved Reports page. The
   // signed-in download adapter resolves their contents against saved records.
@@ -348,6 +489,7 @@ window.GoverNaraNativePage=(function(){
   function prepareClient(state,sourceId,records){
     var client=state.clients.find(c=>c.id===sourceId),saved=records.clients.find(row=>row.source_client_id===sourceId);
     if(!client||!saved)throw Error('The selected native client is unavailable.');
+    nativeClientIds.set(sourceId,saved.client_id);
     reportZones.set(sourceId,saved.timezone||saved.time_zone||'UTC');
     if(!/^[A-Za-z0-9_-]+$/.test(sourceId)||Object.hasOwn(Object.prototype,sourceId))throw Error('Invalid client identity.');
     var roles=['super_admin','platform_admin','client_grc_manager','client_contributor'];
@@ -459,10 +601,13 @@ window.GoverNaraNativePage=(function(){
     if(!r||guide.occurrenceId!==(r.nativeOccurrenceId||r.occurrenceId))
       throw Error('The review occurrence changed. Reopen the current review.');
     var key=cid+'|'+id+'|'+r.occurrenceId, previous=REVCHK[key]||{};
-    REVCHK[key]=Object.assign({},previous,{steps:guide.steps,st:guide.st,note:guide.note,
+    REVCHK[key]=Object.assign({},previous,{steps:guide.steps,st:guide.st,note:guide.note,occ:guide.cycleTicket,
       nativeContractToken:guide.token,nativeGuideRevision:guide.revision,nativeSpecialist:guide.specialist,
       nativeReadOnly:guide.readOnly,serviceContext:guide.serviceContext,supportingReference:guide.supportingReference});
   }
+  document.addEventListener('change',function(event){
+    if(callbacks&&event.target.id==='rck-occ')connectedPersist();
+  });
   var sourceEvidenceFields=evFields;
   evFields=function(){return [{id:'nativeEvidenceFile',label:'Select file',type:'file',req:true}].concat(sourceEvidenceFields());};
   document.addEventListener('change',function(event){
@@ -561,6 +706,7 @@ window.GoverNaraNativePage=(function(){
     },options);
   };
   function busy(){return editing||!!(callbacks&&callbacks.busy());}
+  var adminClicks=new WeakMap();
   document.addEventListener('click',function(event){
     var el=event.target.closest?.('[data-action]');if(!callbacks||!el)return;
     // Direct dialogs do not use formDlg (for example client access and setup).
@@ -570,7 +716,20 @@ window.GoverNaraNativePage=(function(){
     if(el.closest('#dlg')&&dialogWrites.includes(el.dataset.action)&&staleDialog()){
       event.preventDefault();event.stopImmediatePropagation();originalToast(staleFormMessage);return;
     }
-    var action=el.dataset.action,blocked={'ac-pwd':'Change the password in Existing records → My Account. This password form has not been submitted.',
+    var action=el.dataset.action;
+    if(action==='ai-assess'&&callbacks.openAiAssessment){
+      event.preventDefault();event.stopImmediatePropagation();
+      if(busy())return;
+      var row=CL[S.clientId]?.ai?.find(record=>record.name===el.dataset.id);
+      if(!row||row.st==='Retired'){originalToast(row?'This AI system is retained as retired history.':'Reopen this AI system before starting its assessment.');return;}
+      try{
+        var link=callbacks.openAiAssessment(S.clientId,row.wfId);
+        openDlg('Open saved AI assessment',row.name,'<p>Review the screening questions, saved use and approval conditions in the AI record.</p>',
+          '<button class="ghost" type="button" data-action="dlg-close">Close</button><a class="cta" href="'+esc(link)+'">Open AI assessment</a>');
+      }catch(error){originalToast(error.message);}
+      return;
+    }
+    var blocked={'ac-pwd':'Change the password in Existing records → My Account. This password form has not been submitted.',
       'u-pwd':'Open Existing records → Users & Access for authorized account recovery.',
       'demo-clear-ev':'Signed-in evidence is managed in the client Evidence Library.',
       'demo-storage':'Signed-in client records are saved to the platform.',
@@ -582,15 +741,22 @@ window.GoverNaraNativePage=(function(){
     if(['save-account','save-role','save-access','u-enable','do-disable'].includes(action)&&!identity){
       event.preventDefault();event.stopImmediatePropagation();originalToast('This person is a reference record. Open a platform account in Users & Access.');return;
     }
-    var previous=JSON.stringify([ACCT,USERS]);editing=true;
-    queueMicrotask(function(){
-      editing=false;
-      if(previous!==JSON.stringify([ACCT,USERS])){
-        callbacks.command('adminAction',[action,identity||'']);
-        callbacks.persist(connectedClone(connectedState()),null);
-      }else if(pendingMessage){originalToast(pendingMessage);pendingMessage='';}
-    });
+    adminClicks.set(event,{action:action,identity:identity||'',previous:JSON.stringify([ACCT,USERS])});
+    editing=true;
   },true);
+  // The reference page registers its delegated handlers first. Observe the
+  // same click after those handlers, including when the browser runs a
+  // microtask between listeners.
+  document.addEventListener('click',function(event){
+    var edit=adminClicks.get(event);
+    if(!edit)return;
+    adminClicks.delete(event);
+    editing=false;
+    if(edit.previous!==JSON.stringify([ACCT,USERS])){
+      callbacks.command('adminAction',[edit.action,edit.identity]);
+      callbacks.persist(connectedClone(connectedState()),null);
+    }else if(pendingMessage){originalToast(pendingMessage);pendingMessage='';}
+  });
   function bindCommands(){
     ["setReviewDescription","rescheduleReview","completeReview","saveRecordSchedule",
      "closeRisk","completeAction","validateFinding","savePolicyApproval","retireAI","offboardVendor"]
@@ -680,9 +846,13 @@ window.GoverNaraNativePage=(function(){
         if(S.clientId&&!CLIENTS.some(function(c){return c.id===S.clientId;})){
           S.clientId=null;S.route='portfolio';location.hash='portfolio';
         }
-        if(installed)renderRoute();else{installed=true;sourceRoute();}
+        if(installed){
+          var previousRoute=location.hash.split('?')[0];
+          if('#'+resolveSavedFrameworkRoute()===previousRoute)renderRoute();else route();
+        }else{installed=true;route();}
         reopenDrawer();
         var boot=document.getElementById('native-workspace-loading');if(boot)boot.remove();
+        document.getElementById('native-workspace-status')?.remove();
       }finally{importing=false;}
     },
     actor:function(actor,clients){
@@ -722,6 +892,7 @@ window.GoverNaraNativePage=(function(){
     fail:function(message){
       installed=false;
       document.body.style.visibility='hidden';
+      document.getElementById('native-workspace-status')?.remove();
       var panel=document.createElement('div');panel.className='panel';panel.dataset.nativeWorkspaceError='';
       panel.style.cssText='visibility:visible;position:fixed;inset:0;z-index:99999;padding:48px;background:var(--bg,#eef5f2)';
       var title=document.createElement('h1');title.textContent='GoverNara';panel.appendChild(title);
@@ -746,11 +917,15 @@ def native_document(source):
     # must never restore or write that store, even during initial rendering.
     normalized = normalized.replace(initialization,
         b'connectedRestore=function(){};connectedPersist=function(){return true;};window.GoverNaraPrototypePersist=connectedPersist;\n' + initialization, 1)
+    for original, native in NATIVE_ROUTING:
+        if normalized.count(original) != 1:
+            raise ValueError('The approved document routing point changed')
+        normalized = normalized.replace(original, native, 1)
     marker = b'p16Initialize();\nif (!location.hash)'
     if normalized.count(marker) != 1:
         raise ValueError('The approved document initialization point changed')
     result = normalized.replace(marker, b'p16Initialize();\n' + PAGE_HOOK.encode() + b'\nif (!location.hash)', 1)
     position = result.rfind(b'</body>')
     scripts = b'<script src="/staging-workspace.js"></script><script src="/approved-v3-native.js"></script>'
-    result = result[:position] + scripts + result[position:]
-    return result.replace(b'</head>',b'<style id="native-workspace-loading">body{visibility:hidden}#toast{visibility:visible}</style></head>',1)
+    result = result[:position] + NATIVE_LOADING_PANEL + scripts + result[position:]
+    return result.replace(b'</head>', NATIVE_LOADING_STYLE+b'</head>', 1)

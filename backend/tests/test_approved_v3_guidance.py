@@ -77,6 +77,41 @@ class ApprovedGuidanceTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual((await self.client.put(url,json=draft)).status_code,409)
         self.assertEqual(await harness.server.db.approved_v3_guidance.count_documents({}),0)
 
+    async def test_first_guided_save_records_an_explicit_judgment_and_reviewed_text_once(self):
+        row, path, draft = await self.context()
+        wording = 'The synthetic inventory covers only managed laptops.'
+        response = await self.client.put(path + '/approved-guide', json={
+            **draft, 'reviewed': True,
+            'checkpoint': {'stage': 'applied', 'idx': 1, 'ans': {'exist': 'Partially'}, 'draft': wording},
+        })
+        self.assertEqual(response.status_code, 200, response.text)
+        reference = {key: response.json()[key] for key in ('version', 'revision', 'digest')}
+        before = (await self.client.get(path)).json()
+        self.assertEqual(before['status'], 'not_assessed')
+        intent = {
+            'approved_v3_guide': reference, 'implementation': wording,
+            'expected_last_assessed': draft['expected_assessment_token'],
+            'status': 'in_progress', 'record_approved_v3_judgment': True,
+            'item_draft': {'expected_revision': 0, 'operations': [{
+                'operation': 'add', 'request_id': 'approved_v3_item_27',
+                'item_type': 'confirmation', 'text': 'Confirm unmanaged devices.',
+            }]},
+        }
+        self.assertEqual((await self.client.patch(path, json={**intent, 'verification': 'verified'})).status_code, 422)
+        self.assertEqual((await self.client.patch(path, json={**intent, 'implementation': 'Unreviewed change'})).status_code, 422)
+        saved = await self.client.patch(path, json=intent)
+        self.assertEqual(saved.status_code, 200, saved.text)
+        self.sign_in('admin')
+        reopened = (await self.client.get(path)).json()
+        self.assertEqual(reopened['framework_assessment_id'], row['framework_assessment_id'])
+        self.assertEqual(reopened['status'], 'in_progress')
+        for field in ('verification', 'verification_checklist'):
+            self.assertEqual(reopened.get(field), before.get(field))
+        self.assertEqual(reopened['implementation'], wording)
+        self.assertEqual(len(reopened['assessment_history']), len(before.get('assessment_history', [])) + 1)
+        self.assertEqual(reopened['assessment_history'][-1]['implementation'], wording)
+        self.assertEqual(reopened['items_to_address'][0]['text'], 'Confirm unmanaged devices.')
+
     async def test_reviewed_implementation_and_recurring_activity_use_the_same_native_save(self):
         row,path,draft=await self.context()
         context=(await self.client.get(path+'/service-context')).json()

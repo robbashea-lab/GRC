@@ -47,19 +47,25 @@ function entryName(row,index){
 
 // The exact complete authorized population is frozen, verified, then checked again;
 // a failed member never becomes a partial successful archive.
-export async function buildEvidenceArchive({clientId,params={},folderArea=null,storedOnly=false,signal,isCurrent,limits=EVIDENCE_ARCHIVE_LIMITS}){
+export async function buildEvidenceArchive({clientId,params={},folderArea=null,storedOnly=false,selectedFiles=null,signal,isCurrent,limits=EVIDENCE_ARCHIVE_LIMITS}){
   if(!clientId||typeof isCurrent!=='function')fail('Select an authorized client.');
   const mode=PREVIEW_MODE,currentScope=isCurrent;
   isCurrent=()=>currentScope()&&PREVIEW_MODE===mode;
   const query=JSON.parse(JSON.stringify(params));
   delete query.page;delete query.page_size;query.client_id=clientId;
+  if(selectedFiles&&selectedFiles.length>limits.files)fail('This selection exceeds the safe in-browser archive size.');
+  const selectedIds=selectedFiles&&new Set(selectedFiles.map(row=>row.evidence_id));
+  const selectedPopulation=selectedFiles&&JSON.stringify(population(selectedFiles,clientId));
   async function load(){
-    const rows=await collectEvidencePages(async page=>{check(signal,isCurrent);const response=await api.get('/evidence/catalog',{params:{...query,page,page_size:100},signal});check(signal,isCurrent);return response.data;},{signal,maxItems:limits.files});
+    const rows=await collectEvidencePages(async page=>{check(signal,isCurrent);const response=await api.get('/evidence/catalog',{params:{...query,page,page_size:100},signal});check(signal,isCurrent);return response.data;},
+      {signal,maxItems:selectedFiles?undefined:limits.files});
     check(signal,isCurrent);
     if(rows.some(row=>row.client_id!==clientId))fail('The evidence selection contains a different client.');
     // Imported evidence references belong in a report index. Only records
     // explicitly marked reference-only may be omitted from its stored-file ZIP.
-    return JSON.parse(JSON.stringify(storedOnly?rows.filter(row=>row.file_available!==false):rows));
+    const selected=rows.filter(row=>(!storedOnly||row.file_available!==false)&&(!selectedIds||selectedIds.has(row.evidence_id)));
+    if(selectedPopulation&&JSON.stringify(population(selected,clientId))!==selectedPopulation)fail('The evidence selection changed while preparing the archive.');
+    return JSON.parse(JSON.stringify(selected));
   }
   const rows=await load();
   if(!rows.length)fail('No evidence files match this selection.');
@@ -86,7 +92,9 @@ export async function buildEvidenceArchive({clientId,params={},folderArea=null,s
     if(identity(after,clientId)!==expected)fail('An evidence file changed during download.');
     const areas=folderArea?[folderArea]:[...new Set(row.program_areas?.length?row.program_areas:['Unassigned'])];
     if(areas.some(area=>!AREAS.has(area))||folderArea&&!row.program_areas?.includes(folderArea))fail('An evidence folder relationship changed.');
-    for(const area of areas){
+    // A report package includes one copy per selected evidence identity.
+    const entryAreas=selectedFiles?areas.sort().slice(0,1):areas;
+    for(const area of entryAreas){
       entryBytes+=bytes.length;if(entryBytes>limits.entryBytes)fail('Folder copies exceed the safe in-browser archive size.');
       const name=area+'/'+entryName(row,position);entries[name]=[bytes,{level:0}];
       index.push([name,row.evidence_id,row.version,sha,computed?'Computed at download from verified immutable fixture bytes':'Recorded SHA-256',row.filename,row.evidence_type||'Other',(row.references||[]).map(ref=>[ref.label||ref.kind,ref.title||ref.id,ref.period].filter(Boolean).join(' · ')).join('; '),uploaderLabel(row),row.uploaded_at||row.created_at||'Not recorded']);

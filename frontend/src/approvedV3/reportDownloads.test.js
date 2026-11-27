@@ -1,4 +1,4 @@
-import {createApprovedReportDownloader} from './reportDownloads';
+import {approvedReportEvidence,createApprovedReportDownloader} from './reportDownloads';
 import {loadReportMaterials,downloadAuditPackage,auditedDownload} from '../components/ReportPackageFiles';
 import {strFromU8,unzipSync} from 'fflate';
 
@@ -41,6 +41,17 @@ test('single register download produces real native XLSX and attaches correct ty
   expect(saved.name).toBe('Risk-register.xlsx');expect(delivery).toMatchObject({kind:'register-workbook',frameworkKey:'cis-ig1',workbook:saved.name});
   expect(Object.values(unzipSync(delivery.content)).map(bytes=>strFromU8(bytes)).join('\n')).toContain('Native-only risk');
 });
+test('the single Evidence index applies the same copy decision as the ZIP',async()=>{
+  const {run,request,materials}=setup();
+  materials.evidence=[{evidence_id:'reference-file',client_id:'c17',filename:'Selected evidence.txt',
+    frameworks:['cis-ig1'],file_available:true}];
+  materials.evidenceCount=1;
+  await run({...request,kind:'single',path:'08_Evidence/Evidence-index.xlsx',
+    decisions:[{key:'ev-copies|reference-file',group:'ev-copies',label:'Selected evidence.txt',status:'Reference only'}]},()=>true);
+  const xml=strFromU8(unzipSync(auditedDownload.mock.calls[0][0].content)['xl/worksheets/sheet1.xml']);
+  expect(xml).toContain('>Reference only<');
+  expect(xml).not.toContain('>Stored copy included<');
+});
 test('executive PDF uses actual native author, selected recipient and relative reporting period, and records its digest via the native delivery function',async()=>{
   const {run,request,api}=setup();await run({...request,kind:'exec'},()=>true);
   expect(api.get).toHaveBeenCalledTimes(2);
@@ -57,7 +68,8 @@ test('an individual exclusion cannot accidentally broaden a package that contain
   const {run,request,materials}=setup();materials.evidenceCount=2;
   request.decisions=[{key:'x|1',group:'pol-docs',label:'Access policy',status:'Provided separately'}];
   const result=await run(request,()=>true);
-  expect(result.workbench.url).toBe('/reports?reports_tab=audit&framework_key=cis-ig1&client_id=c17');
+  expect(result.workbench.url).toBe('/reports?reports_tab=audit&framework_key=cis-ig1&period_start='+request.start+
+    '&period_end='+request.end+'&client_id=c17');
   expect(downloadAuditPackage).not.toHaveBeenCalled();
 });
 test('a stale source selection, a foreign preparer, and a missing actual recipient cannot trigger a download',async()=>{
@@ -73,4 +85,36 @@ test('switching clients after requesting a report suppresses delivery',async()=>
   loadReportMaterials.mockImplementationOnce(async()=>{scope.clientId='other';return materials;});
   await expect(run(request,()=>true)).rejects.toThrow(/selection changed/);
   expect(downloadAuditPackage).not.toHaveBeenCalled();
+});
+
+test('the approved audit package retains the period, separate request and per-file copy decision',async()=>{
+  const {run,request,materials}=setup();
+  materials.evidence=[
+    {evidence_id:'reference-file',client_id:'c17',filename:'Reference only.txt',frameworks:['cis-ig1'],file_available:true},
+    {evidence_id:'shared-file',client_id:'c17',filename:'Share this.txt',frameworks:['cis-ig1'],file_available:true}
+  ];
+  materials.evidenceCount=2;
+  request.decisions=[
+    {key:'cis-gaps',group:'cis-gaps',label:'CIS safeguards with gaps',status:'Provided separately'},
+    {key:'ev-copies|reference-file',group:'ev-copies',label:'Reference only.txt',status:'Reference only'}
+  ];
+  expect(await run(request,()=>true)).toEqual({name:'Audit package.zip'});
+  expect(downloadAuditPackage).toHaveBeenCalledWith(expect.objectContaining({
+    clientId:'c17',frameworkKey:'cis-ig1',from:request.start,to:request.end,
+    decisions:{'CIS safeguards with gaps':'Provided separately'},
+    config:expect.objectContaining({copies:true,referenceOnlyEvidenceIds:['reference-file']})
+  }));
+  await expect(run({...request,decisions:[{...request.decisions[1],key:'ev-copies|different-framework'}]},()=>true)).rejects.toThrow(/evidence selection/i);
+  expect(downloadAuditPackage).toHaveBeenCalledTimes(1);
+});
+
+test('report preparation lists exact client and framework evidence only',()=>{
+  const cis={client_id:'c17',evidence_id:'c17-cis',frameworks:['cis-ig1','soc-2']};
+  const soc={client_id:'c17',evidence_id:'c17-soc',frameworks:['soc-2']};
+  const foreign={...cis,client_id:'c18'};
+  const archived={...cis,evidence_id:'archive',archived_at:'2026-11-16'};
+  const records={evidenceCatalog:[cis,soc,foreign,archived]};
+  expect(approvedReportEvidence(records,'c17','cis')).toEqual([cis]);
+  expect(approvedReportEvidence(records,'c17','soc')).toEqual([cis,soc]);
+  expect(approvedReportEvidence(records,'c17','unknown')).toEqual([]);
 });

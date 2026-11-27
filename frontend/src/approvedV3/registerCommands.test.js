@@ -1,4 +1,5 @@
-import {applyRegisterChanges} from './registerCommands';
+import {applyRegisterChanges,aiAssessmentDestination} from './registerCommands';
+import {overlayApprovedV3Registers} from '../preview/approvedV3Registers';
 
 const copy=value=>JSON.parse(JSON.stringify(value));
 function scenario(){
@@ -146,4 +147,30 @@ test('native assurance requires its actual metadata and a calculated AI tier req
   p.after=copy(p.before);p.after.records.sample.ai[0].tier='High';
   await expect(applyRegisterChanges(p)).rejects.toThrow('screening questions');
   expect(p.api.patch).not.toHaveBeenCalled();
+});
+
+test('explicit No client data persists independently of unanswered and typed intake after a native re-projection',async()=>{
+  const p=scenario();
+  const apply=state=>overlayApprovedV3Registers(state,p.records,{clientId:p.clientId,sourceId:p.sourceId,userName:()=>null});
+  const unknown=apply(copy(p.before)).records.sample.ai[0];
+  expect(unknown.dataHandling).toEqual({status:'unknown',types:[]});
+  p.before.records.sample.ai[0].dataHandling=unknown.dataHandling;
+  p.after.records.sample.ai[0].dataHandling={status:'none',types:[]};
+  await applyRegisterChanges(p);
+  expect(p.api.patch).toHaveBeenCalledWith('/ai_systems/ai1',{no_client_data:true,data_types:[],expected_updated_at:'read'});
+  const reopened=apply(copy(p.before));
+  expect(reopened.records.sample.ai[0].dataHandling).toEqual({status:'none',types:[]});
+  p.before=reopened;p.after=copy(reopened);
+  p.after.records.sample.ai[0].dataHandling={status:'handled',types:['Public']};
+  await applyRegisterChanges(p);
+  expect(p.api.patch).toHaveBeenLastCalledWith('/ai_systems/ai1',{no_client_data:false,data_types:['Public'],expected_updated_at:'ack1'});
+  expect(apply(copy(p.before)).records.sample.ai[0].dataHandling).toEqual({status:'handled',types:['Public']});
+});
+
+test('the AI assessment handoff uses an exact saved client and AI identity',()=>{
+  const p=scenario();
+  p.records.ai_systems.push({...p.records.ai_systems[0],client_id:'another-client',ai_system_id:'foreign-ai'});
+  expect(aiAssessmentDestination(p,'A')).toBe('/ai-governance?ai_system_id=ai1&client_id=native-client');
+  expect(()=>aiAssessmentDestination({...p,sourceId:'another-source'},'A')).toThrow(/selected client/);
+  expect(()=>aiAssessmentDestination(p,'foreign-ai')).toThrow(/selected client/);
 });

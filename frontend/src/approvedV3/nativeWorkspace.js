@@ -5,13 +5,13 @@ import {approvedV3IdentityMaps, overlayApprovedClientAssessments,approvedHipaaSu
 import {overlayApprovedV3Work} from '../preview/approvedV3Work';
 import {overlayApprovedV3Registers} from '../preview/approvedV3Registers';
 import {applyClientChanges,approvedOnboardingPlan} from './clientCommands';
-import {applyRegisterChanges} from './registerCommands';
+import {aiAssessmentDestination,applyRegisterChanges} from './registerCommands';
 import {applyWorkChanges} from './workCommands';
 import {prepareReviewGuide, downloadApprovedEvidence,loadApprovedEvidenceCatalog,downloadApprovedEvidenceArchive} from './workGuidance';
 import {applyCmmcChanges, overlayCmmcWorkbook, downloadApprovedCmmc} from './cmmcCommands';
 import {overlayNativeAudit} from './auditProjection';
 import {loadGlobalRecords,overlayGlobalRecords,applyGlobalChanges} from './adminCommands';
-import {createApprovedReportDownloader} from './reportDownloads';
+import {approvedReportEvidence,createApprovedReportDownloader} from './reportDownloads';
 import {loadApprovedSetupCatalog,approvedSetupActivities} from './setupActivities';
 
 const endpoint = '/v3/approved-portfolio';
@@ -291,7 +291,7 @@ export async function startNativeWorkspace(page, transport=api) {
         const handled = {};
         const context = {before,after:edit.state,records,clientId,sourceId,api:requests,
           identityMaps,userIds,commands:scopedCommands,pendingRequests,
-          files:new Map((files.get(sourceId)||[]).map(file=>[file.name,file])),handled};
+          files:new Map((files.get(sourceId)||[]).map(file=>[file.name,file])),handled,reviewSetupVersions:new Map()};
         const clientResult = await applyClientChanges(context);
         clientId = clientResult.clientId || clientId;
         identityMaps = clientResult.identityMaps || identityMaps;
@@ -394,6 +394,15 @@ export async function startNativeWorkspace(page, transport=api) {
       const clientId=identityMaps.clientIds[sourceId];
       return downloadApprovedEvidenceArchive({api:transport,records:nativeRecords[clientId],clientId,sourceId,folder,
         isCurrent:()=>page.context().sourceId===sourceId && ready && !saving && !pending});
+    },
+    reportEvidence:(sourceId,program)=>{
+      const clientId=identityMaps?.clientIds?.[sourceId];
+      return approvedReportEvidence(nativeRecords?.[clientId],clientId,program);
+    },
+    openAiAssessment:(sourceId,sourceKey)=>{
+      const clientId=identityMaps?.clientIds?.[sourceId];
+      if(!ready||saving||pending||page.context().sourceId!==sourceId)throw Error('Reopen this AI system before starting its assessment.');
+      return aiAssessmentDestination({records:nativeRecords?.[clientId],clientId,sourceId},sourceKey);
     },
     downloadReport,
   });

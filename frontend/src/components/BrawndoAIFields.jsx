@@ -4,6 +4,7 @@ import {DueDate} from './RegisterCells';
 
 export default function BrawndoAIFields({tab,form,current,input,person,boolean,put,Choices,vendors,admin,isNew,dirty,approvalPilot,metadataEnabled=approvalPilot}){
   if(tab==='Data & Access')return <>
+    <label className="flex gap-2 text-sm"><input type="checkbox" checked={!!form.no_client_data} onChange={event=>put('no_client_data',event.target.checked)}/>No client data</label>
     <Choices label="Known data processed (not permission to use)" values={catalog.data_types} selected={form.data_types} onChange={v=>put('data_types',v)}/>
     <Choices label="System access" values={catalog.access} selected={form.access} onChange={v=>put('access',v)}/>
     {metadataEnabled&&<>{input('data_settings','Data, integrations & account settings',true)}

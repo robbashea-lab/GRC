@@ -97,6 +97,7 @@ export function aiRequest(db,path,method,params,body){
     }
     row.ai_name_key=nameKey;
   }
+  if(!Object.hasOwn(old||{},'no_client_data')&&!Object.hasOwn(body,'no_client_data'))delete row.no_client_data;
   if(old)for(const [key,value] of Object.entries(AI_PILOT_DEFAULTS))
     if(!Object.hasOwn(old,key)&&!Object.hasOwn(body,key)&&JSON.stringify(row[key])===JSON.stringify(value))delete row[key];
   if(screeningReview)row.onboarding_screening=reviewedScreening(old,row,screeningReview,db.user.user_id,now());

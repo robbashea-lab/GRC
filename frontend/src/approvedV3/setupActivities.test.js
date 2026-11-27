@@ -27,7 +27,9 @@ beforeAll(()=>{
       var g=gState(c,it);g.ans={exist:'Yes',reviewTarget:legacy||key,ticket:'876543',ticketUrl:'https://tickets.example.test/876543',ticketTitle:'Synthetic setup',reviewCadence:'Every six months',nextReview:'2026-12-01',tool:['ninjaone']};
       var before=buildWork(c.id).revs.length,plan=coordStageAssessment(c,it,g.ans);coordSaveAssessment(c,it,{coordination:plan});GUIDE_SAVED[itemKey(c,it.id)].stage='applied';
       return {itemKey:itemKey(c,it.id),ref:id,before:before,after:buildWork(c.id).revs.length,plan:plan};},
-    select:function(key,legacy){var c=byId('${sourceId}'),x=coordEntry(c,key),it=regFor(c).items.find(function(r){return r.id===x.ids[0];});return coordSelection(c,it,{reviewTarget:legacy})?.key||null;}
+    select:function(key,legacy){var c=byId('${sourceId}'),x=coordEntry(c,key),it=regFor(c).items.find(function(r){return r.id===x.ids[0];});return coordSelection(c,it,{reviewTarget:legacy})?.key||null;},
+    narrative:function(key,answers){var c=byId('${sourceId}'),it=regFor(c).items.find(function(row){return row.id==='1.1';});
+      answers.reviewTarget=key;return guideNarrative(c,it,answers,guideOutcome(c,it,answers));}
   };`;
   dom=new JSDOM(html.replace('p16Initialize();\nif (!location.hash)','p16Initialize();\n'+hook+'\n'+expose+'\nif (!location.hash)'),{
     url:'https://governara.example.test/#portfolio',runScripts:'dangerously',virtualConsole:new VirtualConsole()});
@@ -188,6 +190,23 @@ test('an uncreated guidance activity is adopted only at native assessment Save, 
   expect(api.patch).toHaveBeenCalledTimes(1);expect(api.post).not.toHaveBeenCalled();
   expect(response.handled.reviews).toContain(proposal.key);expect(response.identityMaps.recordIds[cid].reviews[proposal.key]).toBe(newRid);
   expect(after.work[sourceId].revs).toHaveLength(before.work[sourceId].revs.length);
+});
+
+test('reopening an interview describes the saved successor and completed review despite retained first-cycle answers',()=>{
+  const current=catalog.activities.find(row=>row.title==='Enterprise Asset Inventory Review'&&row.review_id);
+  const review=records.reviews.find(row=>row.review_id===current.review_id);
+  Object.assign(review,{due_date:'2027-06-01',occurrences:[{occurrence_id:'saved-complete-first-inventory',
+    status:'completed',due_date:'2026-12-01',completed_at:'2026-11-27T12:00:00Z',completed_by:'qa-owner'}]});
+  current.first_next_due='2027-06-01';
+  const state=page.snapshot();
+  overlayApprovedV3Work(state,records,{clientId:cid,sourceId,liveDates:true});page.apply(clone(state));
+  inspect.entries('cis');
+  const answers={exist:'Yes',nextReview:'2026-12-01',freq:'Every six months',reviewPerformed:'Not yet — first review planned'};
+  const text=inspect.narrative(current.activity_id,answers);
+  expect(text).toContain('Jun 1, 2027');
+  expect(text).toContain('Nov 27, 2026');
+  expect(text).not.toContain('No completed review is reported yet');
+  expect(answers.nextReview).toBe('2026-12-01');
 });
 
 test('catalog loader rejects cross-client and duplicate identities without a write',async()=>{

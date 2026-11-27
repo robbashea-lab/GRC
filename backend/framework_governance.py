@@ -186,6 +186,7 @@ class AssessmentPatch(BaseModel):
     model_config=ConfigDict(extra='forbid')
     expected_last_assessed: Optional[str]=Field(default=None,max_length=100)
     record_assessment: bool=False
+    record_approved_v3_judgment: bool=False
     status: Optional[Literal['not_assessed','in_progress','addressed','needs_attention','not_applicable']]=None
     implementation: Optional[str]=Field(default=None,max_length=20000)
     guided_assessment_source: Optional[guided_assessment.GuidedSource]=None
@@ -821,7 +822,13 @@ def router_for(s):
         changes.pop('coordination',None)
         item_draft=changes.pop('item_draft',None)
         v3_reference=body.approved_v3_guide
-        if v3_reference and any(key in changes for key in ('status', 'verification', 'record_assessment', 'verification_checklist')):
+        explicit_v3_judgment=changes.pop('record_approved_v3_judgment',False)
+        if explicit_v3_judgment and (not v3_reference or changes.get('status') is None):
+            raise HTTPException(422,'Choose an implementation status before recording the reviewed assessment')
+        if v3_reference and (
+            any(key in changes for key in ('verification','verification_checklist'))
+            or not explicit_v3_judgment and any(key in changes for key in ('status','record_assessment'))
+        ):
             raise HTTPException(422,'Apply the reviewed implementation separately from an assessment or verification decision')
         if 'approved_v3_guide' in changes:
             if not v3_reference or 'guided_assessment_source' in changes:
@@ -830,7 +837,10 @@ def router_for(s):
                 user,v3_reference,changes.get('implementation'))
         elif old.get('approved_v3_guide') and 'implementation' in changes and changes['implementation']!=old.get('implementation'):
             changes['approved_v3_guide']=None
-        if 'item_draft' in body.model_fields_set and (not item_draft or 'status' in changes or not v3_reference and not changes.get('guided_assessment_source')):
+        if 'item_draft' in body.model_fields_set and (
+            not item_draft or 'status' in changes and not explicit_v3_judgment
+            or not v3_reference and not changes.get('guided_assessment_source')
+        ):
             raise HTTPException(422,'Pending Item edits require the reviewed implementation-only Save')
         context_plan=await r4_services.prepare_context_plan(s,old,user,body.coordination) if body.coordination is not None else None
         if 'guided_assessment_source' in changes:
@@ -1034,7 +1044,7 @@ def router_for(s):
                 changes.update(last_saved=at,assessment_recorded_at=at if judgment else old.get('assessment_recorded_at'),
                                assessment_recorded_by=user['user_id'] if judgment else old.get('assessment_recorded_by'))
                 data.update(changes)
-            snapshot={k:data.get(k) for k in AssessmentPatch.model_fields if k not in ('expected_last_assessed','record_assessment','coordination','item_draft') and (k not in ('cis_assessment_criteria','soc_assessment_checks','iso_assessment_checks','cis_operation','guided_assessment_source','approved_v3_guide') or k in data) and (k not in VERIFICATION_FIELDS or k in history_verification)};snapshot.update(at=at,by=user['user_id'])
+            snapshot={k:data.get(k) for k in AssessmentPatch.model_fields if k not in ('expected_last_assessed','record_assessment','record_approved_v3_judgment','coordination','item_draft') and (k not in ('cis_assessment_criteria','soc_assessment_checks','iso_assessment_checks','cis_operation','guided_assessment_source','approved_v3_guide') or k in data) and (k not in VERIFICATION_FIELDS or k in history_verification)};snapshot.update(at=at,by=user['user_id'])
             if changes.get('guided_assessment_source') or v3_reference:
                 snapshot.update(items_to_address=data.get('items_to_address',[]),items_revision=data.get('items_revision',0))
             if old['framework_key']=='soc-2':

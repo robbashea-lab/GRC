@@ -258,3 +258,52 @@ test.each([true,false])('the inline NoTicket decision=%s uses the native SPM exc
   expect(ctx.after.services.brawndo).toEqual(sourceServices);
   expect(result.handled.reviews).toContain(review.id);
 });
+
+test('a first guided Save sends the explicitly selected judgment with the reviewed narrative',async()=>{
+  const ctx=context(),key='brawndo|cis:8.1|1.1';
+  const aid=ctx.identityMaps.recordIds[cid].framework_assessments['cis-ig1|1.1'];
+  const record=ctx.records.framework_assessments.find(row=>row.framework_assessment_id===aid);
+  record.status='not_assessed';
+  for(const view of [ctx.before,ctx.after]){
+    view.clients.find(client=>client.id===sourceId).progs.find(program=>program.k==='cis')
+      .reg.items.find(item=>item.id==='1.1').st=view===ctx.before?'A':'P';
+  }
+  ctx.after.itemCur[key]='The synthetic inventory covers only managed laptops.';
+  ctx.after.guideSaved[key]={stage:'applied',draft:ctx.after.itemCur[key],ans:{exist:'Partially'}};
+  ctx.api.put=jest.fn(async()=>({data:{version:sourceHash,revision:1,digest:'e'.repeat(64)}}));
+  ctx.api.patch=jest.fn(async()=>({data:record}));
+  await applyClientChanges(ctx);
+  expect(ctx.api.patch).toHaveBeenCalledTimes(1);
+  expect(ctx.api.patch).toHaveBeenCalledWith('/framework_assessments/'+aid,expect.objectContaining({
+    implementation:ctx.after.itemCur[key],status:'in_progress',record_approved_v3_judgment:true,
+    approved_v3_guide:{version:sourceHash,revision:1,digest:'e'.repeat(64)}
+  }));
+});
+
+test('saving the reviewed narrative never reschedules an already scheduled inventory occurrence',async()=>{
+  const ctx=context(),key='brawndo|cis:8.1|1.1';
+  const aid=ctx.identityMaps.recordIds[cid].framework_assessments['cis-ig1|1.1'];
+  const sourceReview=ctx.after.work.brawndo.revs.find(review=>review.title==='Enterprise Asset Inventory Review');
+  const native=ctx.records.reviews.find(review=>review.client_id===cid&&review.source_record_id===sourceReview.id);
+  const activity={
+    client_id:cid,activity_id:'review:'+native.review_id,review_id:native.review_id,
+    expected_updated_at:native.updated_at??null,expected_client_updated_at:null,
+    first_next_due:'2027-06-01',cadence:'semiannual',setup:{recurring_ticket_number:'59834'}
+  };
+  ctx.after.itemCur[key]='Updated narrative after the first review completed.';
+  ctx.after.guideSaved[key]={stage:'applied',draft:ctx.after.itemCur[key],ans:{
+    nextReview:'2026-12-01',freq:'Every six months',reviewTarget:activity.activity_id,
+    _coord:{nativeActivity:{opened:activity,plan:{next:'2026-12-01',cadence:'S'}},committed:true}
+  }};
+  ctx.after.services.brawndo.assessmentReviews={[key]:activity.activity_id};
+  ctx.api.put=jest.fn(async()=>({data:{version:sourceHash,revision:1,digest:'e'.repeat(64)}}));
+  ctx.api.get=jest.fn(async()=>({data:{client_id:cid,expected_client_updated_at:null,
+    candidates:[activity],selected_activity_id:activity.activity_id}}));
+  ctx.api.patch=jest.fn(async()=>({data:{...ctx.records.framework_assessments.find(row=>row.framework_assessment_id===aid)}}));
+  await applyClientChanges(ctx);
+  const patch=ctx.api.patch.mock.calls[0][1];
+  expect(patch.implementation).toBe(ctx.after.itemCur[key]);
+  expect(patch.coordination).toMatchObject({review_id:native.review_id});
+  expect(patch.coordination).not.toHaveProperty('first_next_due');
+  expect(patch.coordination).not.toHaveProperty('cadence');
+});
