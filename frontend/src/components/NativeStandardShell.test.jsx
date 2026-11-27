@@ -13,7 +13,9 @@ jest.mock('@/preview/DemoNotice', () => ({renderTrigger}) => renderTrigger(null)
 jest.mock('./NotificationBell', () => () => <button type="button">Native notifications</button>);
 jest.mock('./ClientIdentityMark', () => ({client}) => <span>{client?.name?.[0]}</span>);
 jest.mock('react-router-dom', () => {
-  const Link = ({to, children, ...props}) => <a href={to} {...props} onClick={event => {event.preventDefault(); mockNavigate(to);}}>{children}</a>;
+  const Link = ({to, children, reloadDocument, ...props}) => <a href={to} {...props}
+    data-reload-document={reloadDocument || undefined}
+    onClick={event => {event.preventDefault(); if (!reloadDocument) mockNavigate(to);}}>{children}</a>;
   return {Link, NavLink:({end, ...props}) => <Link {...props}/>, useNavigate:() => mockNavigate, useLocation:() => ({pathname:mockPath})};
 }, {virtual:true});
 
@@ -76,6 +78,32 @@ test('one protected shell serves unfamiliar clients and every configured framewo
   expect(document.documentElement.dataset.nativeStandard).toBe('light');
   expect(document.documentElement.dataset.previewTheme).toBe('glass07');
   expect(api.get.mock.calls.every(([, options]) => !options?.params?.client_id || options.params.client_id === client.client_id)).toBe(true);
+});
+
+test('standard staging Portfolio links cross documents unless the retained native directory is selected', async () => {
+  const previous = process.env.REACT_APP_STANDARD_SIGN_IN;
+  process.env.REACT_APP_STANDARD_SIGN_IN = 'true';
+  try {
+    mockPath = '/dashboard';
+    await render();
+    const brand = () => host.querySelector('header .brand');
+    const portfolio = () => host.querySelector('[data-testid="return-to-portfolio"]');
+    expect(brand().getAttribute('data-reload-document')).toBe('true');
+    expect(portfolio().getAttribute('data-reload-document')).toBe('true');
+    await click(brand());
+    expect(mockNavigate).not.toHaveBeenCalled();
+
+    document.cookie = 'governara_staging_workspace=existing; path=/';
+    await render();
+    expect(brand().hasAttribute('data-reload-document')).toBe(false);
+    expect(portfolio().hasAttribute('data-reload-document')).toBe(false);
+    await click(brand());
+    expect(mockNavigate).toHaveBeenCalledWith('/clients');
+  } finally {
+    document.cookie = 'governara_staging_workspace=; Max-Age=0; path=/';
+    if(previous===undefined)delete process.env.REACT_APP_STANDARD_SIGN_IN;
+    else process.env.REACT_APP_STANDARD_SIGN_IN=previous;
+  }
 });
 
 test('platform navigation retains only current authorized active clients and native administration routes', async () => {

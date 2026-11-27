@@ -11,6 +11,7 @@ afterEach(() => {
   jest.restoreAllMocks();
   document.body.replaceChildren();
   delete document.body.dataset.stagingEntry;
+  delete window.GoverNaraNativePage;
   sessionStorage.clear();
   localStorage.clear();
 });
@@ -29,6 +30,20 @@ test('opens native records in standard mode while preserving other preferences',
   expect(sessionStorage.getItem('grc_client_id')).toBeNull();
   expect(sessionStorage.getItem('appearance')).toBe('glass07');
   expect(replace).toHaveBeenCalledWith('/clients');
+});
+
+test('an old history entry restores the native document when Back changes the path', () => {
+  const reload = jest.fn();
+  const location = {...window.location, pathname:'/clients', reload};
+  jest.spyOn(window, 'location', 'get').mockReturnValue(location);
+  window.GoverNaraNativePage = {};
+  loadBridge();
+
+  window.dispatchEvent(new PopStateEvent('popstate'));
+  expect(reload).not.toHaveBeenCalled();
+  location.pathname = '/admin/users';
+  window.dispatchEvent(new PopStateEvent('popstate'));
+  expect(reload).toHaveBeenCalledTimes(1);
 });
 
 test('sign-out waits for the server and allows retry after a failed request', async () => {

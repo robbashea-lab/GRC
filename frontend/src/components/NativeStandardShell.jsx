@@ -14,6 +14,7 @@ import {dashboardRecordHref} from '@/lib/dashboardItemSummary';
 import {canExportReports, isInternal} from '@/lib/permissions';
 import {nativeRoleLabel} from '@/lib/plannedRoleModel';
 import {usePortfolioRefresh} from '@/lib/usePortfolioRefresh';
+import {approvedPortfolioDestination} from '@/lib/stagingWorkspace';
 import {ticketRecords} from '@/lib/remediationTickets';
 import {pilotActionMatches} from '@/lib/brawndoActions';
 import DemoNotice from '@/preview/DemoNotice';
@@ -38,6 +39,10 @@ export default function NativeStandardShell({children}) {
   const auth = useAuth(), org = useOrg(), {items:frameworks} = useCompliance();
   const {pathname} = useLocation(), navigate = useNavigate();
   const {user} = auth, internal = isInternal(user);
+  const approvedPortfolio = internal && approvedPortfolioDestination(auth.workspaceMode);
+  // The approved Portfolio is a separate document. A SPA push followed by
+  // replacement can leave the Portfolio DOM under a native URL after Back.
+  const portfolioLink = {to: approvedPortfolio || '/clients', reloadDocument: Boolean(approvedPortfolio)};
   const {choice, mode:theme} = useAppearance();
   const [menu, setMenu] = useState(null), [navigation, setNavigation] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false), [query, setQuery] = useState(''), [selected, setSelected] = useState(0);
@@ -136,7 +141,11 @@ export default function NativeStandardShell({children}) {
     if (org.switchClient(next.client_id) === false) return;
     setSearchOpen(false); setMenu(null); navigate(clientDestination(next.client_id));
   }
-  function openPage(to) {setSearchOpen(false); navigate(clientId && !to.startsWith('/admin/') && !['/clients','/account'].includes(to) ? clientDestination(clientId, to) : to);}
+  function openPage(to) {
+    setSearchOpen(false);
+    if (to === '/clients' && approvedPortfolio) window.location.assign(approvedPortfolio);
+    else navigate(clientId && !to.startsWith('/admin/') && !['/clients','/account'].includes(to) ? clientDestination(clientId, to) : to);
+  }
   const link = ([to, label, Icon]) => {
     const count = badges && badges.clientId === clientId ? badges.counts[to] : null;
     return <NavLink key={to} to={clientId ? clientDestination(clientId, to) : to} className="nav" data-testid={`nav-${to.replace(/^\//,'').replaceAll('/','-')}`}><Icon size={16} aria-hidden="true"/>{label}{Number.isFinite(count) && count > 0 && <span className="badge-n" aria-label={`${count} ${label} needing attention`}>{count}</span>}</NavLink>;
@@ -146,7 +155,7 @@ export default function NativeStandardShell({children}) {
   return <div ref={root} className="native-standard portfolio-reference brawndo-workspace-pilot app-shell" data-theme={theme} data-native-navigation={navigation ? 'open' : 'closed'}>
     <header className="topbar">
       <button ref={navigationTrigger} type="button" className="icon-btn native-mobile-nav" aria-label="Toggle client navigation" aria-expanded={navigation} onClick={() => setNavigation(value => !value)}><MenuIcon size={20}/></button>
-      <Link className="brand" to={internal ? '/clients' : '/dashboard'}>
+      <Link className="brand" {...(internal ? portfolioLink : {to:'/dashboard'})}>
         <svg aria-hidden="true" width="30" height="30" viewBox="0 0 32 32" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" style={{color:'var(--accent)'}}><path d="M27 4C16 5 8 12 6 25M27 4c-1 9-7 16-17 18M12 19l6-6M15 21l7-7M10 16l5-5M6 25l-2 3"/></svg>
         <span><span className="brand-name">GoverNara</span><br/><span className="brand-tag">Turn complexity into clarity.</span></span>
       </Link>
@@ -157,7 +166,7 @@ export default function NativeStandardShell({children}) {
           <Menu.Trigger asChild><button type="button" className="ws-btn" aria-label="Switch workspace"><span className="lbl">{client?.name || 'Portfolio'}</span><ChevronDown size={14}/></button></Menu.Trigger>
           <Menu.Portal container={root.current}><Menu.Content className="pop native-menu" align="end" sideOffset={10}>
             <div className="pop-head">WORKSPACE</div>
-            {internal && <Menu.Item asChild><Link className="pop-item" to="/clients"><Briefcase size={16}/>Portfolio</Link></Menu.Item>}
+            {internal && <Menu.Item asChild><Link className="pop-item" {...portfolioLink}><Briefcase size={16}/>Portfolio</Link></Menu.Item>}
             <Menu.Separator className="pop-sep"/>
             {clientState || clients.map(next => <Menu.Item key={next.client_id} asChild><button type="button" className="pop-item" onClick={() => openClient(next)}><ClientMark client={next}/>{next.name}</button></Menu.Item>)}
           </Menu.Content></Menu.Portal>
@@ -179,11 +188,11 @@ export default function NativeStandardShell({children}) {
       {navigation && <button type="button" className="native-nav-scrim" aria-label="Close client navigation" onClick={() => setNavigation(false)}/>}
       <nav className="side" aria-label={platform ? 'Platform' : 'Client workspace'} data-testid={platform ? 'sidebar-platform' : 'sidebar-client'} onClick={event => {if (event.target.closest('a,button')) setNavigation(false);}}>
         {platform ? <>
-          <NavLink className="nav" to="/clients" end data-testid="nav-clients"><Briefcase size={16}/>Portfolio</NavLink><span className="side-label">CLIENTS</span>
+          <NavLink className="nav" {...portfolioLink} end data-testid="nav-clients"><Briefcase size={16}/>Portfolio</NavLink><span className="side-label">CLIENTS</span>
           <div data-testid="sidebar-client-list">{clientState || clients.map(next => <button key={next.client_id} type="button" className="nav" data-testid={`sidebar-open-${next.client_id}`} onClick={() => openClient(next)}><ClientMark client={next}/><span className="ellip">{next.name}</span></button>)}</div>
           <span className="side-label">ADMINISTRATION</span>{ADMIN.filter(([to]) => to !== '/admin/audit' || user?.role === 'super_admin').map(link)}
         </> : <>
-          {internal && <Link className="nav" to="/clients" data-testid="return-to-portfolio"><ArrowLeft size={14}/>Portfolio</Link>}
+          {internal && <Link className="nav" {...portfolioLink} data-testid="return-to-portfolio"><ArrowLeft size={14}/>Portfolio</Link>}
           <div className="ws-card"><ClientMark client={client} size={32}/><div style={{minWidth:0}}><b className="ellip">{client?.name || 'Client workspace'}</b><div className="sub">{client?.industry || 'Industry not set'}</div></div></div>
           <span className="side-label">WORK</span>{WORK.map(link)}<span className="side-label">PROGRAM</span>{frameworks.map(f => link([f.to, f.label, ShieldCheck]))}{PROGRAM.map(link)}
           <span className="side-label">CLIENT</span>{CLIENT.filter(([to]) => to !== '/reports' || canReports).map(link)}
