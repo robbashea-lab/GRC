@@ -29,6 +29,11 @@
     return;
   }
 
+  window.addEventListener('popstate', () => {
+    // Repair history entries left by the old SPA-to-document replacement.
+    if (window.GoverNaraNativePage && location.pathname !== '/clients') window.location.reload();
+  });
+
   const appearanceRelease = 'governara.staging.exact-appearance.5bb03e12';
   try {
     if (!localStorage.getItem(appearanceRelease)) {

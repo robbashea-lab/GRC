@@ -116,6 +116,35 @@ async function run(){
     assert.equal(approved.status,200);assert.equal(approved.source,hash(fs.readFileSync(path.join(build,'visual-preview.html'))));
     assert.equal(approved.bundle,receipt.bundle);
     pass('Normal sign-in opened the authenticated approved page and exact build.');
+    if(fast||selectedCase==='Portfolio browser history')await workflow('Portfolio browser history',async()=>{
+      const historyPage=await context.newPage();observe(historyPage);
+      try{
+        const nativeUrl=base+'/compliance/cis-ig1?client_id=v3sample_initech';
+        const portfolioUrl=base+'/clients#portfolio';
+        const nativeHeading=historyPage.getByRole('heading',{name:'CIS IG2',exact:true});
+        const portfolioHeading=historyPage.getByRole('heading',{name:'Client portfolio',exact:true});
+        await historyPage.goto(nativeUrl);
+        await nativeHeading.waitFor({timeout:45000});
+        await historyPage.locator('header a.brand[href="/clients"]').click();
+        await ready(historyPage);
+        await portfolioHeading.waitFor();
+        assert.equal(historyPage.url(),portfolioUrl);
+        await historyPage.reload();
+        await ready(historyPage);
+        await portfolioHeading.waitFor();
+
+        await historyPage.goBack();
+        assert.equal(historyPage.url(),nativeUrl);
+        await nativeHeading.waitFor({timeout:15000});
+        assert.equal(await portfolioHeading.count(),0,'Browser Back must restore the native document');
+        await historyPage.goForward();
+        assert.equal(historyPage.url(),portfolioUrl);
+        await ready(historyPage);
+        await portfolioHeading.waitFor();
+        assert.equal(await nativeHeading.count(),0,'Browser Forward must restore the approved document');
+        pass('Native CIS IG2 → Portfolio → reload restores the correct screen on Browser Back and Forward.');
+      }finally{await historyPage.close();}
+    });
     await page.addInitScript(()=>document.addEventListener('DOMContentLoaded',()=>{
       const page=window.GoverNaraNativePage;if(!page)return;const finish=page.finish;window.qaNativeSaves=[];
       page.finish=(...args)=>{window.qaNativeSaves.push(args);return finish(...args);};

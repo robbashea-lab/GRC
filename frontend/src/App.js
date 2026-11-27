@@ -29,6 +29,7 @@ import VendorRegister from "@/pages/VendorRegister";
 import AIGovernance from '@/pages/AIGovernance';
 import IVentureSetup from '@/components/IVentureSetup';
 import ToolCatalog from '@/components/ToolCatalog';
+import {approvedPortfolioDestination} from '@/lib/stagingWorkspace';
 import "@/App.css";
 import "@/NativeNordic.css";
 
@@ -41,28 +42,25 @@ function Protected({ children }) {
   return children;
 }
 
-const isExistingWorkspace = () => document.cookie.split(';').some(value =>
-  value.trim() === 'governara_staging_workspace=existing');
-
 function ClientPortfolioRoute() {
   const {workspaceMode} = useAuth();
-  const approved = process.env.REACT_APP_STANDARD_SIGN_IN === 'true' && !isExistingWorkspace();
+  const approved = approvedPortfolioDestination(workspaceMode);
   useEffect(() => {
     if (approved) {
       // A document navigation loads the supplied HTML after client-side sign-in.
-      window.location.replace(workspaceMode === 'demo' ? '/visual-preview.html' : '/clients');
+      window.location.replace(approved);
     }
-  }, [approved, workspaceMode]);
+  }, [approved]);
   return approved ? <p role="status">Opening client portfolio…</p> : <ClientDirectory />;
 }
 
 // Internal users (super_admin, platform_admin) land on Client Directory.
 // Client users land directly in their tenant Dashboard.
 function LandingRoute() {
-  const { user } = useAuth();
+  const {user, workspaceMode} = useAuth();
   const isInternal = ["super_admin", "platform_admin"].includes(user?.role);
   const {clients, loading} = useOrg();
-  if (isInternal && process.env.REACT_APP_STANDARD_SIGN_IN === 'true' && !isExistingWorkspace()) {
+  if (isInternal && approvedPortfolioDestination(workspaceMode)) {
     return <Navigate to="/clients" replace />;
   }
   if (loading) return <div className="p-8">Loading clients…</div>;
