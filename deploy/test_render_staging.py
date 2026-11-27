@@ -98,7 +98,9 @@ class HostingTests(unittest.TestCase):
         approved = ROOT / 'frontend' / 'public' / 'visual-preview.html'
         shutil.copyfile(approved, Path(self.directory.name) / approved.name)
         source = approved.read_bytes()
-        from approved_v3_page import native_document, PAGE_HOOK
+        from approved_v3_page import (
+            native_document, PAGE_HOOK, NATIVE_LOADING_PANEL, NATIVE_LOADING_STYLE, NATIVE_ROUTING,
+        )
         source = source.replace(b'\r\n',b'\n')
         expected = native_document(source)
         for method in (self.client.get, self.client.head):
@@ -111,8 +113,11 @@ class HostingTests(unittest.TestCase):
                     self.assertIn(BRIDGE_TAG + native_tag + b'</body>', response.content)
                     without_hook = response.content.replace(PAGE_HOOK.encode()+b'\n',b'',1)
                     without_hook = without_hook.replace(BRIDGE_TAG+native_tag,b'',1)
+                    without_hook = without_hook.replace(NATIVE_LOADING_PANEL,b'',1)
                     without_hook = without_hook.replace(b'connectedRestore=function(){};connectedPersist=function(){return true;};window.GoverNaraPrototypePersist=connectedPersist;\n',b'',1)
-                    without_hook = without_hook.replace(b'<style id="native-workspace-loading">body{visibility:hidden}#toast{visibility:visible}</style>',b'',1)
+                    without_hook = without_hook.replace(NATIVE_LOADING_STYLE,b'',1)
+                    for original, native in reversed(NATIVE_ROUTING):
+                        without_hook = without_hook.replace(native, original, 1)
                     self.assertEqual(without_hook, source)
                     self.assertEqual(response.content,expected)
                 else:

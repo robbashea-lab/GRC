@@ -40,6 +40,13 @@ const delay=()=>new Promise(resolve=>window.setTimeout(resolve,20));
 async function check(){
   assert.equal(loadingRule()?.selectorText,'body');
   assert.equal(loadingRule()?.style.visibility,'hidden');
+  const loading = field('native-workspace-status');
+  assert.ok(loading, 'Authorized startup must show persistent loading feedback');
+  const statusRule = field('native-workspace-loading').sheet.cssRules[1];
+  assert.equal(statusRule.selectorText, '#native-workspace-status');
+  assert.equal(statusRule.style.visibility, 'visible');
+  assert.equal(loading.querySelector('[role="status"]').textContent, 'Loading saved workspace…');
+  assert.equal(loading.querySelector('a[href="/existing"]').textContent, 'Open Existing records');
   assert.deepEqual(storageCalls,[]);
   // Load the same session/appearance script the native document references.
   window.eval(fs.readFileSync('public/staging-workspace.js','utf8'));
@@ -67,6 +74,7 @@ async function check(){
   }});
   page.apply(state);page.actor(actual,['brawndo']);
   assert.equal(loadingRule(),undefined);
+  assert.equal(field('native-workspace-status'),null);
   assert.notEqual(document.body.style.visibility,'hidden');
   assert.equal(page.context().sourceId,'brawndo');
   // Source governance authorization must choose the signed-in ID even when a
@@ -105,4 +113,80 @@ async function check(){
   assert.equal(recovery.querySelector('a[href="/existing"]').textContent,'Open Existing records');
 }
 
-check().catch(error=>{console.error(error);process.exitCode=1;}).finally(()=>window.close());
+const open = href => new JSDOM(html, {
+  url: 'https://governara.example.test' + href, runScripts: 'dangerously', virtualConsole: new VirtualConsole(),
+  beforeParse(browser) { browser.scrollTo = () => {}; },
+});
+
+async function checkPortfolioEntry() {
+  const portfolio = open('/clients');
+  try {
+    const browser = portfolio.window;
+    assert.equal(browser.location.hash, '#portfolio');
+    assert.equal(browser.history.length, 1, 'The default hash must not add a blank Back destination');
+    const page = browser.GoverNaraNativePage;
+    page.apply(page.snapshot());
+    assert.equal(browser.document.getElementById('v-portfolio').hidden, false);
+    assert.match(browser.document.getElementById('v-portfolio').textContent, /Brawndo/);
+  } finally {
+    portfolio.window.close();
+  }
+}
+
+async function checkFrameworkNavigation() {
+  function defaultToHipaa(page) {
+    const state = page.snapshot();
+    const client = state.clients.find(row => row.id === 'cyberdyne');
+    const hipaa = state.clients.find(row => row.id === 'ppth').progs.find(program => program.k === 'hipaa');
+    client.progs.unshift(hipaa);
+    client.activeProg = 'hipaa';
+    page.apply(state);
+  }
+  const first = open('/clients#client-cyberdyne');
+  let reopened;
+  try {
+    const browser = first.window;
+    const page = browser.GoverNaraNativePage;
+    defaultToHipaa(page);
+
+    const link = browser.document.querySelector('#side-client a[data-val="cmmc"]');
+    assert.ok(link, 'The multi-framework client renders its CMMC Level 2 link');
+    link.click();
+    await new Promise(resolve => browser.setTimeout(resolve, 20));
+    assert.equal(page.context().program, 'cmmc');
+
+    reopened = open(browser.location.pathname + browser.location.hash);
+    const reloadedPage = reopened.window.GoverNaraNativePage;
+    defaultToHipaa(reloadedPage);
+    assert.equal(reloadedPage.context().program, 'cmmc', 'Fresh boot preserves the selected framework');
+    assert.equal(reloadedPage.context().sourceId, 'cyberdyne');
+    assert.equal(link.getAttribute('href'), '#client-cyberdyne-program?framework=cmmc');
+
+    reopened.window.location.hash = '#client-cyberdyne-item-3.1.4?framework=cmmc';
+    await new Promise(resolve => reopened.window.setTimeout(resolve, 20));
+    assert.match(reopened.window.document.getElementById('v-client').textContent, /Separate the duties/i);
+    assert.equal(reloadedPage.context().program, 'cmmc');
+    reopened.window.location.hash = '#client-cyberdyne-item-3.1.4?framework=hipaa';
+    await new Promise(resolve => reopened.window.setTimeout(resolve, 20));
+    assert.equal(reopened.window.location.hash, '#client-cyberdyne-program?framework=hipaa');
+    assert.doesNotMatch(reopened.window.document.getElementById('v-client').textContent, /Separate the duties/i);
+
+    browser.history.back();
+    await new Promise(resolve => browser.setTimeout(resolve, 20));
+    assert.equal(browser.location.hash, '#client-cyberdyne');
+    browser.history.forward();
+    await new Promise(resolve => browser.setTimeout(resolve, 20));
+    assert.equal(browser.location.hash, '#client-cyberdyne-program?framework=cmmc');
+    assert.equal(page.context().program, 'cmmc');
+  } finally {
+    first.window.close();
+    reopened?.window.close();
+  }
+}
+
+Promise.allSettled([check(), checkPortfolioEntry(), checkFrameworkNavigation()]).then(results => {
+  for (const result of results) if (result.status === 'rejected') {
+    console.error(result.reason);
+    process.exitCode = 1;
+  }
+}).finally(() => window.close());

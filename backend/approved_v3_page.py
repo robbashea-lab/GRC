@@ -4,8 +4,63 @@ import hashlib
 from approved_v3 import SOURCE_SHA256
 
 
+NATIVE_ROUTING = (
+    (b'var h = (location.hash||"").replace("#","");',
+     b'var h = resolveSavedFrameworkRoute();'),
+    (b'var currentHash = "#client-" + context.client.id + "-item-" + context.item.id;',
+     b'var currentHash = savedFrameworkHash(context.client, "item-" + context.item.id);'),
+    (b'window.addEventListener("hashchange", route);',
+     b'window.addEventListener("hashchange", function(){route();});'),
+    (b'location.hash = "portfolio";',
+     b'history.replaceState(history.state, "", "#portfolio");'),
+)
+NATIVE_LOADING_STYLE = (
+    b'<style id="native-workspace-loading">body{visibility:hidden}'
+    b'#native-workspace-status{visibility:visible;position:fixed;inset:0;z-index:99999;'
+    b'padding:48px;background:var(--bg,#eef5f2)}</style>'
+)
+NATIVE_LOADING_PANEL = (
+    '<section class="panel" id="native-workspace-status"><h1>GoverNara</h1>'
+    '<p role="status">Loading saved workspace…</p>'
+    '<a href="/existing">Open Existing records</a></section>'
+).encode()
+
+
 PAGE_HOOK = r"""
 /* Native integration preserves the approved rendering functions and layout. */
+function savedFrameworkHash(client, sub, key){
+  var framework=key||client.activeProg;
+  return '#client-'+client.id+'-'+sub+(framework?'?framework='+encodeURIComponent(framework):'');
+}
+function resolveSavedFrameworkRoute(){
+  var hash=location.hash.slice(1),separator=hash.indexOf('?');
+  var target=separator<0?hash:hash.slice(0,separator);
+  var client=CLIENTS.filter(function(row){return target.indexOf('client-'+row.id+'-')===0;})
+    .sort(function(a,b){return b.id.length-a.id.length;})[0];
+  if(!client||!active(client)||!DASH[client.id])return target;
+  var sub=target.slice(('client-'+client.id+'-').length);
+  if(sub!=='program'&&sub.indexOf('item-')!==0)return target;
+  var params=new URLSearchParams(separator<0?'':hash.slice(separator+1));
+  var scoped=params.has('framework'),requested=scoped?params.get('framework'):client.activeProg;
+  var programs=progsLive(client).filter(function(program){return !program.ws&&program.reg;});
+  var program=programs.find(function(row){return row.k===requested;});
+  var item=sub==='program'?null:sub.slice(5);
+  if(item&&!scoped){
+    var eligible=programs.filter(function(row){return row.reg.items.some(function(candidate){return candidate.id===item;});});
+    if(!eligible.includes(program)&&eligible.length===1)program=eligible[0];
+  }
+  if(!program){
+    if(!scoped)return target;
+    target='client-'+client.id;
+    history.replaceState(history.state,'','#'+target);
+    return target;
+  }
+  if(program.k!==client.activeProg)activateProg(client,program.k);
+  if(item&&!program.reg.items.some(function(row){return row.id===item;}))sub='program';
+  var canonical=savedFrameworkHash(client,sub);
+  if(canonical!==location.hash)history.replaceState(history.state,'',canonical);
+  return 'client-'+client.id+'-'+sub;
+}
 window.GoverNaraNativePage=(function(){
   var callbacks=null, importing=false, editing=false;
   var nativeViewRevision=0,sourceOpenDialog=openDlg;
@@ -78,6 +133,15 @@ window.GoverNaraNativePage=(function(){
   };
   var originalToast=toast,installed=false,sourceRoute=route;
   route=function(){if(installed)return sourceRoute();};
+  var sourceClientSide=renderClientSide;
+  renderClientSide=function(client){
+    sourceClientSide.apply(this,arguments);
+    var bare='#client-'+client.id+'-program';
+    document.querySelectorAll('#side-client a').forEach(function(link){
+      if(link.getAttribute('href')===bare)
+        link.setAttribute('href',savedFrameworkHash(client,'program',link.dataset.val));
+    });
+  };
   function refreshClock(){var now=new Date();NOW=now;TODAY=new Date(now.getFullYear(),now.getMonth(),now.getDate());}
   function currentCaption(html){return html.replace(/As of (?:Nov 17|Sep 24|Nov 7), 2026/g,'As of '+TODAY.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}));}
   refreshClock();
@@ -680,9 +744,13 @@ window.GoverNaraNativePage=(function(){
         if(S.clientId&&!CLIENTS.some(function(c){return c.id===S.clientId;})){
           S.clientId=null;S.route='portfolio';location.hash='portfolio';
         }
-        if(installed)renderRoute();else{installed=true;sourceRoute();}
+        if(installed){
+          var previousRoute=location.hash.split('?')[0];
+          if('#'+resolveSavedFrameworkRoute()===previousRoute)renderRoute();else route();
+        }else{installed=true;route();}
         reopenDrawer();
         var boot=document.getElementById('native-workspace-loading');if(boot)boot.remove();
+        document.getElementById('native-workspace-status')?.remove();
       }finally{importing=false;}
     },
     actor:function(actor,clients){
@@ -722,6 +790,7 @@ window.GoverNaraNativePage=(function(){
     fail:function(message){
       installed=false;
       document.body.style.visibility='hidden';
+      document.getElementById('native-workspace-status')?.remove();
       var panel=document.createElement('div');panel.className='panel';panel.dataset.nativeWorkspaceError='';
       panel.style.cssText='visibility:visible;position:fixed;inset:0;z-index:99999;padding:48px;background:var(--bg,#eef5f2)';
       var title=document.createElement('h1');title.textContent='GoverNara';panel.appendChild(title);
@@ -746,11 +815,15 @@ def native_document(source):
     # must never restore or write that store, even during initial rendering.
     normalized = normalized.replace(initialization,
         b'connectedRestore=function(){};connectedPersist=function(){return true;};window.GoverNaraPrototypePersist=connectedPersist;\n' + initialization, 1)
+    for original, native in NATIVE_ROUTING:
+        if normalized.count(original) != 1:
+            raise ValueError('The approved document routing point changed')
+        normalized = normalized.replace(original, native, 1)
     marker = b'p16Initialize();\nif (!location.hash)'
     if normalized.count(marker) != 1:
         raise ValueError('The approved document initialization point changed')
     result = normalized.replace(marker, b'p16Initialize();\n' + PAGE_HOOK.encode() + b'\nif (!location.hash)', 1)
     position = result.rfind(b'</body>')
     scripts = b'<script src="/staging-workspace.js"></script><script src="/approved-v3-native.js"></script>'
-    result = result[:position] + scripts + result[position:]
-    return result.replace(b'</head>',b'<style id="native-workspace-loading">body{visibility:hidden}#toast{visibility:visible}</style></head>',1)
+    result = result[:position] + NATIVE_LOADING_PANEL + scripts + result[position:]
+    return result.replace(b'</head>', NATIVE_LOADING_STYLE+b'</head>', 1)
