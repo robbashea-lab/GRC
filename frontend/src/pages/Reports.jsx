@@ -65,6 +65,9 @@ function ReportForm({clientId,scopeKey,activeScope,clientTimeZone}){
     }
   }
   const selected=frameworks?.find(f=>f.key===frameworkKey);
+  const entryQuery=new URLSearchParams(window.location.search);
+  const initialPeriod=entryQuery.get('client_id')===clientId&&entryQuery.get('framework_key')===frameworkKey?
+    {start:entryQuery.get('period_start'),end:entryQuery.get('period_end')}:null;
   return <div className="reports-body">
     <RegisterLoadError error={loadError} onRetry={()=>setRevision(n=>n+1)} name="enabled frameworks"/>
     {!frameworks&&!loadError&&<p role="status">Loading enabled frameworks…</p>}
@@ -74,7 +77,7 @@ function ReportForm({clientId,scopeKey,activeScope,clientTimeZone}){
       if(Object.hasOwn(keys,event.key)){event.preventDefault();event.currentTarget.parentElement.children[keys[event.key]].focus();setTab(['internal','audit','details'][keys[event.key]]);}
     }} onClick={()=>setTab(key)}>{label}{key==='audit'&&<small className="rp-chip">{selected?.name}</small>}</button>)}</div>
     {frameworks.length>1&&<div className="rp-framework"><label htmlFor="reports-framework">Framework</label><select id="reports-framework" className="input" value={frameworkKey} onChange={event=>{setFrameworkKey(event.target.value);setGenerateError('');setMessage('');}}>{frameworks.map(f=><option key={f.key} value={f.key}>{f.name}</option>)}</select></div>}
-    <section id="rp-view" role="tabpanel" aria-labelledby={'rp-tab-'+tab}>{tab!=='details' ? <ReportPackageWorkspace key={frameworkKey} {...{clientId,scopeKey,activeScope,clientTimeZone,tab}} framework={selected}/> : <><form onSubmit={generate} className="reports-form" aria-label="Generate framework report" aria-busy={generating}>
+    <section id="rp-view" role="tabpanel" aria-labelledby={'rp-tab-'+tab}>{tab!=='details' ? <ReportPackageWorkspace key={frameworkKey} {...{clientId,scopeKey,activeScope,clientTimeZone,tab,initialPeriod}} framework={selected}/> : <><form onSubmit={generate} className="reports-form" aria-label="Generate framework report" aria-busy={generating}>
       <fieldset disabled={generating} className="reports-fields">
         {frameworks.length===1&&<div><span className="reports-label">Framework/program</span><p className="reports-framework" data-testid="report-framework">{selected.name}</p></div>}
         {selected&&(selected.version||selected.scope)&&<p className="reports-scope">{[selected.version&&`Version ${selected.version}`,selected.scope].filter(Boolean).join(' · ')}</p>}

@@ -57,7 +57,8 @@ test('an individual exclusion cannot accidentally broaden a package that contain
   const {run,request,materials}=setup();materials.evidenceCount=2;
   request.decisions=[{key:'x|1',group:'pol-docs',label:'Access policy',status:'Provided separately'}];
   const result=await run(request,()=>true);
-  expect(result.workbench.url).toBe('/reports?reports_tab=audit&framework_key=cis-ig1&client_id=c17');
+  expect(result.workbench.url).toBe('/reports?reports_tab=audit&framework_key=cis-ig1&period_start='+request.start+
+    '&period_end='+request.end+'&client_id=c17');
   expect(downloadAuditPackage).not.toHaveBeenCalled();
 });
 test('a stale source selection, a foreign preparer, and a missing actual recipient cannot trigger a download',async()=>{

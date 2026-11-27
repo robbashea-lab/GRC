@@ -1,4 +1,5 @@
 import {assessedRisk,isOpen} from '../lib/grcWork';
+import {actionPendingValidation,actionReturnedForRework} from '../lib/actionItems';
 import rules from '../lib/grcRules.json';
 
 const sheet = (name,columns,rows,guide='Saved client records in the selected package scope.') =>
@@ -144,10 +145,10 @@ export function registerWorkbooks(materials,config) {
   const actionsPath=key==='iso-27001'?'09_Nonconformities-and-corrective-actions/Corrective-actions.xlsx':
     key==='soc-2'?'09_Exceptions-and-remediation/Exceptions-and-remediation.xlsx':'09_Open-items/Open-items.xlsx';
   const findings=new Map(r.findings.map(finding=>[finding.finding_id,finding]));
-  const pendingValidation=task=>task.status==='done'&&findings.get(task.finding_id)?.status==='remediated';
+  const pendingValidation=task=>actionPendingValidation(task,findings.get(task.finding_id));
   const validatedAt=task=>{
     const finding=findings.get(task.finding_id);
-    return finding?(finding.status==='closed'?finding.validated_at:null):task.validated_at;
+    return finding?(finding.status==='closed'&&!actionReturnedForRework(task,finding)?finding.validated_at:null):task.validated_at;
   };
   const actionRows=tasks.filter(task=>isOpen('tasks',task)||pendingValidation(task)?config.open:
     task.status==='done'&&(within(task.completed_at)||within(validatedAt(task))));

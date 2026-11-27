@@ -1,5 +1,6 @@
 import {reviewSchedule} from '../lib/reviewOccurrences.js';
 import {calendarDay,managementDay} from '../lib/managementDates';
+import {actionPendingValidation} from '../lib/actionItems';
 
 const programKeys = {cis:'cis-ig1', soc:'soc-2', iso:'iso-27001', nist:'nist-csf-2', hipaa:'hipaa', cmmc:'cmmc'};
 const sourceProgramKeys = {'cis-ig1':'cis:8.1','soc-2':'soc:2017-2022','iso-27001':'iso:27001-2022',
@@ -441,9 +442,7 @@ function overlayClientWork(view, records, ctx) {
       const id=nativeKey(row,'task_id'), prev=oldTasks.get(id) || {};
       const finding=lookup('findings',row.finding_id,'finding_id');
       // The submitted Action stays visible until the linked Finding has been validated.
-      const returned=(finding?.decision_history || []).some(d=>d.action==='rejected' && row.completed_at &&
-        new Date(d.at)>=new Date(row.completed_at));
-      const pending=row.status==='done' && finding && !returned && !['closed','accepted'].includes(finding.status);
+      const pending=actionPendingValidation(row,finding);
       const st=pending ? 'Pending validation' : reverseTaskStatus[row.status] || row.status;
       // Native Finding remediation stores the origin on its Finding rather than
       // duplicating it on the primary task. Resolve that exact scoped relation.

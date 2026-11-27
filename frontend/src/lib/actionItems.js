@@ -7,6 +7,14 @@ export const actionStatus = status => ({done:'Completed',open:'Open',in_progress
 export const actionTitle = row => row.title_generated===true&&row.title?.startsWith('Remediate: ')?row.title.slice(11):row.title;
 export const actionPriority = value => ({critical:'Immediate',immediate:'Immediate',medium:'Moderate',moderate:'Moderate',high:'High',low:'Low'})[value] || value;
 export const actionTerminal = row => ['done','cancelled'].includes(row.status);
+export function actionReturnedForRework(task,finding) {
+  return (finding?.decision_history || []).some(decision=>decision.action==='rejected' && task.completed_at &&
+    new Date(decision.at)>=new Date(task.completed_at));
+}
+export function actionPendingValidation(task,finding) {
+  return task.status==='done' && !!finding && !actionReturnedForRework(task,finding) &&
+    !['closed','accepted'].includes(finding.status);
+}
 export const daysDue = (row, now=new Date()) => {
   const day = calendarDay(row.due_date);
   return day == null ? null : Math.round((day-Date.UTC(now.getFullYear(),now.getMonth(),now.getDate()))/86400000);

@@ -11,6 +11,8 @@ NATIVE_ROUTING = (
      b'var currentHash = savedFrameworkHash(context.client, "item-" + context.item.id);'),
     (b'window.addEventListener("hashchange", route);',
      b'window.addEventListener("hashchange", function(){route();});'),
+    (b"""'<a class="why-req" href="#client-'+c.id+'-item-'+esc(id)+'">""",
+     b"""'<a class="why-req" href="'+esc(savedFrameworkHash(c,'item-'+id))+'">"""),
     (b'location.hash = "portfolio";',
      b'history.replaceState(history.state, "", "#portfolio");'),
 )
@@ -158,14 +160,22 @@ window.GoverNaraNativePage=(function(){
       option.textContent=result.action.title+' · '+result.client.name;list.appendChild(option);
     });
   };
-  var sourceClientSide=renderClientSide;
-  renderClientSide=function(client){
-    sourceClientSide.apply(this,arguments);
+  function qualifyProgramLinks(client,selector){
     var bare='#client-'+client.id+'-program';
-    document.querySelectorAll('#side-client a').forEach(function(link){
+    document.querySelectorAll(selector).forEach(function(link){
       if(link.getAttribute('href')===bare)
         link.setAttribute('href',savedFrameworkHash(client,'program',link.dataset.val));
     });
+  }
+  var sourceClientSide=renderClientSide,sourceProfile=renderProfile;
+  renderClientSide=function(client){
+    sourceClientSide.apply(this,arguments);
+    qualifyProgramLinks(client,'#side-client a');
+  };
+  renderProfile=function(){
+    sourceProfile.apply(this,arguments);
+    var client=byId(S.clientId);
+    if(client)qualifyProgramLinks(client,'#v-client a[data-action="prog-switch"]');
   };
   function refreshClock(){var now=new Date();NOW=now;TODAY=new Date(now.getFullYear(),now.getMonth(),now.getDate());}
   function currentCaption(html){return html.replace(/As of (?:Nov 17|Sep 24|Nov 7), 2026/g,'As of '+TODAY.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}));}

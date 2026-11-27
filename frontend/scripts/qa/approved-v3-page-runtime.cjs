@@ -143,7 +143,7 @@ async function checkFrameworkNavigation() {
     page.apply(state);
   }
   const first = open('/clients#client-cyberdyne');
-  let reopened;
+  let reopened, copied;
   try {
     const browser = first.window;
     const page = browser.GoverNaraNativePage;
@@ -178,9 +178,19 @@ async function checkFrameworkNavigation() {
     await new Promise(resolve => browser.setTimeout(resolve, 20));
     assert.equal(browser.location.hash, '#client-cyberdyne-program?framework=cmmc');
     assert.equal(page.context().program, 'cmmc');
+
+    browser.location.hash = '#client-cyberdyne-profile';
+    await new Promise(resolve => browser.setTimeout(resolve, 20));
+    const profileLink = browser.document.querySelector('#v-client a.prog-line[data-val="cmmc"]');
+    assert.ok(profileLink, 'The client profile also offers a CMMC program link');
+    copied = open('/clients' + profileLink.getAttribute('href'));
+    const copiedPage = copied.window.GoverNaraNativePage;
+    defaultToHipaa(copiedPage);
+    assert.equal(copiedPage.context().program, 'cmmc', 'A copied Profile link opens CMMC in a clean document');
   } finally {
     first.window.close();
     reopened?.window.close();
+    copied?.window.close();
   }
 }
 

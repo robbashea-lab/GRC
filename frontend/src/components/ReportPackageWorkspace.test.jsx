@@ -65,6 +65,17 @@ test('regular Reports opens the audit workspace, scopes every native data read, 
   expect(api.get.mock.calls.every(([,options])=>options.params.client_id==='client-a')).toBe(true);
 });
 
+test('audit handoff restores validated dates only for the linked client and framework',async()=>{
+  window.history.replaceState(null,'','/reports?client_id=client-a&framework_key=framework-a&period_start=2026-11-01&period_end=2026-11-15');
+  await act(async()=>root.render(<Reports/>));
+  expect(host.querySelector('#rp-from').value).toBe('2026-11-01');
+  expect(host.querySelector('#rp-through').value).toBe('2026-11-15');
+  const selected=host.querySelector('#reports-framework');
+  await act(async()=>{selected.value='framework-b';selected.dispatchEvent(new Event('change',{bubbles:true}));});
+  expect(host.querySelector('#rp-through').value).toBe(asOf);
+  expect(api.post).not.toHaveBeenCalled();
+});
+
 test('the package exports only chosen native materials, current report values and a real PDF introduction',async()=>{
   const signal=new AbortController().signal;
   const materials=await loadReportMaterials('client-a','framework-a',asOf,signal);
@@ -119,9 +130,10 @@ test('the ZIP preserves outstanding independent validation and exact scoped risk
   const signal=new AbortController().signal;
   const materials=await loadReportMaterials('client-a','framework-a',asOf,signal);
   materials.registers={...materials.registers,
-    findings:[{finding_id:'qa-finding',status:'remediated'},
+    findings:[{finding_id:'qa-finding',status:'remediated',decision_history:[{action:'rejected',at:'2000-01-02'}]},
       {finding_id:'closed-finding',status:'closed',validated_at:asOf+'T10:00:00Z'}],
     tasks:[...materials.registers.tasks,{task_id:'qa-action',finding_id:'qa-finding',title:'Synthetic High correction',priority:'high',status:'done',completed_at:asOf},
+      {task_id:'returned-work',finding_id:'qa-finding',title:'Returned first attempt',status:'done',completed_at:'2000-01-01'},
       {task_id:'prior-work',finding_id:'closed-finding',title:'Validated today',status:'done',completed_at:'2000-01-01'}],
     reviews:[...materials.registers.reviews,{review_id:'risk-review',risk_id:'rr',title:'Asset Inventory Risk Review',
       occurrences:[{occurrence_id:'qa-risk-occurrence',outcome:'Confirmed',completed_at:asOf},
@@ -134,6 +146,7 @@ test('the ZIP preserves outstanding independent validation and exact scoped risk
   const xml=(path,sheet)=>strFromU8(unzipSync(archive[path])['xl/worksheets/sheet'+sheet+'.xml']);
   const risk=xml('03_Risk-management/Risk-register.xlsx',2),work=xml('09_Open-items/Open-items.xlsx',1);
   expect(work).toMatch(/Synthetic High correction[\s\S]*Pending validation/);
+  expect(work).not.toContain('Returned first attempt');
   expect(work).toMatch(/Validated today[\s\S]*T10:00:00Z/);
   expect(JSON.stringify(packageFiles(materials,{...config,open:false}).find(file=>file.path.startsWith('09_')).sheets))
     .not.toContain('Synthetic High correction');
