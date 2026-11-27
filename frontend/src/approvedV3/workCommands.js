@@ -51,6 +51,7 @@ export function nativeReviewCompletion(guide, details, occurrenceId) {
   const body={occurrence_id:occurrenceId,expected_updated_at:guide.expected_updated_at ?? null,
     outcome,completion_notes:details.notes || '',
     checklist:{contract_token:guide.contract_token,results},supporting_reference:text(details.supportingReference)};
+  if(Object.hasOwn(details.checklist||{},'cycleTicket'))body.cycle_ticket_number=text(details.checklist.cycleTicket);
   if (details.assessment) {
     const {L,I,note}=details.assessment;
     if (![L,I].every(n=>Number.isInteger(Number(n)) && Number(n)>=1 && Number(n)<=5)) throw Error('Supply both risk ratings on the 1–5 scale.');

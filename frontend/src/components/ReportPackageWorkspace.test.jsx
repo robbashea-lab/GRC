@@ -136,7 +136,9 @@ test('the ZIP preserves outstanding independent validation and exact scoped risk
       {task_id:'returned-work',finding_id:'qa-finding',title:'Returned first attempt',status:'done',completed_at:'2000-01-01'},
       {task_id:'prior-work',finding_id:'closed-finding',title:'Validated today',status:'done',completed_at:'2000-01-01'}],
     reviews:[...materials.registers.reviews,{review_id:'risk-review',risk_id:'rr',title:'Asset Inventory Risk Review',
-      occurrences:[{occurrence_id:'qa-risk-occurrence',outcome:'Confirmed',completed_at:asOf},
+      activity_setup:{recurring_ticket_number:'836501'},current_occurrence_id:'next-risk-occurrence',
+      occurrences:[{occurrence_id:'qa-risk-occurrence',outcome:'Confirmed',completed_at:asOf,
+        activity_setup:{recurring_ticket_number:'836501',cycle_ticket_number:'836503'}},
         {occurrence_id:'old-risk-occurrence',outcome:'Prior',completed_at:'2000-01-01'}]}]
   };
   materials.registerHistory=[...materials.registerHistory,{register:'Risks',record:'=formula',event:'Closed',at:asOf}];
@@ -145,6 +147,10 @@ test('the ZIP preserves outstanding independent validation and exact scoped risk
   const archive=unzipSync(await readBlob(files[0]));
   const xml=(path,sheet)=>strFromU8(unzipSync(archive[path])['xl/worksheets/sheet'+sheet+'.xml']);
   const risk=xml('03_Risk-management/Risk-register.xlsx',2),work=xml('09_Open-items/Open-items.xlsx',1);
+  const reviewPath='04_Recurring-reviews/Review-schedule-and-log.xlsx';
+  expect(xml(reviewPath,1)).toMatch(/qa-risk-occurrence[\s\S]*836501[\s\S]*836503/);
+  expect(xml(reviewPath,2)).toContain('836501');
+  expect(xml(reviewPath,2)).not.toContain('836503');
   expect(work).toMatch(/Synthetic High correction[\s\S]*Pending validation/);
   expect(work).not.toContain('Returned first attempt');
   expect(work).toMatch(/Validated today[\s\S]*T10:00:00Z/);

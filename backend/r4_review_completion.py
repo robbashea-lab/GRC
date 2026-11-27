@@ -285,10 +285,12 @@ async def validate_completion(s, review, body, evidence, user):
     if len(reference) > 4000:
         raise HTTPException(422, 'Keep the supporting result reference within 4,000 characters')
     setup = copy.deepcopy(review.get('activity_setup') or {})
-    # Only the current occurrence's checkpoint supplies its ticket to history.
+    # The submitted value can be newer than the current occurrence's saved checkpoint.
     setup.pop('cycle_ticket_number', None)
-    if contract['cycle_ticket_number']:
-        setup['cycle_ticket_number'] = contract['cycle_ticket_number']
+    cycle_ticket = data.get('cycle_ticket_number')
+    cycle_ticket = contract['cycle_ticket_number'] if cycle_ticket is None else cycle_ticket.strip()
+    if cycle_ticket:
+        setup['cycle_ticket_number'] = cycle_ticket
     planned = {str(setup.get(k) or '').strip() for k in ('recurring_ticket_number', 'recurring_ticket_url')}
     for item in evidence:
         ident = item.get('evidence_id')

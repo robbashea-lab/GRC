@@ -3894,6 +3894,7 @@ class ReviewCompleteIn(BaseModel):
     expected_updated_at: Optional[str] = Field(default=None, max_length=100)
     checklist: Optional[r4_review_completion.ChecklistIn] = None
     supporting_reference: str = Field(default='', max_length=4000)
+    cycle_ticket_number: Optional[str] = Field(default=None, max_length=2048)
     outcome: Optional[Literal['No exceptions noted', 'Exceptions noted']] = None
 
 

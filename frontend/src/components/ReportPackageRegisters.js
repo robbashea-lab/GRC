@@ -91,6 +91,8 @@ export function registerWorkbooks(materials,config) {
     .map(row=>[row.at,row.record,row.event,row.version,'','','']);
   const occurrences=[];
   const exceptions=[];
+  const currentTickets=review=>[review.activity_setup?.recurring_ticket_number,
+    review.r4_current_checklist?.occurrence_id===review.current_occurrence_id?review.r4_current_checklist?.cycle_ticket_number:null];
   for(const review of reviews) {
     const saved=(review.occurrences||[]).filter(o=>o.completed_at||o.completion_date);
     if(!saved.length&&review.status==='completed'&&review.completion_date)saved.push({...review,completed_at:review.completion_date});
@@ -98,13 +100,14 @@ export function registerWorkbooks(materials,config) {
       const completed=o.completed_at||o.completion_date, due=day(o.due_date);
       if(!within(completed))continue;
       const status=due&&day(completed)>due?'Completed late':'Completed';
-      const row=[o.occurrence_id||'',o.title||review.title,person(o.owner_id||review.owner_id),o.due_date,completed,status,o.outcome];
+      const row=[o.occurrence_id||'',o.title||review.title,person(o.owner_id||review.owner_id),o.due_date,completed,status,o.outcome,
+        o.activity_setup?.recurring_ticket_number,o.activity_setup?.cycle_ticket_number];
       occurrences.push(row);if(status==='Completed late')exceptions.push(row);
       if(config.history&&riskNames.has(review.risk_id))riskHistory.push([
         completed,riskNames.get(review.risk_id),'Review completed','',o.occurrence_id||'',o.title||review.title,o.outcome]);
     }
     if(config.open&&isOpen('reviews',review)&&day(review.due_date)&&day(review.due_date)<config.end) {
-      const row=[review.current_occurrence_id,review.title,person(review.owner_id),review.due_date,'','Overdue',''];
+      const row=[review.current_occurrence_id,review.title,person(review.owner_id),review.due_date,'','Overdue','',...currentTickets(review)];
       occurrences.push(row);exceptions.push(row);
     }
   }
@@ -113,13 +116,15 @@ export function registerWorkbooks(materials,config) {
     ...(config.history?[sheet('Risk review history',['Date','Record','Event','Version','Occurrence ID','Review','Outcome'],
       riskHistory.sort(([left],[right])=>String(left).localeCompare(String(right))))]:[]),
     sheet('Rating method',['Minimum score','Rating'],rules.riskBands,'Likelihood × impact. Both inputs must be recorded on the native 1–5 scale.')));
-  const occurrenceColumns=['Occurrence ID','Review','Owner','Due date','Completed','Status','Outcome'];
+  const ticketColumns=['Recurring ticket','Cycle ticket'];
+  const occurrenceColumns=['Occurrence ID','Review','Owner','Due date','Completed','Status','Outcome',...ticketColumns];
   const horizon=new Date(header.as_of+'T12:00:00Z');horizon.setUTCDate(horizon.getUTCDate()+90);
-  const schedule=reviews.map(v=>[v.review_id,v.title,v.review_type,v.recurrence,person(v.owner_id),v.due_date,v.status]);
+  const scheduleColumns=['ID','Review','Type','Frequency','Owner','Due date','Status',...ticketColumns];
+  const schedule=reviews.map(v=>[v.review_id,v.title,v.review_type,v.recurrence,person(v.owner_id),v.due_date,v.status,...currentTickets(v)]);
   files.push(workbook('04_Recurring-reviews/Review-schedule-and-log.xlsx',
     sheet('Occurrences in period',occurrenceColumns,occurrences),
-    sheet('Review schedule',['ID','Review','Type','Frequency','Owner','Due date','Status'],schedule),
-    sheet('Next 90 days',['ID','Review','Type','Frequency','Owner','Due date','Status'],schedule.filter(row=>day(row[5])>=header.as_of&&day(row[5])<=horizon.toISOString().slice(0,10)&&isOpen('reviews',{status:row[6]})))));
+    sheet('Review schedule',scheduleColumns,schedule),
+    sheet('Next 90 days',scheduleColumns,schedule.filter(row=>day(row[5])>=header.as_of&&day(row[5])<=horizon.toISOString().slice(0,10)&&isOpen('reviews',{status:row[6]})))));
   files.push(workbook('05_Vendor-management/Vendor-register.xlsx',sheet('Vendor register',['Vendor','Status','Criticality','Data access','Assurance','Next review','Renewal'],
     r.vendors.map(v=>[v.name,v.status,v.criticality_provisional?[v.criticality,'provisional'].filter(Boolean).join(' · '):v.criticality,list(v.data_relationship)||list(v.data_types),v.assurance_status,v.next_review,v.contract_renewal])),
     sheet('Assurance records',['Vendor','Document','Required','Received','Refresh due'],r.vendors.flatMap(v=>(v.assurance_records||[]).map(a=>[v.name,a.document_name||a.type,a.required,a.received_at,a.refresh_due]))),

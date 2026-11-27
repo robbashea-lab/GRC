@@ -719,7 +719,7 @@ window.GoverNaraNativePage=(function(){
     if(action==='ai-assess'&&callbacks.openAiAssessment){
       event.preventDefault();event.stopImmediatePropagation();
       if(busy())return;
-      var row=CL[S.clientId]?.ai?.find(record=>record.name===el.dataset.id||record.wfId===el.dataset.id);
+      var row=CL[S.clientId]?.ai?.find(record=>record.name===el.dataset.id);
       if(!row||row.st==='Retired'){originalToast(row?'This AI system is retained as retired history.':'Reopen this AI system before starting its assessment.');return;}
       try{
         var link=callbacks.openAiAssessment(S.clientId,row.wfId);

@@ -124,10 +124,11 @@ class R4ReviewRouteTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(updated.status_code, 200, updated.text)
         self.assertEqual(updated.json()['cycle_ticket_number'], '836502')
         completion['expected_updated_at'] = updated.json()['expected_updated_at']
+        completion['cycle_ticket_number'] = '836503'
         completed = await self.client.post(path + '/complete', json=completion)
         self.assertEqual(completed.status_code, 200, completed.text)
         immutable = completed.json()['occurrence']
-        self.assertEqual(immutable['activity_setup']['cycle_ticket_number'], '836502')
+        self.assertEqual(immutable['activity_setup']['cycle_ticket_number'], '836503')
         self.assertEqual(immutable['activity_setup']['recurring_ticket_number'], '836501')
         successor = (await self.client.get(path + '/completion-guide')).json()
         self.assertEqual(successor['cycle_ticket_number'], '')
@@ -138,7 +139,7 @@ class R4ReviewRouteTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(export.status_code, 200, export.text)
         rows = list(csv.reader(io.StringIO(export.text)))
         self.assertEqual(len(rows), 2)
-        self.assertEqual(rows[1][8:10], ['836501', '836502'])
+        self.assertEqual(rows[1][8:10], ['836501', '836503'])
 
     async def test_exception_cannot_change_rating_or_complete_without_its_recorded_finding(self):
         _, _, path, body = await self.prepare()
