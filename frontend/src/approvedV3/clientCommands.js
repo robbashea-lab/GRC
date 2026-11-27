@@ -404,6 +404,9 @@ async function sourceCoordination(ctx,row,key) {
     const activity=requireSetupActivity({...context,activities:context.candidates},cid,reviewKey,explicit.opened);
     const body=setupActivityBody(activity,ctx.version,explicit.plan);
     delete body.responsibility;
+    // A guided answer describes the plan. Existing occurrences are moved
+    // through Edit schedule, which uses the current occurrence's identity.
+    preserveActiveSchedule(body,activity);
     body.ticket_confirmed=!!answer.ticket&&answer._coord?.defaults?.ticket===undefined;
     addCoordinationTools(body,tools,sourceProfile,oldProfile,context,answer,activity);
     return {body,route,reviewKey:sourceActivityReviewKey(ctx,activity)||reviewKey,activity};
@@ -423,9 +426,17 @@ async function sourceCoordination(ctx,row,key) {
       first_next_due:dateOnly(sourceReview.due),cadence:cadence||'custom',
       custom_days:cadence?null:Number(String(sourceReview.cad).replace(/^D:/,'')),
       ticket_confirmed:!!answer.ticket&&answer._coord?.defaults?.ticket===undefined});
+    preserveActiveSchedule(body,activity);
   }
   addCoordinationTools(body,tools,sourceProfile,oldProfile,context,answer,activity);
   return activity||body.area_id?{body,route,reviewKey,activity}:null;
+}
+
+function preserveActiveSchedule(body,activity) {
+  if(!activity.review_id||!activity.first_next_due)return;
+  delete body.first_next_due;
+  delete body.cadence;
+  delete body.custom_days;
 }
 
 function addCoordinationTools(body,tools,sourceProfile,oldProfile,context,answer,activity) {
@@ -538,6 +549,7 @@ async function saveAssessments(ctx,prior,next) {
     const coordination=reviewed?await sourceCoordination(ctx,row,rawKey):null;
     if(reviewed){
       patch.approved_v3_guide=reviewed;patch.implementation=row.implementation;
+      if(Object.hasOwn(patch,'status'))patch.record_approved_v3_judgment=true;
       if(ops.length)patch.item_draft={expected_revision:saved.items_revision||0,operations:ops};
       if(coordination)patch.coordination=coordination.body;
     }
