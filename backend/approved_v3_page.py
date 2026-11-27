@@ -348,6 +348,24 @@ window.GoverNaraNativePage=(function(){
     if(x&&x.nativeActivity&&!x.r){context.frequency=coordFrequency(nativeSetupCadence(x.nativeActivity))||'';context.next=x.nativeActivity.first_next_due||'';}
     return context;
   };
+  var sourceGuideNarrative=guideNarrative;
+  guideNarrative=function(c,it,answers,outcome){
+    var current=connectedClone(answers),context=coordContext(c,it,current);
+    if(!context.record?.nativeId)return sourceGuideNarrative(c,it,answers,outcome);
+    var next=context.entry?.nativeActivity?.first_next_due||context.next;
+    if(next){
+      current.nextReview=next;
+      var cadenceKey=regFor(c).kind==='cis'&&it.id==='1.1'?'freq':'reviewCadence';
+      if(context.frequency)current[cadenceKey]=context.frequency;
+    }
+    var completion=CONNECTED.reviewHistory(c.id,context.record.id).find(function(row){
+      return row.nativeOccurrenceId&&connectedDate(row.done);
+    });
+    var text=sourceGuideNarrative(c,it,current,outcome);
+    if(completion)text=text.replace('No completed review is reported yet; the ticket records planned work only.',
+      'The linked Review records completion on '+fD(completion.done)+'. The interview answer has not confirmed that result.');
+    return text;
+  };
   makeProg=function(){
     var program=sourceMakeProgram.apply(this,arguments);
     if(program.k==='hipaa'&&callbacks&&callbacks.hipaaSupplement)
